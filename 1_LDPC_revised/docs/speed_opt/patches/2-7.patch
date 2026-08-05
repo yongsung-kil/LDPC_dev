@@ -1,0 +1,100 @@
+diff --git a/1_LDPC_revised/README.md b/1_LDPC_revised/README.md
+index 2e0f426..6ff5087 100644
+--- a/1_LDPC_revised/README.md
++++ b/1_LDPC_revised/README.md
+@@ -15,3 +15,4 @@
+ | 2-4 | stopping_criteria 판정 hoisting | decoder.cpp | 적용 완료 | [docs/speed_opt/2-4_stopping_criteria_hoist.md](../docs/speed_opt/2-4_stopping_criteria_hoist.md) |
+ | 2-5 | before_BS dead code 제거 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-5_before_BS_dead_code.md](../docs/speed_opt/2-5_before_BS_dead_code.md) |
+ | 2-6 | _nq 배열 체인 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-6_nq_arrays_tv_guard.md](../docs/speed_opt/2-6_nq_arrays_tv_guard.md) |
++| 2-7 | pre_exist_sgn_reg_BS 3종 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md](../docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md) |
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index 3bddb2b..17cc9cb 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -45,9 +45,11 @@ void Decoder::Initialize_Dec()
+     pre_exist_sgn_reg = NULL;
+     pre_exist_sgn_reg2 = NULL;
+     pre_exist_sgn_reg3 = NULL;
++#if defined (__ECC_TV__)
+     pre_exist_sgn_reg_BS = NULL;
+     pre_exist_sgn_reg2_BS = NULL;
+     pre_exist_sgn_reg3_BS = NULL;
++#endif
+     Syndrome = NULL;
+     Syndrome_intermediate = NULL;
+ #if defined(__ECC_TV_SYND_INTERNAL_DEBUG__)
+@@ -151,9 +153,11 @@ void Decoder::Alloc_Dec()
+     pre_exist_sgn_reg = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg[i] = new int[z_sb];
+     pre_exist_sgn_reg2 = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg2[i] = new int[z_sb];
+     pre_exist_sgn_reg3 = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg3[i] = new int[z_sb];
++#if defined (__ECC_TV__)
+     pre_exist_sgn_reg_BS = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg_BS[i] = new int[z_sb];
+     pre_exist_sgn_reg2_BS = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg2_BS[i] = new int[z_sb];
+     pre_exist_sgn_reg3_BS = new int*[J]; for (i = 0; i < J; i++) pre_exist_sgn_reg3_BS[i] = new int[z_sb];
++#endif
+     Syndrome = new int[M];
+     Syndrome_intermediate = new int[M];
+ #if defined(__ECC_TV_SYND_INTERNAL_DEBUG__)
+@@ -318,12 +322,16 @@ void Decoder::Release_Dec()
+         delete[] pre_exist_sgn_reg[i];
+         delete[] pre_exist_sgn_reg2[i];
+         delete[] pre_exist_sgn_reg3[i];
++#if defined (__ECC_TV__)
+         delete[] pre_exist_sgn_reg_BS[i];
+         delete[] pre_exist_sgn_reg2_BS[i];
+         delete[] pre_exist_sgn_reg3_BS[i];
++#endif
+     }
+     delete[] pre_exist_sgn_reg; delete[] pre_exist_sgn_reg2; delete[] pre_exist_sgn_reg3;
++#if defined (__ECC_TV__)
+     delete[] pre_exist_sgn_reg_BS; delete[] pre_exist_sgn_reg2_BS; delete[] pre_exist_sgn_reg3_BS;
++#endif
+     delete[] Syndrome;
+     delete[] Syndrome_intermediate;
+ #if defined(__ECC_TV_SYND_INTERNAL_DEBUG__)
+@@ -694,8 +702,10 @@ void Decoder::Delay_2clk(int parity_skip)
+         for (i = 0; i < m_PCM->z_sb; i++) {
+             pre_exist_sgn_reg3[ii][i] = pre_exist_sgn_reg2[ii][i];
+             pre_exist_sgn_reg2[ii][i] = pre_exist_sgn_reg[ii][i];
++#if defined (__ECC_TV__)
+             pre_exist_sgn_reg3_BS[ii][i] = pre_exist_sgn_reg2_BS[ii][i];
+             pre_exist_sgn_reg2_BS[ii][i] = pre_exist_sgn_reg_BS[ii][i];
++#endif
+             VNU_out3[ii][i] = VNU_out2[ii][i];
+             VNU_out2[ii][i] = VNU_out[ii][i];
+ #if defined (__ECC_TV__)
+@@ -765,8 +775,10 @@ void Decoder::Clear_Delay_REG()
+         for (i = 0; i < m_PCM->z_sb; i++) {
+             pre_exist_sgn_reg3[ii][i] = 0;
+             pre_exist_sgn_reg2[ii][i] = 0;
++#if defined (__ECC_TV__)
+             pre_exist_sgn_reg3_BS[ii][i] = 0;
+             pre_exist_sgn_reg2_BS[ii][i] = 0;
++#endif
+             VNU_out3_temp[ii][i] = 0;
+             VNU_out3[ii][i] = 0;
+             VNU_out2[ii][i] = 0;
+@@ -2428,7 +2440,9 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+         if (new_sgn % 2 == 1) { check_out = -check_out; }    // minus sign
+         VNU_in[mux_index][j] = check_out;
+         pre_exist_sgn_reg[mux_index][z_mem_shift[j]] = edge_sgn;
++#if defined (__ECC_TV__)
+         pre_exist_sgn_reg_BS[mux_index][j] = edge_sgn;
++#endif
+ #if defined (__ECC_TV__)
+ #if defined (__4_BIT_LLR__)
+         /* 4-bit precision */
+diff --git a/1_LDPC_revised/decoder.h b/1_LDPC_revised/decoder.h
+index 7585d3c..175be87 100644
+--- a/1_LDPC_revised/decoder.h
++++ b/1_LDPC_revised/decoder.h
+@@ -232,7 +232,9 @@ private:
+     int**       Sum_t_OLD_G1;
+ 
+     int**      pre_exist_sgn_reg, **pre_exist_sgn_reg2, **pre_exist_sgn_reg3; //HW delay consideration
++#if defined (__ECC_TV__)
+     int**      pre_exist_sgn_reg_BS, **pre_exist_sgn_reg2_BS, **pre_exist_sgn_reg3_BS; //HW delay consideration
++#endif
+ 
+     int*        Syndrome;
+     int*        Syndrome_intermediate;

@@ -113,7 +113,7 @@ mode.h ← common.h ← (거의 모든 .h)
 
 ### 빌드 도구
 
-`LDPC_Original/build.bat` — MSVC cl.exe 직접 호출 (단일 타겟)
+`0_LDPC_original/build.bat` — MSVC cl.exe 직접 호출 (단일 타겟)
 
 ```bat
 cl /EHsc /W3 /O2 /Fe:ldpc_sim.exe *.cpp

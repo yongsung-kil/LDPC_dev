@@ -1,0 +1,52 @@
+diff --git a/1_LDPC_revised/encoder.cpp b/1_LDPC_revised/encoder.cpp
+index 6486005..da0b2c3 100644
+--- a/1_LDPC_revised/encoder.cpp
++++ b/1_LDPC_revised/encoder.cpp
+@@ -155,9 +155,9 @@ void Encoder::LDPC_encoder_dual_diagonal(int* Codeword, int* Msg, int** PCM, int
+     for (r = 0; r < zsb; r++) {
+         tmp = 0;
+         for (c = 0; c < zsb; c++) {
+-            tmp = (tmp + (*(*(Pj + r) + c)) * (*(Msg + j * zsb + c))) % 2;
++            tmp = tmp ^ ((*(*(Pj + r) + c)) & (*(Msg + j * zsb + c)));    // GF(2): 0/1 값이라 곱=AND, 합=XOR
+         }
+-        *(Parity + r) = (*(Parity + r) + tmp) % 2;
++        *(Parity + r) = *(Parity + r) ^ tmp;
+     }
+     }
+     for (i = 0; i < NumRowBlk; i++) {
+@@ -171,9 +171,9 @@ void Encoder::LDPC_encoder_dual_diagonal(int* Codeword, int* Msg, int** PCM, int
+                     flag = *(*(PCM + i) + j);
+                     for (r = 0; r < zsb; r++) {
+                         if (flag + r < zsb)
+-                            *(Parity + r) = (*(Parity + r) + *(Codeword + j * zsb + r + flag)) % 2;
++                            *(Parity + r) = *(Parity + r) ^ *(Codeword + j * zsb + r + flag);
+                         else
+-                            *(Parity + r) = (*(Parity + r) + *(Codeword + j * zsb + r + flag - zsb)) % 2;
++                            *(Parity + r) = *(Parity + r) ^ *(Codeword + j * zsb + r + flag - zsb);
+                     }
+                 }
+             }
+@@ -198,9 +198,9 @@ void Encoder::LDPC_encoder_dual_diagonal(int* Codeword, int* Msg, int** Parity_i
+     for (r = 0; r < zsb; r++) {
+         tmp = 0;
+         for (c = 0; c < zsb; c++) {
+-            tmp = (tmp + (*(*(Pj + r) + c)) * (*(Msg + j * zsb + c))) % 2;
++            tmp = tmp ^ ((*(*(Pj + r) + c)) & (*(Msg + j * zsb + c)));    // GF(2): 0/1 값이라 곱=AND, 합=XOR
+         }
+-        *(Parity + r) = (*(Parity + r) + tmp) % 2;
++        *(Parity + r) = *(Parity + r) ^ tmp;
+     }
+     }
+     for (i = 0; i < NumRowBlk; i++) {
+@@ -214,9 +214,9 @@ void Encoder::LDPC_encoder_dual_diagonal(int* Codeword, int* Msg, int** Parity_i
+                     flag = *(*(PCM + i) + j);
+                     for (r = 0; r < zsb; r++) {
+                         if (flag + r < zsb)
+-                            *(Parity + r) = (*(Parity + r) + *(Codeword + j * zsb + r + flag)) % 2;
++                            *(Parity + r) = *(Parity + r) ^ *(Codeword + j * zsb + r + flag);
+                         else
+-                            *(Parity + r) = (*(Parity + r) + *(Codeword + j * zsb + r + flag - zsb)) % 2;
++                            *(Parity + r) = *(Parity + r) ^ *(Codeword + j * zsb + r + flag - zsb);
+                     }
+                 }
+             }

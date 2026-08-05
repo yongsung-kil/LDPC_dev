@@ -1,0 +1,112 @@
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index d8b7e23..987dd69 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -2370,6 +2370,12 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+     v_deg = m_PCM->ColW[jj];
+     // j-루프 불변 판정 hoisting: synd=0, check_sum=0, edge_sgn=1 프로브 → old sgn 유지 시 1, clear 시 0
+     const int b_c2v_keep_old_sgn = C2V_Cal_New_Sgn(iter, 0, 0, 1, jj);
++    // j-루프 불변: 1bit precision 모드 판정
++#ifdef __AUTO_LLR_OPT__
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
++#else
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) ? TRUE : FALSE;
++#endif
+     for (j = 0; j < m_PCM->z_sb; j++) { //VN ordering (before BS)
+         row_idx_r = idx_offset + z_mem_shift[j];
+         /* C2V sgn calculation */
+@@ -2379,13 +2385,7 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+         /* Syndrome aided decoding algorithm */
+         new_sgn = (synd + check_sum + ((TRUE == b_c2v_keep_old_sgn) ? edge_sgn : 0)) % 2;
+         /* C2V mag calculation */
+-        if ((TRUE == flag_BF_on) &&
+-#ifdef __AUTO_LLR_OPT__
+-            (iter <= 4) &&
+-#else
+-            (iter <= ITER_MAX_HBF) &&
+-#endif
+-            (v_deg > DV_5)) { //Dv > 5 인 column은 1bit precision -> mag는 4로 고정
++        if (TRUE == b_1bit_precision) { //Dv > 5 인 column은 1bit precision -> mag는 4로 고정
+ #if defined (__4_BIT_LLR__)
+                 check_out = EDGE_MAG_8;
+ #else
+@@ -2736,6 +2736,12 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+     int b_v2c_keep_old_sgn = 0;
+     CNU_Remove_Old_Sgn(iter, 1, &b_v2c_keep_old_sgn, jj);
+     const int b_iter_init = Is_Iter_Type_Init(iter);    // j-루프 불변
++    // j-루프 불변: 1bit precision 모드 판정
++#ifdef __AUTO_LLR_OPT__
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
++#else
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) ? TRUE : FALSE;
++#endif
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
+         /* Read VNU output (before BS) */
+@@ -2806,13 +2812,7 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+         min2_value = REG_min2_value[bit_pos];
+         old_min1_value = min1_value;
+         old_min2_value = min2_value;
+-        if ((TRUE == flag_BF_on)
+-#ifdef __AUTO_LLR_OPT__
+-            && (iter <= 4)
+-#else
+-            && (iter <= ITER_MAX_HBF)
+-#endif
+-            && (v_deg > DV_5)) { //1bit mode
++        if (TRUE == b_1bit_precision) { //1bit mode
+             update_flag = FALSE;
+         }
+         else { //3bit mode
+@@ -3995,6 +3995,12 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+     int bTable;
+     int bit_pos;
+     int mux_idx;
++    // (j, ii)-루프 불변: 1bit precision 모드 판정
++#ifdef __AUTO_LLR_OPT__
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
++#else
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) ? TRUE : FALSE;
++#endif
+ #if defined(__AUTO_LLR_OPT__)
+     Get_VNU_LLR_SET_FILE(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #else
+@@ -4065,11 +4071,7 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;
+-#ifdef __AUTO_LLR_OPT__
+-            if ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) { //1bit precision
+-#else
+-            if ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) { //1bit precision
+-#endif
++            if (TRUE == b_1bit_precision) { //1bit precision
+                 /* Zero V-out */
+                 if (temp_m == 0) {
+ #if defined (__4_BIT_LLR__)
+@@ -4170,6 +4172,12 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+     current_G_idx = (G_idx + iter) % 2;
+     int start_deg = 0;
+     int end_deg = 0;
++    // (j, ii)-루프 불변: 1bit precision 모드 판정
++#ifdef __AUTO_LLR_OPT__
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
++#else
++    const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) ? TRUE : FALSE;
++#endif
+ #if defined(__AUTO_LLR_OPT__)
+     Get_VNU_LLR_SET_FILE(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #else
+@@ -4284,11 +4292,7 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;
+-#ifdef __AUTO_LLR_OPT__
+-            if ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) { //1bit precision
+-#else
+-            if ((TRUE == flag_BF_on) && (iter <= ITER_MAX_HBF) && (v_deg > DV_5)) { //1bit precision
+-#endif
++            if (TRUE == b_1bit_precision) { //1bit precision
+                 /* Zero V-out */
+                 if (temp_m == 0) {
+ #if defined (__4_BIT_LLR__)

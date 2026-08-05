@@ -1,0 +1,16 @@
+diff --git a/LDPC/random.cpp b/1_LDPC_revised/random.cpp
+index 6047faf..ef0e82d 100644
+--- a/LDPC/random.cpp
++++ b/1_LDPC_revised/random.cpp
+@@ -312,10 +312,7 @@ double xor_r25(unsigned int* a)
+     double tmp;
+     unsigned int t = (a[18] ^ (a[18] << 5));
+     unsigned int w = (t ^ (t >> 13)) ^ (a[0] ^ (a[0] << 20));
+-    int i = 0;
+-    for (i = 0; i < 24; i++) {
+-        a[i] = a[i + 1];
+-    }
++    memmove(a, a + 1, 24 * sizeof(unsigned int));    // 24회 원소별 이동 → 단일 블록 이동 (겹치는 영역이라 memmove)
+     a[24] = w;
+ 
+     tmp = w / (double)4294967295;

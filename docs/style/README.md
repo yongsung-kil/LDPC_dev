@@ -1,6 +1,6 @@
 # LDPC C++ 코딩 컨벤션 — 진입점
 
-> **목적**: `LDPC_Original/` 하위 C++ 소스의 스타일을 하나로 통일하기 위한 규칙 모음.
+> **목적**: `0_LDPC_original/` 하위 C++ 소스의 스타일을 하나로 통일하기 위한 규칙 모음.
 > 리팩토링·신규 코드 작성 전 이 폴더를 읽고 시작합니다.
 
 ---
@@ -45,7 +45,7 @@
 - 기계적 규칙 → `.clang-format` 로 일괄 처리 ([proposed.clang-format](proposed.clang-format) 초안 참조)
 - 의미적 규칙(네이밍, 주석 내용, 선언-초기화 결합, 인코딩) → 사람/AI 판단 필요
 
-> ⚠️ **주의**: `LDPC_Original/`는 현재 빌드 불가 상태이고 일부 파일이 CP949 인코딩 손상(`@@@`)이 있습니다.
+> ⚠️ **주의**: `0_LDPC_original/`는 현재 빌드 불가 상태이고 일부 파일이 CP949 인코딩 손상(`@@@`)이 있습니다.
 > clang-format 일괄 적용 **전에** 인코딩 정상화(UTF-8 통일)를 먼저 끝내야 합니다.
 > (자세한 순서는 [refactoring_checklist.md](refactoring_checklist.md) §0 참조)
 

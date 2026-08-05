@@ -2,7 +2,7 @@
 
 > 기준: **Google C++ Style Guide** 차용 + 프로젝트 특화.
 > 각 규칙에 `[Google]`(구글과 동일) / `[특화]`(프로젝트 고유) / `[결정]`(확정 필요) 태그 표기.
-> Good/Bad 예시는 실제 `LDPC_Original/` 코드에서 발췌.
+> Good/Bad 예시는 실제 `0_LDPC_original/` 코드에서 발췌.
 
 ---
 

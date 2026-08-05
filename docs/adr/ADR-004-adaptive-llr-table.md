@@ -13,6 +13,6 @@ Iteration 구간별 LLR 파라미터를 다르게 적용. `PARAM_LLR` 구조체�
 - BP 정밀 LLR: HW 구현 비용 과다
 
 ## 영향 파일
-- `LDPC_Original/decoder.h:122-126` — `Get_VNU_Table_Idx`, `Get_VNU_Ch_LLR_Adaptive`, `Get_VNU_Th_Adaptive`
-- `LDPC_Original/common.h:396-688` — LLR 테이블 인덱스 enum, iteration 구간 상수
-- `LDPC_Original/ecc_data.h:179-198` — `PARAM_LLR` 구조체
+- `0_LDPC_original/decoder.h:122-126` — `Get_VNU_Table_Idx`, `Get_VNU_Ch_LLR_Adaptive`, `Get_VNU_Th_Adaptive`
+- `0_LDPC_original/common.h:396-688` — LLR 테이블 인덱스 enum, iteration 구간 상수
+- `0_LDPC_original/ecc_data.h:179-198` — `PARAM_LLR` 구조체

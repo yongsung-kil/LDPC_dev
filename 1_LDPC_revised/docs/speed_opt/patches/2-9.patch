@@ -1,0 +1,264 @@
+diff --git a/1_LDPC_revised/README.md b/1_LDPC_revised/README.md
+index 6f53081..d24054a 100644
+--- a/1_LDPC_revised/README.md
++++ b/1_LDPC_revised/README.md
+@@ -17,3 +17,4 @@
+ | 2-6 | _nq 배열 체인 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-6_nq_arrays_tv_guard.md](../docs/speed_opt/2-6_nq_arrays_tv_guard.md) |
+ | 2-7 | pre_exist_sgn_reg_BS 3종 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md](../docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md) |
+ | 2-8 | Delay_2clk 행 단위 memcpy | decoder.cpp | 적용 완료 | [docs/speed_opt/2-8_delay_2clk_memcpy.md](../docs/speed_opt/2-8_delay_2clk_memcpy.md) |
++| 2-9 | LLR 테이블 파일 파라미터화 | decoder.h, decoder.cpp, llr_tables_template.txt | 적용 완료 | [docs/speed_opt/2-9_llr_table_parameterize.md](../docs/speed_opt/2-9_llr_table_parameterize.md) |
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index a754c35..3bfc818 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -28,6 +28,7 @@ void Decoder::Initialize_Dec()
+     Check_SRAM_sgn = NULL;
+     Check_REG = NULL;
+     Variable_mem = NULL;
++    m_llr_from_file = FALSE;
+     shift_tbl_C2V = NULL;
+     shift_tbl_V2C = NULL;
+     VNU_in = NULL;
+@@ -273,6 +274,7 @@ void Decoder::Alloc_Dec()
+     m_log_VNU_out = new int*[J]; for (i = 0; i < J; i++) m_log_VNU_out[i] = new int[N];
+     m_log_sum_t = new int[N];
+     m_log_ch_llr = new int[N];
++    Load_LLR_Tables();
+ }
+ //=============================================
+ // Release memory
+@@ -6717,6 +6719,71 @@ void Decoder::Set_CSW(int w)
+ 	prev_CSW = w;
+ }
+ //================================================
++// LLR/threshold 테이블 로드 (Alloc_Dec에서 1회 호출)
++// llr_tables.txt가 있으면 파일 값 사용 (m_llr_from_file = TRUE),
++// 없으면 Get_VNU_*_Adaptive 안의 코드 기본 테이블 사용
++// 파일 포맷: '#' 시작 줄은 주석. 섹션마다 "이름 rows cols" 한 줄 + rows*cols개 정수
++// 섹션 순서: CH_HD, CH_2SD, CH_3SD, TH_HD, TH_2SD, TH_3SD
++//================================================
++static void Skip_LLR_Comments(FILE* fp)
++{
++    int c;
++    for (;;) {
++        c = fgetc(fp);
++        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') continue;
++        if (c == '#') { while ((c = fgetc(fp)) != EOF && c != '\n') {} continue; }
++        if (c != EOF) ungetc(c, fp);
++        return;
++    }
++}
++static int Load_LLR_Section(FILE* fp, const char* name, int* dst, int rows, int cols)
++{
++    char sec_name[64];
++    int sec_rows, sec_cols;
++    int i;
++    Skip_LLR_Comments(fp);
++    if (fscanf(fp, "%63s %d %d", sec_name, &sec_rows, &sec_cols) != 3) return FALSE;
++    if (strcmp(sec_name, name) != 0 || sec_rows != rows || sec_cols != cols) {
++        printf("[Error] llr_tables.txt: expected [%s %d %d], got [%s %d %d]\n", name, rows, cols, sec_name, sec_rows, sec_cols);
++        return FALSE;
++    }
++    for (i = 0; i < rows * cols; i++) {
++        if (fscanf(fp, "%d", dst + i) != 1) {
++            printf("[Error] llr_tables.txt: section %s value %d read fail\n", name, i);
++            return FALSE;
++        }
++    }
++    return TRUE;
++}
++void Decoder::Load_LLR_Tables()
++{
++    FILE* fp;
++    int ok = TRUE;
++    m_llr_from_file = FALSE;
++    memset(m_Ch_LLR_HD, 0, sizeof(m_Ch_LLR_HD));
++    memset(m_Ch_LLR_2SD, 0, sizeof(m_Ch_LLR_2SD));
++    memset(m_Ch_LLR_3SD, 0, sizeof(m_Ch_LLR_3SD));
++    memset(m_Th_HD, 0, sizeof(m_Th_HD));
++    memset(m_Th_2SD, 0, sizeof(m_Th_2SD));
++    memset(m_Th_3SD, 0, sizeof(m_Th_3SD));
++    fp = fopen("llr_tables.txt", "r");
++    if (fp == NULL) return;    // 파일 없으면 코드 기본 테이블 사용
++    ok = ok && Load_LLR_Section(fp, "CH_HD", &m_Ch_LLR_HD[0][0], PRIME_HD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * 1);
++    ok = ok && Load_LLR_Section(fp, "CH_2SD", &m_Ch_LLR_2SD[0][0], PRIME_2SD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * 2);
++    ok = ok && Load_LLR_Section(fp, "CH_3SD", &m_Ch_LLR_3SD[0][0], PRIME_3SD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * 4);
++    ok = ok && Load_LLR_Section(fp, "TH_HD", &m_Th_HD[0][0], PRIME_HD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH);
++    ok = ok && Load_LLR_Section(fp, "TH_2SD", &m_Th_2SD[0][0], PRIME_2SD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH);
++    ok = ok && Load_LLR_Section(fp, "TH_3SD", &m_Th_3SD[0][0], PRIME_3SD_LLR_TABLE_NUM_ROW, PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH);
++    fclose(fp);
++    if (TRUE == ok) {
++        m_llr_from_file = TRUE;
++        printf("[Info] LLR tables loaded from llr_tables.txt\n");
++    }
++    else {
++        printf("[Error] llr_tables.txt parse fail ==> 코드 기본 테이블 사용\n");
++    }
++}
++//================================================
+ // Return Channel LLR
+ // NOTE: excel로부터 생성한 txt에서 복사해서 사용
+ // common.h 부분 같이 update 필요
+@@ -6725,7 +6792,7 @@ void Decoder::Get_VNU_Ch_LLR_Adaptive(int dv, int col_idx, int table_idx, int* c
+ {
+ 	int dv_idx = 0;
+ 	if (m_ecc_info->matrix_sel == LAYOUT_PRIME_512B_TLC_VSS_OFF) {
+-	    int Ch_LLR_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 1] = {
++	    static const int Ch_LLR_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 1] = {
+ #ifdef __4_BIT_LLR__
+ 	        /*{17, 22, 13, 13},
+ 	{12, 11, 12,  8},
+@@ -6874,7 +6941,7 @@ void Decoder::Get_VNU_Ch_LLR_Adaptive(int dv, int col_idx, int table_idx, int* c
+     {21, 14, 12, 10}
+ #endif // __4_BIT_LLR__
+ 	};
+-        int Ch_LLR_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 2] = {
++        static const int Ch_LLR_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 2] = {
+ 
+ #ifdef __4_BIT_LLR__
+             {15, 4, 15, 4, 17, 5, 13, 4},
+@@ -6964,7 +7031,7 @@ void Decoder::Get_VNU_Ch_LLR_Adaptive(int dv, int col_idx, int table_idx, int* c
+             {15, 4, 15, 4, 17, 5, 13, 4}
+ #endif
+         };
+-        int Ch_LLR_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 4];
++        static const int Ch_LLR_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 4] = {0};    // 원본 초기화 리스트 소실 — 실제 값은 llr_tables.txt로 공급할 것
+ #ifdef __4_BIT_LLR__
+         if (dv >= 5)	dv_idx = PRIME_LLR_TABLE_IDX_DV12;
+ 	    else if (dv == 4)	dv_idx = PRIME_LLR_TABLE_IDX_DV4;
+@@ -6982,22 +7049,25 @@ void Decoder::Get_VNU_Ch_LLR_Adaptive(int dv, int col_idx, int table_idx, int* c
+ 	        dv_idx = PRIME_LLR_TABLE_IDX_DV2;
+ #endif // __LLR_PUNCT_TO_DV2__
+ 	if ((MODE_DEC_HD == m_param_dec->init_n) || (MODE_DEC_1_5SD == m_param_dec->init_n)) {
+-	    *ch1 = Ch_LLR_HD[table_idx][dv_idx];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Ch_LLR_HD[table_idx] : Ch_LLR_HD[table_idx];
++	    *ch1 = row[dv_idx];
+ 	    *ch2 = 0;
+ 	    *ch3 = 0;
+ 	    *ch4 = 0;
+ 	}
+ 	else if (MODE_DEC_2SD == m_param_dec->init_n) {
+-	    *ch1 = Ch_LLR_2SD[table_idx][dv_idx * 2];
+-	    *ch2 = Ch_LLR_2SD[table_idx][dv_idx * 2 + 1];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Ch_LLR_2SD[table_idx] : Ch_LLR_2SD[table_idx];
++	    *ch1 = row[dv_idx * 2];
++	    *ch2 = row[dv_idx * 2 + 1];
+ 	    *ch3 = 0;
+ 	    *ch4 = 0;
+ 	}
+ 	else if (MODE_DEC_3SD == m_param_dec->init_n) {
+-	    *ch1 = Ch_LLR_3SD[table_idx][dv_idx * 4];
+-	    *ch2 = Ch_LLR_3SD[table_idx][dv_idx * 4 + 1];
+-	    *ch3 = Ch_LLR_3SD[table_idx][dv_idx * 4 + 2];
+-	    *ch4 = Ch_LLR_3SD[table_idx][dv_idx * 4 + 3];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Ch_LLR_3SD[table_idx] : Ch_LLR_3SD[table_idx];
++	    *ch1 = row[dv_idx * 4];
++	    *ch2 = row[dv_idx * 4 + 1];
++	    *ch3 = row[dv_idx * 4 + 2];
++	    *ch4 = row[dv_idx * 4 + 3];
+ 	}
+ }
+ #if defined (__ONLY_FOR_DEBUG__)
+@@ -7175,9 +7245,10 @@ void Decoder::Get_VNU_Th_Adaptive(int dv, int col_idx, int table_idx, int* th1,
+ {
+ 	int dv_idx = 0;
+ 	if (m_ecc_info->matrix_sel == LAYOUT_PRIME_512B_TLC_VSS_OFF) {
+-        int table_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
+-        int table_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
+-        int table_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
++        // 원본 초기화 리스트 소실 — 실제 값은 llr_tables.txt로 공급할 것 (기본값 0)
++        static const int table_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH] = {0};
++        static const int table_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH] = {0};
++        static const int table_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH] = {0};
+ 
+ #ifdef __4_BIT_LLR__
+         if (dv >= 5) dv_idx = PRIME_LLR_TABLE_IDX_DV12;
+@@ -7196,36 +7267,39 @@ void Decoder::Get_VNU_Th_Adaptive(int dv, int col_idx, int table_idx, int* th1,
+ 		dv_idx = PRIME_LLR_TABLE_IDX_DV2;
+ #endif // __LLR_PUNCT_TO_DV2__
+ 	if ((MODE_DEC_HD == m_param_dec->init_n) || (MODE_DEC_1_5SD == m_param_dec->init_n)) {
+-	    *th1 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH];
+-	    *th2 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
+-	    *th3 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Th_HD[table_idx] : table_HD[table_idx];
++	    *th1 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH];
++	    *th2 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
++	    *th3 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
+ #if defined (__4_BIT_LLR__)
+-	    *th4 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
+-	    *th5 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
+-	    *th6 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
+-	    *th7 = table_HD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
++	    *th4 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
++	    *th5 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
++	    *th6 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
++	    *th7 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
+ #endif
+ 	}
+ 	else if (MODE_DEC_2SD == m_param_dec->init_n) {
+-	    *th1 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH];
+-	    *th2 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
+-	    *th3 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Th_2SD[table_idx] : table_2SD[table_idx];
++	    *th1 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH];
++	    *th2 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
++	    *th3 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
+ #if defined (__4_BIT_LLR__)
+-	    *th4 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
+-	    *th5 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
+-	    *th6 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
+-	    *th7 = table_2SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
++	    *th4 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
++	    *th5 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
++	    *th6 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
++	    *th7 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
+ #endif
+ 	}
+ 	else if (MODE_DEC_3SD == m_param_dec->init_n) {
+-	    *th1 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH];
+-	    *th2 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
+-	    *th3 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
++	    const int* row = (TRUE == m_llr_from_file) ? m_Th_3SD[table_idx] : table_3SD[table_idx];
++	    *th1 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH];
++	    *th2 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 1];
++	    *th3 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 2];
+ #if defined (__4_BIT_LLR__)
+-	    *th4 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
+-	    *th5 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
+-	    *th6 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
+-	    *th7 = table_3SD[table_idx][dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
++	    *th4 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 3];
++	    *th5 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 4];
++	    *th6 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 5];
++	    *th7 = row[dv_idx * PRIME_LLR_TABLE_NUM_TH + 6];
+ #endif
+ 	    }
+ 	}
+diff --git a/1_LDPC_revised/decoder.h b/1_LDPC_revised/decoder.h
+index 175be87..8f13238 100644
+--- a/1_LDPC_revised/decoder.h
++++ b/1_LDPC_revised/decoder.h
+@@ -157,6 +157,7 @@ private:
+     //void    Select_Iteration_Set();
+     int     Is_Iter_Type_Edge_Clear(int cur_iteration);
+     int     Is_Iter_Type_Init(int cur_iteration);
++    void    Load_LLR_Tables();
+     void    Get_Err_Cnt(int* i_HD_input, int * i_SD_input, int * dec_output, int * err_cnt, int * strong_err_cnt, int* zero_to_one_flip_cnt, int *weak_cor_cnt);
+     int     Get_One_Cnt(int* dec_output);
+     void    Set_CSW(int w);
+@@ -222,6 +223,15 @@ private:
+     int**       shift_tbl_C2V;      // [s][j] shift 순열 사전 계산 (dir=0). s = PCM_b shift 값 (0 ~ z_sb-1 전제)
+     int**       shift_tbl_V2C;      // [s][j] shift 순열 사전 계산 (dir=1)
+ 
++    /* LLR/threshold 테이블 파라미터화: llr_tables.txt에서 1회 로드 (없으면 코드 기본 테이블 사용) */
++    int         m_llr_from_file;
++    int         m_Ch_LLR_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 1];
++    int         m_Ch_LLR_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 2];
++    int         m_Ch_LLR_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * 4];
++    int         m_Th_HD[PRIME_HD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
++    int         m_Th_2SD[PRIME_2SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
++    int         m_Th_3SD[PRIME_3SD_LLR_TABLE_NUM_ROW][PRIME_LLR_TABLE_NUM_DEGREE * PRIME_LLR_TABLE_NUM_TH];
++
+     int**       VNU_in, **VNU_out, **VNU_out2, **VNU_out3; //HW delay consideration
+ #if defined (__ECC_TV__)
+     int**        VNU_out_nq, **VNU_out2_nq, ** VNU_out3_nq;

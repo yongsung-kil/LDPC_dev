@@ -1,0 +1,37 @@
+diff --git a/LDPC/encoder.cpp b/1_LDPC_revised/encoder.cpp
+index e055315..51af74e 100644
+--- a/LDPC/encoder.cpp
++++ b/1_LDPC_revised/encoder.cpp
+@@ -21,8 +21,16 @@ Encoder::~Encoder()
+ //================================================
+ void Encoder::Init_Enc(PCM* pcm)
+ {
++    int shuffled_dual_diag;
++#if defined(__SHUFFLED_DUAL_DIAG__)
++    shuffled_dual_diag = TRUE;
++#else
++    shuffled_dual_diag = FALSE;
++#endif
+     m_PCM = pcm;
+     Alloc_Enc();
++    // PCM_b는 시뮬레이션 중 불변 — 인코딩용 PCM 재배열은 최초 1회만 수행 (기존: 매 프레임 재생성)
++    Generate_PCM_encoding(m_PCM->PCM_b, m_PCM->PCM_b_enc, m_PCM->N_b, m_PCM->M_b, shuffled_dual_diag);
+ }
+ //================================================
+ // Dynamic memory allocation
+@@ -62,7 +70,6 @@ void Encoder::LDPC_encoder_4KB(int* Codeword, int* Msg)
+ #else
+     shuffled_dual_diag = FALSE;
+ #endif
+-    Generate_PCM_encoding(m_PCM->PCM_b, m_PCM->PCM_b_enc, m_PCM->N_b, m_PCM->M_b, shuffled_dual_diag);
+     LDPC_encoder_dual_diagonal(Codeword, Msg, m_PCM->PCM_b_enc, m_PCM->N_b, m_PCM->M_b, m_PCM->z_sb);
+     if (TRUE == shuffled_dual_diag) {
+         Column_Reordering_Dual_Update(Codeword, m_PCM->N_b, m_PCM->M_b, m_PCM->z_sb);
+@@ -89,7 +96,6 @@ void Encoder::LDPC_encoder_4KB(int* Codeword, int* Msg, int** Parity_inter)
+ #else
+     shuffled_dual_diag = FALSE;
+ #endif
+-    Generate_PCM_encoding(m_PCM->PCM_b, m_PCM->PCM_b_enc, m_PCM->N_b, m_PCM->M_b, shuffled_dual_diag);
+     LDPC_encoder_dual_diagonal(Codeword, Msg, Parity_inter, m_PCM->PCM_b_enc, m_PCM->N_b, m_PCM->M_b, m_PCM->z_sb);
+     if (TRUE == shuffled_dual_diag) {
+         Column_Reordering_Dual_Update(Codeword, m_PCM->N_b, m_PCM->M_b, m_PCM->z_sb);

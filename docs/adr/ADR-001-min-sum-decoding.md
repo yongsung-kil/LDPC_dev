@@ -13,5 +13,5 @@ Min-Sum 변형 사용. CN 연산에서 min1/min2 값과 position만 추적 (`REG
 - Offset/Normalized Min-Sum: 코드에 scaling factor 미확인 — 순수 min-sum 또는 별도 LLR 테이블로 보정하는 방식 추정
 
 ## 영향 파일
-- `LDPC_Original/decoder.cpp` — `CNU_Update_New_Mag()`, `C2V_Cal_New_Sgn()`
-- `LDPC_Original/decoder.h:79` — min1/min2/min1_pos 레지스터
+- `0_LDPC_original/decoder.cpp` — `CNU_Update_New_Mag()`, `C2V_Cal_New_Sgn()`
+- `0_LDPC_original/decoder.h:79` — min1/min2/min1_pos 레지스터

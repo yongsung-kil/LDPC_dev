@@ -1,0 +1,171 @@
+diff --git a/1_LDPC_revised/README.md b/1_LDPC_revised/README.md
+index 5a48645..0bf284c 100644
+--- a/1_LDPC_revised/README.md
++++ b/1_LDPC_revised/README.md
+@@ -21,3 +21,4 @@
+ | 2-10 | Init_Log_Data 프레임당 호출 가드 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-10_init_log_data_guard.md](../docs/speed_opt/2-10_init_log_data_guard.md) |
+ | 2-11 | magnitude 매핑 산술화 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-11_mag_domain_arith.md](../docs/speed_opt/2-11_mag_domain_arith.md) |
+ | 2-12 | % 2 → & 1 / ^ 1 치환 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-12_mod2_to_bitand.md](../docs/speed_opt/2-12_mod2_to_bitand.md) |
++| 2-13 | VN_Cal Mux_idx 로컬 캐시 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-13_mux_idx_cache.md](../docs/speed_opt/2-13_mux_idx_cache.md) |
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index 9ac7b69..171e95e 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -4012,6 +4012,9 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+     int bTable;
+     int bit_pos;
+     int mux_idx;
++    // j-루프 불변: 컬럼의 mux 채널 목록 1회 캐시 (Mux_idx는 [dv][N_b] 레이아웃이라 ii 순회 시 stride가 큼)
++    int mux_cache[MAX_DV_GLOBAL];
++    for (ii = 0; ii < v_deg; ii++) { mux_cache[ii] = m_PCM->Mux_idx[ii][col_idx]; }
+     // (j, ii)-루프 불변: 1bit precision 모드 판정
+ #ifdef __AUTO_LLR_OPT__
+     const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
+@@ -4069,7 +4072,7 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+         }*/
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             sum_t = sum_t + VNU_in[mux_idx][j];
+         }
+         /* syndrome-aided decoding */
+@@ -4080,7 +4083,7 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+         m_log_sum_t[bit_pos] = sum_t;
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;
+@@ -4187,6 +4190,9 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+     current_G_idx = (G_idx + iter) % 2;
+     int start_deg = 0;
+     int end_deg = 0;
++    // j-루프 불변: 컬럼의 mux 채널 목록 1회 캐시
++    int mux_cache[MAX_DV_GLOBAL];
++    for (ii = 0; ii < v_deg; ii++) { mux_cache[ii] = m_PCM->Mux_idx[ii][col_idx]; }
+     // (j, ii)-루프 불변: 1bit precision 모드 판정
+ #ifdef __AUTO_LLR_OPT__
+     const int b_1bit_precision = ((TRUE == flag_BF_on) && (iter <= 4) && (v_deg > DV_5)) ? TRUE : FALSE;
+@@ -4261,7 +4267,7 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             sum_t_old_temp = 0;
+             //for (ii = 0; ii < v_deg / 2; ii++) {
+             for (ii = 0; ii < separate_v_deg; ii++) {
+-                mux_idx = m_PCM->Mux_idx[ii][col_idx];
++                mux_idx = mux_cache[ii];
+                 sum_t_old_temp = sum_t_old_temp + VNU_in[mux_idx][j];
+             }
+             Sum_t_OLD_G0[col_idx - (HCU_start)][j] = sum_t_old_temp;
+@@ -4272,7 +4278,7 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             sum_t_old_temp = 0;
+             //for (ii = v_deg / 2; ii < v_deg; ii++) {
+             for (ii = separate_v_deg; ii < v_deg; ii++) {
+-                mux_idx = m_PCM->Mux_idx[ii][col_idx];
++                mux_idx = mux_cache[ii];
+                 sum_t_old_temp = sum_t_old_temp + VNU_in[mux_idx][j];
+             }
+             Sum_t_OLD_G1[col_idx - (HCU_start)][j] = sum_t_old_temp;
+@@ -4299,7 +4305,7 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             start_deg = separate_v_deg; end_deg = v_deg;
+         }
+         for (ii = start_deg; ii < end_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;
+@@ -4393,6 +4399,9 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+     int bTable;
+     int bit_pos;
+     int mux_idx;
++    // j-루프 불변: 컬럼의 mux 채널 목록 1회 캐시
++    int mux_cache[MAX_DV_GLOBAL];
++    for (ii = 0; ii < v_deg; ii++) { mux_cache[ii] = m_PCM->Mux_idx[ii][col_idx]; }
+ #if defined(__AUTO_LLR_OPT__)
+     Get_VNU_LLR_SET_FILE(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #else
+@@ -4450,7 +4459,7 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+         }*/
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             sum_t = sum_t + VNU_in[mux_idx][j];
+         }
+         /* syndrome-aided decoding */
+@@ -4461,7 +4470,7 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+         m_log_sum_t[bit_pos] = sum_t;
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+ 	temp = sum_r - VNU_in[mux_idx][j];
+ 	temp_m = abs(temp);
+ 	/* Zero V-out */
+@@ -4528,6 +4537,9 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+     int bTable;
+     int bit_pos;
+     int mux_idx;
++    // j-루프 불변: 컬럼의 mux 채널 목록 1회 캐시
++    int mux_cache[MAX_DV_GLOBAL];
++    for (ii = 0; ii < v_deg; ii++) { mux_cache[ii] = m_PCM->Mux_idx[ii][col_idx]; }
+ #if defined(__AUTO_LLR_OPT__)
+     Get_VNU_LLR_SET_FILE(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #else
+@@ -4598,7 +4610,7 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+         //printf("%d [bit_pos: %d] %d\n", mn, bit_pos, tv_llr_out[bit_pos]);
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             sum_t = sum_t + VNU_in[mux_idx][j];
+         }
+         /* syndrome aided decoding */
+@@ -4616,7 +4628,7 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+         m_log_sum_t[bit_pos] = sum_t;
+ #endif
+         for (ii = 0; ii < v_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;
+@@ -4689,6 +4701,9 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+     int bTable;
+     int bit_pos;
+     int mux_idx;
++    // j-루프 불변: 컬럼의 mux 채널 목록 1회 캐시
++    int mux_cache[MAX_DV_GLOBAL];
++    for (ii = 0; ii < v_deg; ii++) { mux_cache[ii] = m_PCM->Mux_idx[ii][col_idx]; }
+     int separate_v_deg = 0;
+     if (col_idx == HCU_start) {
+         separate_v_deg = SEPARATE_V_DEG_1;
+@@ -4777,7 +4792,7 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             sum_t_old_temp = 0;
+             //for (ii = 0; ii < v_deg / 2; ii++) {
+             for (ii = 0; ii < separate_v_deg; ii++) {
+-                mux_idx = m_PCM->Mux_idx[ii][col_idx];
++                mux_idx = mux_cache[ii];
+                 sum_t_old_temp = sum_t_old_temp + VNU_in[mux_idx][j];
+             }
+             Sum_t_OLD_G0[col_idx - (HCU_start)][j] = sum_t_old_temp;
+@@ -4788,7 +4803,7 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             sum_t_old_temp = 0;
+             //for (ii = v_deg / 2; ii < v_deg; ii++) {
+             for (ii = separate_v_deg; ii < v_deg; ii++) {
+-                mux_idx = m_PCM->Mux_idx[ii][col_idx];
++                mux_idx = mux_cache[ii];
+                 sum_t_old_temp = sum_t_old_temp + VNU_in[mux_idx][j];
+             }
+             Sum_t_OLD_G1[col_idx - (HCU_start)][j] = sum_t_old_temp;
+@@ -4813,7 +4828,7 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             start_deg = separate_v_deg; end_deg = v_deg;
+         }
+         for (ii = start_deg; ii < end_deg; ii++) {
+-            mux_idx = m_PCM->Mux_idx[ii][col_idx];
++            mux_idx = mux_cache[ii];
+             temp = sum_t - VNU_in[mux_idx][j];
+             temp_m = abs(temp);
+             temp_nq = temp;

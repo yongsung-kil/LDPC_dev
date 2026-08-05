@@ -1,0 +1,58 @@
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index a49556c..ddd5f04 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -2713,12 +2713,13 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+     int update_flag;
+     int v2c_sgn;
+     int v2c_mag;
++#if defined (__ECC_TV__)
+     int check_in_before_BS;
+     int check_in_before_BS_nq;
+     int check_in_before_BS_mag;
+     int v2c_sgn_before_BS;
+-    int v2c_mag_before_BS;
+     int pre_v2c_sgn_before_BS;
++#endif
+     int bit_pos;
+     int mux_idx;
+     int v_deg;
+@@ -2744,6 +2745,7 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+ #endif
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
++#if defined (__ECC_TV__)
+         /* Read VNU output (before BS) */
+         check_in_before_BS = VNU_out3[mux_idx][j];
+         check_in_before_BS_nq = VNU_out3_nq[mux_idx][j];
+@@ -2751,20 +2753,6 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+         /* domain 변경 */
+         if (check_in_before_BS >= 0)    v2c_sgn_before_BS = V_PLUS;
+         else                            v2c_sgn_before_BS = V_MINUS;
+-#if defined (__4_BIT_LLR__)
+-        if (check_in_before_BS_mag == EDGE_MAG_8)      v2c_mag_before_BS = V_MAG7;
+-        else if (check_in_before_BS_mag == EDGE_MAG_7) v2c_mag_before_BS = V_MAG6;
+-        else if (check_in_before_BS_mag == EDGE_MAG_6) v2c_mag_before_BS = V_MAG5;
+-        else if (check_in_before_BS_mag == EDGE_MAG_5) v2c_mag_before_BS = V_MAG4;
+-        else if (check_in_before_BS_mag == EDGE_MAG_4) v2c_mag_before_BS = V_MAG3;
+-        else if (check_in_before_BS_mag == EDGE_MAG_3) v2c_mag_before_BS = V_MAG2;
+-        else if (check_in_before_BS_mag == EDGE_MAG_2) v2c_mag_before_BS = V_MAG1;
+-        else                                           v2c_mag_before_BS = V_MAG0;
+-#else
+-        if (check_in_before_BS_mag == EDGE_MAG_7)      v2c_mag_before_BS = V_VERY_STRONG;
+-        else if (check_in_before_BS_mag == EDGE_MAG_5) v2c_mag_before_BS = V_NORMAL_STRONG;
+-        else if (check_in_before_BS_mag == EDGE_MAG_3) v2c_mag_before_BS = V_NORMAL_WEAK;
+-        else                                           v2c_mag_before_BS = V_VERY_WEAK;
+ #endif
+         /* Read VNU output (after BS ==> Extreme ECC 2.2 방식) */
+         check_in = VNU_out3[mux_idx][z_mem_shift[j]];
+@@ -2790,7 +2778,9 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+         /* Read Check REG */
+         pre_v2c_sgn = pre_exist_sgn_reg3[mux_idx][j];
+         check_sum = Check_REG[bit_pos][IDX_CHECK_SUM];
++#if defined (__ECC_TV__)
+         pre_v2c_sgn_before_BS = pre_exist_sgn_reg3_BS[mux_idx][j];
++#endif
+         check_sum = (check_sum + ((TRUE == b_v2c_keep_old_sgn) ? pre_v2c_sgn : 0)) % 2;
+         CNU_Update_New_Sgn(v2c_sgn, &check_sum);
+         /* Write Check REG  */

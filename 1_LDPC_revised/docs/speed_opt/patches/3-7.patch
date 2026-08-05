@@ -1,0 +1,57 @@
+diff --git a/1_LDPC_revised/random.cpp b/1_LDPC_revised/random.cpp
+index ef0e82d..2daed92 100644
+--- a/1_LDPC_revised/random.cpp
++++ b/1_LDPC_revised/random.cpp
+@@ -342,13 +342,37 @@ void rand_sel_ep(int* err_position, int len_max, int n_err_len, int type)
+     int i, j, s;
+     int temp;
+     unsigned int tmp = 0;
+-    int temp_i;
+-
+-    temp_i = 0;
+-    for (i = 0; i < len_max; i++) {
+-        err_position[i] = temp_i;
+-        temp_i++;
++    // 매 프레임 len_max(수만) identity 재초기화 대신, 직전 호출의 swap을 역순으로 되돌려 identity 복원.
++    // 전제: 호출자는 반환 후 err_position을 읽기만 함 (외부에서 쓰면 복원이 깨짐).
++    // 난수 소비 순서와 선택 결과는 기존과 완전 동일.
++    static int* swap_hist = NULL;
++    static int swap_cap = 0;
++    static int swap_cnt = 0;
++    static int* last_arr = NULL;
++    static int last_len = 0;
++
++    if (swap_cap < n_err_len) {
++        delete[] swap_hist;
++        swap_hist = new int[n_err_len];
++        swap_cap = n_err_len;
++    }
++    if ((last_arr == err_position) && (last_len == len_max)) {
++        /* 역순 복원: swap은 자기 역원이므로 역순 적용 시 identity로 복귀 */
++        for (j = swap_cnt - 1; j >= 0; j--) {
++            s = swap_hist[j];
++            temp = err_position[j];
++            err_position[j] = err_position[s];
++            err_position[s] = temp;
++        }
++    }
++    else {
++        for (i = 0; i < len_max; i++) {
++            err_position[i] = i;
++        }
++        last_arr = err_position;
++        last_len = len_max;
+     }
++    swap_cnt = 0;
+ 
+     for (j = 0; j < n_err_len; j++) {
+         if (MODE_RANDOM_TYPE_SRAND == type) {
+@@ -358,6 +382,8 @@ void rand_sel_ep(int* err_position, int len_max, int n_err_len, int type)
+             tmp = (unsigned int)(xor_r25(memory_for_rng) * 4294967295);
+         }
+         s = (tmp % (len_max - j)) + j;
++        swap_hist[j] = s;
++        swap_cnt = j + 1;
+ 
+         temp = err_position[j];
+         err_position[j] = err_position[s];

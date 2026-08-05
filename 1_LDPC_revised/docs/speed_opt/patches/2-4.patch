@@ -1,0 +1,112 @@
+diff --git a/1_LDPC_revised/decoder.cpp b/1_LDPC_revised/decoder.cpp
+index 987dd69..a49556c 100644
+--- a/1_LDPC_revised/decoder.cpp
++++ b/1_LDPC_revised/decoder.cpp
+@@ -4007,6 +4007,8 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+     Get_VNU_Ch_LLR_Adaptive(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4);
+     Get_VNU_Th_Adaptive(v_deg, col_idx, cur_set_idx, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #endif
++    // j-루프 불변: stopping criteria 판정 → bTable 구간 channel LLR 사전 결정
++    const int table_llr = ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) ? ch1 : CH_LLR_MAX;    /* FALSE = Power stopping algorithm (Part 2) */
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+@@ -4034,13 +4036,7 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+             channel_llr = CH_LLR_MIN;
+         }
+         if (TRUE == bTable) {
+-            if ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) {
+-                channel_llr = ch1;
+-            }
+-            else {
+-                /* Power stopping algorithm (Part 2) */
+-                channel_llr = CH_LLR_MAX;
+-            }
++            channel_llr = table_llr;
+         }
+         sum_t = channel_llr;
+ #if defined (__ECC_TV__)
+@@ -4184,6 +4180,8 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+     Get_VNU_Ch_LLR_Adaptive(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4);
+     Get_VNU_Th_Adaptive(v_deg, col_idx, cur_set_idx, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #endif
++    // j-루프 불변: stopping criteria 판정 → bTable 구간 channel LLR 사전 결정
++    const int table_llr = ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) ? ch1 : CH_LLR_MAX;    /* FALSE = Power stopping algorithm (Part 2) */
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+@@ -4225,13 +4223,7 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             channel_llr = CH_LLR_MIN;
+         }
+         if (TRUE == bTable) {
+-            if ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) {
+-                channel_llr = ch1;
+-            }
+-            else {
+-                /* Power stopping algorithm (Part 2) */
+-                channel_llr = CH_LLR_MAX;
+-            }
++            channel_llr = table_llr;
+         }
+         sum_t = channel_llr;
+ #if defined (__ECC_TV__)
+@@ -4386,6 +4378,8 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+     Get_VNU_Ch_LLR_Adaptive(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4);
+     Get_VNU_Th_Adaptive(v_deg, col_idx, cur_set_idx, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #endif
++    // j-루프 불변: stopping criteria 판정 → bTable 구간 channel LLR 사전 결정
++    const int table_llr = ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) ? ch1 : CH_LLR_MAX;    /* FALSE = Power stopping algorithm (Part 2) */
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+@@ -4418,13 +4412,7 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+             channel_llr = CH_LLR_MIN;
+         }
+         if (TRUE == bTable) {
+-            if ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) {
+-                channel_llr = ch1;
+-            }
+-            else {
+-                /* Power stopping algorithm (Part 2) */
+-                channel_llr = CH_LLR_MAX;
+-            }
++            channel_llr = table_llr;
+         }
+         }
+         sum_t = channel_llr;
+@@ -4525,6 +4513,8 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+     Get_VNU_Ch_LLR_Adaptive(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4);
+     Get_VNU_Th_Adaptive(v_deg, col_idx, cur_set_idx, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #endif
++    // j-루프 불변: stopping criteria 판정 (FALSE = Power stopping algorithm (Part 2))
++    const int b_use_table_llr = ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) ? TRUE : FALSE;
+     for (j = 0; j < m_PCM->z_sb; j++) {
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+@@ -4552,7 +4542,7 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+             channel_llr = CH_LLR_MIN;
+         }
+         if (TRUE == bTable) {
+-            if ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) {
++            if (TRUE == b_use_table_llr) {
+                 mag = abs(Soft_LLR_PRIME[bit_pos]);
+                 if (MODE_DEC_2SD == m_param_dec->init_n) {
+                     //if (mag >= EDGE_MAG_3) { channel_llr = ch1; }
+@@ -4693,6 +4683,8 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+     Get_VNU_Ch_LLR_Adaptive(v_deg, col_idx, cur_set_idx, &ch1, &ch2, &ch3, &ch4);
+     Get_VNU_Th_Adaptive(v_deg, col_idx, cur_set_idx, &th1, &th2, &th3, &th4, &th5, &th6, &th7);
+ #endif
++    // j-루프 불변: stopping criteria 판정 (FALSE = Power stopping algorithm (Part 2))
++    const int b_use_table_llr = ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) ? TRUE : FALSE;
+     //th1 = th1 + 5;
+     //th2 = th2 + 5;
+     //th3 = th3 + 2;
+@@ -4725,7 +4717,7 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+             channel_llr = CH_LLR_MIN;
+         }
+         if (TRUE == bTable) {
+-            if ((MODE_STOPPING_CRITERIA_ITER == m_param_dec->stopping_criteria) || ((MODE_STOPPING_CRITERIA_CYCLE == m_param_dec->stopping_criteria) && (Force_stopping < POWER_STOPPING_DELAY))) {
++            if (TRUE == b_use_table_llr) {
+                 mag = abs(Soft_LLR_PRIME[bit_pos]);
+                 if (MODE_DEC_2SD == m_param_dec->init_n) {
+                     //if (mag >= EDGE_MAG_3) { channel_llr = ch1; }

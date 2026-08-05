@@ -1,0 +1,57 @@
+diff --git a/1_LDPC_revised/ecc_top.cpp b/1_LDPC_revised/ecc_top.cpp
+index 24d4f30..263d800 100644
+--- a/1_LDPC_revised/ecc_top.cpp
++++ b/1_LDPC_revised/ecc_top.cpp
+@@ -1791,24 +1791,43 @@ void ECC_Top::Make_Dec_Input_AWGN_Quantize(int N, double * cwr, double var, int
+     int hd;
+     int sd;
+     int cc;
+-    for (int n = 0; n < N; n++) {
+-        Lq_ini = (2.0 * cwr[n]) / var;
+-        Lq_ini_m = fabs(Lq_ini);
+-        if (cwr[n] >= 0)        HD_input[n] = 0;
+-        else                    HD_input[n] = 1;
+-        if (MODE_DEC_2SD == m_param_dec->init_n) {
++    // init_n은 루프 불변 — bit당 모드 분기 체인을 모드별 전용 루프로 분리 (연산 순서·결과 동일)
++    if (MODE_DEC_2SD == m_param_dec->init_n) {
++        for (int n = 0; n < N; n++) {
++            Lq_ini = (2.0 * cwr[n]) / var;
++            Lq_ini_m = fabs(Lq_ini);
++            if (cwr[n] >= 0)        HD_input[n] = 0;
++            else                    HD_input[n] = 1;
+             Get_Mag_2SD(Lq_ini_m, &sd);
+             SD_input[n] = sd;
+         }
+-        else if (MODE_DEC_3SD == m_param_dec->init_n) {
++    }
++    else if (MODE_DEC_3SD == m_param_dec->init_n) {
++        for (int n = 0; n < N; n++) {
++            Lq_ini = (2.0 * cwr[n]) / var;
++            Lq_ini_m = fabs(Lq_ini);
++            if (cwr[n] >= 0)        HD_input[n] = 0;
++            else                    HD_input[n] = 1;
+             Get_Mag_3SD(Lq_ini_m, &sd, &cc);
+             SD_input[n] = sd;
+             CC_input[n] = cc;
+         }
+-        else if (MODE_DEC_1_5SD == m_param_dec->init_n) {
++    }
++    else if (MODE_DEC_1_5SD == m_param_dec->init_n) {
++        for (int n = 0; n < N; n++) {
++            Lq_ini = (2.0 * cwr[n]) / var;
++            if (cwr[n] >= 0)        HD_input[n] = 0;
++            else                    HD_input[n] = 1;
+             Get_Mag_1_5SD(Lq_ini, &hd, &sd);
+             HD_input[n] = hd;
+-            CD_input[n] = (hd + sd) % 2;
++            CD_input[n] = (hd + sd) & 1;
++        }
++    }
++    else {
++        /* HD 모드: SD/CC/CD 출력 없음 */
++        for (int n = 0; n < N; n++) {
++            if (cwr[n] >= 0)        HD_input[n] = 0;
++            else                    HD_input[n] = 1;
+         }
+     }
+ }
