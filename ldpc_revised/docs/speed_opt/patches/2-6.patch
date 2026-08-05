@@ -1,0 +1,151 @@
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index ddd5f04..3bddb2b 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -34,9 +34,11 @@ void Decoder::Initialize_Dec()
+     VNU_out = NULL;
+     VNU_out2 = NULL;
+     VNU_out3 = NULL;
++#if defined (__ECC_TV__)
+     VNU_out_nq = NULL;
+     VNU_out2_nq = NULL;
+     VNU_out3_nq = NULL;
++#endif
+     VNU_out3_temp = NULL;
+     Sum_t_OLD_G0 = NULL;
+     Sum_t_OLD_G1 = NULL;
+@@ -138,9 +140,11 @@ void Decoder::Alloc_Dec()
+     VNU_out = new int*[J]; for (i = 0; i < J; i++) VNU_out[i] = new int[z_sb];
+     VNU_out2 = new int*[J]; for (i = 0; i < J; i++) VNU_out2[i] = new int[z_sb];
+     VNU_out3 = new int*[J]; for (i = 0; i < J; i++) VNU_out3[i] = new int[z_sb];
++#if defined (__ECC_TV__)
+     VNU_out_nq = new int* [J]; for (i = 0; i < J; i++) VNU_out_nq[i] = new int[z_sb];
+     VNU_out2_nq = new int* [J]; for (i = 0; i < J; i++) VNU_out2_nq[i] = new int[z_sb];
+     VNU_out3_nq = new int* [J]; for (i = 0; i < J; i++) VNU_out3_nq[i] = new int[z_sb];
++#endif
+     VNU_out3_temp = new int*[J]; for (i = 0; i < J; i++) VNU_out3_temp[i] = new int[z_sb];
+     Sum_t_OLD_G0 = new int* [m_PCM->punct_col_num]; for (i = 0;i < m_PCM->punct_col_num;i++) Sum_t_OLD_G0[i] = new int[z_sb];
+     Sum_t_OLD_G1 = new int* [m_PCM->punct_col_num]; for (i = 0;i < m_PCM->punct_col_num;i++) Sum_t_OLD_G1[i] = new int[z_sb];
+@@ -295,13 +299,17 @@ void Decoder::Release_Dec()
+         delete[] VNU_out[i];
+         delete[] VNU_out2[i];
+         delete[] VNU_out3[i];
++#if defined (__ECC_TV__)
+         delete[] VNU_out_nq[i];
+         delete[] VNU_out2_nq[i];
+         delete[] VNU_out3_nq[i];
++#endif
+         delete[] VNU_out3_temp[i];
+     }
+     delete[] VNU_in;    delete[] VNU_out;    delete[] VNU_out2; delete[] VNU_out3; delete[] VNU_out3_temp;
++#if defined (__ECC_TV__)
+     delete[] VNU_out_nq;    delete[] VNU_out2_nq;  delete[] VNU_out3_nq;
++#endif
+     for (i = 0;i < m_PCM->punct_col_num;i++) delete[] Sum_t_OLD_G0[i];
+     delete[] Sum_t_OLD_G0;
+     for (i = 0;i < m_PCM->punct_col_num;i++) delete[] Sum_t_OLD_G1[i];
+@@ -690,8 +698,10 @@ void Decoder::Delay_2clk(int parity_skip)
+             pre_exist_sgn_reg2_BS[ii][i] = pre_exist_sgn_reg_BS[ii][i];
+             VNU_out3[ii][i] = VNU_out2[ii][i];
+             VNU_out2[ii][i] = VNU_out[ii][i];
++#if defined (__ECC_TV__)
+             VNU_out3_nq[ii][i] = VNU_out2_nq[ii][i];
+             VNU_out2_nq[ii][i] = VNU_out_nq[ii][i];
++#endif
+         }
+     }
+ }
+@@ -3620,7 +3630,9 @@ void Decoder::VN_Cal_Pre(int jj)
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][i];
+ #endif
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][i] = VNU_out[mux_idx][i];
++#endif
+         }
+     }
+ }
+@@ -3681,7 +3693,9 @@ else if ((MODE_DEC_2SD == m_param_dec->init_n) || (MODE_DEC_3SD == m_param_dec->
+                 Soft_LLR[bit_pos] = CH_LLR_MIN;
+ #endif
+             }
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][i] = VNU_out[mux_idx][i];
++#endif
+             /* clipping */
+ #if defined (__4_BIT_LLR__)
+             if (VNU_out[mux_idx][i] > EDGE_MAG_8)       VNU_out[mux_idx][i] = EDGE_MAG_8;
+@@ -3841,7 +3855,9 @@ void Decoder::VN_Cal_Pre_HCU(int jj, int G_idx)
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][i];
+ #endif
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][i] = VNU_out[mux_idx][i];
++#endif
+         }
+     }
+ }
+@@ -3894,7 +3910,9 @@ if ((bit_pos>=m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info -> bit
+                 VNU_out[mux_idx][i] = EDGE_MAG_1;
+                 Soft_LLR[bit_pos] = CH_LLR_MIN;
+             }
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][i] = VNU_out[mux_idx][i];
++#endif
+             /* clipping */
+ #if defined (__4_BIT_LLR__)
+             if (VNU_out[mux_idx][i] > EDGE_MAG_8)       VNU_out[mux_idx][i] = EDGE_MAG_8;
+@@ -4120,7 +4138,9 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+                 }
+             }
+             VNU_out[mux_idx][j] = temp;
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][j] = temp_nq;
++#endif
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_in[mux_idx][bit_pos] = VNU_in[mux_idx][j];
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][j];
+@@ -4337,7 +4357,9 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+                 }
+             }
+             VNU_out[mux_idx][j] = temp;
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][j] = temp_nq;
++#endif
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_in[mux_idx][bit_pos] = VNU_in[mux_idx][j];
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][j];
+@@ -4629,7 +4651,9 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+                 else                          temp = -temp_m;
+             }
+             VNU_out[mux_idx][j] = temp;
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][j] = temp_nq;
++#endif
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_in[mux_idx][bit_pos] = VNU_in[mux_idx][j];
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][j];
+@@ -4824,7 +4848,9 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+                 else                          temp = -temp_m;
+             }
+             VNU_out[mux_idx][j] = temp;
++#if defined (__ECC_TV__)
+             VNU_out_nq[mux_idx][j] = temp_nq;
++#endif
+ #if defined (__LOG_VNU_IN_OUT__)
+             m_log_VNU_in[mux_idx][bit_pos] = VNU_in[mux_idx][j];
+             m_log_VNU_out[mux_idx][bit_pos] = VNU_out[mux_idx][j];
+diff --git a/ldpc_revised/decoder.h b/ldpc_revised/decoder.h
+index 36caa44..7585d3c 100644
+--- a/ldpc_revised/decoder.h
++++ b/ldpc_revised/decoder.h
+@@ -223,7 +223,9 @@ private:
+     int**       shift_tbl_V2C;      // [s][j] shift 순열 사전 계산 (dir=1)
+ 
+     int**       VNU_in, **VNU_out, **VNU_out2, **VNU_out3; //HW delay consideration
++#if defined (__ECC_TV__)
+     int**        VNU_out_nq, **VNU_out2_nq, ** VNU_out3_nq;
++#endif
+     int**        VNU_out3_temp;
+     /* Half Column */
+     int**       Sum_t_OLD_G0;

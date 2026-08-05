@@ -1,0 +1,289 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index 0bf284c..600a67a 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -22,3 +22,4 @@
+ | 2-11 | magnitude 매핑 산술화 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-11_mag_domain_arith.md](../docs/speed_opt/2-11_mag_domain_arith.md) |
+ | 2-12 | % 2 → & 1 / ^ 1 치환 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-12_mod2_to_bitand.md](../docs/speed_opt/2-12_mod2_to_bitand.md) |
+ | 2-13 | VN_Cal Mux_idx 로컬 캐시 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-13_mux_idx_cache.md](../docs/speed_opt/2-13_mux_idx_cache.md) |
++| 2-14 | bit_region 분류 테이블화 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-14_bit_region_table.md](../docs/speed_opt/2-14_bit_region_table.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index 171e95e..6edc704 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -28,6 +28,8 @@ void Decoder::Initialize_Dec()
+     Check_SRAM_sgn = NULL;
+     Check_REG = NULL;
+     Variable_mem = NULL;
++    m_bit_region = NULL;
++    m_bit_region_ready = FALSE;
+     m_llr_from_file = FALSE;
+     shift_tbl_C2V = NULL;
+     shift_tbl_V2C = NULL;
+@@ -137,6 +139,7 @@ void Decoder::Alloc_Dec()
+     Check_SRAM_sgn = new int*[M]; for (i = 0; i < M; i++) Check_SRAM_sgn[i] = new int[K];
+     Check_REG = new int*[M]; for (i = 0; i < M; i++) Check_REG[i] = new int[2];
+     Variable_mem = new int[N];
++    m_bit_region = new int[N];
+     shift_tbl_C2V = new int*[z_sb]; for (i = 0; i < z_sb; i++) { shift_tbl_C2V[i] = new int[z_sb]; shift_mem(shift_tbl_C2V[i], z_sb, i, 0); }
+     shift_tbl_V2C = new int*[z_sb]; for (i = 0; i < z_sb; i++) { shift_tbl_V2C[i] = new int[z_sb]; shift_mem(shift_tbl_V2C[i], z_sb, i, 1); }
+     VNU_in = new int*[J]; for (i = 0; i < J; i++) VNU_in[i] = new int[z_sb];
+@@ -294,6 +297,7 @@ void Decoder::Release_Dec()
+     delete[] Check_SRAM_sgn;
+     delete[] Check_REG;
+     delete[] Variable_mem;
++    delete[] m_bit_region;
+     for (i = 0; i < m_PCM->z_sb; i++) {
+         delete[] shift_tbl_C2V[i];
+         delete[] shift_tbl_V2C[i];
+@@ -1078,6 +1082,10 @@ void Decoder::LDPC_Decoder(
+ #if defined (__LOG_DECODING_STATUS__) || defined (__PRINT_LOG_DATA__) || defined (__AUTO_LLR_OPT__) || defined (__CORNER_CHECKER__)
+     Init_Log_Data();
+ #endif
++    if (FALSE == m_bit_region_ready) {
++        Build_Bit_Region();    // bit_pos 구간 경계는 시뮬레이션 내내 불변 — 최초 1회만 생성
++        m_bit_region_ready = TRUE;
++    }
+     Open_Log_Files();
+     /* Set LLR */
+     if ((MODE_DEC_2SD == m_param_dec->init_n) || (MODE_DEC_3SD == m_param_dec->init_n) || (MODE_DEC_1_5SD == m_param_dec->init_n)) {
+@@ -3996,6 +4004,24 @@ else if ((MODE_DEC_2SD == m_param_dec->init_n) || (MODE_DEC_3SD == m_param_dec->
+     }
+ }
+ //================================================
++// bit 위치별 구간 분류 테이블 생성
++// (shortening / puncturing / LLR table 구간 — 경계는 시뮬레이션 내내 불변)
++// 분류 순서는 VN_Cal_* 의 기존 if-else 체인과 동일
++//================================================
++void Decoder::Build_Bit_Region()
++{
++    for (int n = 0; n < m_PCM->N; n++) {
++        int r = BIT_REGION_NONE;
++        if ((n >= m_ecc_info->bit_pos.info_sh_start) && (n < m_ecc_info->bit_pos.info_sh_end)) { r = BIT_REGION_SH; }
++        else if ((n >= m_ecc_info->bit_pos.info_punc_start1) && (n < m_ecc_info->bit_pos.info_punc_end1)) { r = BIT_REGION_PUNC; }
++        else if ((n >= m_ecc_info->bit_pos.info_punc_start2) && (n < m_ecc_info->bit_pos.info_punc_end2)) { r = BIT_REGION_PUNC; }
++        else if ((n >= m_ecc_info->bit_pos.info_no_punc_start) && (n < m_ecc_info->bit_pos.info_no_punc_end)) { r = BIT_REGION_TABLE; }
++        else if ((n >= m_ecc_info->bit_pos.parity_no_punc_start) && (n < m_ecc_info->bit_pos.parity_no_punc_end)) { r = BIT_REGION_TABLE; }
++        else if ((n >= m_ecc_info->bit_pos.parity_punc_start) && (n < m_ecc_info->bit_pos.parity_punc_end)) { r = BIT_REGION_PUNC; }
++        m_bit_region[n] = r;
++    }
++}
++//================================================
+ // Calculate V2C (VNU_out) for HD
+ // v_deg : degree of VN
+ // idx_offset : start index of column block
+@@ -4033,27 +4059,11 @@ void Decoder::VN_Cal_HD(int v_deg, int idx_offset, int iter)
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+         bTable = FALSE;
+-        if ((bit_pos >= m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info->bit_pos.info_sh_end)) {
+-            /* shortening */
+-            channel_llr = CH_LLR_MAX;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start1) && (bit_pos < m_ecc_info->bit_pos.info_punc_end1)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start2) && (bit_pos < m_ecc_info->bit_pos.info_punc_end2)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.info_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_punc_end)) {
+-            /* puncturing (parity part) */
+-            channel_llr = CH_LLR_MIN;
++        switch (m_bit_region[bit_pos]) {
++        case BIT_REGION_SH:    channel_llr = CH_LLR_MAX; break;    /* shortening */
++        case BIT_REGION_PUNC:  channel_llr = CH_LLR_MIN; break;    /* puncturing */
++        case BIT_REGION_TABLE: bTable = TRUE; break;
++        default: break;    // 구간 밖 — 기존 동작(channel_llr 값 유지) 보존
+         }
+         if (TRUE == bTable) {
+             channel_llr = table_llr;
+@@ -4211,41 +4221,11 @@ void Decoder::VN_Cal_HD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+         bTable = FALSE;
+-        if ((bit_pos >= m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info->bit_pos.info_sh_end)) {
+-            /* shortening */
+-            channel_llr = CH_LLR_MAX;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start1) && (bit_pos < m_ecc_info->bit_pos.info_punc_end1)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-            /*
+-            if (bit_pos < m_PCM->z_sb) {
+-                if (abs(m_PCM->punct_vote[0][j]) >= PR_MAJORITY_MAG) channel_llr = 10;
+-            }
+-            else {
+-                if (abs(m_PCM->punct_vote[1][j]) >= PR_MAJORITY_MAG) channel_llr = 10;
+-            }*/
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start2) && (bit_pos < m_ecc_info->bit_pos.info_punc_end2)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-            /*
+-            if (bit_pos < m_PCM->z_sb) {
+-                if (abs(m_PCM->punct_vote[0][j]) >= PR_MAJORITY_MAG) channel_llr = 10;
+-            }
+-            else {
+-                if (abs(m_PCM->punct_vote[1][j]) >= PR_MAJORITY_MAG) channel_llr = 10;
+-            }*/
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.info_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_punc_end)) {
+-            /* puncturing (parity part) */
+-            channel_llr = CH_LLR_MIN;
++        switch (m_bit_region[bit_pos]) {
++        case BIT_REGION_SH:    channel_llr = CH_LLR_MAX; break;    /* shortening */
++        case BIT_REGION_PUNC:  channel_llr = CH_LLR_MIN; break;    /* puncturing */
++        case BIT_REGION_TABLE: bTable = TRUE; break;
++        default: break;    // 구간 밖 — 기존 동작(channel_llr 값 유지) 보존
+         }
+         if (TRUE == bTable) {
+             channel_llr = table_llr;
+@@ -4419,27 +4399,11 @@ void Decoder::VN_Cal_CD(int v_deg, int idx_offset, int iter)
+             channel_llr = CH_LLR_MIN;    // erasure
+         }
+         else {
+-        if ((bit_pos >= m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info->bit_pos.info_sh_end)) {
+-            /* shortening */
+-            channel_llr = CH_LLR_MAX;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start1) && (bit_pos < m_ecc_info->bit_pos.info_punc_end1)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start2) && (bit_pos < m_ecc_info->bit_pos.info_punc_end2)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.info_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_punc_end)) {
+-            /* puncturing (parity part) */
+-            channel_llr = CH_LLR_MIN;
++        switch (m_bit_region[bit_pos]) {
++        case BIT_REGION_SH:    channel_llr = CH_LLR_MAX; break;    /* shortening */
++        case BIT_REGION_PUNC:  channel_llr = CH_LLR_MIN; break;    /* puncturing */
++        case BIT_REGION_TABLE: bTable = TRUE; break;
++        default: break;    // 구간 밖 — 기존 동작(channel_llr 값 유지) 보존
+         }
+         if (TRUE == bTable) {
+             channel_llr = table_llr;
+@@ -4552,27 +4516,11 @@ void Decoder::VN_Cal_SD(int v_deg, int idx_offset, int iter)
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+         bTable = FALSE;
+-        if ((bit_pos >= m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info->bit_pos.info_sh_end)) {
+-            /* shortening */
+-            channel_llr = CH_LLR_MAX;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start1) && (bit_pos < m_ecc_info->bit_pos.info_punc_end1)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start2) && (bit_pos < m_ecc_info->bit_pos.info_punc_end2)) {
+-            /* puncturing (info part) */
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.info_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_punc_end)) {
+-            /* puncturing (parity part) */
+-            channel_llr = CH_LLR_MIN;
++        switch (m_bit_region[bit_pos]) {
++        case BIT_REGION_SH:    channel_llr = CH_LLR_MAX; break;    /* shortening */
++        case BIT_REGION_PUNC:  channel_llr = CH_LLR_MIN; break;    /* puncturing */
++        case BIT_REGION_TABLE: bTable = TRUE; break;
++        default: break;    // 구간 밖 — 기존 동작(channel_llr 값 유지) 보존
+         }
+         if (TRUE == bTable) {
+             if (TRUE == b_use_table_llr) {
+@@ -4730,29 +4678,11 @@ void Decoder::VN_Cal_SD_HCU(int v_deg, int idx_offset, int G_idx, int iter)
+         bit_pos = idx_offset + j;
+         sum_t = 0;
+         bTable = FALSE;
+-        if ((bit_pos >= m_ecc_info->bit_pos.info_sh_start) && (bit_pos < m_ecc_info->bit_pos.info_sh_end)) {
+-            /* shortening */
+-            channel_llr = CH_LLR_MAX;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start1) && (bit_pos < m_ecc_info->bit_pos.info_punc_end1)) {
+-            /* puncturing (info part) */
+-            //mag값 인가
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_punc_start2) && (bit_pos < m_ecc_info->bit_pos.info_punc_end2)) {
+-            /* puncturing (info part) */
+-            //mag값 인가
+-            channel_llr = CH_LLR_MIN;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.info_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.info_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_no_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_no_punc_end)) {
+-            bTable = TRUE;
+-        }
+-        else if ((bit_pos >= m_ecc_info->bit_pos.parity_punc_start) && (bit_pos < m_ecc_info->bit_pos.parity_punc_end)) {
+-            /* puncturing (parity part) */
+-            channel_llr = CH_LLR_MIN;
++        switch (m_bit_region[bit_pos]) {
++        case BIT_REGION_SH:    channel_llr = CH_LLR_MAX; break;    /* shortening */
++        case BIT_REGION_PUNC:  channel_llr = CH_LLR_MIN; break;    /* puncturing */
++        case BIT_REGION_TABLE: bTable = TRUE; break;
++        default: break;    // 구간 밖 — 기존 동작(channel_llr 값 유지) 보존
+         }
+         if (TRUE == bTable) {
+             if (TRUE == b_use_table_llr) {
+diff --git a/ldpc_revised/decoder.h b/ldpc_revised/decoder.h
+index 8f13238..41e324e 100644
+--- a/ldpc_revised/decoder.h
++++ b/ldpc_revised/decoder.h
+@@ -10,6 +10,12 @@
+ 
+ #ifndef __VSS_ECC_TOP__
+ #include "TV_Dec_Inter.h"
++
++/* bit 위치별 구간 분류 (Build_Bit_Region) */
++#define BIT_REGION_NONE     0
++#define BIT_REGION_SH       1
++#define BIT_REGION_PUNC     2
++#define BIT_REGION_TABLE    3
+ #endif
+ 
+ //======================================
+@@ -158,6 +164,7 @@ private:
+     int     Is_Iter_Type_Edge_Clear(int cur_iteration);
+     int     Is_Iter_Type_Init(int cur_iteration);
+     void    Load_LLR_Tables();
++    void    Build_Bit_Region();
+     void    Get_Err_Cnt(int* i_HD_input, int * i_SD_input, int * dec_output, int * err_cnt, int * strong_err_cnt, int* zero_to_one_flip_cnt, int *weak_cor_cnt);
+     int     Get_One_Cnt(int* dec_output);
+     void    Set_CSW(int w);
+@@ -220,6 +227,8 @@ private:
+     int**       Check_SRAM_sgn;
+     int**       Check_REG;
+     int*       Variable_mem;
++    int*        m_bit_region;       // [N] bit 위치별 구간 분류 (BIT_REGION_*)
++    int         m_bit_region_ready;
+     int**       shift_tbl_C2V;      // [s][j] shift 순열 사전 계산 (dir=0). s = PCM_b shift 값 (0 ~ z_sb-1 전제)
+     int**       shift_tbl_V2C;      // [s][j] shift 순열 사전 계산 (dir=1)
+ 

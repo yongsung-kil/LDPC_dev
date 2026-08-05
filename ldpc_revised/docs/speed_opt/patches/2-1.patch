@@ -1,0 +1,70 @@
+diff --git a/original/decoder.cpp b/revised/decoder.cpp
+index 15de67b..199b26b 100644
+--- a/original/decoder.cpp
++++ b/revised/decoder.cpp
+@@ -28,7 +28,8 @@ void Decoder::Initialize_Dec()
+     Check_SRAM_sgn = NULL;
+     Check_REG = NULL;
+     Variable_mem = NULL;
+-    z_mem_shift = NULL;
++    shift_tbl_C2V = NULL;
++    shift_tbl_V2C = NULL;
+     VNU_in = NULL;
+     VNU_out = NULL;
+     VNU_out2 = NULL;
+@@ -131,7 +132,8 @@ void Decoder::Alloc_Dec()
+     Check_SRAM_sgn = new int*[M]; for (i = 0; i < M; i++) Check_SRAM_sgn[i] = new int[K];
+     Check_REG = new int*[M]; for (i = 0; i < M; i++) Check_REG[i] = new int[2];
+     Variable_mem = new int[N];
+-    z_mem_shift = new int[z_sb];
++    shift_tbl_C2V = new int*[z_sb]; for (i = 0; i < z_sb; i++) { shift_tbl_C2V[i] = new int[z_sb]; shift_mem(shift_tbl_C2V[i], z_sb, i, 0); }
++    shift_tbl_V2C = new int*[z_sb]; for (i = 0; i < z_sb; i++) { shift_tbl_V2C[i] = new int[z_sb]; shift_mem(shift_tbl_V2C[i], z_sb, i, 1); }
+     VNU_in = new int*[J]; for (i = 0; i < J; i++) VNU_in[i] = new int[z_sb];
+     VNU_out = new int*[J]; for (i = 0; i < J; i++) VNU_out[i] = new int[z_sb];
+     VNU_out2 = new int*[J]; for (i = 0; i < J; i++) VNU_out2[i] = new int[z_sb];
+@@ -282,7 +284,12 @@ void Decoder::Release_Dec()
+     delete[] Check_SRAM_sgn;
+     delete[] Check_REG;
+     delete[] Variable_mem;
+-    delete[] z_mem_shift;
++    for (i = 0; i < m_PCM->z_sb; i++) {
++        delete[] shift_tbl_C2V[i];
++        delete[] shift_tbl_V2C[i];
++    }
++    delete[] shift_tbl_C2V;
++    delete[] shift_tbl_V2C;
+     for (i = 0; i < J; i++) {
+         delete[] VNU_in[i];
+         delete[] VNU_out[i];
+@@ -2356,7 +2363,7 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+     int v_deg;
+     row_idx = m_PCM->V_net_b[jj][ii];
+     s = m_PCM->PCM_b[row_idx][jj];
+-    shift_mem(z_mem_shift, m_PCM->z_sb, s, 0);
++    const int* z_mem_shift = shift_tbl_C2V[s];
+     position_c = m_PCM->VtoC_ID[row_idx][jj];
+     idx_offset = row_idx * m_PCM->z_sb;
+     mux_index = m_PCM->Mux_idx[ii][jj];
+@@ -2718,7 +2725,7 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+     // current int sub-block information
+     row_idx = m_PCM->V_net_b[jj][ii]; // current row index at base-matrix
+     s = m_PCM->PCM_b[row_idx][jj]; // shift value at current sub-matrix
+-    shift_mem(z_mem_shift, m_PCM->z_sb, s, 1); // % index permutation
++    const int* z_mem_shift = shift_tbl_V2C[s]; // % index permutation
+     position_c = m_PCM->VtoC_ID[row_idx][jj]; // order in current check // jj번째 column block의 ii번째 nonzero block이 해당 check에서 몇번째로 몇번째 variable node인지를 의미하는 값.
+     idx_offset = row_idx * m_PCM->z_sb;
+     mux_idx = m_PCM->Mux_idx[ii][jj];
+diff --git a/original/decoder.h b/revised/decoder.h
+index e18270f..36caa44 100644
+--- a/original/decoder.h
++++ b/revised/decoder.h
+@@ -219,7 +219,8 @@ private:
+     int**       Check_SRAM_sgn;
+     int**       Check_REG;
+     int*       Variable_mem;
+-    int*        z_mem_shift;
++    int**       shift_tbl_C2V;      // [s][j] shift 순열 사전 계산 (dir=0). s = PCM_b shift 값 (0 ~ z_sb-1 전제)
++    int**       shift_tbl_V2C;      // [s][j] shift 순열 사전 계산 (dir=1)
+ 
+     int**       VNU_in, **VNU_out, **VNU_out2, **VNU_out3; //HW delay consideration
+     int**        VNU_out_nq, **VNU_out2_nq, ** VNU_out3_nq;

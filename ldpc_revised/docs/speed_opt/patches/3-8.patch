@@ -1,0 +1,80 @@
+diff --git a/LDPC/ecc_top.cpp b/ldpc_revised/ecc_top.cpp
+index ec8daf4..24d4f30 100644
+--- a/LDPC/ecc_top.cpp
++++ b/ldpc_revised/ecc_top.cpp
+@@ -848,13 +848,11 @@ void ECC_Top::Run_Ref_C_Scenario_4KB()
+             }
+         }
+         /* Copy buffer */
+-        for (int n = 0; n < N; n++) {
+-            m_HD_input[n] = m_HD_channel[n];
+-            m_SD_input[n] = m_SD_channel[n];
+-            m_CC_input[n] = m_CC_channel[n];
+-            m_CD_input[n] = m_CD_channel[n];
+-            m_inv_cw_input[n] = m_inv_cw[n];
+-        }
++        memcpy(m_HD_input, m_HD_channel, N * sizeof(int));
++        memcpy(m_SD_input, m_SD_channel, N * sizeof(int));
++        memcpy(m_CC_input, m_CC_channel, N * sizeof(int));
++        memcpy(m_CD_input, m_CD_channel, N * sizeof(int));
++        memcpy(m_inv_cw_input, m_inv_cw, N * sizeof(int));
+         Clear_Corner_Checker();
+         /* LDPC decoding */
+         m_dec.LDPC_Decoder(m_HD_input, m_SD_input, m_CC_input, m_CD_input, m_param_dec->init_n, m_inv_cw_input,
+@@ -1094,13 +1092,11 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB()
+             Make_TV_Fixed_Err_Case_4KB(err_idx);
+             Make_Dec_Input_TV_Fixed_4KB(m_cw, m_HD_channel, m_SD_channel, m_CC_channel, m_CD_channel, fp_tv_report);
+             /* Copy buffer */
+-            for (int n = 0; n < N; n++) {
+-                m_HD_input[n] = m_HD_channel[n];
+-                m_SD_input[n] = m_SD_channel[n];
+-                m_CC_input[n] = m_CC_channel[n];
+-                m_CD_input[n] = m_CD_channel[n];
+-                m_inv_cw_input[n] = m_inv_cw[n];
+-            }
++            memcpy(m_HD_input, m_HD_channel, N * sizeof(int));
++            memcpy(m_SD_input, m_SD_channel, N * sizeof(int));
++            memcpy(m_CC_input, m_CC_channel, N * sizeof(int));
++            memcpy(m_CD_input, m_CD_channel, N * sizeof(int));
++            memcpy(m_inv_cw_input, m_inv_cw, N * sizeof(int));
+ #if defined (__FIXED_SECTOR_NUMBER__)
+             if (TV_idx == 0) {
+                 Intentional_Blank();
+@@ -1233,13 +1229,11 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_XOR25_Seed_File()
+             Make_Dec_Input_TV_Gen_AWGN(N, m_cw, m_cwt, m_cwr, m_HD_channel, m_SD_channel, m_CC_channel, m_CD_channel);
+         }
+         /* Copy buffer */
+-        for (int n = 0; n < N; n++) {
+-            m_HD_input[n] = m_HD_channel[n];
+-            m_SD_input[n] = m_SD_channel[n];
+-            m_CC_input[n] = m_CC_channel[n];
+-            m_CD_input[n] = m_CD_channel[n];
+-            m_inv_cw_input[n] = m_inv_cw[n];
+-        }
++        memcpy(m_HD_input, m_HD_channel, N * sizeof(int));
++        memcpy(m_SD_input, m_SD_channel, N * sizeof(int));
++        memcpy(m_CC_input, m_CC_channel, N * sizeof(int));
++        memcpy(m_CD_input, m_CD_channel, N * sizeof(int));
++        memcpy(m_inv_cw_input, m_inv_cw, N * sizeof(int));
+         m_tv_dec.Set_TV_idx(TV_idx, EMPTY);
+         m_tv_dec.Open();
+         /* LDPC decoding */
+@@ -1323,13 +1317,11 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_DIN_File()
+         //======================================
+         Load_Dec_Input_Vector_Format(N, len_noPS);
+         /* Copy buffer */
+-        for (int n = 0; n < N; n++) {
+-            m_HD_input[n] = m_HD_channel[n];
+-            m_SD_input[n] = m_SD_channel[n];
+-            m_CC_input[n] = m_CC_channel[n];
+-            m_CD_input[n] = m_CD_channel[n];
+-            m_inv_cw_input[n] = m_inv_cw[n];
+-        }
++        memcpy(m_HD_input, m_HD_channel, N * sizeof(int));
++        memcpy(m_SD_input, m_SD_channel, N * sizeof(int));
++        memcpy(m_CC_input, m_CC_channel, N * sizeof(int));
++        memcpy(m_CD_input, m_CD_channel, N * sizeof(int));
++        memcpy(m_inv_cw_input, m_inv_cw, N * sizeof(int));
+         m_tv_dec.Set_TV_idx(TV_idx, EMPTY);
+         m_tv_dec.Open();
+         /* LDPC decoding */

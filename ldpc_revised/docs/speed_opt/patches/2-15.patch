@@ -1,0 +1,82 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index 600a67a..3fb8276 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -23,3 +23,4 @@
+ | 2-12 | % 2 → & 1 / ^ 1 치환 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-12_mod2_to_bitand.md](../docs/speed_opt/2-12_mod2_to_bitand.md) |
+ | 2-13 | VN_Cal Mux_idx 로컬 캐시 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-13_mux_idx_cache.md](../docs/speed_opt/2-13_mux_idx_cache.md) |
+ | 2-14 | bit_region 분류 테이블화 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-14_bit_region_table.md](../docs/speed_opt/2-14_bit_region_table.md) |
++| 2-15 | Clear 계열 memset화 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-15_clear_memset.md](../docs/speed_opt/2-15_clear_memset.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index 6edc704..4bca933 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -675,11 +675,9 @@ void Decoder::Clear_CN_REG(int type)
+ //=============================================
+ void Decoder::Clear_Edge_SRAM()
+ {
+-    int i, j;
++    int i;
+     for (i = 0; i < m_PCM->M; i++) {
+-        for (j = 0; j < m_PCM->K; j++) {
+-            Check_SRAM_sgn[i][j] = 0;
+-        }
++        memset(Check_SRAM_sgn[i], 0, m_PCM->K * sizeof(int));
+     }
+ }
+ //=============================================
+@@ -772,19 +770,17 @@ void Decoder::Clear_Edge_Restart()
+ //=============================================
+ void Decoder::Clear_Delay_REG()
+ {
+-    int ii, i;
++    int ii;
+     for (ii = 0; ii < m_PCM->J; ii++) {
+-        for (i = 0; i < m_PCM->z_sb; i++) {
+-            pre_exist_sgn_reg3[ii][i] = 0;
+-            pre_exist_sgn_reg2[ii][i] = 0;
++        memset(pre_exist_sgn_reg3[ii], 0, m_PCM->z_sb * sizeof(int));
++        memset(pre_exist_sgn_reg2[ii], 0, m_PCM->z_sb * sizeof(int));
+ #if defined (__ECC_TV__)
+-            pre_exist_sgn_reg3_BS[ii][i] = 0;
+-            pre_exist_sgn_reg2_BS[ii][i] = 0;
++        memset(pre_exist_sgn_reg3_BS[ii], 0, m_PCM->z_sb * sizeof(int));
++        memset(pre_exist_sgn_reg2_BS[ii], 0, m_PCM->z_sb * sizeof(int));
+ #endif
+-            VNU_out3_temp[ii][i] = 0;
+-            VNU_out3[ii][i] = 0;
+-            VNU_out2[ii][i] = 0;
+-        }
++        memset(VNU_out3_temp[ii], 0, m_PCM->z_sb * sizeof(int));
++        memset(VNU_out3[ii], 0, m_PCM->z_sb * sizeof(int));
++        memset(VNU_out2[ii], 0, m_PCM->z_sb * sizeof(int));
+     }
+ }
+ //=============================================
+@@ -923,21 +919,16 @@ void Decoder::Clear_TV_Min_Upt()
+ //================================================
+ void Decoder::Clear_Edge_SRAM_Sgn()
+ {
+-    int i, j;
++    int i;
+     for (i = 0; i < m_PCM->M; i++) {
+-        for (j = 0; j < m_PCM->K; j++) {
+-            Check_SRAM_sgn[i][j] = 0;
+-        }
++        memset(Check_SRAM_sgn[i], 0, m_PCM->K * sizeof(int));
+     }
+ }
+ void Decoder::Clear_Syndrome()
+ {
+-    int i;
+-    for (i = 0; i < m_PCM->M; i++) {
+-        Syndrome[i] = 0;
+-        // ITER=0 Puncturing Recovery시에만 사용하긴 하지만 Clear syndrome시 같이 clear 수행하도록 해놓음.
+-        Syndrome_intermediate[i] = 0;
+-    }
++    memset(Syndrome, 0, m_PCM->M * sizeof(int));
++    // ITER=0 Puncturing Recovery시에만 사용하긴 하지만 Clear syndrome시 같이 clear 수행하도록 해놓음.
++    memset(Syndrome_intermediate, 0, m_PCM->M * sizeof(int));
+ }
+ //================================================
+ // clear min position

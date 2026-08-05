@@ -1,0 +1,35 @@
+diff --git a/LDPC/partial_CRC.cpp b/ldpc_revised/partial_CRC.cpp
+index db98127..ae00e52 100644
+--- a/LDPC/partial_CRC.cpp
++++ b/ldpc_revised/partial_CRC.cpp
+@@ -5,16 +5,14 @@
+ void partial_crc_HW_T4(int* dec_d, int* lfsr, int column_number, int ShortenedBit, int* idxTermination)
+ {
+     int i;
+-    int* tmp1 = NULL;
+-    int* tmp2 = NULL;
+-    int* tmp_dec_d = NULL;
++    // iteration당 column마다 호출되는 함수 — heap 할당 3쌍 대신 고정 크기 지역 배열 (CRC_LEN/DEC_D_LEN은 컴파일 타임 상수, 스택 ~1.4KB)
++    int tmp1[CRC_LEN];
++    int tmp2[CRC_LEN];
++    int tmp_dec_d[DEC_D_LEN];
+     int TP1 = idxTermination[0];
+     int TP2 = idxTermination[1];
+     int TP3 = idxTermination[2];
+     int TP4 = idxTermination[3];
+-    tmp1 = new int[CRC_LEN];
+-    tmp2 = new int[CRC_LEN];
+-    tmp_dec_d = new int[DEC_D_LEN];
+     for (i = 0; i < DEC_D_LEN; i++) {
+         tmp_dec_d[i] = 0;
+     }
+@@ -66,9 +64,6 @@ void partial_crc_HW_T4(int* dec_d, int* lfsr, int column_number, int ShortenedBi
+         }
+     }
+     */
+-    delete[] tmp1;
+-    delete[] tmp2;
+-    delete[] tmp_dec_d;
+ }
+ //=============================================
+ // division circuit

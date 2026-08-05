@@ -1,0 +1,144 @@
+diff --git a/ldpc_revised/ecc_top.cpp b/ldpc_revised/ecc_top.cpp
+index 78b956d..785f645 100644
+--- a/ldpc_revised/ecc_top.cpp
++++ b/ldpc_revised/ecc_top.cpp
+@@ -815,10 +815,10 @@ void ECC_Top::Run_Ref_C_Scenario_4KB()
+         }
+         /* Invert or copy message */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = (m_msg[n] + 1) % 2; }
++            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n]; }
++            memcpy(m_inv_msg, m_msg, (N - M) * sizeof(int));
+         }
+         /* Information Shortening */
+         for (int n = m_ecc_info->bit_pos.info_sh_start; n < m_ecc_info->bit_pos.info_sh_end; n++) {
+@@ -830,10 +830,10 @@ void ECC_Top::Run_Ref_C_Scenario_4KB()
+         m_enc.LDPC_encoder_4KB(m_inv_cw, m_inv_msg);
+         /* Re-invert or copy codeword */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = (m_inv_cw[n] + 1) % 2; }
++            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n]; }
++            memcpy(m_cw, m_inv_cw, N * sizeof(int));
+         }
+         /* Make LDPC decoder input*/
+         if (MODE_SEED_LOAD_UNCOR_VECTOR == m_param_ref_c->mode_seed) {
+@@ -864,9 +864,10 @@ void ECC_Top::Run_Ref_C_Scenario_4KB()
+         flag_update_corner_check = Update_Corner_Checker_Total();
+ #endif
+ #if defined (__SHOW_RBER_DIST__)
+-        FILE * fp_rber_dist = fopen("rber_dist.dat", "a");
++        static FILE * fp_rber_dist = NULL;    // 매 프레임 open/close 대신 핸들 유지 (파일 내용 동일)
++        if (fp_rber_dist == NULL) fp_rber_dist = fopen("rber_dist.dat", "a");
+         fprintf(fp_rber_dist, "%d\n", o_CRC_flag);
+-        fclose(fp_rber_dist);
++        fflush(fp_rber_dist);
+ #endif
+         /* Result */
+         if (FLAG_HIGH == o_CRC_flag) {
+@@ -1045,10 +1046,10 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB()
+ 
+             /* Invert or copy message */
+             if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-                for (int n = 0; n < N - M; n++) { m_inv_msg[n] = (m_msg[n] + 1) % 2; }
++                for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n] ^ 1; }
+             }
+             else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-                for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n]; }
++                memcpy(m_inv_msg, m_msg, (N - M) * sizeof(int));
+             }
+ 
+             /* Information Shortening */
+@@ -1188,10 +1189,10 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_XOR25_Seed_File()
+         rand_msg_xor25(m_msg, N - M);
+         /* Invert or copy message */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = (m_msg[n] + 1) % 2; }
++            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n]; }
++            memcpy(m_inv_msg, m_msg, (N - M) * sizeof(int));
+         }
+         /* Information Shortening */
+         for (int n = m_ecc_info->bit_pos.info_sh_start; n < m_ecc_info->bit_pos.info_sh_end; n++) {
+@@ -1203,10 +1204,10 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_XOR25_Seed_File()
+         m_enc.LDPC_encoder_4KB(m_inv_cw, m_inv_msg);
+         /* Re-invert or copy codeword */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = (m_inv_cw[n] + 1) % 2; }
++            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n]; }
++            memcpy(m_cw, m_inv_cw, N * sizeof(int));
+         }
+ #if defined(__NAND_IO_DELIVERY__)
+ #else
+@@ -1291,10 +1292,10 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_DIN_File()
+ 
+         /* Invert or copy message */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = (m_msg[n] + 1) % 2; }
++            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N - M; n++) { m_inv_msg[n] = m_msg[n]; }
++            memcpy(m_inv_msg, m_msg, (N - M) * sizeof(int));
+         }
+         /* Information Shortening */
+         for (int n = m_ecc_info->bit_pos.info_sh_start; n < m_ecc_info->bit_pos.info_sh_end; n++) {
+@@ -1306,10 +1307,10 @@ void ECC_Top::Run_TV_Gen_Scenario_4KB_DIN_File()
+         m_enc.LDPC_encoder_4KB(m_inv_cw, m_inv_msg);
+         /* Re-invert or copy codeword */
+         if (MODE_ALL_ONE_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = (m_inv_cw[n] + 1) % 2; }
++            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n] ^ 1; }
+         }
+         else if (MODE_ALL_ZERO_CODEWORD == m_ecc_info->mode_all_one_cw) {
+-            for (int n = 0; n < N; n++) { m_cw[n] = m_inv_cw[n]; }
++            memcpy(m_cw, m_inv_cw, N * sizeof(int));
+         }
+         /* Make decoder input */
+         //======================================
+@@ -2876,10 +2877,20 @@ void ECC_Top::Open_Log_Files()
+ }
+ void ECC_Top::Load_Dec_Input_Vector_Format(int N, int len_noPS)
+ {
+-    int * tmp_buf_HD = new int[len_noPS];
+-    int * tmp_buf_SD = new int[len_noPS];
+-    int * tmp_buf_CC = new int[len_noPS];
+-    int * tmp_buf_CD = new int[len_noPS];
++    // 해당 모드에서 프레임당 호출 — 버퍼는 최초 1회 할당 후 재사용 (길이가 늘면 재할당)
++    static int * tmp_buf_HD = NULL;
++    static int * tmp_buf_SD = NULL;
++    static int * tmp_buf_CC = NULL;
++    static int * tmp_buf_CD = NULL;
++    static int tmp_buf_len = 0;
++    if (tmp_buf_len < len_noPS) {
++        delete[] tmp_buf_HD; delete[] tmp_buf_SD; delete[] tmp_buf_CC; delete[] tmp_buf_CD;
++        tmp_buf_HD = new int[len_noPS];
++        tmp_buf_SD = new int[len_noPS];
++        tmp_buf_CC = new int[len_noPS];
++        tmp_buf_CD = new int[len_noPS];
++        tmp_buf_len = len_noPS;
++    }
+     int bit_pos;
+     int bCopy;
+     /* init */
+@@ -2929,10 +2940,6 @@ void ECC_Top::Load_Dec_Input_Vector_Format(int N, int len_noPS)
+             bit_pos++;
+         }
+     }
+-    delete[] tmp_buf_HD;
+-    delete[] tmp_buf_SD;
+-    delete[] tmp_buf_CC;
+-    delete[] tmp_buf_CD;
+ }
+ void ECC_Top::Set_Corner_Checker()
+ {

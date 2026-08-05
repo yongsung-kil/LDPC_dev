@@ -1,0 +1,48 @@
+# Build outputs
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+build/
+out/
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj*
+*.user
+Debug/
+Release/
+x64/
+x86/
+
+# Test outputs
+_test/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Logs
+*.log
+ideas/**/logs/*.log
+
+# H-matrix data (large binary files)
+H_Matrix/
+
+# Results
+result_*.txt
+Ref_C_result_*.txt
+
+# TV output files
+TV_*/
+__pycache__/

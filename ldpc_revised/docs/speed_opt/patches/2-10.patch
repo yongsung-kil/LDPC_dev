@@ -1,0 +1,24 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index d24054a..f32250c 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -18,3 +18,4 @@
+ | 2-7 | pre_exist_sgn_reg_BS 3종 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md](../docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md) |
+ | 2-8 | Delay_2clk 행 단위 memcpy | decoder.cpp | 적용 완료 | [docs/speed_opt/2-8_delay_2clk_memcpy.md](../docs/speed_opt/2-8_delay_2clk_memcpy.md) |
+ | 2-9 | LLR 테이블 파일 파라미터화 | decoder.h, decoder.cpp, llr_tables_template.txt | 적용 완료 | [docs/speed_opt/2-9_llr_table_parameterize.md](../docs/speed_opt/2-9_llr_table_parameterize.md) |
++| 2-10 | Init_Log_Data 프레임당 호출 가드 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-10_init_log_data_guard.md](../docs/speed_opt/2-10_init_log_data_guard.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index 3bfc818..b08b8af 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -1074,7 +1074,10 @@ void Decoder::LDPC_Decoder(
+ #if defined (__ONLY_FOR_DEBUG__)
+     cout << "LDPC idx : " << m_sector_idx << endl;
+ #endif
++    // 로그/CSW 소비 빌드에서만 매 프레임 로그 배열 초기화 (Ref-C 순수 빌드에서는 프레임당 수십만 대입 제거)
++#if defined (__LOG_DECODING_STATUS__) || defined (__PRINT_LOG_DATA__) || defined (__AUTO_LLR_OPT__) || defined (__CORNER_CHECKER__)
+     Init_Log_Data();
++#endif
+     Open_Log_Files();
+     /* Set LLR */
+     if ((MODE_DEC_2SD == m_param_dec->init_n) || (MODE_DEC_3SD == m_param_dec->init_n) || (MODE_DEC_1_5SD == m_param_dec->init_n)) {

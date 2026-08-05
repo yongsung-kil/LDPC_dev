@@ -1,0 +1,132 @@
+diff --git a/ldpc_revised/ecc_top.cpp b/ldpc_revised/ecc_top.cpp
+index 785f645..249c198 100644
+--- a/ldpc_revised/ecc_top.cpp
++++ b/ldpc_revised/ecc_top.cpp
+@@ -963,7 +963,7 @@ void ECC_Top::Run_Ref_C_Scenario_4KB()
+     }// end while
+ #ifdef __AUTO_LLR_OPT__
+     if (MODE_SEED_SAVE_UNCOR_SEED_LOAD_INIT_SEED == m_param_ref_c->mode_seed || MODE_SEED_DEFAULT_LOAD_INIT_SEED == m_param_ref_c->mode_seed) {
+-        xor_r25(current_seed);
++        xor_r25_u32(current_seed);    // 반환값 미사용 (상태 전진만) — 나눗셈 생략, 상태 갱신 동일
+         Print_Init_Seed(fp_init_seed, 0, filename_init_seed, current_seed);
+     }
+ #endif
+diff --git a/ldpc_revised/random.cpp b/ldpc_revised/random.cpp
+index 8905aa6..d485a12 100644
+--- a/ldpc_revised/random.cpp
++++ b/ldpc_revised/random.cpp
+@@ -314,19 +314,27 @@ double Gaussian_xor25(double a, double d)
+ }
+ 
+ //================================================
+-// Calculate xor25
++// Calculate xor25 (정수 경로 — 상태 갱신 + w 반환)
++// 정수 소비처(rand_msg_xor25 등)의 double 왕복
++// w → w/4294967295.0 → ×4294967295 → (unsigned) 제거용.
++// 왕복은 전 범위(2^32) 전수 검증으로 항등 확인됨 → 값 동일 (5-6)
+ //================================================
+-double xor_r25(unsigned int* a)
++unsigned int xor_r25_u32(unsigned int* a)
+ {
+-    double tmp;
+     unsigned int t = (a[18] ^ (a[18] << 5));
+     unsigned int w = (t ^ (t >> 13)) ^ (a[0] ^ (a[0] << 20));
+     memmove(a, a + 1, 24 * sizeof(unsigned int));    // 24회 원소별 이동 → 단일 블록 이동 (겹치는 영역이라 memmove)
+     a[24] = w;
++    return w;
++}
+ 
+-    tmp = w / (double)4294967295;
+-
+-    return tmp;
++//================================================
++// Calculate xor25
++//================================================
++double xor_r25(unsigned int* a)
++{
++    // 실수 소비처(Gaussian_xor25)용 — 정수 경로 위에 나눗셈 1회 (기존과 동일 값)
++    return xor_r25_u32(a) / (double)4294967295;
+ }
+ 
+ //================================================
+@@ -337,7 +345,7 @@ void rand_msg_xor25(int* msg, int msglen)
+     int i;
+     unsigned int tmp;
+     for (i = 0; i < msglen; i++) {
+-        tmp = (unsigned int)(xor_r25(memory_for_rng) * 4294967295);
++        tmp = xor_r25_u32(memory_for_rng);    // double 왕복 제거 — 전수 검증으로 동일 값 보장
+         *(msg + i) = (int)(tmp % 2);
+     }
+ }
+@@ -388,7 +396,7 @@ void rand_sel_ep(int* err_position, int len_max, int n_err_len, int type)
+             tmp = (unsigned int)(rand() * rand());
+         }
+         else if (MODE_RANDOM_TYPE_XOR_25 == type) {
+-            tmp = (unsigned int)(xor_r25(memory_for_rng) * 4294967295);
++            tmp = xor_r25_u32(memory_for_rng);    // double 왕복 제거 — 전수 검증으로 동일 값 보장
+         }
+         s = (tmp % (len_max - j)) + j;
+         swap_hist[j] = s;
+@@ -666,7 +674,7 @@ void Make_Msg_TV(int* msg, int msglen, int input_index, int type)
+ 
+ unsigned char rand_int(void)
+ {
+-    unsigned int tmp = (unsigned int)(xor_r25(memory_for_rng) * 4294967295);
++    unsigned int tmp = xor_r25_u32(memory_for_rng);    // double 왕복 제거 — 전수 검증으로 동일 값 보장
+     tmp = tmp % 256;
+     return (unsigned char)tmp;
+ }
+diff --git a/ldpc_revised/random.h b/ldpc_revised/random.h
+new file mode 100644
+index 0000000..8ac652e
+--- /dev/null
++++ b/ldpc_revised/random.h
+@@ -0,0 +1,48 @@
++#ifndef ECCTG_RANDOM_H
++#define ECCTG_RANDOM_H
++
++#include "common.h"
++
++//======================================
++// Random generator
++//======================================
++
++#define IM1 2147483563
++#define IM2 2147483399
++#define AM (1.0 / IM1)
++#define IMM1 (IM1 - 1)
++#define IA1 40014
++#define IA2 40692
++#define IQ1 53668
++#define IQ2 52774
++#define IR1 12211
++#define IR2 3791
++#define NTAB 32
++#define NDIV (1 + IMM1 / NTAB)
++#define EPS 1.2e-7
++#define RNMX (1.0 - EPS)
++
++void    Set_Random_Seed_xor25(int v);
++void    Set_Random_Seed(unsigned int * s);
++void    Get_Random_Seed(unsigned int * s);
++void    Print_Seed(FILE * fp_uncor_seed, int uncor_type, char * filename_uncor_seed, unsigned int * current_seed);
++int     Read_Seed(FILE * fp_uncor_seed, unsigned int * current_seed);
++int     Read_Uncor_Seed_Format(FILE * fp_uncor_seed);
++#ifdef __AUTO_LLR_OPT__
++void    Print_Init_Seed(FILE* fp_uncor_seed, int uncor_type, char* filename_uncor_seed, unsigned int* current_seed);
++#endif
++
++double  ran2(int seed_ran2, int reset);
++double  Gaussian_xor25(double a, double d);
++double  xor_r25(unsigned int* a);
++unsigned int xor_r25_u32(unsigned int* a);  // 정수 경로 — double 왕복 없이 상태 갱신 + w 반환 (5-6)
++void    rand_msg_xor25(int *msg, int msglen);
++void    rand_sel_ep(int *err_position, int len_max, int n_err_len, int type);
++void    Make_Msg_TV(int *msg, int msglen, int input_index, int type);
++
++unsigned char rand_int(void);
++int Read_Uncor_Vector_Format(int N, FILE *, int *uncor_input);
++void Convert_Hex_Bin(char hex, int * arr);
++void Reverse_Arr(int * arr, int num);
++
++#endif

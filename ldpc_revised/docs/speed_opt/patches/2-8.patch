@@ -1,0 +1,52 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index 6ff5087..6f53081 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -16,3 +16,4 @@
+ | 2-5 | before_BS dead code 제거 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-5_before_BS_dead_code.md](../docs/speed_opt/2-5_before_BS_dead_code.md) |
+ | 2-6 | _nq 배열 체인 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-6_nq_arrays_tv_guard.md](../docs/speed_opt/2-6_nq_arrays_tv_guard.md) |
+ | 2-7 | pre_exist_sgn_reg_BS 3종 TV 가드 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md](../docs/speed_opt/2-7_sgn_reg_BS_tv_guard.md) |
++| 2-8 | Delay_2clk 행 단위 memcpy | decoder.cpp | 적용 완료 | [docs/speed_opt/2-8_delay_2clk_memcpy.md](../docs/speed_opt/2-8_delay_2clk_memcpy.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index 17cc9cb..a754c35 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -682,7 +682,6 @@ void Decoder::Clear_Edge_SRAM()
+ void Decoder::Delay_2clk(int parity_skip)
+ {
+     int ii;
+-    int i;
+     if (TRUE == parity_skip) {
+         prev_variable_node2 = prev_variable_node;
+         prev_variable_node2_G_idx = prev_variable_node_G_idx;
+@@ -698,21 +697,18 @@ void Decoder::Delay_2clk(int parity_skip)
+ #if defined (__ONLY_FOR_DEBUG__)
+     cout << "Delay_2clk()  prev2 <== " << prev_variable_node2 << "\tprev <== " << prev_variable_node << endl;
+ #endif
++    // 3단 시프트는 반드시 3←2, 2←1 순서 유지 (원소별 대입과 동일 순서). 포인터 swap 금지 — HCU 컬럼의 부분 갱신 잔존값 의미가 달라짐
+     for (ii = 0; ii < m_PCM->J; ii++) {
+-        for (i = 0; i < m_PCM->z_sb; i++) {
+-            pre_exist_sgn_reg3[ii][i] = pre_exist_sgn_reg2[ii][i];
+-            pre_exist_sgn_reg2[ii][i] = pre_exist_sgn_reg[ii][i];
++        memcpy(pre_exist_sgn_reg3[ii], pre_exist_sgn_reg2[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(pre_exist_sgn_reg2[ii], pre_exist_sgn_reg[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(VNU_out3[ii], VNU_out2[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(VNU_out2[ii], VNU_out[ii], m_PCM->z_sb * sizeof(int));
+ #if defined (__ECC_TV__)
+-            pre_exist_sgn_reg3_BS[ii][i] = pre_exist_sgn_reg2_BS[ii][i];
+-            pre_exist_sgn_reg2_BS[ii][i] = pre_exist_sgn_reg_BS[ii][i];
++        memcpy(pre_exist_sgn_reg3_BS[ii], pre_exist_sgn_reg2_BS[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(pre_exist_sgn_reg2_BS[ii], pre_exist_sgn_reg_BS[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(VNU_out3_nq[ii], VNU_out2_nq[ii], m_PCM->z_sb * sizeof(int));
++        memcpy(VNU_out2_nq[ii], VNU_out_nq[ii], m_PCM->z_sb * sizeof(int));
+ #endif
+-            VNU_out3[ii][i] = VNU_out2[ii][i];
+-            VNU_out2[ii][i] = VNU_out[ii][i];
+-#if defined (__ECC_TV__)
+-            VNU_out3_nq[ii][i] = VNU_out2_nq[ii][i];
+-            VNU_out2_nq[ii][i] = VNU_out_nq[ii][i];
+-#endif
+-        }
+     }
+ }
+ //=============================================

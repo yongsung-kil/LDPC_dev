@@ -1,0 +1,37 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index f32250c..5544f5f 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -19,3 +19,4 @@
+ | 2-8 | Delay_2clk 행 단위 memcpy | decoder.cpp | 적용 완료 | [docs/speed_opt/2-8_delay_2clk_memcpy.md](../docs/speed_opt/2-8_delay_2clk_memcpy.md) |
+ | 2-9 | LLR 테이블 파일 파라미터화 | decoder.h, decoder.cpp, llr_tables_template.txt | 적용 완료 | [docs/speed_opt/2-9_llr_table_parameterize.md](../docs/speed_opt/2-9_llr_table_parameterize.md) |
+ | 2-10 | Init_Log_Data 프레임당 호출 가드 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-10_init_log_data_guard.md](../docs/speed_opt/2-10_init_log_data_guard.md) |
++| 2-11 | magnitude 매핑 산술화 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-11_mag_domain_arith.md](../docs/speed_opt/2-11_mag_domain_arith.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index b08b8af..7283de5 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -2431,10 +2431,7 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+             else if (check_out_temp == V_MAG1) { check_out = EDGE_MAG_2; }
+             else { check_out = EDGE_MAG_1; }
+ #else
+-            if (check_out_temp == V_VERY_STRONG) { check_out = EDGE_MAG_7; }
+-            else if (check_out_temp == V_NORMAL_STRONG) { check_out = EDGE_MAG_5; }
+-            else if (check_out_temp == V_NORMAL_WEAK) { check_out = EDGE_MAG_3; }
+-            else { check_out = EDGE_MAG_1; }
++            check_out = (check_out_temp << 1) | 1;    // V {3,2,1,0} → EDGE {7,5,3,1} (기존 if-chain과 도메인 전수 일치)
+ #endif
+         }
+         /* real output */
+@@ -2795,10 +2792,7 @@ void Decoder::V2C_Store(int jj, int ii, int iter, int store_checksum_REG, int st
+         else if (check_in_mag == EDGE_MAG_2) v2c_mag = V_MAG1;
+         else                                 v2c_mag = V_MAG0;
+ #else
+-        if (check_in_mag == EDGE_MAG_7)      v2c_mag = V_VERY_STRONG;
+-        else if (check_in_mag == EDGE_MAG_5) v2c_mag = V_NORMAL_STRONG;
+-        else if (check_in_mag == EDGE_MAG_3) v2c_mag = V_NORMAL_WEAK;
+-        else                                 v2c_mag = V_VERY_WEAK;
++        v2c_mag = check_in_mag >> 1;    // EDGE {7,5,3,1} → V {3,2,1,0} (기존 if-chain과 도메인 전수 일치)
+ #endif
+         /* Read Check REG */
+         pre_v2c_sgn = pre_exist_sgn_reg3[mux_idx][j];

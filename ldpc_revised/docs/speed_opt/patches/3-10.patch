@@ -1,0 +1,49 @@
+diff --git a/ldpc_revised/ecc_top.cpp b/ldpc_revised/ecc_top.cpp
+index 263d800..78b956d 100644
+--- a/ldpc_revised/ecc_top.cpp
++++ b/ldpc_revised/ecc_top.cpp
+@@ -1690,7 +1690,7 @@ void ECC_Top::Make_Dec_Input_Fixed_4KB(int * HD_input, int * SD_input, int * CC_
+         start_pos = 0;
+         end_pos = e1;
+         for (int n = start_pos; n < end_pos; n++) {
+-            HD_input[m_err_position[n]] = (HD_input[m_err_position[n]] + 1) % 2;
++            HD_input[m_err_position[n]] ^= 1;
+             if (m_err_position[n] < ctrl_info_len) {
+                 info_err_cnt++;
+             }
+@@ -1701,7 +1701,7 @@ void ECC_Top::Make_Dec_Input_Fixed_4KB(int * HD_input, int * SD_input, int * CC_
+         start_pos = 0;
+         end_pos = start_pos + e2 + e1;
+         for (int n = 0; n < end_pos; n++) {
+-            HD_input[m_err_position[n]] = (HD_input[m_err_position[n]] + 1) % 2;
++            HD_input[m_err_position[n]] ^= 1;
+             if (m_err_position[n] < ctrl_info_len) {
+                 info_err_cnt++;
+             }
+@@ -1718,7 +1718,7 @@ void ECC_Top::Make_Dec_Input_Fixed_4KB(int * HD_input, int * SD_input, int * CC_
+         start_pos = 0;
+         end_pos = start_pos + e4 + e3 + e2 + e1;
+         for (int n = start_pos; n < end_pos; n++) {
+-            HD_input[m_err_position[n]] = (HD_input[m_err_position[n]] + 1) % 2;
++            HD_input[m_err_position[n]] ^= 1;
+             if (m_err_position[n] < ctrl_info_len) {
+                 info_err_cnt++;
+             }
+@@ -1746,7 +1746,7 @@ void ECC_Top::Make_Dec_Input_Fixed_4KB(int * HD_input, int * SD_input, int * CC_
+         start_pos = 0;
+         end_pos = start_pos + e2 + e1;
+         for (int n = start_pos; n < end_pos; n++) {
+-            HD_input[m_err_position[n]] = (HD_input[m_err_position[n]] + 1) % 2;
++            HD_input[m_err_position[n]] ^= 1;
+             if (m_err_position[n] < ctrl_info_len) {
+                 info_err_cnt++;
+             }
+@@ -1755,7 +1755,7 @@ void ECC_Top::Make_Dec_Input_Fixed_4KB(int * HD_input, int * SD_input, int * CC_
+         start_pos = e2;
+         end_pos = start_pos + e1;
+         for (int n = start_pos; n < end_pos; n++) {
+-            CD_input[m_err_position[n]] = (CD_input[m_err_position[n]] + 1) % 2;
++            CD_input[m_err_position[n]] ^= 1;
+         }
+     }
+     /* puncturing, shortening */

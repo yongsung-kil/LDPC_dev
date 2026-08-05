@@ -1,0 +1,56 @@
+diff --git a/ldpc_revised/README.md b/ldpc_revised/README.md
+index 9438b3a..61b64af 100644
+--- a/ldpc_revised/README.md
++++ b/ldpc_revised/README.md
+@@ -27,3 +27,4 @@
+ | 2-16 | Clear_REG_min_value 분기 제거 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-16_clear_reg_min_branch.md](../docs/speed_opt/2-16_clear_reg_min_branch.md) |
+ | 2-17 | VN_Cal_Pre cwc 분기 축소 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-17_vn_cal_pre_cwc.md](../docs/speed_opt/2-17_vn_cal_pre_cwc.md) |
+ | 2-18 | Check_REG 평탄화 | decoder.h, decoder.cpp | 적용 완료 | [docs/speed_opt/2-18_check_reg_flatten.md](../docs/speed_opt/2-18_check_reg_flatten.md) |
++| 2-19 | VNU_out3_temp/PMU no-op 스킵 | decoder.cpp | 적용 완료 | [docs/speed_opt/2-19_pmu_noop_skip.md](../docs/speed_opt/2-19_pmu_noop_skip.md) |
+diff --git a/ldpc_revised/decoder.cpp b/ldpc_revised/decoder.cpp
+index ce130aa..4ff9793 100644
+--- a/ldpc_revised/decoder.cpp
++++ b/ldpc_revised/decoder.cpp
+@@ -2659,14 +2659,15 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+             /* delay */
+             //prev_variable_node2_print = prev_variable_node2;
+             prev_variable_node2_print = jj;
+-            for (int ii = 0; ii < m_PCM->J; ii++) {
+-                for (int i = 0; i < m_PCM->z_sb; i++) {
+-                    VNU_out3_temp[ii][i] = VNU_out3[ii][i];
++            // z_sb < PMU_UNIT_SIZE면 factor = 0 → PMU fragment 루프가 0회(no-op)라 복사·호출 스킵 (현 구성 z_sb=32 < 128)
++            if (m_PCM->z_sb >= PMU_UNIT_SIZE) {
++                for (int ii = 0; ii < m_PCM->J; ii++) {
++                    memcpy(VNU_out3_temp[ii], VNU_out3[ii], m_PCM->z_sb * sizeof(int));
++                }
++                if (FALSE == skip) {
++                    PMU_Write(prev_variable_node2_print);
+                 }
+             }
+-        if (FALSE == skip) {
+-            PMU_Write(prev_variable_node2_print);
+-        }
+     }
+     }
+     //================================================
+@@ -2704,13 +2705,14 @@ void Decoder::C2V_Cal(int jj, int ii, int iter)
+     /* delay */
+     //prev_variable_node2_print = prev_variable_node2;
+     prev_variable_node2_print = jj;
+-    for (int ii = 0; ii < m_PCM->J; ii++) {
+-        for (int i = 0; i < m_PCM->z_sb; i++) {
+-            VNU_out3_temp[ii][i] = VNU_out3[ii][i];
++    // z_sb < PMU_UNIT_SIZE면 factor = 0 → PMU fragment 루프가 0회(no-op)라 복사·호출 스킵
++    if (m_PCM->z_sb >= PMU_UNIT_SIZE) {
++        for (int ii = 0; ii < m_PCM->J; ii++) {
++            memcpy(VNU_out3_temp[ii], VNU_out3[ii], m_PCM->z_sb * sizeof(int));
++        }
++        if (FALSE == skip) {
++            PMU_Write_HCU(prev_variable_node2_print, G_idx);
+         }
+-    }
+-    if (FALSE == skip) {
+-        PMU_Write_HCU(prev_variable_node2_print, G_idx);
+     }
+     }
+ }
