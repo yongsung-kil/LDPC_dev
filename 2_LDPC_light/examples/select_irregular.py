@@ -34,7 +34,8 @@ MAX_ITER = 120   # 사용자 지정 (2026-07-30)
 def fer_at(code, rber, seed, target_errors, max_frames, batch=128):
     dec = MinSumDecoder(code, max_iter=MAX_ITER)
     rng = np.random.default_rng([seed, int(rber * 1e7)])
-    return run_fer_point(code, lambda b, rg: chan.bsc_llr(code, rber, b, rg),
+    zero_cw = lambda b: np.zeros((b, code.N_b, code.z), np.uint8)   # all-zero (인코더 미사용)
+    return run_fer_point(code, lambda b, rg: chan.bsc_llr(code, zero_cw(b), rber, rg),
                          dec, rng, target_errors=target_errors,
                          max_frames=max_frames, batch=batch)
 

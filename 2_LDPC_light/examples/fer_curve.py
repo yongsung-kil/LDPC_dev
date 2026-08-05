@@ -1,47 +1,26 @@
 """예시 부호 정정능력 커브: FER vs RBER (BSC hard) / FER vs Eb/N0 (AWGN soft).
 
+파라미터는 코드가 아니라 fer_curve.json에 있다 (run.py 참조).
+H-matrix 준비: python -m 2_LDPC_light.tools.gen_example_code (최초 1회, 파일 없을 때만)
 실행: python -m 2_LDPC_light.examples.fer_curve
 출력: 2_LDPC_light/examples/out/{fer_bsc.csv, fer_awgn.csv, fer_curves.png}
 
-측정 조건: all-zero codeword, genie 판정, offset min-sum(beta=1), max 20 iter.
+측정 조건: all-zero codeword(encoder 스텁), genie 판정, offset min-sum(beta=1).
 0-error 포인트는 FER < 1/frames 상한으로 open marker 표시.
 """
 import os
 
-import numpy as np
-
-from ..pcm import QCCode
-from ..decoder import MinSumDecoder
-from .. import channel as chan
-from ..sim import sweep, save_csv
+from .. import run as runner
 
 HERE = os.path.dirname(__file__)
-CODE_FILE = os.path.join(HERE, "example_18x147_z256.qc")
-OUT = os.path.join(HERE, "out")
-MAX_ITER = 120   # 사용자 지정 (2026-07-30)
+CONFIG_FILE = os.path.join(HERE, "fer_curve.json")
 
 # dataviz 기본 팔레트 (light) slot1/slot2
 BLUE, ORANGE = "#2a78d6", "#eb6834"
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#d9d8d4"
 
 
-def measure(code, dec):
-    bsc_points = [0.0105, 0.0100, 0.0095, 0.0090, 0.0085, 0.0080, 0.0075, 0.0070]
-    awgn_points = [3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0]
-    common = dict(target_errors=40, max_frames=3000, batch=128, stop_below=5e-4)
-
-    print("== BSC (hard-decision read) ==")
-    bsc = sweep(code, dec, bsc_points,
-                lambda p: (lambda b, rg: chan.bsc_llr(code, p, b, rg)),
-                seed=20260730, **common)
-    print("== AWGN (soft read) ==")
-    awgn = sweep(code, dec, awgn_points,
-                 lambda p: (lambda b, rg: chan.awgn_llr(code, p, b, rg)),
-                 seed=20260731, **common)
-    return bsc, awgn
-
-
-def plot(code, bsc, awgn, path):
+def plot(code, bsc, awgn, path, max_iter):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -75,7 +54,7 @@ def plot(code, bsc, awgn, path):
 
     fig.suptitle(
         f"Correction capability — example QC-LDPC {code.M_b}x{code.N_b}, z={code.z}, "
-        f"rate {code.rate:.3f}, offset min-sum (b=1), max {MAX_ITER} iter, genie termination",
+        f"rate {code.rate:.3f}, offset min-sum (b=1), max {max_iter} iter, genie termination",
         color=INK, fontsize=11)
     fig.text(0.99, 0.01, "open marker = 0 errors observed (FER upper bound)",
              ha="right", color=INK2, fontsize=8)
@@ -85,18 +64,15 @@ def plot(code, bsc, awgn, path):
 
 
 def main():
-    os.makedirs(OUT, exist_ok=True)
-    if not os.path.exists(CODE_FILE):
-        from ..tools.gen_example_code import build_example
-        build_example().save(CODE_FILE)
-    code = QCCode.load(CODE_FILE)
+    config = runner.load_config(CONFIG_FILE)
+    code, dec = runner.setup(config)
     print(code.summary())
-    dec = MinSumDecoder(code, max_iter=MAX_ITER)
 
-    bsc, awgn = measure(code, dec)
-    save_csv(bsc, os.path.join(OUT, "fer_bsc.csv"), param_name="rber")
-    save_csv(awgn, os.path.join(OUT, "fer_awgn.csv"), param_name="ebn0_db")
-    plot(code, bsc, awgn, os.path.join(OUT, "fer_curves.png"))
+    results = runner.run_experiment(code, dec, config)
+    runner.report(results, config)
+    bsc, awgn = results["bsc"], results["awgn"]
+    plot(code, bsc, awgn, os.path.join(config["output"]["dir"], "fer_curves.png"),
+         max_iter=dec.max_iter)
 
     print("\n== summary ==")
     for name, rs, fmt in (("BSC", bsc, "{:.4f}"), ("AWGN", awgn, "{:.1f}dB")):

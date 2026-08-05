@@ -1,22 +1,27 @@
-"""채널 모델: all-zero codeword 전제 (plan.md §7 #2).
+"""채널 모델: 송신 codeword(cw)를 받아 read-bit/LLR을 만든다 (plan.md §7 #6).
 
 원본 channel.cpp 대응 범위: 에러 주입 + read-bit/구간 결정까지.
 여기서는 vanilla 뼈대로 BSC(hard)와 AWGN(soft, 균일 양자화)을 제공한다.
 실물 HD/2SD/3SD region + VN 테이블 매핑은 실물 LLR 테이블 반입 후 추가 (plan.md §4 선행 조건).
 
-반환 LLR 부호 규칙: +값 = bit 0 신뢰. all-zero 송신이므로 에러 없는 위치는 +.
+반환 LLR 부호 규칙: +값 = bit 0 신뢰. cw는 encoder.encode()가 만든 (batch, N_b, z) {0,1}
+송신 codeword다. 현재는 encoder가 스텁이라 항상 all-zero이지만, 채널 함수는 그 값을 그대로
+따른다 (인코더가 실제로 채워지면 채널 수정 없이 그대로 동작).
 """
 import numpy as np
 
 
-def bsc_llr(code, rber, batch, rng, mag=8.0):
-    """BSC(hard-decision read). rber 확률로 비트 flip, LLR = ±mag.
+def bsc_llr(code, cw, rber, rng, mag=8.0):
+    """BSC(hard-decision read). cw: (batch, N_b, z) {0,1} 송신 codeword.
+    rber 확률로 read bit flip, LLR = ±mag.
     mag: 스칼라 또는 (N_b,) column block별 값 (llr_tables.ch_mag_by_col 참조)."""
     mag = np.asarray(mag, np.float32)
     if mag.ndim == 1:
         mag = mag.reshape(1, -1, 1)          # (1, N_b, 1) → 브로드캐스트
-    flips = rng.random((batch, code.N_b, code.z)) < rber
-    return np.where(flips, -mag, mag).astype(np.float32)
+    batch = cw.shape[0]
+    flip = rng.random((batch, code.N_b, code.z)) < rber
+    read_bit = np.asarray(cw, np.uint8) ^ flip.astype(np.uint8)
+    return np.where(read_bit == 0, mag, -mag).astype(np.float32)
 
 
 def fixed_error_llr(code, n_err, batch, rng, mag=8.0):
@@ -34,11 +39,14 @@ def fixed_error_llr(code, n_err, batch, rng, mag=8.0):
     return llr.reshape(batch, code.N_b, code.z)
 
 
-def awgn_llr(code, ebn0_db, batch, rng, step=0.5, ch_clip=31, quantize=True):
-    """BPSK + AWGN. Eb/N0 기준 (rate 반영). LLR = 2y/sigma^2 → step 균일 양자화 + 클리핑."""
+def awgn_llr(code, cw, ebn0_db, rng, step=0.5, ch_clip=31, quantize=True):
+    """BPSK + AWGN. cw: (batch, N_b, z) {0,1} 송신 codeword. Eb/N0 기준 (rate 반영).
+    LLR = 2y/sigma^2 → step 균일 양자화 + 클리핑."""
     ebn0 = 10.0 ** (ebn0_db / 10.0)
     sigma2 = 1.0 / (2.0 * code.rate * ebn0)
-    y = 1.0 + rng.normal(0.0, np.sqrt(sigma2), size=(batch, code.N_b, code.z))
+    batch = cw.shape[0]
+    bpsk = 1.0 - 2.0 * np.asarray(cw, np.float32)    # 0 -> +1, 1 -> -1
+    y = bpsk + rng.normal(0.0, np.sqrt(sigma2), size=(batch, code.N_b, code.z))
     llr = (2.0 / sigma2) * y
     if quantize:
         llr = np.clip(np.rint(llr / step), -ch_clip, ch_clip)

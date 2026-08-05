@@ -5,6 +5,6 @@ C++ Ref-C와의 절대 FER 일치는 보장하지 않으며, 최종 검증은 �
 """
 from .pcm import QCCode
 from .decoder import MinSumDecoder
-from . import channel, sim
+from . import channel, encoder, sim
 
-__all__ = ["QCCode", "MinSumDecoder", "channel", "sim"]
+__all__ = ["QCCode", "MinSumDecoder", "channel", "encoder", "sim"]

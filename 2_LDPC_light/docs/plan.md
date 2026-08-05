@@ -49,13 +49,15 @@ FER에 영향을 주는 것은 알고리즘 요소이므로, 제거는 "HW 구�
 |------|------|----------|
 | `config.py` | 파라미터 (N_b, z_sb, max_iter, 양자화 비트 등) | `ecc_data.h` PARAM_DEC/PARAM_LLR |
 | `pcm.py` | H-matrix 파일 로드 (기존 포맷 그대로 파싱), base matrix + circulant shift | `ecc_top.cpp` `Load_PCM()`, `input.cpp` |
+| `encoder.py` | 메시지 생성 + 인코딩 (§7 #6 참조: 현재 `encode()`는 스텁, all-zero 반환) | `ecc_top.cpp` 인코더 (미포팅) |
 | `llr_tables.py` | 2-9 포맷 LLR 테이블 파일 로드 | `decoder.cpp` LLR 테이블 로드 |
-| `channel.py` | AWGN/BSC + HD/2SD/3SD 양자화 → **read-bit/구간(region)까지** (리뷰 확인: 원본 channel.cpp도 여기까지만 담당. LLR **값** 부여는 VN 단계 테이블 소관 → decoder.py) | `channel.cpp` `Set_R_Offset()`, `Set_LLR_Th()` |
+| `channel.py` | AWGN/BSC + HD/2SD/3SD 양자화 → **read-bit/구간(region)까지** (리뷰 확인: 원본 channel.cpp도 여기까지만 담당. LLR **값** 부여는 VN 단계 테이블 소관 → decoder.py). `encoder.py`가 만든 codeword를 인자로 받는다 (§7 #6) | `channel.cpp` `Set_R_Offset()`, `Set_LLR_Th()` |
 | `decoder.py` | quantized min-sum, column-wise(기본)/two_set 스케줄, HW-근사 3-bit 프로파일, 배치 벡터화 | `decoder.cpp` `LDPC_Decoder()`, `C2V_Cal()`, `VN_Cal_*()`, `CNU_*` |
-| `sim.py` | FER 하니스: 배치 생성 → 복호 → bitwise 판정 → 통계 | `ecc_top.cpp` 프레임 루프 |
-| `mpi_runner.py` | mpi4py: rank별 시드 분할, 에러 카운트 Allreduce | `mpi.cpp` (`__RUN_MPI__`) |
+| `sim.py` | FER 하니스: 한 채널 조건에서 배치 생성 → 복호 → bitwise 판정 → 통계 (`run_fer_point`), CSV 저장 | `ecc_top.cpp` 프레임 루프 |
+| `run.py` | 실험 진입점. JSON 설정(파라미터) → setup(환경) → run_experiment(실험) → report(출력) 4단계로 분리 (§7 #6) | `ecc_top.cpp` main 흐름 |
+| `mpi_runner.py` | mpi4py: rank별 시드 분할, 에러 카운트 Allreduce (CLI 인자, JSON 설정과 미통일) | `mpi.cpp` (`__RUN_MPI__`) |
 
-- 인코더: **all-zero codeword** 사용 확정 (대칭 채널 + 대칭 복호기에서는 all-zero로 FER 측정 가능 → 인코더 불필요).
+- 인코더: **all-zero codeword** 사용은 유지하되(대칭 채널 + 대칭 복호기에서는 all-zero로 FER 측정 가능), 2026-08-05부터 `encoder.py`에 msg 생성 + encode 자리를 스텁으로 마련해 실물 인코더 반입 시 이 파일만 교체하면 되도록 한다 (§7 #6, 기존 "인코더 불필요" 결정을 구조상 보완).
 - 논문 아이디어는 `decoder.py`의 훅(예: CN/VN 업데이트 함수 교체, 스케줄 순서 함수 교체)으로 붙인다. 아이디어별 코드는 `2_LDPC_light/ideas/` 하위에 분리.
 
 ### 3.1b 예시 부호 생성 도구 (2026-07-30 사용자 추가 지시)
@@ -123,3 +125,4 @@ FER에 영향을 주는 것은 알고리즘 요소이므로, 제거는 "HW 구�
 | 3 | Dual-Update | **off** |
 | 4 | 시뮬 파라미터 | **max_iter = 120** (2026-07-30 사용자 지정). SNR/RBER 범위·배치 크기는 실험별 설정 |
 | 5 | numba | **사용 안 함** — numpy 배치만. 추후 필요 시 재검토 |
+| 6 | 실행 흐름 구조 (2026-08-05 사용자 지시) | `run.py` 신설 — 파라미터를 코드에서 분리해 JSON 설정 파일로 읽는다. main()은 load_config → setup → run_experiment → report 4단계 함수로 나눈다. "sweep"이라는 이름/개념 대신 config의 `channels` 리스트(채널별 `points` 리스트)로 단일·다중 채널·포인트를 동일하게 처리한다. `encoder.py`를 신설해 msg 생성(실장) + encode(스텁, all-zero 반환)를 실험 루프에 명시적으로 포함시킨다 — 채점 결과는 기존과 동일(all-zero)하지만 실물 인코더 반입 시 `encode()`만 교체하면 되도록 구조를 마련. H-matrix 생성 도구(`tools/gen_example_code.py`)는 실행 흐름에서 자동 호출하지 않는다(기존 `examples/fer_curve.py`의 자동 생성 폴백 제거). 생성은 별도로 수동 실행한다 |

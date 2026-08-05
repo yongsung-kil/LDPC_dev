@@ -44,10 +44,13 @@ def main():
     code = QCCode.load(args.code_file)
     dec = MinSumDecoder(code, max_iter=args.max_iter)
     rng = np.random.default_rng([args.seed, rank])
+    def zero_cw(b):
+        return np.zeros((b, code.N_b, code.z), np.uint8)   # all-zero codeword (인코더 미사용)
+
     if args.rber is not None:
-        fn = lambda b, r: chan.bsc_llr(code, args.rber, b, r)
+        fn = lambda b, r: chan.bsc_llr(code, zero_cw(b), args.rber, r)
     else:
-        fn = lambda b, r: chan.awgn_llr(code, args.ebn0, b, r)
+        fn = lambda b, r: chan.awgn_llr(code, zero_cw(b), args.ebn0, r)
 
     my_frames = args.frames // size + (1 if rank < args.frames % size else 0)
     r = run_fer_point(code, fn, dec, rng, target_errors=10 ** 9,
