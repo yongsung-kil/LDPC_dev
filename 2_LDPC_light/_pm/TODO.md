@@ -11,6 +11,8 @@
 
 - [ ] `_test/20260806_setup_구성_실험/LDPC_base/` 개정본 코드 딥 리뷰
   - 상세: `_pm/tasks/20260806_review/`
+  - 2026-08-06 리뷰 실행 완료 (Round 1→2→3, 최종 판정: 수정 필요). 수정 지시 대기
+  - 잔여 Decision 안건: ㉮ llr_profile 모드 존폐 ㉯ channels→channel.use 전환 기록 ㉰ irregular dv=10 사용 여부 ㉱ .gitignore `H_Matrix/` 범위 축소
 - [ ] LDPC_base 변수명·가독성 리팩토링 (짧아서 부정확한 변수명 풀어 쓰기, 원본 C++ 용어와 정합)
   - **착수 조건**: 외부에서 진행 중인 LDPC 동작 확인 작업 완료 후
   - 상세: `_pm/tasks/20260806_가독성리팩토링/` (개선 후보 사전 조사 포함)
