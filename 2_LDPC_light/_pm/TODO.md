@@ -19,6 +19,12 @@
   - H_matrix 폴더는 `Input/H_matrix` 고정 운용이지만 형태는 분리해서 받는다
   - 수정 파일: `LDPC_base/run.py` load_config, `config.json`, README 스키마 절
   - **착수 조건**: 위 리팩토링과 동일 (외부 LDPC 동작 확인 작업 완료 후)
+- [ ] LDPC_base 결과 폴더 구조화 + 분석 로그 출력 기능 (사용자 지시 2026-08-06, 착수 대기)
+  - Sim_Output 하위에 실행마다 `YYMMDD_HHMMSS_{라벨}/` 폴더 생성, config 사본 저장
+  - JSON `log` 섹션으로 항목별 로그 선택 (iteration별 CSW, bit error 전체·DV별 등)
+  - C++에 없는 통상 항목도 포함 (post-FEC BER, FER 신뢰구간, miscorrection 분리, FER vs iteration 등)
+  - 상세: `_pm/tasks/20260806_출력폴더_로그기능/`
+  - **착수 조건**: 위와 동일 (외부 LDPC 동작 확인 작업 완료 후)
 - [ ] H-matrix와 LLR 테이블 실물 파일 확인 (z_sb=256 대상) 후 실물 파라미터로 교체 (외부 반입 필요, 저장소에 없음)
   - 3-bit internal precision 잔여 갭은 소실된 HW TH/CH 실값 없이는 추정 튜닝 한계. 실값 반입 시 재검증
 - [ ] mpi_runner 슈퍼컴 반입
