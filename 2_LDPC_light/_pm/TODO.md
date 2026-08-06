@@ -22,7 +22,7 @@
 - [ ] LDPC_base 결과 폴더 구조화 + 분석 로그 출력 기능 (사용자 지시 2026-08-06, 착수 대기)
   - Sim_Output 하위에 실행마다 `YYMMDD_HHMMSS_{라벨}/` 폴더 생성, config 사본 저장
   - JSON `log` 섹션으로 항목별 로그 선택 (iteration별 CSW, bit error 전체·DV별 등)
-  - C++에 없는 통상 항목도 포함 (post-FEC BER, FER 신뢰구간, miscorrection 분리, FER vs iteration 등)
+  - C++에 없는 통상 항목은 3개만 추가 확정 (post-FEC BER, FER vs iteration, FER 커브 PNG)
   - 상세: `_pm/tasks/20260806_출력폴더_로그기능/`
   - **착수 조건**: 위와 동일 (외부 LDPC 동작 확인 작업 완료 후)
 - [ ] H-matrix와 LLR 테이블 실물 파일 확인 (z_sb=256 대상) 후 실물 파라미터로 교체 (외부 반입 필요, 저장소에 없음)
