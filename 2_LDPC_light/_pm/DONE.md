@@ -1,5 +1,20 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-07 — 이름 정확성 일괄 수정 (수단이 아닌 목적이 이름)
+사용자 지적: `_apply_genie`는 수단(genie)이 이름 — error check가 목적이므로 이름이어야 함.
+같은 기준으로 전수 감사 후 일괄 수정. **원칙 확정: 이름은 길어져도 명확한 것이 우선**
+- **변경**:
+  - ㉮ `_apply_genie` → `_check_errors` (에러 검사가 목적, genie는 수단)
+  - ㉯ `n_iter` → `decode_success_iteration` (프레임별 "디코딩이 성공한 iteration 번호",
+    실패 프레임은 0 — "iteration 수"로 오독되던 이름)
+  - ㉰ `avg_iter_ok`/`avg_iter_success` → `avg_decode_success_iteration`
+    (성공 프레임들의 성공까지 평균 iteration 수. CSV 열 이름 포함)
+  - ㉱ decoder 속성 `self.matrix` → `self.llr_matrix` (H-matrix와 혼동 방지)
+  - ㉲ `_restart_policy` → `_is_edge_clear_iter` (반환값 그대로, C++ Is_Iter_Type_Edge_Clear 정합)
+  - ㉳ 문서 잔존 옛 이름 `_decode_matrix()` → `decoder_main()` (README, 차이.md)
+- **검증**: 고정 입력 회귀 배열 단위 완전 일치, 루트·vanilla config end-to-end 정상
+- **파일**: `LDPC_base/decoder.py`, `sim.py`, `run.py`, `README.md`, `차이.md` — `_test/` 아래
+
 ### 2026-08-07 — decoder 진입 함수 개명 + 단계별 함수 추출
 사용자 확정: 진입 함수 decode_batch → decoder_main. 본문을 단계별 함수로 추출
 (함수 추출 = 긴 함수 본문을 의미 단위의 작은 함수로 나누는 리팩토링 기법)
