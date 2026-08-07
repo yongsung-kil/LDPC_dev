@@ -1,5 +1,29 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-07 — LDPC_base 가독성 리팩토링 + JSON 개편 2차 + 실행 폴더·분석 로그
+대기 중이던 3개 작업을 사용자 착수 승인 후 일괄 수행 (`_test/` 개정본 대상)
+- **배경**: 외부 LDPC 동작 확인 완료로 착수 조건 해제. 미결정 3건 사용자 확정
+  (㉮ 메시지 변수명 VNU_in/VNU_out ㉯ legacy 경로 삭제 ㉰ 로그는 핵심 세트 먼저)
+- **변경**:
+  - ㉮ 가독성 리팩토링 — legacy 경로(two_set 스케줄, 비-matrix signed LLR 경로) 삭제로
+    decoder를 syndrome-aided 단일 경로로 축소. 변수명을 원본 C++ 용어와 정합
+    (sum_t, vnu_in/vnu_out, check_sum, edge_sgn, syndrome, min1_pos, prev_csw,
+    table_row_idx 등). llr_matrix.py/channel.py의 축약 변수도 풀어 씀
+  - ㉯ JSON 개편 2차 — `H_matrix`/`decoder.llr_matrix`를 `{"dir","file"}` 분리,
+    seed를 최상위 하나로 단일화(기본 0, [seed, 채널 인덱스, 포인트]로 스트림 파생),
+    `batch`→`frames_per_batch`, `_desc` 설명 키 규칙 적용 (config.json에 실제 반영)
+  - ㉰ 실행 폴더 — 실행마다 `Sim_Output/YYMMDD_HHMMSS_{라벨}/` 생성, config 사본과
+    summary.txt(git 커밋 해시 포함) 저장
+  - ㉱ 분석 로그 핵심 세트 — csw_per_iter, bit_err_per_iter, bit_err_by_dv(실값 dv 라벨),
+    iter_histogram, fail_frame_detail + post_fec_ber(FER CSV 상시 열),
+    fer_vs_iter("max_iter를 k로 줄였다면"의 FER), fer_curve_png.
+    후순위 로그 7종은 TODO 잔류
+- **검증**: 리팩토링 전후 고정 입력(2개 매트릭스 × 2채널 × 16프레임) decode 결과
+  배열 단위 완전 일치. end-to-end 실행으로 실행 폴더/로그 CSV/그림 생성 확인
+  (dv별 로그가 토이 매트릭스의 dv2 고착을 그대로 드러내는 것 확인)
+- **파일**: `LDPC_base/decoder.py`(재작성), `run.py`(재작성), `sim.py`(재작성),
+  `channel.py`, `llr_matrix.py`, `config.json`, `README.md` — 전부 `_test/` 아래 (git 미추적)
+
 ### 2026-08-05 — 실행 흐름을 JSON 설정 기반 4단계 구조로 재편
 사용자 지시로 실행 흐름을 파라미터/코드 분리 + 함수 분리 구조로 변경
 - **배경**: 기존 `examples/fer_curve.py`는 파라미터가 코드에 하드코딩되어 있었고, BSC/AWGN 스윕이 `sim.sweep()`에 고정되어 있었으며, H-matrix 생성(`tools/gen_example_code.py`)이 실행 흐름에 자동으로 섞여 있었음
