@@ -21,7 +21,11 @@
   - H_matrix 폴더는 `Input/H_matrix` 고정 운용이지만 형태는 분리해서 받는다
   - JSON 설명 key 규칙 추가 (사용자 논의 2026-08-07): `_`로 시작하는 key(예: `_desc`)는
     설명용으로 코드가 무시. config.json 각 섹션에 설명 달기
-  - 수정 파일: `LDPC_base/run.py` load_config, `config.json`, README 스키마 절
+  - `run.batch` → `run.frames_per_batch`로 개명 (사용자 확정 2026-08-07). `_desc`:
+    "한 번에 동시 복호하는 프레임 수, 속도와 메모리 조절용이며 결과에 영향 없음"
+  - seed는 채널별(`rber.seed` 등)에서 한 단계 위(`channel.seed`)로 올려 하나만 두고,
+    기본값 0 (사용자 확정 2026-08-07). `run.seed` fallback도 제거하고 단일화
+  - 수정 파일: `LDPC_base/run.py` load_config와 run_experiment, `config.json`, README 스키마 절
   - **착수 조건**: 위 리팩토링과 동일 (외부 LDPC 동작 확인 작업 완료 후)
 - [ ] LDPC_base 결과 폴더 구조화 + 분석 로그 출력 기능 (사용자 지시 2026-08-06, 착수 대기)
   - Sim_Output 하위에 실행마다 `YYMMDD_HHMMSS_{라벨}/` 폴더 생성, config 사본 저장
