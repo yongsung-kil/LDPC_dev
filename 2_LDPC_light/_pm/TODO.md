@@ -19,6 +19,8 @@
 - [ ] LDPC_base JSON 설정에서 폴더명과 파일명 분리 수용 (사용자 지시 2026-08-06, 지금 수정하지 않고 대기)
   - 대상 키: `H_matrix`, `decoder.llr_matrix` — `{"dir": 폴더, "file": 파일명}` 형태로 변경
   - H_matrix 폴더는 `Input/H_matrix` 고정 운용이지만 형태는 분리해서 받는다
+  - JSON 설명 key 규칙 추가 (사용자 논의 2026-08-07): `_`로 시작하는 key(예: `_desc`)는
+    설명용으로 코드가 무시. config.json 각 섹션에 설명 달기
   - 수정 파일: `LDPC_base/run.py` load_config, `config.json`, README 스키마 절
   - **착수 조건**: 위 리팩토링과 동일 (외부 LDPC 동작 확인 작업 완료 후)
 - [ ] LDPC_base 결과 폴더 구조화 + 분석 로그 출력 기능 (사용자 지시 2026-08-06, 착수 대기)
