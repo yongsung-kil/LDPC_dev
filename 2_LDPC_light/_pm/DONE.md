@@ -1,5 +1,17 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-07 — decoder 진입 함수 개명 + 단계별 함수 추출
+사용자 확정: 진입 함수 decode_batch → decoder_main. 본문을 단계별 함수로 추출
+(함수 추출 = 긴 함수 본문을 의미 단위의 작은 함수로 나누는 리팩토링 기법)
+- **변경**: decoder_main()은 흐름만 남기고(약 10줄) 단계를 분리 —
+  _read_channel_input(채널 해석) / _init_state(상태 초기화) /
+  _run_iteration(한 iteration) / _process_column(한 column) /
+  _record_iteration(로그·최종 상태) / _apply_genie(판정·배치 압축) / _build_result(반환 조립).
+  상태 배열은 _DecodeState 묶음 객체로 전달 (필드 목록을 클래스에 주석으로 명시)
+- **불변**: 교체 지점 7개 시그니처 그대로 (아이디어 코드 영향 없음)
+- **검증**: 고정 입력 회귀 배열 단위 완전 일치, 루트·vanilla config end-to-end 정상
+- **파일**: `LDPC_base/decoder.py`, `sim.py`(호출부), `Ideas/vanilla/README.md` — `_test/` 아래
+
 ### 2026-08-07 — 논문 아이디어 교체 지점 구조 + Ideas/ 뼈대 (vanilla reference 포함)
 아이디어 적용 구조 사용자 확정: 교체 단위 = 원본 C++ 함수 경계, 아이디어는 자식 클래스.
 (교체 지점 = 본체가 단계를 별도 함수로 분리해 둬 그 함수만 갈아끼울 수 있는 자리, 업계 용어 hook)
