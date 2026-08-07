@@ -5,13 +5,14 @@
   - anchor column (첫 패리티 col): row {0, M/2, M-1}, shift {s0, 0, s0} — 재귀 인코딩 가능 조건
   - 나머지 M-1개: bidiagonal — col P_k가 row {k-1, k}에 shift 0
 
-실행: python -m 2_LDPC_light.tools.gen_example_code [출력경로]
+실행: python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 """
+import os
 import sys
 
 import numpy as np
 
-from ..pcm import QCCode
+from ...pcm import QCCode
 from .peg import peg_base
 from .lifting import lift_greedy
 
@@ -49,7 +50,9 @@ def build_example(z=256, M=18, N=147, dv_info=4, seed=20260730):
 
 
 def main():
-    out = sys.argv[1] if len(sys.argv) > 1 else "2_LDPC_light/examples/example_18x147_z256.qc"
+    default_out = os.path.join(os.path.dirname(__file__), "out", "example_18x147_z256.qc")
+    out = sys.argv[1] if len(sys.argv) > 1 else default_out
+    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     code = build_example()
     code.save(out)
     print(code.summary())
