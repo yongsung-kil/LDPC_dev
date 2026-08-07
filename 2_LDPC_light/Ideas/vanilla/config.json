@@ -1,0 +1,53 @@
+{
+  "_desc": [
+    "vanilla reference 실험 설정 — 모든 아이디어의 비교 기준선",
+    "이 폴더에서의 상대경로는 이 config 파일 위치 기준 (../../ = 실험 루트)",
+    "실행: 실험 루트에서 python -m LDPC_base.run Ideas/vanilla/config.json"
+  ],
+
+  "H_matrix": {
+    "dir": "../../Input/H_matrix",
+    "file": "example_18x147_z256.qc"
+  },
+
+  "decoder": {
+    "type": "vanilla",
+    "llr_matrix": {
+      "dir": "../../Input/LLR",
+      "file": "LLR_MATRIX_HD_1.txt"
+    }
+  },
+
+  "seed": 0,
+
+  "run": {
+    "max_frame_errors": 10,
+    "max_frames": 256,
+    "frames_per_batch": 64,
+    "stop_below_fer": null
+  },
+
+  "channels": [
+    {
+      "type": "fixed_error",
+      "points": [200, 300]
+    }
+  ],
+
+  "log": {
+    "csw_per_iter": true,
+    "bit_err_per_iter": true,
+    "bit_err_by_dv": true,
+    "iter_histogram": true,
+    "fer_vs_iter": true,
+    "fail_frame_detail": true,
+    "fer_curve_png": true
+  },
+
+  "output": {
+    "_desc": "결과는 이 아이디어 폴더 아래 Sim_Output/에 쌓인다",
+    "dir": "Sim_Output",
+    "csv_prefix": "fer",
+    "label": "vanilla"
+  }
+}

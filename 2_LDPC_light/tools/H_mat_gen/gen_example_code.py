@@ -12,7 +12,7 @@ import sys
 
 import numpy as np
 
-from ...pcm import QCCode
+from ...LDPC_base.pcm import QCCode
 from .peg import peg_base
 from .lifting import lift_greedy
 

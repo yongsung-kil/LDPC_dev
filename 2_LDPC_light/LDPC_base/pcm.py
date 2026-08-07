@@ -4,14 +4,15 @@ base matrix: (M_b, N_b) int 배열. -1 = zero block, 그 외 = circulant shift �
 연결 규칙: edge (i, j, s)에서 CN block i의 lane k는 VN block j의 lane (k+s) mod z와 연결.
   → VN 정렬 배열 v에서 CN 정렬로: cn = np.roll(v, -s) / CN 정렬 c를 VN 정렬로: vn = np.roll(c, +s)
 
-파일 포맷: Ref-C(원본 C++ ecc_top.cpp Load_PCM)와 동일 (사용자 지시 2026-08-03):
+파일 포맷: Ref-C(원본 C++ ecc_top.cpp Load_PCM)와 동일, 이 포맷만 지원 (2026-08-06
+사용자 결정 — 구 포맷('#' 주석 + 'M_b N_b z' 헤더) 지원 제거):
   N_b M_b
-  J K          # J = 최대 column degree, K = 최대 row degree
+  J K          (J = 최대 column degree, K = 최대 row degree)
   z
   (빈 줄)
   M_b행 x N_b열 shift 행렬 (-1 = zero block)
 주석 없이 저장 — C++ fscanf("%d")가 그대로 읽을 수 있다.
-load()는 구 포맷('#' 주석 + 'M_b N_b z' 헤더)도 자동 감지해 읽는다 (기존 파일 호환).
+column block은 DV 내림차순 배치를 전제로 한다 (예시 부호도 재배열 완료, 2026-08-06 정정).
 """
 import numpy as np
 
@@ -52,27 +53,22 @@ class QCCode:
 
     @classmethod
     def load(cls, path):
-        """Ref-C 포맷(헤더 첫 줄 정수 2개) / 구 포맷(정수 3개) 자동 감지 로드."""
+        """Ref-C 포맷 로드: N_b M_b / J K / z / 빈 줄 / shift 행렬."""
         with open(path, encoding="utf-8") as f:
-            lines = [ln.split("#", 1)[0].strip() for ln in f]
-        lines = [ln for ln in lines if ln]
+            lines = [ln.strip() for ln in f if ln.strip()]
         head = lines[0].split()
-        if len(head) == 2:                       # Ref-C: N_b M_b / J K / z
-            N_b, M_b = map(int, head)
-            J, K = map(int, lines[1].split())
-            z = int(lines[2])
-            vals = " ".join(lines[3:]).split()
-        elif len(head) == 3:                     # 구 포맷: M_b N_b z
-            M_b, N_b, z = map(int, head)
-            J = K = None
-            vals = " ".join(lines[1:]).split()
-        else:
-            raise ValueError(f"{path}: 헤더 형식 인식 불가 ({lines[0]!r})")
+        if len(head) != 2:
+            raise ValueError(
+                f"{path}: Ref-C 헤더가 아님 (첫 줄 {lines[0]!r} — 'N_b M_b' 정수 2개여야 함)")
+        N_b, M_b = map(int, head)
+        J, K = map(int, lines[1].split())
+        z = int(lines[2])
+        vals = " ".join(lines[3:]).split()
         base = np.array([int(v) for v in vals], dtype=np.int32)
         if base.size != M_b * N_b:
             raise ValueError(f"{path}: 행렬 원소 수 {base.size} != {M_b}x{N_b}")
         code = cls(base.reshape(M_b, N_b), z)
-        if J is not None and (code.col_deg.max() > J or code.row_deg.max() > K):
+        if code.col_deg.max() > J or code.row_deg.max() > K:
             raise ValueError(
                 f"{path}: 헤더 J/K=({J},{K})보다 실제 degree"
                 f"({int(code.col_deg.max())},{int(code.row_deg.max())})가 큼")

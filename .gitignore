@@ -36,12 +36,13 @@ desktop.ini
 *.log
 ideas/**/logs/*.log
 
-# H-matrix data (large binary files)
-H_Matrix/
+# H-matrix data (large binary files) — 원본 한정 (2_LDPC_light/Input/H_matrix는 추적 대상)
+0_LDPC_original/H_Matrix/
 
 # Results
 result_*.txt
 Ref_C_result_*.txt
+Sim_Output/
 
 # TV output files
 TV_*/

@@ -1,5 +1,33 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-07 — 개정본 본체 반영 (구 코드 삭제 + `_test` 산출물 이동)
+사용자 확정: `_test` 개정본을 본체로 이동, 구 코드는 삭제 (git 이력으로 복구 가능)
+- **변경**:
+  - ㉮ 구 본체 삭제 — channel, decoder, encoder, pcm, run, sim, mpi_runner(재설계 예정), examples
+  - ㉯ 개정본 이동 — LDPC_base/, Ideas/, Input/, Sim_Output/, config.json을 `2_LDPC_light/`
+    바로 아래로 (sandbox 구조 그대로라 import·registry 무수정 동작). 차이.md는 docs/로
+  - ㉰ `.gitignore` — `H_Matrix/`를 `0_LDPC_original/` 한정으로 축소 (Input/H_matrix 추적
+    가능해짐), `Sim_Output/` 무시 추가
+  - ㉱ tools/H_mat_gen import 보정 (`...pcm` → `...LDPC_base.pcm`), select_irregular는
+    실행 불가 상태 명시 (손질 TODO 잔류)
+  - ㉲ README 전면 갱신 (본체 정본), plan.md에 구조 개편 안내, sandbox에는 이동 안내만 남김
+- **검증**: `python -m LDPC_base.run config.json`, vanilla config, H_mat_gen 생성까지
+  새 위치에서 전부 정상 실행
+- **파일**: `2_LDPC_light/` 전반, `.gitignore` — 이번 반영으로 개정본이 git 추적 시작
+
+### 2026-08-07 — LDPC_base 개정본 딥 리뷰 + 후속 수정 (완료 처리는 TODO 점검에서)
+Round 1→2→3 딥 리뷰 후 사용자 확정 회신대로 후속 수정, 자동 검증 51건 통과
+- **배경**: `_test/20260806_setup_구성_실험/LDPC_base/` 개정본(2026-08-06 시점)의 정합성 검증
+- **변경** (후속 수정): 키맵+필수값+config checker, strong_error 2단계 추출,
+  F8 캐스케이드 교체, F11 LLR matrix 제약 정리(겹침 거부·restart 제약 유지, DAO 규칙 정본),
+  F14 주석·문서화, llr_profile 제거(llr_tables.py 삭제), 채널 리스트 복원
+- **Decision 해소**: ㉮ llr_profile 제거 ㉯ 채널 설정 리스트 복원 ㉰ dv는 H-matrix 기준,
+  LLR_MATRIX 미커버 시 에러 ㉱ .gitignore는 본체 반영 시 조치로 이관
+- **검증**: 자동 검증 51건 통과 + 라이트 재리뷰(r4) 수리 4건 반영
+- **잔여 이관**: config checker 키별 허용값 확장(TODO 별도 항목),
+  legacy 경로 존폐는 가독성 리팩토링에서 삭제로 해소
+- **기록**: `done/20260806_review/`, `done/20260807_리뷰후속수정/`
+
 ### 2026-08-07 — 이름 정확성 일괄 수정 (수단이 아닌 목적이 이름)
 사용자 지적: `_apply_genie`는 수단(genie)이 이름 — error check가 목적이므로 이름이어야 함.
 같은 기준으로 전수 감사 후 일괄 수정. **원칙 확정: 이름은 길어져도 명확한 것이 우선**

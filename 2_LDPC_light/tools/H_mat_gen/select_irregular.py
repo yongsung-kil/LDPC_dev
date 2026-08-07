@@ -9,8 +9,9 @@ dual-diagonal parity(M=17)가 dv2×16(bidiagonal) + dv3×1(anchor)을 공급하�
 실행: python -m 2_LDPC_light.tools.H_mat_gen.select_irregular
 출력: 이 폴더의 out/ 하위 (irregular_17x144_z256.qc, select_irregular.csv)
 
-주의 (2026-08-07 이동): 이 스크립트는 구 본체 API(구 decoder/sim/channel) 기준이다.
-LDPC_base 개정본을 본체로 반영할 때 새 구조(채널 dict, decoder_main)로 손봐야 실행된다.
+주의 (2026-08-07): 이 스크립트는 구 본체 API 기준이라 **현재 실행 불가** — 새 구조
+(채널 dict, decoder_main, LLR matrix 필수)로 손질 필요 (TODO 등록됨). import만
+LDPC_base로 돌려놓은 상태다.
 """
 import csv
 import math
@@ -19,9 +20,9 @@ import time
 
 import numpy as np
 
-from ...decoder import MinSumDecoder
-from ... import channel as chan
-from ...sim import run_fer_point
+from ...LDPC_base.decoder import MinSumDecoder
+from ...LDPC_base import channel as chan
+from ...LDPC_base.sim import run_fer_point
 from .gen_example_code import build_code
 
 HERE = os.path.dirname(__file__)
