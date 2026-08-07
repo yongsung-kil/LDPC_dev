@@ -1,5 +1,22 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-07 — 논문 아이디어 훅 구조 + Ideas/ 뼈대 (vanilla reference 포함)
+아이디어 적용 구조 사용자 확정: 훅 경계 = 원본 C++ 함수 경계, 아이디어는 서브클래스
+- **배경**: 논문 아이디어를 하나씩 적용할 때의 모듈화 수준 논의 — 전 파일 복사(전파 불가)와
+  decoder 통짜 교체(중복) 대신, C++ 함수 단위 훅 + 아이디어별 서브클래스로 확정.
+  vanilla(원본 대응 정본)도 Ideas의 한 항목으로 두어 reference 실험까지 같은 틀로 통일 (사용자 제안)
+- **변경**:
+  - ㉮ decoder.py 훅 추출 — _c2v_reconstruct(C2V_Cal), _vn_decide(VN_Cal_HD 판정),
+    _vnu_quantize(기존), _cnu_update(CNU_*), _column_order(스케줄), _restart_policy(Clear_Edge_Restart).
+    훅 표를 모듈 docstring에 기록
+  - ㉯ Ideas/ 신설 — registry.py(이름→클래스 경로) + vanilla/(오버라이드 없는 reference
+    서브클래스, config, README에 새 아이디어 추가 절차). 아이디어 결과는 각 폴더 Sim_Output/에
+  - ㉰ run.py decoder.type 연결 — config로 디코더 선택 (기본 vanilla, Ideas 없는 환경은
+    vanilla만 정본으로 동작)
+- **검증**: 훅 추출 후 고정 입력 회귀 배열 단위 완전 일치. vanilla config와 루트 config
+  end-to-end 실행 확인. 데모 서브클래스(_c2v_reconstruct에 offset)로 훅 오버라이드 실효 확인
+- **파일**: `LDPC_base/decoder.py`, `run.py`, `Ideas/`(신설), `README.md` — `_test/` 아래 (git 미추적)
+
 ### 2026-08-07 — LDPC_base 가독성 리팩토링 + JSON 개편 2차 + 실행 폴더·분석 로그
 대기 중이던 3개 작업을 사용자 착수 승인 후 일괄 수행 (`_test/` 개정본 대상)
 - **배경**: 외부 LDPC 동작 확인 완료로 착수 조건 해제. 미결정 3건 사용자 확정
