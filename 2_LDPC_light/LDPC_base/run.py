@@ -12,8 +12,16 @@ JSON 구조:
   H_matrix: {"dir": 폴더, "file": 파일명} — 폴더와 파일명 분리 (Ref-C 포맷,
     폴더는 Input/H_matrix 고정 운용)
   decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
-  decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX (필수).
+  decoder.use_input_llr_matrix: true(기본)면 LLR matrix 파일을 사용,
+    false면 내부 균일 n-bit 양자화로 디코딩 (internal_quantize 설정 사용,
+    llr_matrix 키는 있어도 무시)
+  decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX
+    (use_input_llr_matrix=true일 때 필수).
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
+  decoder.internal_quantize: use_input_llr_matrix=false일 때 필수 —
+    {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
+    magnitude(전 dv 공통), "max_iter": 최대 iteration(파일이 없으므로 여기서 지정),
+    "mode": "HD"(기본)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널·포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트 — 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
@@ -52,7 +60,8 @@ from .sim import run_fer_point, save_csv
 
 # 섹션별 허용 키 (키맵). "_" 시작 키는 설명용이라 검사 대상에서 제외된다.
 _TOP_KEYS = {"H_matrix", "decoder", "channels", "run", "output", "seed", "log"}
-_DECODER_KEYS = {"llr_matrix", "type"}
+_DECODER_KEYS = {"llr_matrix", "type", "use_input_llr_matrix", "internal_quantize"}
+_INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress"}
 _OUTPUT_KEYS = {"dir", "csv_prefix", "label"}
@@ -165,10 +174,31 @@ def load_config(path):
     decoder_config = config.setdefault("decoder", {})
     if "max_iter" in decoder_config:
         raise ValueError(
-            "decoder.max_iter는 JSON에 두지 않는다 — LLR matrix 파일의 마지막 iter_end가 결정")
+            "decoder.max_iter는 JSON에 두지 않는다 — LLR matrix 파일(또는 "
+            "internal_quantize.max_iter)이 결정")
     _check_keys("decoder", decoder_config, _DECODER_KEYS)
-    decoder_config["llr_matrix"] = _path_pair(
-        "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
+    use_input_llr_matrix = decoder_config.setdefault("use_input_llr_matrix", True)
+    if not isinstance(use_input_llr_matrix, bool):
+        raise ValueError(
+            f"config [decoder] use_input_llr_matrix={use_input_llr_matrix!r} — true/false여야 함")
+    if use_input_llr_matrix:
+        decoder_config["llr_matrix"] = _path_pair(
+            "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
+    else:
+        internal_quantize = _require("decoder", decoder_config, "internal_quantize")
+        if not isinstance(internal_quantize, dict):
+            raise ValueError("config [decoder.internal_quantize] — 객체여야 함")
+        _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
+        _check_int("decoder.internal_quantize", "num_bits",
+                   _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
+        _check_int("decoder.internal_quantize", "channel_llr",
+                   _require("decoder.internal_quantize", internal_quantize, "channel_llr"), 1)
+        _check_int("decoder.internal_quantize", "max_iter",
+                   _require("decoder.internal_quantize", internal_quantize, "max_iter"), 1)
+        mode = internal_quantize.setdefault("mode", "HD")
+        if mode not in ("HD", "2SD", "3SD"):
+            raise ValueError(
+                f"config [decoder.internal_quantize] mode={mode!r} — HD/2SD/3SD 중 하나여야 함")
     decoder_type = decoder_config.setdefault("type", "vanilla")
     if not isinstance(decoder_type, str) or not decoder_type:
         raise ValueError(
@@ -235,13 +265,23 @@ def _resolve_decoder_class(decoder_type):
 
 
 def setup(config):
-    """H-matrix와 LLR matrix를 로드하고 decoder.type의 디코더를 구성한다.
-    파일이 없으면 준비하라는 에러를 낸다 (이 함수는 생성하지 않음)."""
+    """H-matrix를 로드하고 LLR matrix를 준비(파일 로드 또는 내부 합성)한 뒤
+    decoder.type의 디코더를 구성한다. 파일이 없으면 준비하라는 에러를 낸다
+    (이 함수는 생성하지 않음)."""
     h_matrix_path = config["H_matrix"]
     if not os.path.exists(h_matrix_path):
         raise FileNotFoundError(f"{h_matrix_path} 없음 — H-matrix를 먼저 준비할 것")
     code = QCCode.load(h_matrix_path)
-    llr_matrix = LLRMatrix.load(config["decoder"]["llr_matrix"])
+    if config["decoder"]["use_input_llr_matrix"]:
+        llr_matrix = LLRMatrix.load(config["decoder"]["llr_matrix"])
+    else:
+        internal_quantize = config["decoder"]["internal_quantize"]
+        llr_matrix = LLRMatrix.make_internal_uniform_matrix(
+            num_bits=internal_quantize["num_bits"],
+            channel_llr=internal_quantize["channel_llr"],
+            max_iter=internal_quantize["max_iter"],
+            dv_max=int(code.col_deg.max()),
+            mode=internal_quantize["mode"])
     decoder_class = _resolve_decoder_class(config["decoder"]["type"])
     decoder = decoder_class(code, llr_matrix=llr_matrix)
     return code, decoder

@@ -1,4 +1,10 @@
-"""DAO LLR_MATRIX 텍스트 포맷 로더 + iteration/CSW별 테이블 row 선택.
+"""DAO LLR_MATRIX 텍스트 포맷 로더 + 내부 합성 + iteration/CSW별 테이블 row 선택.
+
+LLRMatrix 공급 경로 2가지:
+- ㉮ 파일 로드 (LLRMatrix.load) — DAO 산출물, 3-bit(th 3개, EDGE {7,5,3,1}) 구성
+- ㉯ 내부 합성 (make_internal_uniform_matrix) — 파일 없이 균일 n-bit 양자화로
+  디코딩할 때. 전 dv 공통 ch, 균일 th 경계, 그룹 1개 구성의 매트릭스를 만들어
+  디코더가 파일 매트릭스와 같은 경로로 소비한다
 
 파일 포맷 (DAO_LLR_MATRIX.py Read_Input_LLR_Matrix와 동일, 빈 줄 무시):
   num_parameter_each_set / num_dv / dv_from / dv_to / num_group /
@@ -42,8 +48,10 @@ _NAME_RE = re.compile(r"LLR_MATRIX_(HD|2SD|3SD)_", re.IGNORECASE)
 
 class LLRMatrix:
     def __init__(self, mode, num_param, dv_from, dv_to, group_rows, group_type,
-                 restart_iters, max_value, min_value, rows, name=""):
-        """rows: (values(num_dv*num_param), csw, iter_start, iter_end, floor) 튜플 리스트."""
+                 restart_iters, max_value, min_value, rows, name="", edge_mag=None):
+        """rows: (values(num_dv*num_param), csw, iter_start, iter_end, floor) 튜플 리스트.
+        edge_mag: VNU 출력 magnitude 레벨 (내림차순, 길이 = th 개수 + 1).
+        생략하면 3-bit 기본 {7,5,3,1} (th 3개 구성 전용 — DAO 파일이 이 경우다)."""
         self.name = name
         self.mode = mode
         self.ch_len = MODE_CH_LEN[mode]
@@ -51,6 +59,16 @@ class LLRMatrix:
         self.th_len = self.num_param - self.ch_len
         if self.th_len <= 0:
             raise ValueError(f"{name}: num_param {num_param}이 {mode} ch {self.ch_len}개 이하")
+        if edge_mag is None:
+            if self.th_len != 3:
+                raise NotImplementedError(
+                    f"{name}: th {self.th_len}개 — 파일 매트릭스는 3-bit(th 3개) 전용. "
+                    "다른 레벨 구성은 edge_mag를 지정해 합성할 것")
+            edge_mag = [7, 5, 3, 1]                      # 3-bit VNU 출력 레벨
+        self.edge_mag = np.asarray(edge_mag, np.float32)
+        if len(self.edge_mag) != self.th_len + 1:
+            raise ValueError(
+                f"{name}: edge_mag 길이 {len(self.edge_mag)} != th 개수 + 1 ({self.th_len + 1})")
         self.dv_from = np.asarray(dv_from, np.int32)
         self.dv_to = np.asarray(dv_to, np.int32)
         self.num_dv = len(self.dv_from)
@@ -173,6 +191,31 @@ class LLRMatrix:
         return cls(mode, num_param, dv_from, dv_to, group_rows, group_type,
                    restart_iters, max_value, min_value, rows,
                    name=os.path.basename(path))
+
+    # ---------- 내부 합성 (파일 없이 균일 n-bit 양자화) ----------
+    @classmethod
+    def make_internal_uniform_matrix(cls, num_bits, channel_llr, max_iter, dv_max,
+                                     mode="HD"):
+        """균일 n-bit 양자화용 매트릭스 합성 — 파일 매트릭스와 같은 경로로 소비된다.
+
+        num_bits: 메시지 양자화 bit 수 (sign 포함). magnitude 레벨은
+          0..(2^(num_bits-1) − 1), th는 0.5 간격 균일 경계 → 캐스케이드가
+          |값| 반올림 + 상한 클리핑과 같아진다 (flip 도메인 값은 전부 정수라
+          경계 동률은 발생하지 않는다)
+        channel_llr: 채널 LLR magnitude (전 dv 공통)
+        max_iter: 최대 iteration (파일이 없으므로 여기서 받는다)
+        dv_max: H-matrix의 최대 column degree — dv 구간 [1, dv_max] 하나로 전 dv 커버
+        구성: 그룹 1개(ITER, iteration 1..max_iter), restart 없음."""
+        top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
+        ch_len = MODE_CH_LEN[mode]
+        th = [top_level - k - 0.5 for k in range(top_level)]   # 내림차순, 0.5 간격
+        edge_mag = list(range(top_level, -1, -1))              # [top_level, ..., 1, 0]
+        values = np.array([channel_llr] * ch_len + th, np.float64)
+        num_param = ch_len + top_level
+        rows = [(values, -1, 1, int(max_iter), -1)]
+        return cls(mode, num_param, [1], [int(dv_max)], [1], [GROUP_TYPE_ITER],
+                   [], [max(top_level, channel_llr)] * num_param, [0] * num_param,
+                   rows, name=f"internal_uniform_{num_bits}bit", edge_mag=edge_mag)
 
     # ---------- 런타임 ----------
     def col_dv_idx(self, code):

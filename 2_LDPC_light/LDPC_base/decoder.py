@@ -102,19 +102,20 @@ class _DecodeState:
 class MinSumDecoder:
     def __init__(self, code, llr_matrix):
         """code: pcm.QCCode. llr_matrix: llr_matrix.LLRMatrix (필수) —
-        max_iter는 파일의 마지막 iter_end가 결정. 현재 HD, 3-bit(th 3개) 전용."""
+        DAO 파일 로드 또는 LLRMatrix.make_internal_uniform_matrix()로 합성해 공급.
+        max_iter와 VNU 출력 레벨(edge_mag)은 llr_matrix가 결정한다.
+        디코딩 산술은 HD 전용이며 2SD/3SD는 decoder_main에서 에러를 낸다
+        (2SD/3SD 산술 구현 시 해제)."""
         if llr_matrix is None:
-            raise ValueError("llr_matrix는 필수 — DAO LLR_MATRIX 파일을 로드해 넘길 것")
-        if llr_matrix.mode != "HD":
-            raise NotImplementedError(
-                "llr_matrix 2SD/3SD는 채널 region 매핑 미구현 — 현재 HD만 지원")
-        if llr_matrix.th_len != 3:
-            raise NotImplementedError("th 3개(EDGE_MAG 4레벨) 구성만 지원")
+            raise ValueError(
+                "llr_matrix는 필수 — DAO 파일 로드 또는 내부 합성(make_internal_uniform_matrix)")
+        if llr_matrix.mode not in ("HD", "2SD", "3SD"):
+            raise NotImplementedError("llr_matrix는 HD/2SD/3SD만 지원")
         self.code = code
         self.llr_matrix = llr_matrix
         self.max_iter = llr_matrix.max_iter              # 마지막 iter_end = max_iter
         self._col_dv_idx = llr_matrix.col_dv_idx(code)   # (N_b,) column→dv 구간 인덱스
-        self._edge_mag = np.array([7, 5, 3, 1], np.float32)  # 3-bit VNU 출력 레벨
+        self._edge_mag = np.asarray(llr_matrix.edge_mag, np.float32)  # VNU 출력 레벨 (내림차순)
 
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
     def _is_edge_clear_iter(self, iteration):
@@ -142,15 +143,18 @@ class MinSumDecoder:
 
     def _vnu_quantize(self, raw, vnu_in, th):
         """[교체 지점: VN_Cal_HD 양자화부 대응] VNU 출력 양자화.
-        th: (num_active_frames, 3) — 프레임별(현재 row의 dv별) 임계값.
+        th: (num_active_frames, th 개수) — 프레임별(현재 row의 dv별) 임계값 (내림차순 관례).
         C++ 캐스케이드(decoder.cpp:4112-4115) 그대로: |raw| >= th1 → 최대 레벨,
-        아니고 >= th2 → 다음 레벨, ... (비단조 th도 C++와 같은 의미로 소비 — 리뷰 F8).
-        raw==0이면 sign은 VNU_in에서."""
+        아니고 >= th2 → 다음 레벨, ..., 전부 아니면 마지막 레벨
+        (비단조 th도 C++와 같은 의미로 소비 — 위쪽 th의 참 조건이 우선).
+        레벨 값과 개수는 llr_matrix.edge_mag가 결정한다 (파일 3-bit {7,5,3,1},
+        내부 균일 n-bit [최대..0]). raw==0이면 sign은 VNU_in에서."""
         mag_in = np.abs(raw)
         edge_mag = self._edge_mag
-        mag = np.where(mag_in >= th[:, 0, None], edge_mag[0],
-              np.where(mag_in >= th[:, 1, None], edge_mag[1],
-              np.where(mag_in >= th[:, 2, None], edge_mag[2], edge_mag[3])))
+        # 아래 레벨부터 덮어써서 가장 위(작은 k)의 참 조건이 최종값 — elif 체인과 동일
+        mag = np.full_like(mag_in, edge_mag[-1])
+        for k in range(len(edge_mag) - 2, -1, -1):
+            mag = np.where(mag_in >= th[:, k, None], edge_mag[k], mag)
         sgn = np.where(raw > 0, np.float32(1.0), np.float32(-1.0))
         zero = raw == 0
         if zero.any():
@@ -364,6 +368,10 @@ class MinSumDecoder:
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)
           final_csw, final_err_by_dv: (B,), (B, num_dv) — fail_detail 시
         """
+        if self.llr_matrix.mode != "HD":
+            raise NotImplementedError(
+                f"{self.llr_matrix.mode} 디코딩 산술 미구현 — 현재 HD만 디코딩 가능 "
+                "(2SD/3SD는 region→채널 LLR 매핑과 SD Edge Clear 규칙 구현 후 해제)")
         log = set() if log is None else set(log)
         unknown_log_items = log - LOG_ITEMS   # 허용 목록에 없는 항목 = 오타 검출
         if unknown_log_items:

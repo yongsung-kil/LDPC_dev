@@ -12,12 +12,22 @@
 
   "decoder": {
     "_desc": [
-      "llr_matrix 필수 (DAO LLR_MATRIX, 모드는 파일명 HD/2SD/3SD로 판별)",
-      "max_iter는 LLR matrix 파일의 마지막 iter_end가 결정 (JSON에 두면 에러)"
+      "use_input_llr_matrix: true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
+      "  max_iter는 파일의 마지막 iter_end가 결정 — JSON에 두면 에러)",
+      "false면 내부 균일 n-bit 양자화로 디코딩 (internal_quantize 사용, llr_matrix는 무시)",
+      "internal_quantize: num_bits(메시지 양자화 bit 수, sign 포함),",
+      "  channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter, mode(기본 HD)"
     ],
+    "use_input_llr_matrix": true,
     "llr_matrix": {
       "dir": "Input/LLR",
       "file": "LLR_MATRIX_HD_1.txt"
+    },
+    "internal_quantize": {
+      "num_bits": 6,
+      "channel_llr": 8,
+      "max_iter": 120,
+      "mode": "HD"
     }
   },
 

@@ -1,5 +1,24 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-08 — 내부 균일 n-bit 양자화 모드 (LLR matrix 파일 없이 디코딩)
+사용자 제안대로 내부 파라미터로 LLR matrix를 합성 — 디코더는 파일 경로와 동일하게 소비
+- **변경**:
+  - ㉮ `LLRMatrix.make_internal_uniform_matrix(num_bits, channel_llr, max_iter, dv_max, mode)`
+    신설 — 균일 th 경계(0.5 간격)와 레벨 [최대..0]의 매트릭스를 합성 (그룹 1개, restart 없음).
+    flip 도메인 값은 전부 정수라 캐스케이드가 반올림+클리핑과 정확히 같음
+  - ㉯ LLRMatrix가 edge_mag(VNU 출력 레벨)를 보유 — 파일은 3-bit {7,5,3,1} 기본,
+    합성은 임의 레벨. decoder `_vnu_quantize` 캐스케이드를 th 개수 임의로 일반화
+  - ㉰ JSON: `decoder.use_input_llr_matrix`(기본 true)로 파일/내부 토글,
+    `decoder.internal_quantize` {num_bits, channel_llr, max_iter, mode}.
+    내부 모드는 max_iter를 여기서 받는다 (파일이 없으므로)
+  - ㉱ 디코더 생성자는 HD/2SD/3SD를 받되(사용자 수정 반영, "3SD]" 오타 수리)
+    산술은 HD 전용이라 decoder_main에서 2SD/3SD 명시적 에러 (조용한 오답 방지)
+- **검증**: 파일 경로 고정 입력 회귀 배열 단위 완전 일치 (캐스케이드 일반화 후에도 불변).
+  내부 6-bit: fixed-error 300비트 256프레임 전량 정정(FER 0, 평균 7.6 iteration),
+  380비트 4/32, 420비트 0/32 — 구 6-bit 기준선(정정 한계 380~400비트)과 부합.
+  internal_quantize 누락 시 명시적 에러 확인
+- **파일**: `LDPC_base/llr_matrix.py`, `decoder.py`, `run.py`, `config.json`, `README.md`
+
 ### 2026-08-08 — 의견1 반영 (이름 명확화 2차 + 실험 요약 출력 + 문장 작성 규칙)
 사용자 리뷰 노트(의견1.md, `done/20260808_의견1_반영/` 보존)의 전 항목 반영
 - **이름 변경** (LDPC_base 전반):

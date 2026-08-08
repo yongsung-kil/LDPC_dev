@@ -42,7 +42,10 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 {
   "H_matrix": { "dir": "Input/H_matrix", "file": "....qc" },
   "decoder": { "type": "vanilla",
-               "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" } },
+               "use_input_llr_matrix": true,
+               "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" },
+               "internal_quantize": { "num_bits": 6, "channel_llr": 8,
+                                      "max_iter": 120, "mode": "HD" } },
   "seed": 0,
   "run": { "max_frame_errors": 10, "max_frames": 256, "frames_per_batch": 64,
            "stop_below_fer": null },
@@ -57,8 +60,13 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 ```
 
 - ㉮ `H_matrix`, `decoder.llr_matrix`: **폴더와 파일명 분리** `{"dir", "file"}`.
-  llr_matrix는 필수이며 **max_iter는 이 파일의 마지막 iter_end가 결정** —
-  JSON에 max_iter를 쓰면 에러. 디코딩 모드는 파일명(HD/2SD/3SD)으로 판별
+  `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **max_iter는
+  파일의 마지막 iter_end가 결정** — JSON에 decoder.max_iter를 쓰면 에러.
+  디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
+  false면 **내부 균일 n-bit 양자화**로 디코딩한다 — `internal_quantize`의
+  num_bits(메시지 양자화 bit 수, sign 포함), channel_llr(채널 LLR magnitude,
+  전 dv 공통), max_iter, mode(기본 HD)로 매트릭스를 내부 합성하며, llr_matrix
+  키는 있어도 무시된다 (플래그만 바꿔 토글 가능)
 - ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널·포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
