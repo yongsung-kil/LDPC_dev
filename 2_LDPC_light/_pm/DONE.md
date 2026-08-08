@@ -1,5 +1,27 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-08 — 의견1 반영 (이름 명확화 2차 + 실험 요약 출력 + 문장 작성 규칙)
+사용자 리뷰 노트(의견1.md, `done/20260808_의견1_반영/` 보존)의 전 항목 반영
+- **이름 변경** (LDPC_base 전반):
+  - ㉮ run.py — decoder_cls→decoder_class, mx→llr_matrix, dec→decoder, ch→channel_config,
+    p→point, r→point_result, points→point_results, rng→random_generator,
+    verbose→print_progress (JSON 키 run.print_progress), dec_type→decoder_type,
+    sbf→stop_below_fer. _make_channel_fn 결과는 channel_fn 변수로 받아서 전달
+  - ㉯ sim.py — b→batch, res→decode_result, unknown→unknown_log_items,
+    agg_*→total_*(iteration별 합계), n_it→num_iterations_run,
+    fail_rows→fail_frame_details, 결과 키 log_agg→iteration_totals
+    (하위 키 active_frames/csw_sum/bit_err_sum/bit_err_by_dv_sum)
+  - ㉰ decoder.py — s→state, n_active→num_active_frames, frozenset→set(용어 제거)
+  - ㉱ channel/encoder — rng→random_generator
+- **실험 요약 출력**: setup 직후와 summary.txt 상단에 부호 정보, LLR matrix 정보,
+  디코더 정보(type, class, max_iter), 읽은 config 정보(seed, 채널·포인트, run 설정,
+  켜진 로그)를 출력 (`_experiment_summary_lines`)
+- **문장 작성 규칙 등록** (루트 CLAUDE.md): ㉮ 수리는 덧대기가 아니라 다시 쓰기
+  (이력 서술은 코드·문서에 남기지 않음 — DONE.md와 git이 담당) ㉯ 규칙은 긍정문
+  ㉰ 이름·용어는 명확성 우선. 기존 LDPC_base docstring의 이력 서술도 정리
+- **검증**: 고정 입력 회귀 배열 단위 완전 일치, 루트·vanilla config end-to-end 정상
+- **파일**: `LDPC_base/` 전 파일, 루트 `CLAUDE.md`
+
 ### 2026-08-07 — 개정본 본체 반영 (구 코드 삭제 + `_test` 산출물 이동)
 사용자 확정: `_test` 개정본을 본체로 이동, 구 코드는 삭제 (git 이력으로 복구 가능)
 - **변경**:

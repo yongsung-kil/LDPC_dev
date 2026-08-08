@@ -40,7 +40,7 @@ def dev_from_rber(p):
     return np.sqrt(1.0 / (2.0 * snr))
 
 
-def rber_channel(code, cw, rber, rng, mode="HD"):
+def rber_channel(code, cw, rber, random_generator, mode="HD"):
     """MODE_CH_RBER: RBER 등가 AWGN. BPSK(0→+1) + N(0,var), HD = sign(cwr),
     2SD/3SD는 |Lq=2·cwr/var|를 LLR_th_k = 2·r_offset_k/var와 비교해 region 결정."""
     if mode not in _R_OFFSET:
@@ -48,7 +48,7 @@ def rber_channel(code, cw, rber, rng, mode="HD"):
     dev = dev_from_rber(rber)
     var = dev * dev
     bpsk = 1.0 - 2.0 * np.asarray(cw, np.float64)
-    cwr = bpsk + rng.normal(0.0, dev, size=cw.shape)
+    cwr = bpsk + random_generator.normal(0.0, dev, size=cw.shape)
     hd = (cwr < 0).astype(np.uint8)          # C++: cwr >= 0 → HD 0
     out = {"mode": mode, "hd": hd, "sd": None, "cc": None}
     if mode == "HD":
@@ -68,27 +68,27 @@ def rber_channel(code, cw, rber, rng, mode="HD"):
     return out
 
 
-def _rand_positions(rng, batch, N, k):
+def _rand_positions(random_generator, batch, N, k):
     """프레임별 무작위 k개 위치 (비복원). 뽑힌 k개의 집합만 균일하고 내부 순서는
     무작위가 아니므로, fixed_error처럼 집합 전체를 같은 방식으로 쓰는 경우 전용
     (구간 슬라이스로 나눠 쓰면 안 됨 — 리뷰 F1)."""
-    return np.argpartition(rng.random((batch, N)), max(k - 1, 0), axis=1)[:, :k]
+    return np.argpartition(random_generator.random((batch, N)), max(k - 1, 0), axis=1)[:, :k]
 
 
-def fixed_error_channel(code, cw, n_err, rng, mode="HD"):
+def fixed_error_channel(code, cw, n_err, random_generator, mode="HD"):
     """MODE_CH_FIXED_ERROR (HD 전용): 프레임마다 정확히 n_err bit flip (e1=n_err, c1=나머지)."""
     if mode != "HD":
         raise ValueError("fixed_error 채널은 HD 전용")
     B = cw.shape[0]
     N = code.N
     hd = np.asarray(cw, np.uint8).reshape(B, N).copy()
-    err_pos = _rand_positions(rng, B, N, int(n_err))
+    err_pos = _rand_positions(random_generator, B, N, int(n_err))
     frame_idx = np.arange(B)[:, None]
     hd[frame_idx, err_pos] ^= 1
     return {"mode": "HD", "hd": hd.reshape(B, code.N_b, code.z), "sd": None, "cc": None}
 
 
-def strong_error_channel(code, cw, n_err, rng, scr, ser, mode="2SD"):
+def strong_error_channel(code, cw, n_err, random_generator, scr, ser, mode="2SD"):
     """MODE_CH_STRONG_ERROR (2SD 전용). E=n_err, SER=에러 중 strong 비율,
     SCR=정정 중 strong 비율:
       e2 = round(E·SER)     → 에러 + strong(sd=1)
@@ -97,7 +97,7 @@ def strong_error_channel(code, cw, n_err, rng, scr, ser, mode="2SD"):
 
     2단계 추출 (사용자 확정 2026-08-07, 리뷰 F1 후속):
       ① N개 중 에러 위치 E개 추출 — 집합만 쓰므로 argpartition의 집합 균일성으로 충분
-      ② strong/weak 배정 — 에러 E개는 행별 독립 셔플(rng.permuted) 뒤 앞 e2개를
+      ② strong/weak 배정 — 에러 E개는 행별 독립 셔플(random_generator.permuted) 뒤 앞 e2개를
          strong으로, 정정 (N−E)개는 같은 난수의 여집합 순위 하위 c1개를 weak으로
     원본(Make_Dec_Input_Ref_C_Fixed_4KB: rand_sel_ep 부분 Fisher-Yates + 구간
     슬라이스)과 통계적으로 등가 — 균일 순열의 앞 k개는 균일 부분집합과 분포가 같다."""
@@ -116,13 +116,13 @@ def strong_error_channel(code, cw, n_err, rng, scr, ser, mode="2SD"):
     hd = np.asarray(cw, np.uint8).reshape(B, N).copy()
     sd = np.ones((B, N), np.uint8)           # 초기값 strong (SD_input=1)
     frame_idx = np.arange(B)[:, None]
-    rand_vals = rng.random((B, N))
+    rand_vals = random_generator.random((B, N))
     # ① 에러 위치 E개: rand_vals가 가장 작은 E개 (집합 균일)
     err_pos = np.argpartition(rand_vals, max(E - 1, 0), axis=1)[:, :E]
     hd[frame_idx, err_pos] ^= 1
     # ② 에러 중 weak (E−e2)개: 행별 독립 셔플 뒤 앞 e2개를 strong으로 남김
     if E > 0:
-        shuffled_err_pos = rng.permuted(err_pos, axis=1)
+        shuffled_err_pos = random_generator.permuted(err_pos, axis=1)
         sd[frame_idx, shuffled_err_pos[:, e2:]] = 0
     # ② 정정 중 weak c1개: 에러 위치를 제외한 여집합에서 rand_vals 순위 하위 c1개
     #    (여집합 내 균일)

@@ -1,12 +1,10 @@
 """배치 벡터화 quantized min-sum 디코더 — DAO LLR_MATRIX 기반 syndrome-aided (원본 C++ 대응).
 
-2026-08-07 리팩토링:
-- legacy 경로(two_set 스케줄, 비-matrix signed LLR 경로) 삭제 (사용자 확정) —
-  LLR_MATRIX 모드만 유지. 구버전은 본체 git 이력(커밋 72b825a 계열)에서 복구 가능
-- 변수명을 원본 C++ 용어와 정합: sum_t, VNU_in/VNU_out(vnu_in/vnu_out),
-  check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_CSW(prev_csw) 등 —
-  코드만 보고 decoder.cpp의 대응 위치를 찾을 수 있게 함
-- 진입 함수는 decoder_main() (사용자 확정 2026-08-07). 단계별 함수 추출로 분리:
+변수명은 원본 C++ 용어를 따른다 (sum_t, vnu_in/vnu_out ↔ VNU_in/VNU_out,
+check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_csw ↔ prev_CSW 등) —
+코드만 보고 decoder.cpp의 대응 위치를 찾을 수 있다.
+
+진입 함수는 decoder_main(). 단계별 구성:
     decoder_main()             ← 흐름만: 아래를 순서대로 호출
     ├── _read_channel_input()  ← 채널 출력 해석 → read_bit
     ├── _init_state()          ← syndrome 계산, CN 상태·결과 버퍼 초기화
@@ -18,32 +16,33 @@
 
 syndrome-aided flip/magnitude 도메인 (모든 메시지가 초기 read bit 기준 상대값):
 - read_bit 고정, syndrome = H·read_bit 1회 계산 후 유지 (C++ iteration 0
-  Pre-update 대응 — 원본은 iter 0에서 V2C sign에 read bit를 실어 check_sum에
-  신드롬을 누적한 뒤 syndrome 레지스터로 복사. 여기서는 직접 계산으로 등가)
+  Pre-update와 등가 — 원본은 iter 0에서 V2C sign에 read bit를 실어 check_sum에
+  신드롬을 누적한 뒤 syndrome 레지스터로 복사한다)
 - VN: sum_t = ch(항상 +, iteration/dv별 테이블값) + Σ VNU_in.
-  sum_t <= 0 → 현재 bit 반전 판정 (동점도 반전 — VN_Cal_HD 원문, 변경 금지)
+  sum_t <= 0이면 현재 bit를 반전한다 (동점 포함 — VN_Cal_HD 원문과 동일)
 - C2V(VNU_in): mag = min1/min2 (EDGE 도메인, RESET=edge_mag[0]),
   sign = syndrome ⊕ check_sum ⊕ edge_sgn (C2V_Cal "Syndrome aided decoding")
-- Edge Clear(iteration 1, restart): CN 상태(min/pos/check_sum/edge_sgn) 클리어,
-  syndrome은 유지 → VNU_in = ±RESET, sign = syndrome. iteration 1부터 신드롬
+- Edge Clear(iteration 1, restart): CN 상태(min/pos/check_sum/edge_sgn)를 클리어하고
+  syndrome은 유지한다 → VNU_in = ±RESET, sign = syndrome. iteration 1부터 신드롬
   기반 정정이 즉시 일어난다 (Clear_Edge_Restart + C2V_Cal_New_Sgn 대응)
-- restart row의 -1 값도 그대로 산술 사용: ch=-1 ≈ 채널 무시, th=-1 → 전 메시지
+- restart row의 -1 값도 그대로 산술에 쓴다: ch=-1 ≈ 채널 무시, th=-1 → 전 메시지
   최대 레벨 → 순수 syndrome bit-flip iteration (C++ 동작 그대로)
 - CSW = Σ(check_sum ⊕ syndrome) (Compute_CSW 대응), iteration 1 진입 시
   prev_csw = |syndrome| (iter 0 종료 시점의 Compute_CSW와 동일)
-- 성공 판정: genie — bit 오류 = read_bit ⊕ (sum_t <= 0) 을 정답 all-zero와 비교,
-  성공 프레임은 배치에서 제외 (마스킹 = 속도 이득, 결과 불변)
-- 조기종료(CRC) 없음, HCU/펑처링/Dual-Update 없음, 파이프라인 store 지연 미재현
+- 성공 판정: genie — bit 오류 = read_bit ⊕ (sum_t <= 0)를 정답 all-zero와 비교,
+  성공 프레임은 배치에서 제외한다 (마스킹 = 속도 이득, 결과 불변)
+- 조기종료(CRC), HCU, 펑처링, Dual-Update, 파이프라인 store 지연은 범위 밖
+  (original과의 차이 전체는 docs/차이.md 참조)
 
 배열 축: (B, N_b, z) — 프레임 배치 B × column block × z lane.
 
-논문 아이디어 교체 지점 (2026-08-07 사용자 확정 — 교체 단위 = 원본 C++ 함수 경계):
-"교체 지점"이란 본체가 특정 단계를 일부러 별도 함수로 분리해 둬서, 아이디어 버전이
+논문 아이디어 교체 지점 (교체 단위 = 원본 C++ 함수 경계):
+"교체 지점"이란 본체가 특정 단계를 별도 함수로 분리해 둬서, 아이디어 버전이
 그 함수만 갈아끼울 수 있게 만든 자리다 (업계 용어로는 hook).
 아이디어는 이 클래스를 상속한 자식 클래스에서 아래 교체용 함수만 재정의한다
 (재정의 = 부모 클래스의 함수를 자식 클래스에서 다른 내용으로 바꿔 채우는 것.
 Ideas/{논문}/decoder.py에 작성, Ideas/registry.py에 등록 → config decoder.type으로 선택).
-교체 지점에 안 들어맞는 근본적 변경은 decoder_main 전체 재정의 허용.
+교체 지점에 안 들어맞는 근본적 변경은 decoder_main 전체 재정의를 허용한다.
 
 | 교체용 함수 | C++ 대응 | 커버 논문 유형 |
 |-------------|----------|---------------|
@@ -65,7 +64,7 @@ class _DecodeState:
     """decoder_main 한 호출의 작업 상태 묶음 — 단계별 함수 사이를 오가는 배열들.
     값은 _init_state()가 채우고, iteration 임시값은 _run_iteration()이 매 iteration 갱신."""
     # 설정과 치수
-    log: frozenset
+    log: set
     need_by_dv: bool
     z: int
     num_dv: int
@@ -91,7 +90,7 @@ class _DecodeState:
     log_err_sum: list
     log_err_by_dv_sum: list
     # iteration 임시값 (_run_iteration이 매 iteration 새로 채움)
-    n_active: int
+    num_active_frames: int
     frame_err: np.ndarray
     err_bits: np.ndarray
     err_by_dv: np.ndarray
@@ -131,19 +130,19 @@ class MinSumDecoder:
                          syndrome_row, check_sum_row, edge_sgn_row):
         """[교체 지점: C2V_Cal 대응] CN 상태로부터 C2V 메시지 재구성 (CN 정렬, roll 전).
         mag = min1 (자신이 min1 위치면 min2), sign = syndrome ⊕ check_sum ⊕ edge_sgn
-        ("Syndrome aided decoding"). *_row: 해당 CN row block 슬라이스 (n_active, z)."""
+        ("Syndrome aided decoding"). *_row: 해당 CN row block 슬라이스 (num_active_frames, z)."""
         check_out = np.where(min1_pos_row == edge, min2_row, min1_row)
         c2v_sgn = (syndrome_row ^ check_sum_row ^ edge_sgn_row).astype(bool)
         return np.where(c2v_sgn, -check_out, check_out)
 
     def _vn_decide(self, sum_t):
         """[교체 지점: VN_Cal_HD 판정부 대응] sum_t → 현재 bit 반전 여부.
-        동점(sum_t==0) 반전은 decoder.cpp:4044 원문 — vanilla에서는 변경 금지 (F14)."""
+        동점(sum_t==0)도 반전한다 (decoder.cpp:4044 VN_Cal_HD 원문과 동일하게 유지)."""
         return sum_t <= 0
 
     def _vnu_quantize(self, raw, vnu_in, th):
         """[교체 지점: VN_Cal_HD 양자화부 대응] VNU 출력 양자화.
-        th: (n_active, 3) — 프레임별(현재 row의 dv별) 임계값.
+        th: (num_active_frames, 3) — 프레임별(현재 row의 dv별) 임계값.
         C++ 캐스케이드(decoder.cpp:4112-4115) 그대로: |raw| >= th1 → 최대 레벨,
         아니고 >= th2 → 다음 레벨, ... (비단조 th도 C++와 같은 의미로 소비 — 리뷰 F8).
         raw==0이면 sign은 VNU_in에서."""
@@ -204,60 +203,60 @@ class MinSumDecoder:
         num_dv = self.llr_matrix.num_dv
         RESET = np.float32(self._edge_mag[0])            # V_VERY_STRONG 대응
 
-        s = _DecodeState()
-        s.log = log
-        s.need_by_dv = bool(log & {"bit_err_by_dv", "fail_detail"})
-        s.z = z
-        s.num_dv = num_dv
-        s.read_bit = read_bit
-        s.syndrome = code.syndrome(read_bit)             # (B, M_b, z) = H·read_bit
-        s.prev_csw = s.syndrome.sum(axis=(-2, -1)).astype(np.int64)
+        state = _DecodeState()
+        state.log = log
+        state.need_by_dv = bool(log & {"bit_err_by_dv", "fail_detail"})
+        state.z = z
+        state.num_dv = num_dv
+        state.read_bit = read_bit
+        state.syndrome = code.syndrome(read_bit)             # (B, M_b, z) = H·read_bit
+        state.prev_csw = state.syndrome.sum(axis=(-2, -1)).astype(np.int64)
 
-        s.min1 = np.full((B, M_b, z), RESET, np.float32)
-        s.min2 = np.full((B, M_b, z), RESET, np.float32)
-        s.min1_pos = np.full((B, M_b, z), -1, np.int32)
-        s.check_sum = np.zeros((B, M_b, z), np.uint8)
-        s.edge_sgn = np.zeros((B, num_edges, z), np.uint8)
+        state.min1 = np.full((B, M_b, z), RESET, np.float32)
+        state.min2 = np.full((B, M_b, z), RESET, np.float32)
+        state.min1_pos = np.full((B, M_b, z), -1, np.int32)
+        state.check_sum = np.zeros((B, M_b, z), np.uint8)
+        state.edge_sgn = np.zeros((B, num_edges, z), np.uint8)
 
-        s.success = np.zeros(B, bool)
-        s.decode_success_iteration = np.zeros(B, np.int32)
-        s.idx_active = np.arange(B)
-        s.profile = []
+        state.success = np.zeros(B, bool)
+        state.decode_success_iteration = np.zeros(B, np.int32)
+        state.idx_active = np.arange(B)
+        state.profile = []
         # 프레임별 최종 상태 (매 iteration 활성 프레임 위치에 덮어써서 "마지막 처리
         # iteration의 값"이 남는다. 성공 프레임은 그 iteration의 에러 0이 기록됨)
-        s.final_err_bits = np.zeros(B, np.int64)
-        s.final_csw = np.zeros(B, np.int64)
-        s.final_err_by_dv = np.zeros((B, num_dv), np.int64)
-        s.log_active, s.log_csw_sum = [], []
-        s.log_err_sum, s.log_err_by_dv_sum = [], []
-        return s
+        state.final_err_bits = np.zeros(B, np.int64)
+        state.final_csw = np.zeros(B, np.int64)
+        state.final_err_by_dv = np.zeros((B, num_dv), np.int64)
+        state.log_active, state.log_csw_sum = [], []
+        state.log_err_sum, state.log_err_by_dv_sum = [], []
+        return state
 
-    def _run_iteration(self, s, iteration):
+    def _run_iteration(self, state, iteration):
         """한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW 갱신."""
         RESET = np.float32(self._edge_mag[0])
-        s.n_active = s.read_bit.shape[0]
-        s.frame_err = np.zeros(s.n_active, bool)
-        s.err_bits = np.zeros(s.n_active, np.int64)
-        s.err_by_dv = np.zeros((s.n_active, s.num_dv), np.int64)
+        state.num_active_frames = state.read_bit.shape[0]
+        state.frame_err = np.zeros(state.num_active_frames, bool)
+        state.err_bits = np.zeros(state.num_active_frames, np.int64)
+        state.err_by_dv = np.zeros((state.num_active_frames, state.num_dv), np.int64)
 
-        s.edge_clear = self._is_edge_clear_iter(iteration)
-        if s.edge_clear and iteration > 1:
+        state.edge_clear = self._is_edge_clear_iter(iteration)
+        if state.edge_clear and iteration > 1:
             # restart: syndrome만 유지하고 CN 상태 클리어 (Clear_Edge_Restart)
-            s.min1.fill(RESET)
-            s.min2.fill(RESET)
-            s.min1_pos.fill(-1)
-            s.check_sum.fill(0)
-            s.edge_sgn.fill(0)
-        table_row_idx = self.llr_matrix.row_index(iteration, s.prev_csw)  # (n_active,)
-        s.cur_ch = self.llr_matrix.row_ch[table_row_idx, :, 0]            # (n_active, num_dv)
-        s.cur_th = self.llr_matrix.row_th[table_row_idx]                  # (n_active, num_dv, 3)
+            state.min1.fill(RESET)
+            state.min2.fill(RESET)
+            state.min1_pos.fill(-1)
+            state.check_sum.fill(0)
+            state.edge_sgn.fill(0)
+        table_row_idx = self.llr_matrix.row_index(iteration, state.prev_csw)  # (num_active_frames,)
+        state.cur_ch = self.llr_matrix.row_ch[table_row_idx, :, 0]            # (num_active_frames, num_dv)
+        state.cur_th = self.llr_matrix.row_th[table_row_idx]                  # (num_active_frames, num_dv, 3)
 
         for col in self._column_order(iteration):
-            self._process_column(s, iteration, col)
+            self._process_column(state, iteration, col)
 
-        s.prev_csw = (s.check_sum ^ s.syndrome).sum(axis=(-2, -1)).astype(np.int64)  # Compute_CSW
+        state.prev_csw = (state.check_sum ^ state.syndrome).sum(axis=(-2, -1)).astype(np.int64)  # Compute_CSW
 
-    def _process_column(self, s, iteration, col):
+    def _process_column(self, state, iteration, col):
         """한 column: C2V 합산(sum_t) → 판정(genie 집계) → VNU 출력·CN 갱신."""
         code = self.code
         edges = code.col_edges[col]
@@ -265,91 +264,91 @@ class MinSumDecoder:
         dv_idx = self._col_dv_idx[col]
         # flip 도메인: 채널 항은 항상 +ch (read bit는 syndrome과 genie에만 반영)
         sum_t = np.broadcast_to(
-            s.cur_ch[:, dv_idx, None], (s.n_active, s.z)).astype(np.float32).copy()
+            state.cur_ch[:, dv_idx, None], (state.num_active_frames, state.z)).astype(np.float32).copy()
         vnu_in_list = []
         for edge in edges:
             row_blk, shift = edge_row[edge], edge_shift[edge]
             c2v = self._c2v_reconstruct(
-                iteration, edge, s.min1[:, row_blk, :], s.min2[:, row_blk, :],
-                s.min1_pos[:, row_blk, :], s.syndrome[:, row_blk, :],
-                s.check_sum[:, row_blk, :], s.edge_sgn[:, edge, :])
+                iteration, edge, state.min1[:, row_blk, :], state.min2[:, row_blk, :],
+                state.min1_pos[:, row_blk, :], state.syndrome[:, row_blk, :],
+                state.check_sum[:, row_blk, :], state.edge_sgn[:, edge, :])
             vnu_in = np.roll(c2v, shift, axis=-1)   # CN 정렬 → VN 정렬
             vnu_in_list.append(vnu_in)
             sum_t += vnu_in
 
         flip = self._vn_decide(sum_t)
-        bit_err = s.read_bit[:, col, :] ^ flip
-        s.frame_err |= bit_err.any(axis=-1)
-        s.err_bits += bit_err.sum(axis=-1)
-        if s.need_by_dv:
-            s.err_by_dv[:, dv_idx] += bit_err.sum(axis=-1)
+        bit_err = state.read_bit[:, col, :] ^ flip
+        state.frame_err |= bit_err.any(axis=-1)
+        state.err_bits += bit_err.sum(axis=-1)
+        if state.need_by_dv:
+            state.err_by_dv[:, dv_idx] += bit_err.sum(axis=-1)
 
         for edge, vnu_in in zip(edges, vnu_in_list):
             row_blk, shift = edge_row[edge], edge_shift[edge]
             vnu_out_raw = sum_t - vnu_in         # C++ sum_t − VNU_in (무포화)
-            vnu_out = self._vnu_quantize(vnu_out_raw, vnu_in, s.cur_th[:, dv_idx, :])
+            vnu_out = self._vnu_quantize(vnu_out_raw, vnu_in, state.cur_th[:, dv_idx, :])
             vnu_out = np.roll(vnu_out, -shift, axis=-1)   # VN 정렬 → CN 정렬
             new_sgn = (vnu_out < 0).astype(np.uint8)
             new_mag = np.abs(vnu_out)
-            self._cnu_update(edge, s.edge_clear, new_sgn, new_mag, row_blk,
-                             s.min1, s.min2, s.min1_pos, s.check_sum, s.edge_sgn)
+            self._cnu_update(edge, state.edge_clear, new_sgn, new_mag, row_blk,
+                             state.min1, state.min2, state.min1_pos, state.check_sum, state.edge_sgn)
 
-    def _record_iteration(self, s, collect_profile):
+    def _record_iteration(self, state, collect_profile):
         """로그 집계(iteration별 활성 프레임 합) + 프레임별 최종 상태 갱신 + profile."""
-        if s.log:
-            s.log_active.append(s.n_active)
-            if "csw" in s.log:
-                s.log_csw_sum.append(int(s.prev_csw.sum()))
-            if "bit_err" in s.log:
-                s.log_err_sum.append(int(s.err_bits.sum()))
-            if "bit_err_by_dv" in s.log:
-                s.log_err_by_dv_sum.append(s.err_by_dv.sum(axis=0))
-        s.final_err_bits[s.idx_active] = s.err_bits
-        if "fail_detail" in s.log:
-            s.final_csw[s.idx_active] = s.prev_csw
-            s.final_err_by_dv[s.idx_active] = s.err_by_dv
+        if state.log:
+            state.log_active.append(state.num_active_frames)
+            if "csw" in state.log:
+                state.log_csw_sum.append(int(state.prev_csw.sum()))
+            if "bit_err" in state.log:
+                state.log_err_sum.append(int(state.err_bits.sum()))
+            if "bit_err_by_dv" in state.log:
+                state.log_err_by_dv_sum.append(state.err_by_dv.sum(axis=0))
+        state.final_err_bits[state.idx_active] = state.err_bits
+        if "fail_detail" in state.log:
+            state.final_csw[state.idx_active] = state.prev_csw
+            state.final_err_by_dv[state.idx_active] = state.err_by_dv
         if collect_profile:
-            s.profile.append((s.n_active, float(s.err_bits.mean())))
+            state.profile.append((state.num_active_frames, float(state.err_bits.mean())))
 
-    def _check_errors(self, s, iteration):
+    def _check_errors(self, state, iteration):
         """에러 검사 (genie: 정답 all-zero와 비교) — 성공/실패 확정 + 성공 프레임
         배치 압축. True 반환 시 루프 종료."""
-        ok = ~s.frame_err
+        ok = ~state.frame_err
         if ok.any():
-            s.success[s.idx_active[ok]] = True
-            s.decode_success_iteration[s.idx_active[ok]] = iteration
-        keep = s.frame_err
+            state.success[state.idx_active[ok]] = True
+            state.decode_success_iteration[state.idx_active[ok]] = iteration
+        keep = state.frame_err
         if not keep.any() or iteration == self.max_iter:
             return True
-        s.idx_active = s.idx_active[keep]
-        s.read_bit, s.syndrome, s.prev_csw = \
-            s.read_bit[keep], s.syndrome[keep], s.prev_csw[keep]
-        s.min1, s.min2, s.min1_pos = s.min1[keep], s.min2[keep], s.min1_pos[keep]
-        s.check_sum, s.edge_sgn = s.check_sum[keep], s.edge_sgn[keep]
+        state.idx_active = state.idx_active[keep]
+        state.read_bit, state.syndrome, state.prev_csw = \
+            state.read_bit[keep], state.syndrome[keep], state.prev_csw[keep]
+        state.min1, state.min2, state.min1_pos = state.min1[keep], state.min2[keep], state.min1_pos[keep]
+        state.check_sum, state.edge_sgn = state.check_sum[keep], state.edge_sgn[keep]
         return False
 
-    def _build_result(self, s, collect_profile):
+    def _build_result(self, state, collect_profile):
         """반환 dict 조립 (형식은 decoder_main docstring 참조)."""
-        out = {"success": s.success, "decode_success_iteration": s.decode_success_iteration,
-               "final_err_bits": s.final_err_bits}
+        out = {"success": state.success, "decode_success_iteration": state.decode_success_iteration,
+               "final_err_bits": state.final_err_bits}
         if collect_profile:
-            out["profile"] = s.profile
-        if s.log:
-            out["log_active"] = np.array(s.log_active, np.int64)
-            if "csw" in s.log:
-                out["log_csw_sum"] = np.array(s.log_csw_sum, np.int64)
-            if "bit_err" in s.log:
-                out["log_err_sum"] = np.array(s.log_err_sum, np.int64)
-            if "bit_err_by_dv" in s.log:
-                out["log_err_by_dv_sum"] = np.array(s.log_err_by_dv_sum, np.int64)
-            if "fail_detail" in s.log:
-                out["final_csw"] = s.final_csw
-                out["final_err_by_dv"] = s.final_err_by_dv
+            out["profile"] = state.profile
+        if state.log:
+            out["log_active"] = np.array(state.log_active, np.int64)
+            if "csw" in state.log:
+                out["log_csw_sum"] = np.array(state.log_csw_sum, np.int64)
+            if "bit_err" in state.log:
+                out["log_err_sum"] = np.array(state.log_err_sum, np.int64)
+            if "bit_err_by_dv" in state.log:
+                out["log_err_by_dv_sum"] = np.array(state.log_err_by_dv_sum, np.int64)
+            if "fail_detail" in state.log:
+                out["final_csw"] = state.final_csw
+                out["final_err_by_dv"] = state.final_err_by_dv
         return out
 
     # ---------- 진입 함수 ----------
     def decoder_main(self, channel_out, collect_profile=False, log=None):
-        """디코딩 진입 함수 (구 이름 decode_batch — 사용자 확정으로 개명 2026-08-07).
+        """디코딩 진입 함수.
 
         channel_out: channel.py 출력 dict {"mode", "hd", ...}
         (테스트 편의로 signed LLR 배열도 허용 — 음수 = read bit 1).
@@ -365,16 +364,16 @@ class MinSumDecoder:
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)
           final_csw, final_err_by_dv: (B,), (B, num_dv) — fail_detail 시
         """
-        log = frozenset() if log is None else frozenset(log)
-        unknown = log - LOG_ITEMS
-        if unknown:
-            raise ValueError(f"log 항목 {sorted(unknown)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
+        log = set() if log is None else set(log)
+        unknown_log_items = log - LOG_ITEMS   # 허용 목록에 없는 항목 = 오타 검출
+        if unknown_log_items:
+            raise ValueError(f"log 항목 {sorted(unknown_log_items)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
 
         read_bit = self._read_channel_input(channel_out)
-        s = self._init_state(read_bit, log)
+        state = self._init_state(read_bit, log)
         for iteration in range(1, self.max_iter + 1):
-            self._run_iteration(s, iteration)
-            self._record_iteration(s, collect_profile)
-            if self._check_errors(s, iteration):
+            self._run_iteration(state, iteration)
+            self._record_iteration(state, collect_profile)
+            if self._check_errors(state, iteration):
                 break
-        return self._build_result(s, collect_profile)
+        return self._build_result(state, collect_profile)

@@ -7,95 +7,110 @@ import numpy as np
 from .decoder import MinSumDecoder, LOG_ITEMS
 
 
-def run_fer_point(code, channel_fn, dec: MinSumDecoder, rng, max_frame_errors=50,
-                  max_frames=20000, frames_per_batch=128, verbose=False, log=None):
+def run_fer_point(code, channel_fn, decoder: MinSumDecoder, random_generator,
+                  max_frame_errors=50, max_frames=20000, frames_per_batch=128,
+                  print_progress=False, log=None):
     """한 채널 조건의 FER 측정.
 
-    channel_fn(batch, rng) -> 채널 출력 (channel.py dict).
+    channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
     프레임 에러 수가 max_frame_errors에 도달하거나 max_frames 소진 시 종료.
+    print_progress: 측정 결과 한 줄을 콘솔에 출력할지 여부.
     log: decoder.LOG_ITEMS 부분집합 — 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
       iter_hist ((max_iter+1,) — [k]=iteration k에 성공한 프레임 수, [0]=실패 프레임 수),
-      log 지정 시 log_agg {active, csw_sum, err_sum, err_by_dv_sum} (iteration별 합계
-      배열 — 평균은 sum/active로 소비측 계산), fail_detail 시 fail_rows
+      log 지정 시 iteration_totals {active_frames, csw_sum, bit_err_sum, bit_err_by_dv_sum}
+      (iteration별 합계 배열 — 평균은 합/active_frames로 소비측 계산),
+      fail_detail 시 fail_frame_details
       [(프레임 번호, 잔여 에러 bit, 최종 CSW, dv별 잔여 에러), ...].
     """
-    # run.py load_config 검증을 우회하는 직접 호출 대비 최소 가드 (리뷰 F19 —
-    # frames_per_batch가 정수 0이면 무한 대기가 된다)
-    for name, v in (("max_frame_errors", max_frame_errors),
-                    ("max_frames", max_frames), ("frames_per_batch", frames_per_batch)):
-        if isinstance(v, bool) or not isinstance(v, numbers.Integral) or v < 1:
-            raise ValueError(f"{name}={v!r} — 1 이상의 정수여야 함")
-    log = frozenset() if log is None else frozenset(log)
-    unknown = log - LOG_ITEMS
-    if unknown:
-        raise ValueError(f"log 항목 {sorted(unknown)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
+    # run.py load_config 검증을 우회하는 직접 호출 대비 최소 가드
+    # (frames_per_batch가 정수 0이면 무한 대기가 된다)
+    for name, value in (("max_frame_errors", max_frame_errors),
+                        ("max_frames", max_frames),
+                        ("frames_per_batch", frames_per_batch)):
+        if isinstance(value, bool) or not isinstance(value, numbers.Integral) or value < 1:
+            raise ValueError(f"{name}={value!r} — 1 이상의 정수여야 함")
+    log = set() if log is None else set(log)
+    unknown_log_items = log - LOG_ITEMS      # 허용 목록에 없는 항목 = 오타 검출
+    if unknown_log_items:
+        raise ValueError(
+            f"log 항목 {sorted(unknown_log_items)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
 
-    max_iter = dec.max_iter
-    num_dv = dec.llr_matrix.num_dv
+    max_iter = decoder.max_iter
+    num_dv = decoder.llr_matrix.num_dv
     frames = errors = 0
-    iter_sum = 0          # 성공 프레임의 수렴 iteration 합
-    err_bit_total = 0     # 전 프레임 잔여 에러 bit 합 (post-FEC BER 분자)
+    success_iteration_sum = 0        # 성공 프레임의 수렴 iteration 합 (평균 계산용)
+    total_residual_err_bits = 0      # 전 프레임 잔여 에러 bit 합 (post-FEC BER 분자)
     iter_hist = np.zeros(max_iter + 1, np.int64)
-    agg_active = np.zeros(max_iter, np.int64)
-    agg_csw = np.zeros(max_iter, np.int64)
-    agg_err = np.zeros(max_iter, np.int64)
-    agg_err_dv = np.zeros((max_iter, num_dv), np.int64)
-    fail_rows = []
+    # iteration별 합계 (배치를 넘어 누적 — 평균은 합/활성 프레임 수로 소비측 계산)
+    total_active_frames = np.zeros(max_iter, np.int64)
+    total_csw = np.zeros(max_iter, np.int64)
+    total_bit_err = np.zeros(max_iter, np.int64)
+    total_bit_err_by_dv = np.zeros((max_iter, num_dv), np.int64)
+    fail_frame_details = []          # 실패 프레임별 (번호, 잔여 에러, 최종 CSW, dv별)
 
-    t0 = time.time()
+    start_time = time.time()
     while frames < max_frames and errors < max_frame_errors:
-        b = min(frames_per_batch, max_frames - frames)
-        res = dec.decoder_main(channel_fn(b, rng), log=log or None)
-        success = res["success"]
+        batch = min(frames_per_batch, max_frames - frames)
+        decode_result = decoder.decoder_main(channel_fn(batch, random_generator),
+                                             log=log or None)
+        success = decode_result["success"]
         errors += int((~success).sum())
-        iter_sum += int(res["decode_success_iteration"].sum())
-        err_bit_total += int(res["final_err_bits"].sum())
-        np.add.at(iter_hist, res["decode_success_iteration"], 1)   # 실패 프레임(0)은 [0]에 집계
+        success_iteration_sum += int(decode_result["decode_success_iteration"].sum())
+        total_residual_err_bits += int(decode_result["final_err_bits"].sum())
+        np.add.at(iter_hist, decode_result["decode_success_iteration"], 1)  # 실패는 [0]
         if log:
-            n_it = len(res["log_active"])
-            agg_active[:n_it] += res["log_active"]
+            num_iterations_run = len(decode_result["log_active"])
+            total_active_frames[:num_iterations_run] += decode_result["log_active"]
             if "csw" in log:
-                agg_csw[:n_it] += res["log_csw_sum"]
+                total_csw[:num_iterations_run] += decode_result["log_csw_sum"]
             if "bit_err" in log:
-                agg_err[:n_it] += res["log_err_sum"]
+                total_bit_err[:num_iterations_run] += decode_result["log_err_sum"]
             if "bit_err_by_dv" in log:
-                agg_err_dv[:n_it] += res["log_err_by_dv_sum"]
+                total_bit_err_by_dv[:num_iterations_run] += \
+                    decode_result["log_err_by_dv_sum"]
             if "fail_detail" in log:
                 for k in np.flatnonzero(~success):
-                    fail_rows.append((frames + int(k), int(res["final_err_bits"][k]),
-                                      int(res["final_csw"][k]),
-                                      res["final_err_by_dv"][k].tolist()))
-        frames += b
-    elapsed = time.time() - t0
+                    fail_frame_details.append(
+                        (frames + int(k), int(decode_result["final_err_bits"][k]),
+                         int(decode_result["final_csw"][k]),
+                         decode_result["final_err_by_dv"][k].tolist()))
+        frames += batch
+    elapsed = time.time() - start_time
     fer = errors / frames
-    point = {
+    point_result = {
         "frames": frames, "errors": errors, "fer": fer,
-        "post_fec_ber": err_bit_total / (frames * code.N),
-        "avg_decode_success_iteration": iter_sum / max(1, frames - errors),
+        "post_fec_ber": total_residual_err_bits / (frames * code.N),
+        "avg_decode_success_iteration": success_iteration_sum / max(1, frames - errors),
         "sec": elapsed, "fps": frames / max(elapsed, 1e-9),
         "iter_hist": iter_hist,
     }
     if log:
-        point["log_agg"] = {"active": agg_active, "csw_sum": agg_csw,
-                            "err_sum": agg_err, "err_by_dv_sum": agg_err_dv}
+        point_result["iteration_totals"] = {
+            "active_frames": total_active_frames, "csw_sum": total_csw,
+            "bit_err_sum": total_bit_err, "bit_err_by_dv_sum": total_bit_err_by_dv}
         if "fail_detail" in log:
-            point["fail_rows"] = fail_rows
-    if verbose:
+            point_result["fail_frame_details"] = fail_frame_details
+    if print_progress:
         print(f"  frames={frames:6d} errors={errors:4d} FER={fer:.3e} "
-              f"BER={point['post_fec_ber']:.3e} "
-              f"avg_decode_success_iteration={point['avg_decode_success_iteration']:.2f} ({point['fps']:.1f} f/s)")
-    return point
+              f"BER={point_result['post_fec_ber']:.3e} "
+              f"avg_decode_success_iteration="
+              f"{point_result['avg_decode_success_iteration']:.2f} "
+              f"({point_result['fps']:.1f} f/s)")
+    return point_result
 
 
-def save_csv(results, path, param_name="param"):
+def save_csv(point_results, path, param_name="param"):
     import csv
     with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow([param_name, "fer", "post_fec_ber", "frames", "errors",
-                    "avg_decode_success_iteration", "sec"])
-        for r in results:
-            w.writerow([r["param"], f"{r['fer']:.6e}", f"{r['post_fec_ber']:.6e}",
-                        r["frames"], r["errors"], f"{r['avg_decode_success_iteration']:.3f}",
-                        f"{r['sec']:.1f}"])
+        writer = csv.writer(f)
+        writer.writerow([param_name, "fer", "post_fec_ber", "frames", "errors",
+                         "avg_decode_success_iteration", "sec"])
+        for point_result in point_results:
+            writer.writerow(
+                [point_result["param"], f"{point_result['fer']:.6e}",
+                 f"{point_result['post_fec_ber']:.6e}", point_result["frames"],
+                 point_result["errors"],
+                 f"{point_result['avg_decode_success_iteration']:.3f}",
+                 f"{point_result['sec']:.1f}"])

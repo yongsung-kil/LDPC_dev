@@ -204,14 +204,14 @@ class LLRMatrix:
         """
         group_idx = self._group_of_iter(iteration)
         row_start, row_end = self.group_slices[group_idx]
-        n_active = len(prev_csw)
+        num_active_frames = len(prev_csw)
         if self.group_type[group_idx] == GROUP_TYPE_ITER or row_end - row_start == 1:
             for row in range(row_start, row_end):
                 if self.row_iter[row, 0] <= iteration <= self.row_iter[row, 1]:
-                    return np.full(n_active, row, np.int64)
+                    return np.full(num_active_frames, row, np.int64)
             raise ValueError(f"{self.name}: 그룹 {group_idx + 1} 내 iteration {iteration} row 없음")
         # CSW 타입: 아래에서부터 처음으로 prev_csw <= 임계값인 row (없으면 그룹 첫 row)
-        selected = np.full(n_active, row_start, np.int64)
+        selected = np.full(num_active_frames, row_start, np.int64)
         for row in range(row_start + 1, row_end):
             selected = np.where(prev_csw <= self.row_csw[row], row, selected)
         return selected

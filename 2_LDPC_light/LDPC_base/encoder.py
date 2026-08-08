@@ -8,9 +8,9 @@ encode()는 아직 실제 구현 없이 자리만 잡아둔 임시 함수다: al
 import numpy as np
 
 
-def generate_message(code, batch, rng):
+def generate_message(code, batch, random_generator):
     """정보 bit K개 무작위 생성. shape (batch, K), {0,1} uint8."""
-    return rng.integers(0, 2, size=(batch, code.K), dtype=np.uint8)
+    return random_generator.integers(0, 2, size=(batch, code.K), dtype=np.uint8)
 
 
 def encode(msg, code):
