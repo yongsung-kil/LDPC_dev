@@ -1,22 +1,28 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
-### 2026-08-08 — 내부 균일 n-bit 양자화 모드 (LLR matrix 파일 없이 디코딩)
-사용자 제안대로 내부 파라미터로 LLR matrix를 합성 — 디코더는 파일 경로와 동일하게 소비
+### 2026-08-08 — 균일 n-bit 양자화 모드 (매트릭스 파일 생성 후 로드)
+사용자 확정 설계: LLR matrix 파일이 없으면 균일 양자화 매트릭스를 **DAO 포맷 파일로
+생성해 저장한 뒤 그 파일을 로드** — 디코더는 파일 로드 단일 경로만 탄다
 - **변경**:
   - ㉮ `LLRMatrix.make_internal_uniform_matrix(num_bits, channel_llr, max_iter, dv_max, mode)`
-    신설 — 균일 th 경계(0.5 간격)와 레벨 [최대..0]의 매트릭스를 합성 (그룹 1개, restart 없음).
-    flip 도메인 값은 전부 정수라 캐스케이드가 반올림+클리핑과 정확히 같음
-  - ㉯ LLRMatrix가 edge_mag(VNU 출력 레벨)를 보유 — 파일은 3-bit {7,5,3,1} 기본,
-    합성은 임의 레벨. decoder `_vnu_quantize` 캐스케이드를 th 개수 임의로 일반화
-  - ㉰ JSON: `decoder.use_input_llr_matrix`(기본 true)로 파일/내부 토글,
+    — 정수 th [최대 레벨..1], 레벨 [최대..0], 전 dv 공통 ch, 그룹 1개 구성 합성.
+    flip 도메인 값이 전부 정수라 캐스케이드가 상한 클리핑과 정확히 같음
+  - ㉯ `LLRMatrix.save(path)` — DAO 포맷 저장 (정수만 기록, load와 round-trip 일치).
+    생성 파일명 `LLR_MATRIX_{mode}_uniform_...` — uniform은 사람이 만든 파일이
+    아니라는 표시이며, load()가 이 표시로 균일 레벨(edge_mag [th 개수..0])을 잡는다
+  - ㉰ LLRMatrix가 edge_mag(VNU 출력 레벨)를 보유 — 사람이 만든 파일은 3-bit
+    {7,5,3,1}, uniform 파일은 [최대..0]. decoder `_vnu_quantize` 캐스케이드를
+    th 개수 임의로 일반화
+  - ㉱ JSON: `decoder.use_input_llr_matrix`(기본 true)로 토글,
     `decoder.internal_quantize` {num_bits, channel_llr, max_iter, mode}.
-    내부 모드는 max_iter를 여기서 받는다 (파일이 없으므로)
-  - ㉱ 디코더 생성자는 HD/2SD/3SD를 받되(사용자 수정 반영, "3SD]" 오타 수리)
+    생성 위치는 llr_matrix.dir(없으면 Input/LLR)
+  - ㉲ 디코더 생성자는 HD/2SD/3SD를 받되(사용자 수정 반영, "3SD]" 오타 수리)
     산술은 HD 전용이라 decoder_main에서 2SD/3SD 명시적 에러 (조용한 오답 방지)
 - **검증**: 파일 경로 고정 입력 회귀 배열 단위 완전 일치 (캐스케이드 일반화 후에도 불변).
-  내부 6-bit: fixed-error 300비트 256프레임 전량 정정(FER 0, 평균 7.6 iteration),
-  380비트 4/32, 420비트 0/32 — 구 6-bit 기준선(정정 한계 380~400비트)과 부합.
-  internal_quantize 누락 시 명시적 에러 확인
+  합성↔저장 후 로드 round-trip에서 디코딩 결과 배열 단위 동일.
+  6-bit uniform: fixed-error 300비트 256프레임 전량 정정(FER 0, 평균 7.6 iteration),
+  정정 한계 380~420비트 사이 — 구 6-bit 기준선과 부합. internal_quantize 누락 시
+  명시적 에러 확인
 - **파일**: `LDPC_base/llr_matrix.py`, `decoder.py`, `run.py`, `config.json`, `README.md`
 
 ### 2026-08-08 — 의견1 반영 (이름 명확화 2차 + 실험 요약 출력 + 문장 작성 규칙)

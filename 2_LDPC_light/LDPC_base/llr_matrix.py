@@ -46,6 +46,11 @@ GROUP_TYPE_ITER, GROUP_TYPE_CSW = 0, 1          # common.h:756-757
 _NAME_RE = re.compile(r"LLR_MATRIX_(HD|2SD|3SD)_", re.IGNORECASE)
 
 
+def uniform_edge_mag(top_level):
+    """균일 양자화 VNU 출력 레벨 [top_level, ..., 1, 0]."""
+    return list(range(int(top_level), -1, -1))
+
+
 class LLRMatrix:
     def __init__(self, mode, num_param, dv_from, dv_to, group_rows, group_type,
                  restart_iters, max_value, min_value, rows, name="", edge_mag=None):
@@ -152,11 +157,17 @@ class LLRMatrix:
     # ---------- 파일 입출력 ----------
     @classmethod
     def load(cls, path):
+        """DAO 포맷 파일 로드. 파일명 규칙:
+        - 모드: LLR_MATRIX_{HD|2SD|3SD}_*.txt
+        - 파일명에 'uniform'이 있으면 생성된 균일 양자화 매트릭스로 취급 —
+          VNU 출력 레벨을 [th 개수..0]으로 잡는다 (make_internal_uniform_matrix 산출물.
+          사람이 만든 3-bit 파일에는 uniform이라는 단어를 쓰지 않는다)"""
         m = _NAME_RE.search(os.path.basename(path))
         if not m:
             raise ValueError(
                 f"{path}: 파일명에서 모드 판별 불가 — LLR_MATRIX_{{HD|2SD|3SD}}_*.txt 형식이어야 함")
         mode = m.group(1).upper()
+        is_uniform = "uniform" in os.path.basename(path).lower()
         with open(path, encoding="utf-8") as f:
             lines = [ln.strip() for ln in f if ln.strip()]
         parsed = [np.array([int(v) for v in ln.split()], np.int64) for ln in lines]
@@ -188,34 +199,64 @@ class LLRMatrix:
                 raise ValueError(f"{path}: row 길이 {len(row_line)} != {num_dv}*{num_param}+4")
             rows.append((row_line[:-4], int(row_line[-4]), int(row_line[-3]),
                          int(row_line[-2]), int(row_line[-1])))
+        edge_mag = (uniform_edge_mag(num_param - MODE_CH_LEN[mode])
+                    if is_uniform else None)
         return cls(mode, num_param, dv_from, dv_to, group_rows, group_type,
                    restart_iters, max_value, min_value, rows,
-                   name=os.path.basename(path))
+                   name=os.path.basename(path), edge_mag=edge_mag)
 
-    # ---------- 내부 합성 (파일 없이 균일 n-bit 양자화) ----------
+    # ---------- 균일 n-bit 양자화 매트릭스 합성 (파일로 저장 후 로드해 사용) ----------
     @classmethod
     def make_internal_uniform_matrix(cls, num_bits, channel_llr, max_iter, dv_max,
                                      mode="HD"):
-        """균일 n-bit 양자화용 매트릭스 합성 — 파일 매트릭스와 같은 경로로 소비된다.
+        """균일 n-bit 양자화용 매트릭스 합성. save()로 DAO 포맷 파일로 저장한 뒤
+        load()로 읽어 파일 매트릭스와 같은 경로로 소비한다 (run.py setup 참조).
 
         num_bits: 메시지 양자화 bit 수 (sign 포함). magnitude 레벨은
-          0..(2^(num_bits-1) − 1), th는 0.5 간격 균일 경계 → 캐스케이드가
-          |값| 반올림 + 상한 클리핑과 같아진다 (flip 도메인 값은 전부 정수라
-          경계 동률은 발생하지 않는다)
+          0..(2^(num_bits-1) − 1), th는 정수 [최대 레벨..1] — flip 도메인 값이
+          전부 정수라 캐스케이드가 |값|의 상한 클리핑과 같아진다
         channel_llr: 채널 LLR magnitude (전 dv 공통)
-        max_iter: 최대 iteration (파일이 없으므로 여기서 받는다)
+        max_iter: 최대 iteration (파일 로드 경로와 달리 호출자가 지정)
         dv_max: H-matrix의 최대 column degree — dv 구간 [1, dv_max] 하나로 전 dv 커버
         구성: 그룹 1개(ITER, iteration 1..max_iter), restart 없음."""
         top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
         ch_len = MODE_CH_LEN[mode]
-        th = [top_level - k - 0.5 for k in range(top_level)]   # 내림차순, 0.5 간격
-        edge_mag = list(range(top_level, -1, -1))              # [top_level, ..., 1, 0]
+        th = list(range(top_level, 0, -1))               # 정수 [최대 레벨..1], 내림차순
+        edge_mag = uniform_edge_mag(top_level)           # [top_level, ..., 1, 0]
         values = np.array([channel_llr] * ch_len + th, np.float64)
         num_param = ch_len + top_level
         rows = [(values, -1, 1, int(max_iter), -1)]
         return cls(mode, num_param, [1], [int(dv_max)], [1], [GROUP_TYPE_ITER],
                    [], [max(top_level, channel_llr)] * num_param, [0] * num_param,
                    rows, name=f"internal_uniform_{num_bits}bit", edge_mag=edge_mag)
+
+    def save(self, path):
+        """DAO LLR_MATRIX 텍스트 포맷으로 저장 (load()가 읽는 형식 그대로).
+        값은 전부 정수로 기록한다 (DAO 파서가 정수만 읽는다)."""
+        lines = [
+            str(self.num_param), "",
+            str(self.num_dv), "",
+            "\t".join(str(int(v)) for v in self.dv_from),
+            "\t".join(str(int(v)) for v in self.dv_to), "",
+            str(len(self.group_rows)), "",
+            "\t".join(str(n) for n in self.group_rows), "",
+            "\t".join(str(t) for t in self.group_type), "",
+            str(len(self.restart_iters)), "",
+        ]
+        if self.restart_iters:
+            lines += ["\t".join(str(i) for i in sorted(self.restart_iters)), ""]
+        lines += [
+            "\t".join(str(int(v)) for v in self.max_value),
+            "\t".join(str(int(v)) for v in self.min_value), "",
+        ]
+        for row_idx in range(len(self.row_csw)):
+            row_values = self.row_values[row_idx].reshape(-1)
+            tail = [self.row_csw[row_idx], self.row_iter[row_idx, 0],
+                    self.row_iter[row_idx, 1], -1]
+            lines.append("\t".join(str(int(v)) for v in list(row_values) + tail))
+            lines.append("")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines).rstrip("\n") + "\n")
 
     # ---------- 런타임 ----------
     def col_dv_idx(self, code):

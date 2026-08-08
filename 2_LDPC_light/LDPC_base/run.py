@@ -12,15 +12,18 @@ JSON 구조:
   H_matrix: {"dir": 폴더, "file": 파일명} — 폴더와 파일명 분리 (Ref-C 포맷,
     폴더는 Input/H_matrix 고정 운용)
   decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
-  decoder.use_input_llr_matrix: true(기본)면 LLR matrix 파일을 사용,
-    false면 내부 균일 n-bit 양자화로 디코딩 (internal_quantize 설정 사용,
-    llr_matrix 키는 있어도 무시)
+  decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
+    false면 균일 n-bit 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
+    그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix 키는
+    있어도 무시). 생성 파일은 llr_matrix.dir(없으면 Input/LLR)에
+    LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_iter{max_iter}.txt로
+    저장된다 — 파일명의 uniform은 사람이 만든 파일이 아니라는 표시
   decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX
     (use_input_llr_matrix=true일 때 필수).
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
   decoder.internal_quantize: use_input_llr_matrix=false일 때 필수 —
     {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
-    magnitude(전 dv 공통), "max_iter": 최대 iteration(파일이 없으므로 여기서 지정),
+    magnitude(전 dv 공통), "max_iter": 최대 iteration(파일 생성에 쓰인다),
     "mode": "HD"(기본)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널·포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트 — 각 항목 {"type": rber|fixed_error|strong_error,
@@ -199,6 +202,17 @@ def load_config(path):
         if mode not in ("HD", "2SD", "3SD"):
             raise ValueError(
                 f"config [decoder.internal_quantize] mode={mode!r} — HD/2SD/3SD 중 하나여야 함")
+        # 생성 파일 경로: llr_matrix.dir(있으면) 또는 Input/LLR, 파일명은 파라미터로 결정
+        generated_dir = "Input/LLR"
+        if isinstance(decoder_config.get("llr_matrix"), dict):
+            generated_dir = decoder_config["llr_matrix"].get("dir", generated_dir)
+        generated_name = (f"LLR_MATRIX_{mode}_uniform_{internal_quantize['num_bits']}bit"
+                          f"_ch{internal_quantize['channel_llr']}"
+                          f"_iter{internal_quantize['max_iter']}.txt")
+        generated_path = os.path.join(generated_dir, generated_name)
+        if not os.path.isabs(generated_path):
+            generated_path = os.path.join(base_dir, generated_path)
+        decoder_config["generated_llr_matrix_path"] = generated_path
     decoder_type = decoder_config.setdefault("type", "vanilla")
     if not isinstance(decoder_type, str) or not decoder_type:
         raise ValueError(
@@ -265,23 +279,29 @@ def _resolve_decoder_class(decoder_type):
 
 
 def setup(config):
-    """H-matrix를 로드하고 LLR matrix를 준비(파일 로드 또는 내부 합성)한 뒤
-    decoder.type의 디코더를 구성한다. 파일이 없으면 준비하라는 에러를 낸다
-    (이 함수는 생성하지 않음)."""
+    """H-matrix를 로드하고 LLR matrix를 준비한 뒤 decoder.type의 디코더를 구성한다.
+    use_input_llr_matrix=false면 균일 양자화 매트릭스를 DAO 포맷 파일로 생성해
+    저장하고, 그 파일을 로드해 사용한다 (파일 로드 단일 경로 유지).
+    H-matrix가 없으면 준비하라는 에러를 낸다 (이 함수는 생성하지 않음)."""
     h_matrix_path = config["H_matrix"]
     if not os.path.exists(h_matrix_path):
         raise FileNotFoundError(f"{h_matrix_path} 없음 — H-matrix를 먼저 준비할 것")
     code = QCCode.load(h_matrix_path)
     if config["decoder"]["use_input_llr_matrix"]:
-        llr_matrix = LLRMatrix.load(config["decoder"]["llr_matrix"])
+        llr_matrix_path = config["decoder"]["llr_matrix"]
     else:
         internal_quantize = config["decoder"]["internal_quantize"]
-        llr_matrix = LLRMatrix.make_internal_uniform_matrix(
+        synthesized = LLRMatrix.make_internal_uniform_matrix(
             num_bits=internal_quantize["num_bits"],
             channel_llr=internal_quantize["channel_llr"],
             max_iter=internal_quantize["max_iter"],
             dv_max=int(code.col_deg.max()),
             mode=internal_quantize["mode"])
+        llr_matrix_path = config["decoder"]["generated_llr_matrix_path"]
+        os.makedirs(os.path.dirname(llr_matrix_path), exist_ok=True)
+        synthesized.save(llr_matrix_path)
+        print(f"generated LLR matrix: {llr_matrix_path}")
+    llr_matrix = LLRMatrix.load(llr_matrix_path)
     decoder_class = _resolve_decoder_class(config["decoder"]["type"])
     decoder = decoder_class(code, llr_matrix=llr_matrix)
     return code, decoder

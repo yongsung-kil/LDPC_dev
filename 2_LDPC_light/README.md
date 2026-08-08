@@ -63,10 +63,12 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **max_iter는
   파일의 마지막 iter_end가 결정** — JSON에 decoder.max_iter를 쓰면 에러.
   디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
-  false면 **내부 균일 n-bit 양자화**로 디코딩한다 — `internal_quantize`의
-  num_bits(메시지 양자화 bit 수, sign 포함), channel_llr(채널 LLR magnitude,
-  전 dv 공통), max_iter, mode(기본 HD)로 매트릭스를 내부 합성하며, llr_matrix
-  키는 있어도 무시된다 (플래그만 바꿔 토글 가능)
+  false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
+  파일을 로드**해 디코딩한다 — `internal_quantize`의 num_bits(메시지 양자화
+  bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter,
+  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 있어도 무시된다 (플래그만
+  바꿔 토글 가능). 생성 파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**
+  (예: LLR_MATRIX_HD_uniform_6bit_ch8_iter120.txt)
 - ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널·포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
