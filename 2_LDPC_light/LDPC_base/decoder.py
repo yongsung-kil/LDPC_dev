@@ -38,26 +38,11 @@ syndrome-aided flip/magnitude 도메인 (모든 메시지가 초기 read bit 기
 
 논문 아이디어 교체 지점 (교체 단위 = 원본 C++ 함수 경계):
 "교체 지점"이란 본체가 특정 단계를 별도 함수로 분리해 둬서, 아이디어 버전이
-그 함수만 갈아끼울 수 있게 만든 자리다.
-아이디어는 이 클래스를 상속한 자식 클래스에서 아래 교체용 함수만 재정의한다
-(재정의 = 부모 클래스의 함수를 자식 클래스에서 다른 내용으로 바꿔 채우는 것.
-Ideas/{논문}/decoder.py에 작성, Ideas/registry.py에 등록 → config decoder.type으로 선택).
-교체 지점에 안 들어맞는 근본적 변경은 decoder_main 전체 재정의를 허용한다.
-
-| 교체용 함수 | C++ 대응 | 커버 논문 유형 |
-|-------------|----------|---------------|
-| _c2v_reconstruct | C2V_Cal | min-sum 변형 (offset/normalized/adjusted), C2V 보정 |
-| _vnu_quantize | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계 |
-| _vn_decide | VN_Cal_HD 판정부 | 판정 규칙 |
-| _cnu_update | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
-| _column_order | 메인 루프 스케줄 | layered / informed dynamic scheduling |
-| _is_edge_clear_iter | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
-| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | LLRMatrix.row_index() (LLRMatrix 자식 클래스로 커버) |
-
-damping과 진동 억제처럼 직전 iteration 값이나 이력이 필요한 아이디어는 교체용
-함수가 iteration 이력을 받지 않으므로 decoder_main 전체 재정의로 구현한다.
-등록 디코더의 생성자는 decoder_class(code, llr_matrix=...) 형태를 유지한다
-(run.py setup이 이렇게 호출).
+그 함수만 갈아끼울 수 있게 만든 자리다. 교체용 함수 6개(_c2v_reconstruct,
+_vnu_quantize, _vn_decide, _cnu_update, _column_order, _is_edge_clear_iter)는
+각 함수 docstring의 [교체 지점] 표지에 C++ 대응 함수가 적혀 있다.
+새 논문을 붙이는 절차, 교체용 함수 표, 상속 경계 규칙의 정본은
+docs/새논문적용규칙.md다.
 """
 import numpy as np
 

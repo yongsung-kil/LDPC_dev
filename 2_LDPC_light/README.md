@@ -16,7 +16,7 @@
 | `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
 | `config.json` | 실험 설정 (아래 스키마 참조) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
-| `docs/` | 차이.md(original 대비 로직 차이), review/(리뷰 기록) |
+| `docs/` | 새논문적용규칙.md(논문 적용 절차 정본), 차이.md(original 대비 로직 차이), review/(리뷰 기록) |
 
 ## 실행 방법
 
@@ -137,32 +137,9 @@ Sim_Output/260807_133321_fixed_error/
 
 ## 논문 아이디어 구조
 
-**교체 단위 = 원본 C++ 함수 경계.** "교체 지점"이란 본체가 특정 단계를 일부러
-별도 함수로 분리해 둬서 아이디어 버전이 그 함수만 갈아끼울 수 있게 만든 자리다.
-아이디어는 `LDPC_base`를 고치지 않고 `BaseDecoder`(엔진 + 원본 C++ 대응 기준
-구현)를 상속한 자식 클래스에서 교체용 함수만 재정의한다(재정의 = 부모 클래스의
-함수를 자식 클래스에서 다른 내용으로 바꿔 채우는 것). 스크리닝에서 살아남은
-아이디어는 교체용 함수의 C++ 대응 함수가 곧 실물 이식 지점이 된다.
-
-가져오는 것과 새로 만드는 것의 경계:
-
-- 1. 기본은 전부 상속이다. 아무것도 재정의하지 않으면 vanilla와 같은 동작이다.
-     엔진(배치 처리, genie 판정, 로그, CN 상태 관리)은 실험 인프라라 새로 만들 이유가 없다
-- 2. 논문이 바꾸는 단계가 교체용 함수 6개 중 하나에 해당하면 **그 함수만** 재정의한다
-- 3. 교체 지점에 안 맞는 근본적 변경(직전 iteration 값이 필요한 damping, 진동 억제 등)은
-     `decoder_main` 전체를 재정의한다 (엔진 부품은 골라 재사용 가능)
-
-| 교체용 함수 | C++ 대응 | 커버 논문 유형 |
-|-------------|----------|---------------|
-| `_c2v_reconstruct` | C2V_Cal | min-sum 변형 (offset/normalized/adjusted), C2V 보정 |
-| `_vnu_quantize` | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계 |
-| `_vn_decide` | VN_Cal_HD 판정부 | 판정 규칙 |
-| `_cnu_update` | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
-| `_column_order` | 메인 루프 스케줄 | layered / informed dynamic scheduling |
-| `_is_edge_clear_iter` | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
-| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | `LLRMatrix.row_index()` (LLRMatrix 자식 클래스로 커버) |
-
-등록 디코더는 생성자를 `(code, llr_matrix=...)` 형태로 유지한다.
+아이디어는 `LDPC_base`를 고치지 않고 `BaseDecoder`를 상속한 자식 클래스에서
+교체용 함수만 재정의한다. **새 논문을 붙이는 절차, 교체용 함수 표, 상속 경계
+규칙의 정본은 [docs/새논문적용규칙.md](docs/새논문적용규칙.md)다.**
 
 ```
 Ideas/
@@ -171,10 +148,6 @@ Ideas/
     ├── config.json / README.md
     └── Sim_Output/   ← 이 실험의 결과
 ```
-
-- ㉮ config `decoder.type`으로 디코더 선택 (기본 "vanilla")
-- ㉯ on/off 비교는 같은 seed로 vanilla config와 아이디어 config를 각각 실행
-- ㉰ 새 아이디어 추가 절차는 `Ideas/vanilla/README.md` 참조
 
 ## 채널 모델: original 대응 3종
 
