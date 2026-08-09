@@ -50,8 +50,8 @@ _NAME_RE = re.compile(r"LLR_MATRIX_(HD|2SD|3SD)_", re.IGNORECASE)
 def uniform_edge_mag(top_level):
     """균일 양자화 VNU 출력 레벨 [top_level, ..., 2, 1, 1]. 최소 레벨은 1이다.
     C++는 C2V 메시지 크기 0을 두지 않으므로(C2V_Cal이 최소 크기를 EDGE_MAG_1=1로
-    복원, decoder.cpp:2405) 같은 방향으로 맞춘 포화형이고, 마지막 두 항이 모두
-    1인 것은 레벨 개수가 th 개수 + 1이어야 한다는 제약 때문이다.
+    복원, decoder.cpp:2405) 같은 방향으로 하한을 1로 막은 구성이고, 마지막 두 항이
+    모두 1인 것은 레벨 개수가 th 개수 + 1이어야 한다는 제약 때문이다.
     소비 결과는 크기 = max(min(|raw|, top_level), 1)."""
     return list(range(int(top_level), 0, -1)) + [1]
 
@@ -131,7 +131,7 @@ class LLRMatrix:
                     f"{self.name}: iteration {covered_end + 1}~{max(iter_start, 1) - 1}을 "
                     f"덮는 그룹 없음")
             covered_end = iter_end
-            # ITER 타입 다중 row 그룹은 내부 row 구간도 같은 규칙(겹침·빈틈 금지)으로
+            # ITER 타입 다중 row 그룹은 내부 row 구간도 같은 규칙(겹침과 빈틈 금지)으로
             # 연속이어야 한다 (어기면 row_index()가 시뮬 도중에야 실패한다)
             if self.group_type[group_idx] == GROUP_TYPE_ITER and row_end - row_start > 1:
                 prev_end = iter_start - 1

@@ -7,7 +7,7 @@ check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_csw ↔ prev_CSW 등).
 진입 함수는 decoder_main(). 단계별 구성:
     decoder_main()             ← 흐름만: 아래를 순서대로 호출
     ├── _read_channel_input()  ← 채널 출력 해석 → read_bit
-    ├── _init_state()          ← syndrome 계산, CN 상태·결과 버퍼 초기화
+    ├── _init_state()          ← syndrome 계산, CN 상태와 결과 버퍼 초기화
     ├── _run_iteration()       ← 한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW
     │   └── _process_column()  ← 한 column: C2V 합산 → 판정 → VNU 갱신 (교체용 함수 호출)
     ├── _record_iteration()    ← 로그 집계 + 프레임별 최종 상태 갱신
@@ -56,7 +56,8 @@ Ideas/{논문}/decoder.py에 작성, Ideas/registry.py에 등록 → config deco
 
 damping과 진동 억제처럼 직전 iteration 값이나 이력이 필요한 아이디어는 교체용
 함수가 iteration 이력을 받지 않으므로 decoder_main 전체 재정의로 구현한다.
-등록 디코더의 생성자 계약: decoder_class(code, llr_matrix=...) (run.py setup이 이 형태로 호출).
+등록 디코더의 생성자는 decoder_class(code, llr_matrix=...) 형태를 유지한다
+(run.py setup이 이렇게 호출).
 """
 import numpy as np
 
@@ -184,10 +185,11 @@ class MinSumDecoder:
 
     def _cnu_update(self, edge, edge_clear, new_sgn, new_mag, row_blk,
                     min1, min2, min1_pos, check_sum, edge_sgn):
-        """[교체 지점: CNU_Remove_Old_Sgn / CNU_Update_New_Mag 대응] CN 상태 갱신 (in-place).
-        remove old(Edge Clear iteration은 생략) 후 insert new: <= 비교,
-        min1 교체 시 min2=RESET (기존 min1을 min2로 내리지 않는 HW 특성, 원문 그대로).
-        재정의할 때도 받은 배열을 in-place로 갱신해야 한다 (반환값은 쓰이지 않는다)."""
+        """[교체 지점: CNU_Remove_Old_Sgn / CNU_Update_New_Mag 대응] CN 상태 갱신
+        (받은 배열을 제자리에서 직접 고침). remove old(Edge Clear iteration은 생략) 후
+        insert new: <= 비교, min1 교체 시 min2=RESET (기존 min1을 min2로 내리지 않는
+        HW 특성, 원문 그대로). 재정의할 때도 받은 배열을 제자리에서 직접 고쳐야 한다
+        (반환값은 쓰이지 않는다)."""
         RESET = np.float32(self._edge_mag[0])
         cur_min1 = min1[:, row_blk, :]
         cur_min2 = min2[:, row_blk, :]
@@ -221,7 +223,7 @@ class MinSumDecoder:
         return read_bit
 
     def _init_state(self, read_bit, log):
-        """syndrome 계산(C++ iteration 0 Pre-update 등가) + CN 상태·결과 버퍼 초기화."""
+        """syndrome 계산(C++ iteration 0 Pre-update 등가) + CN 상태와 결과 버퍼 초기화."""
         code = self.code
         B, _, z = read_bit.shape
         M_b, num_edges = code.M_b, code.E
@@ -277,7 +279,7 @@ class MinSumDecoder:
         for col in self._column_order(iteration):
             self._process_column(state, iteration, col)
 
-        # 에러 집계는 판정비트 배열 전체를 훑는다 (C++의 cwc[] 전 배열 스윕과 동일 구조).
+        # 에러 집계는 판정비트 배열 전체를 훑는다 (C++의 cwc[] 전 배열 검사와 동일 구조).
         # column 루프 안에서 세지 않으므로 _column_order가 일부 column만 방문해도
         # 미방문 column의 에러가 집계에 남는다 (성공 오판정 방지)
         state.frame_err = state.decision_bits.any(axis=(-2, -1))
@@ -292,7 +294,7 @@ class MinSumDecoder:
         state.prev_csw = (state.check_sum ^ state.syndrome).sum(axis=(-2, -1)).astype(np.int64)  # Compute_CSW
 
     def _process_column(self, state, iteration, col):
-        """한 column: C2V 합산(sum_t) → 판정비트 갱신 → VNU 출력·CN 갱신."""
+        """한 column: C2V 합산(sum_t) → 판정비트 갱신 → VNU 출력과 CN 갱신."""
         code = self.code
         edges = code.col_edges[col]
         edge_row, edge_shift = code.edge_row, code.edge_shift

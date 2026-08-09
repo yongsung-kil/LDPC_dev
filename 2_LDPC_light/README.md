@@ -95,7 +95,7 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
   파일명이 아니라 th 값 패턴([n..1]이면 균일)으로 한다
 - ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
-- ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널·포인트별 스트림은
+- ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
 - ㉱ `channels`: 채널 **리스트**. 항목 1개만으로도 실행 가능하며 순서대로 전부 실행.
   항목 키: `type`(rber/fixed_error/strong_error), `points`(스칼라 허용),
@@ -156,7 +156,7 @@ Sim_Output/260807_133321_fixed_error/
 
 damping과 진동 억제처럼 직전 iteration 값이 필요한 아이디어는 교체용 함수가
 이력을 받지 않으므로 `decoder_main` 전체 재정의로 구현한다. 등록 디코더는
-생성자 `(code, llr_matrix=...)` 계약을 지킨다.
+생성자를 `(code, llr_matrix=...)` 형태로 유지한다.
 
 ```
 Ideas/
@@ -177,9 +177,9 @@ dict {"mode", "hd", "sd", "cc"}.
 
 | 채널 | original 대응 | 지원 모드 | points 의미 |
 |------|---------------|----------|-------------|
-| rber | MODE_CH_RBER. RBER를 역Q함수로 AWGN σ 환산(dev_from_RBER), BPSK+노이즈, HD=부호, 2SD/3SD는 \|2y/σ²\|를 LLR_th=2·r_offset/σ²와 비교 (r_offset: 2SD 0.35 / 3SD 0.15·0.35·0.55) | HD, 2SD, 3SD | RBER 값 |
+| rber | MODE_CH_RBER. RBER를 역Q함수로 AWGN σ 환산(dev_from_RBER), BPSK+노이즈, HD=부호, 2SD/3SD는 \|2y/σ²\|를 LLR_th=2·r_offset/σ²와 비교 (r_offset: 2SD 0.35 / 3SD 0.15, 0.35, 0.55) | HD, 2SD, 3SD | RBER 값 |
 | fixed_error | MODE_CH_FIXED_ERROR. 프레임마다 정확히 E개 무작위 bit flip | HD | E (에러 bit 수) |
-| strong_error | MODE_CH_STRONG_ERROR. E 중 round(E·SER)개는 strong(sd=1) 에러·나머지 weak, 정정 bit 중 round(C·SCR)개만 strong·나머지 weak | 2SD | E (에러 bit 수) |
+| strong_error | MODE_CH_STRONG_ERROR. E 중 round(E·SER)개는 strong(sd=1) 에러이고 나머지는 weak, 정정 bit 중 round(C·SCR)개만 strong이고 나머지는 weak | 2SD | E (에러 bit 수) |
 
 - 2SD/3SD는 채널 출력까지만 준비했고, 디코더가 HD 전용이라 현재 실행 불가 (TODO)
 - 난수는 original XOR25 대신 numpy Generator
@@ -198,7 +198,7 @@ dict {"mode", "hd", "sd", "cc"}.
 - 2SD/3SD 디코딩 미구현 (채널 출력까지만)
 - 파이프라인 store 지연(2~3 col) 미재현 (restart 흔들기 전파가 원본과 다소 다를 수 있음)
 - BF(1-bit precision) 구간 미구현 (vanilla, BF off 전제)
-- 실물 H-matrix·LLR_MATRIX 실값 미반입 (토이 예시 사용 중)
+- 실물 H-matrix와 LLR_MATRIX 실값 미반입 (토이 예시 사용 중)
 - `encoder.encode()`는 실제 인코딩 없이 all-zero 반환하는 임시 함수
 
 ## 확정 결정 기록

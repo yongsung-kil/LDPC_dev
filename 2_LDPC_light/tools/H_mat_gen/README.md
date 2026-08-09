@@ -7,7 +7,7 @@ H-matrix 설계 관련 도구를 이 폴더에 모은다 (사용자 지시 2026-
 | `peg.py` | PEG(Progressive Edge Growth)로 base graph 생성 |
 | `lifting.py` | greedy circulant shift 배정 (4-cycle 회피) |
 | `gen_example_code.py` | 위 둘을 조립해 dual-diagonal parity QC-LDPC 예시 부호 생성 (Ref-C 포맷 저장) |
-| `select_irregular.py` | irregular 후보를 여러 seed로 생성 → FER 스크리닝 → 승자 선별·저장 (부호 설계 실험용) |
+| `select_irregular.py` | irregular 후보를 여러 seed로 생성 → FER 스크리닝 → 승자 선별과 저장 (부호 설계 실험용) |
 
 - ㉮ 실행 예 (repo 루트에서):
   `python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]`

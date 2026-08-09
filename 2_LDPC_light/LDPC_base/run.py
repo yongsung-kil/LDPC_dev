@@ -26,7 +26,7 @@ JSON 구조:
     {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
     magnitude(전 dv 공통), "max_iter": 최대 iteration(파일 생성에 쓰인다),
     "mode": "HD"(기본)}
-  seed: 실험 전체 난수 seed 하나 (기본 0). 채널·포인트별 난수 스트림은 여기서 파생
+  seed: 실험 전체 난수 seed 하나 (기본 0). 채널과 포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
   run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료 (기본 50)
