@@ -1,15 +1,15 @@
 """JSON 설정 기반 실험 진입점 (파라미터와 코드를 분리).
 
 main()은 4단계로 구성된다:
-  1. load_config    — JSON 파라미터 읽기 + 검증 (키맵, 필수값, 값 제약)
-  2. setup          — H-matrix 로드, LLR matrix 로드, 디코더 구성
-  3. run_experiment — msg 생성 -> encode(임시: all-zero 반환) -> channel -> decode 반복
-  4. report         — 실행 폴더 생성 + 요약/CSV/로그/그림 저장
+  1. load_config:    JSON 파라미터 읽기 + 검증 (키맵, 필수값, 값 제약)
+  2. setup:          H-matrix 로드, LLR matrix 로드, 디코더 구성
+  3. run_experiment: msg 생성 -> encode(임시: all-zero 반환) -> channel -> decode 반복
+  4. report:         실행 폴더 생성 + 요약/CSV/로그/그림 저장
 
 실행: 2_LDPC_light/에서 python -m LDPC_base.run config.json
 
 JSON 구조:
-  H_matrix: {"dir": 폴더, "file": 파일명} — 폴더와 파일명 분리 (Ref-C 포맷,
+  H_matrix: {"dir": 폴더, "file": 파일명}으로 폴더와 파일명 분리 (Ref-C 포맷,
     폴더는 Input/H_matrix 고정 운용)
   decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
   decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
@@ -19,26 +19,26 @@ JSON 구조:
     LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_dv{dv_max}_iter{max_iter}.txt
     로 저장된다 (파일명의 uniform은 사람이 만든 파일이 아니라는 표시.
     레벨 구성 인식은 파일명이 아니라 th 값 패턴으로 한다)
-  decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX
+  decoder.llr_matrix: {"dir": 폴더, "file": 파일명}. DAO LLR_MATRIX
     (use_input_llr_matrix=true일 때 필수).
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
-  decoder.internal_quantize: use_input_llr_matrix=false일 때 필수 —
+  decoder.internal_quantize: use_input_llr_matrix=false일 때 필수.
     {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
     magnitude(전 dv 공통), "max_iter": 최대 iteration(파일 생성에 쓰인다),
     "mode": "HD"(기본)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널·포인트별 난수 스트림은 여기서 파생
-  channels: 채널 리스트 — 각 항목 {"type": rber|fixed_error|strong_error,
+  channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
   run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료
   run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
     통계 결과는 프레임 수가 충분하면 같고, 같은 seed 수치 재현에는 이 값까지 같아야 한다
   run.stop_below_fer: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (선택)
   run.print_progress: 진행 상황 콘솔 출력 여부 (기본 true)
-  log: 분석 로그 선택 (전부 선택, 기본 꺼짐 — 켜면 속도 비용):
-    csw_per_iter / bit_err_per_iter / bit_err_by_dv — iteration별 집계 CSV
-    iter_histogram / fer_vs_iter — 수렴 iteration 분포와 "max_iter를 k로 줄였다면"의 FER
-    fail_frame_detail — 실패 프레임별 잔여 에러·최종 CSW·dv별 분해
-    fer_curve_png — FER 커브 그림 저장
+  log: 분석 로그 선택 (전부 선택, 기본 꺼짐이고 켜면 속도 비용):
+    csw_per_iter / bit_err_per_iter / bit_err_by_dv: iteration별 집계 CSV
+    iter_histogram / fer_vs_iter: 수렴 iteration 분포와 "max_iter를 k로 줄였다면"의 FER
+    fail_frame_detail: 실패 프레임별 잔여 에러, 최종 CSW, dv별 분해
+    fer_curve_png: FER 커브 그림 저장
   output.dir 하위에 실행마다 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 결과 일체
   (config 사본, summary.txt, 사용한 LLR matrix 사본, CSV, 로그)를 저장한다.
   라벨은 output.label (없으면 첫 채널 type)
@@ -92,21 +92,21 @@ def _check_keys(section, d, allowed):
     unknown_keys = _visible(d) - allowed
     if unknown_keys:
         raise ValueError(
-            f"config [{section}]에 알 수 없는 키 {sorted(unknown_keys)} — "
-            f"허용 키: {sorted(allowed)}")
+            f"config [{section}]에 알 수 없는 키 {sorted(unknown_keys)} "
+            f"(허용 키: {sorted(allowed)})")
 
 
 def _require(section, d, key):
     if key not in d or d[key] is None:
-        raise ValueError(f"config [{section}] {key} 없음 또는 null — 필수 값")
+        raise ValueError(f"config [{section}] {key} 없음 또는 null (필수 값)")
     return d[key]
 
 
 def _check_int(section, key, value, min_value):
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"config [{section}] {key}={value!r} — 정수여야 함")
+        raise ValueError(f"config [{section}] {key}={value!r}: 정수여야 함")
     if value < min_value:
-        raise ValueError(f"config [{section}] {key}={value} — {min_value} 이상이어야 함")
+        raise ValueError(f"config [{section}] {key}={value}: {min_value} 이상이어야 함")
     return value
 
 
@@ -115,7 +115,7 @@ def _path_pair(section, d, base_dir):
     상대경로는 config 파일 위치 기준."""
     if not isinstance(d, dict):
         raise ValueError(
-            f'config [{section}] — {{"dir": 폴더, "file": 파일명}} 객체여야 함 (현재 {d!r})')
+            f'config [{section}]: {{"dir": 폴더, "file": 파일명}} 객체여야 함 (현재 {d!r})')
     _check_keys(section, d, {"dir", "file"})
     path = os.path.join(_require(section, d, "dir"), _require(section, d, "file"))
     return path if os.path.isabs(path) else os.path.join(base_dir, path)
@@ -126,11 +126,11 @@ def _check_channel(index, channel_config):
     포인트 값 제약 (rber: 0<p<0.5 실수, 그 외: 0 이상 정수)."""
     section = f"channels[{index}]"
     if not isinstance(channel_config, dict):
-        raise ValueError(f"config [{section}] — 객체여야 함")
+        raise ValueError(f"config [{section}]: 객체여야 함")
     channel_type = _require(section, channel_config, "type")
     if channel_type not in chan.CHANNELS:
         raise ValueError(
-            f"config [{section}] type={channel_type!r} — "
+            f"config [{section}] type={channel_type!r}: "
             f"{sorted(chan.CHANNELS)} 중 하나여야 함")
     _check_keys(section, channel_config, _CHANNEL_KEYS[channel_type])
     points = _require(section, channel_config, "points")
@@ -138,27 +138,27 @@ def _check_channel(index, channel_config):
         points = [points]
         channel_config["points"] = points
     if not points or any(p is None for p in points):
-        raise ValueError(f"config [{section}] points — 비어 있지 않아야 하고 null 불가")
+        raise ValueError(f"config [{section}] points: 비어 있지 않아야 하고 null 불가")
     for point in points:
         if channel_type == "rber":
             if (isinstance(point, bool) or not isinstance(point, (int, float))
                     or not 0.0 < point < 0.5):
                 raise ValueError(
-                    f"config [{section}] points의 {point!r} — RBER는 0 < p < 0.5 실수여야 함")
+                    f"config [{section}] points의 {point!r}: RBER는 0 < p < 0.5 실수여야 함")
         else:
             if isinstance(point, bool) or not isinstance(point, int) or point < 0:
                 raise ValueError(
-                    f"config [{section}] points의 {point!r} — 에러 비트 수는 0 이상 정수여야 함")
+                    f"config [{section}] points의 {point!r}: 에러 비트 수는 0 이상 정수여야 함")
     if channel_type == "strong_error":
         for key in ("SER", "SCR"):
             value = _require(section, channel_config, key)
             if (isinstance(value, bool) or not isinstance(value, (int, float))
                     or not 0.0 <= value <= 1.0):
-                raise ValueError(f"config [{section}] {key}={value!r} — 0~1 범위 수여야 함")
+                raise ValueError(f"config [{section}] {key}={value!r}: 0~1 범위 수여야 함")
 
 
 def load_config(path):
-    """실험 파라미터 JSON 로드 + 검증 (키맵/필수값/값 제약 — 모듈 docstring 참조).
+    """실험 파라미터 JSON 로드 + 검증 (키맵/필수값/값 제약은 모듈 docstring 참조).
     상대경로는 config 파일 위치 기준으로 해석. channels[].points는 스칼라도
     허용하며 리스트로 정규화한다."""
     with open(path, encoding="utf-8") as f:
@@ -172,7 +172,7 @@ def load_config(path):
 
     for section in ("decoder", "run", "output", "log"):  # 섹션이 null이면 여기서 지목
         if section in config and not isinstance(config[section], dict):
-            raise ValueError(f"config [{section}] — 객체여야 함 (현재 {config[section]!r})")
+            raise ValueError(f"config [{section}]: 객체여야 함 (현재 {config[section]!r})")
 
     config["H_matrix"] = _path_pair("H_matrix", _require("최상위", config, "H_matrix"),
                                     base_dir)
@@ -180,20 +180,20 @@ def load_config(path):
     decoder_config = config.setdefault("decoder", {})
     if "max_iter" in decoder_config:
         raise ValueError(
-            "decoder.max_iter는 JSON에 두지 않는다 — LLR matrix 파일(또는 "
-            "internal_quantize.max_iter)이 결정")
+            "decoder.max_iter는 LLR matrix 파일(또는 internal_quantize.max_iter)이 "
+            "결정하므로 JSON에 두지 않는다")
     _check_keys("decoder", decoder_config, _DECODER_KEYS)
     use_input_llr_matrix = decoder_config.setdefault("use_input_llr_matrix", True)
     if not isinstance(use_input_llr_matrix, bool):
         raise ValueError(
-            f"config [decoder] use_input_llr_matrix={use_input_llr_matrix!r} — true/false여야 함")
+            f"config [decoder] use_input_llr_matrix={use_input_llr_matrix!r}: true/false여야 함")
     if use_input_llr_matrix:
         decoder_config["llr_matrix"] = _path_pair(
             "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
     else:
         internal_quantize = _require("decoder", decoder_config, "internal_quantize")
         if not isinstance(internal_quantize, dict):
-            raise ValueError("config [decoder.internal_quantize] — 객체여야 함")
+            raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
         _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
         num_bits = _check_int(
             "decoder.internal_quantize", "num_bits",
@@ -209,13 +209,13 @@ def load_config(path):
         mode = internal_quantize.setdefault("mode", "HD")
         if mode not in ("HD", "2SD", "3SD"):
             raise ValueError(
-                f"config [decoder.internal_quantize] mode={mode!r} — HD/2SD/3SD 중 하나여야 함")
+                f"config [decoder.internal_quantize] mode={mode!r}: HD/2SD/3SD 중 하나여야 함")
         # 생성 파일은 setup()이 output.dir 하위 _generated/에 저장한다
         # (파일명에 dv_max가 들어가므로 H-matrix 로드 후에야 확정된다)
     decoder_type = decoder_config.setdefault("type", "vanilla")
     if not isinstance(decoder_type, str) or not decoder_type:
         raise ValueError(
-            f"config [decoder] type={decoder_type!r} — 아이디어 이름 문자열이어야 함")
+            f"config [decoder] type={decoder_type!r}: 아이디어 이름 문자열이어야 함")
 
     config["seed"] = _check_int("최상위", "seed", config.get("seed", 0), 0)
 
@@ -239,20 +239,20 @@ def load_config(path):
                                        or not isinstance(stop_below_fer, (int, float))
                                        or stop_below_fer <= 0):
         raise ValueError(
-            f"config [run] stop_below_fer={stop_below_fer!r} — 0보다 큰 수 또는 null")
+            f"config [run] stop_below_fer={stop_below_fer!r}: 0보다 큰 수 또는 null")
 
     log_config = config.setdefault("log", {})
     _check_keys("log", log_config, _LOG_KEYS)
     for key in _visible(log_config):
         if not isinstance(log_config[key], bool):
-            raise ValueError(f"config [log] {key}={log_config[key]!r} — true/false여야 함")
+            raise ValueError(f"config [log] {key}={log_config[key]!r}: true/false여야 함")
 
     channels = _require("최상위", config, "channels")
     if isinstance(channels, dict):          # 단일 항목은 리스트로 정규화
         channels = [channels]
         config["channels"] = channels
     if not isinstance(channels, list) or not channels:
-        raise ValueError("config channels — 비어 있지 않은 리스트여야 함")
+        raise ValueError("config channels: 비어 있지 않은 리스트여야 함")
     for index, channel_config in enumerate(channels):
         _check_channel(index, channel_config)
     return config
@@ -271,11 +271,11 @@ def _resolve_decoder_class(decoder_type):
         if decoder_type == "vanilla":
             return MinSumDecoder
         raise ValueError(
-            f"decoder.type={decoder_type!r} — Ideas 패키지를 찾을 수 없음 "
+            f"decoder.type={decoder_type!r}: Ideas 패키지를 찾을 수 없음 "
             "(2_LDPC_light/에서 실행했는지 확인)")
     if decoder_type not in registry.DECODERS:
         raise ValueError(
-            f"decoder.type={decoder_type!r} — Ideas/registry.py 미등록 "
+            f"decoder.type={decoder_type!r}: Ideas/registry.py 미등록 "
             f"(등록된 이름: {sorted(registry.DECODERS)})")
     module_name, class_name = registry.DECODERS[decoder_type].split(":")
     return getattr(importlib.import_module(module_name), class_name)
@@ -349,7 +349,7 @@ def _check_channel_mode(decoder, channel_type):
     mode = decoder.llr_matrix.mode
     if mode not in chan.CHANNEL_MODES[channel_type]:
         raise ValueError(
-            f"channel {channel_type}은 {chan.CHANNEL_MODES[channel_type]} 전용 — "
+            f"channel {channel_type}은 {chan.CHANNEL_MODES[channel_type]} 전용인데 "
             f"현재 디코딩 모드 {mode} (LLR matrix 파일명 확인)")
     return mode
 
@@ -376,7 +376,7 @@ def run_experiment(code, decoder, config):
     """channels 리스트의 각 채널에 대해 각 포인트를 max_frame_errors 도달 또는
     max_frames 소진까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
 
-    난수: 최상위 seed 하나에서 [seed, 채널 인덱스, 포인트]로 스트림을 파생 —
+    난수: 최상위 seed 하나에서 [seed, 채널 인덱스, 포인트]로 스트림을 파생하므로
     포인트 간, 채널 간 독립이며 같은 seed면 재현된다."""
     run_config = config["run"]
     max_frame_errors = run_config.get("max_frame_errors", 50)

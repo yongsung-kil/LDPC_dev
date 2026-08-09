@@ -1,4 +1,4 @@
-# H_mat_gen — H-matrix 설계 툴 모음
+# H_mat_gen: H-matrix 설계 툴 모음
 
 H-matrix 설계 관련 도구를 이 폴더에 모은다 (사용자 지시 2026-08-07).
 
@@ -15,5 +15,5 @@ H-matrix 설계 관련 도구를 이 폴더에 모은다 (사용자 지시 2026-
 - ㉰ **주의**: `select_irregular.py`는 구 본체 API 기준이라 현재 실행 불가.
   새 구조(채널 dict, decoder_main, LLR matrix 필수)로 손질해야 실행된다
   (`_pm/TODO.md` 등록 항목)
-- ㉱ 이 도구들은 실험 실행 흐름(run.py)과 분리되어 있다 — 실행 흐름은 H-matrix를
+- ㉱ 이 도구들은 실험 실행 흐름(run.py)과 분리되어 있다. 실행 흐름은 H-matrix를
   생성하지 않고 파일로만 받는다 (사용자 결정 2026-08-05)

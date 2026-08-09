@@ -14,7 +14,7 @@
     "_desc": [
       "use_input_llr_matrix:",
       "true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
-      "  max_iter는 파일의 마지막 iter_end가 결정 — JSON에 두면 에러)",
+      "  max_iter는 파일의 마지막 iter_end가 결정하며 JSON에 두면 에러)",
       "false면 균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그 파일을",
       "  로드해 디코딩 (internal_quantize 사용, llr_matrix 키는 무시).",
       "  생성 위치: output.dir/_generated/, 파일명 LLR_MATRIX_{mode}_uniform_..._dv{max}_...",

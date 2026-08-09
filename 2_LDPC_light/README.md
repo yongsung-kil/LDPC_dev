@@ -1,7 +1,7 @@
-# 2_LDPC_light — 논문 아이디어 스크리닝용 경량 QC-LDPC 시뮬레이터
+# 2_LDPC_light: 논문 아이디어 스크리닝용 경량 QC-LDPC 시뮬레이터
 
 > 계획·결정 사항·제약: [docs/plan.md](docs/plan.md), original과의 로직 차이: [docs/차이.md](docs/차이.md)
-> **주의**: py는 아이디어 상대 비교(on/off) 전용 — C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
+> **주의**: py는 아이디어 상대 비교(on/off) 전용이라 C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
 > 유효 아이디어의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (plan.md §4).
 > 2026-08-07: `_test/20260806_setup_구성_실험/`의 개정본을 본체로 반영 (구 코드는 git 이력에 보존)
 
@@ -12,8 +12,8 @@
 | `LDPC_base/` | 코드: pcm, encoder, channel(원본 대응 3종), decoder(syndrome-aided + 논문 교체 지점), sim, run, llr_matrix |
 | `Ideas/` | 논문 아이디어 폴더 (아래 "논문 아이디어 구조" 절). vanilla = reference |
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). column block은 **DV 내림차순 배치** |
-| `Input/LLR/` | LLR 파일 보관 — **DAO LLR_MATRIX 형식만 사용** (LLR_MATRIX_HD_0.txt=restart 포함 토이, HD_1.txt=restart 없는 20-iter 테스트용) |
-| `Sim_Output/` | 실험 결과 출력 (git 무시 — 실행마다 타임스탬프 폴더 생성) |
+| `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (LLR_MATRIX_HD_0.txt=restart 포함 토이, HD_1.txt=restart 없는 20-iter 테스트용) |
+| `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
 | `config.json` | 실험 설정 (아래 스키마 참조) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
 | `docs/` | plan.md(계획·결정), 차이.md(original 대비 로직 차이), review/ |
@@ -84,7 +84,7 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 - ㉵ `output.save_llr_matrix`: 사용한 LLR matrix 파일 사본을 실행 폴더에 저장할지
   (기본 true). 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다
 - ㉶ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
-  `_`로 시작하는 키(예: `_desc`)는 **설명용으로 검사에서 무시** — JSON에 주석이 없어
+  `_`로 시작하는 키(예: `_desc`)는 **설명용으로 검사에서 무시**. JSON에 주석이 없어
   설명은 `_desc` 키로 단다 (문자열 배열 가능)
 
 ## 실행 폴더와 분석 로그
@@ -97,7 +97,7 @@ Sim_Output/260807_133321_fixed_error/
 ├── config.json                  ← 실행에 쓴 설정 사본 (재현성)
 ├── summary.txt                  ← 요약 + 코드 git 커밋 해시
 ├── LLR_MATRIX_*.txt             ← 사용한 LLR matrix 사본 (save_llr_matrix 시)
-├── fer_{라벨}.csv               ← FER 결과 (post_fec_ber 열 포함 — 항상)
+├── fer_{라벨}.csv               ← FER 결과 (post_fec_ber 열 포함, 항상)
 ├── fer_curves.png               ← FER 커브 (fer_curve_png 시)
 ├── log_iter_{라벨}_p{포인트}.csv      ← iteration별 CSW/bit error 평균 (dv별 분해 포함)
 ├── log_iter_hist_{라벨}_p{포인트}.csv ← 수렴 iteration 히스토그램 + fer_vs_iter
@@ -108,7 +108,7 @@ Sim_Output/260807_133321_fixed_error/
 - ㉯ `post_fec_ber`(복호 후 BER)는 로그와 무관하게 항상 FER CSV에 포함
 - ㉰ `fer_vs_iter`: 프레임별 성공 iteration 기록으로 "max_iter를 k로 줄였다면"의 FER를
   한 번의 실행에서 산출
-- ㉱ 후순위 로그 7종은 미구현 — `_pm/TODO.md` 참조
+- ㉱ 후순위 로그 7종은 미구현 (`_pm/TODO.md` 참조)
 
 ## 논문 아이디어 구조
 
@@ -127,7 +127,7 @@ Sim_Output/260807_133321_fixed_error/
 | `_cnu_update` | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
 | `_column_order` | 메인 루프 스케줄 | layered / informed dynamic scheduling |
 | `_is_edge_clear_iter` | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
-| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | `LLRMatrix.row_index()` — LLRMatrix 자식 클래스로 커버 |
+| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | `LLRMatrix.row_index()` (LLRMatrix 자식 클래스로 커버) |
 
 ```
 Ideas/
@@ -141,21 +141,21 @@ Ideas/
 - ㉯ on/off 비교는 같은 seed로 vanilla config와 아이디어 config를 각각 실행
 - ㉰ 새 아이디어 추가 절차는 `Ideas/vanilla/README.md` 참조
 
-## 채널 모델 — original 대응 3종
+## 채널 모델: original 대응 3종
 
 `LDPC_base/channel.py`. 출력은 original의 HD_input/SD_input/CC_input 대응
 dict {"mode", "hd", "sd", "cc"}.
 
 | 채널 | original 대응 | 지원 모드 | points 의미 |
 |------|---------------|----------|-------------|
-| rber | MODE_CH_RBER — RBER를 역Q함수로 AWGN σ 환산(dev_from_RBER), BPSK+노이즈, HD=부호, 2SD/3SD는 \|2y/σ²\|를 LLR_th=2·r_offset/σ²와 비교 (r_offset: 2SD 0.35 / 3SD 0.15·0.35·0.55) | HD, 2SD, 3SD | RBER 값 |
-| fixed_error | MODE_CH_FIXED_ERROR — 프레임마다 정확히 E개 무작위 bit flip | HD | E (에러 bit 수) |
-| strong_error | MODE_CH_STRONG_ERROR — E 중 round(E·SER)개는 strong(sd=1) 에러·나머지 weak, 정정 bit 중 round(C·SCR)개만 strong·나머지 weak | 2SD | E (에러 bit 수) |
+| rber | MODE_CH_RBER. RBER를 역Q함수로 AWGN σ 환산(dev_from_RBER), BPSK+노이즈, HD=부호, 2SD/3SD는 \|2y/σ²\|를 LLR_th=2·r_offset/σ²와 비교 (r_offset: 2SD 0.35 / 3SD 0.15·0.35·0.55) | HD, 2SD, 3SD | RBER 값 |
+| fixed_error | MODE_CH_FIXED_ERROR. 프레임마다 정확히 E개 무작위 bit flip | HD | E (에러 bit 수) |
+| strong_error | MODE_CH_STRONG_ERROR. E 중 round(E·SER)개는 strong(sd=1) 에러·나머지 weak, 정정 bit 중 round(C·SCR)개만 strong·나머지 weak | 2SD | E (에러 bit 수) |
 
-- 2SD/3SD는 채널 출력까지만 준비 — 디코더가 HD 전용이라 현재 실행 불가 (TODO)
+- 2SD/3SD는 채널 출력까지만 준비했고, 디코더가 HD 전용이라 현재 실행 불가 (TODO)
 - 난수는 original XOR25 대신 numpy Generator
 
-## DAO LLR_MATRIX — syndrome-aided decoding
+## DAO LLR_MATRIX: syndrome-aided decoding
 
 `LDPC_base/llr_matrix.py`가 DAO(decoder auto optimizer)의 LLR_MATRIX 텍스트 포맷을
 읽고, `LDPC_base/decoder.py`의 `decoder_main()`이 **원본 C++의 flip/magnitude
@@ -167,7 +167,7 @@ dict {"mode", "hd", "sd", "cc"}.
 - 사람이 만든 LLR matrix 파일은 3-bit(VNU 출력 레벨 {7,5,3,1}) 전용.
   균일 생성물(파일명 uniform)은 n-bit 레벨을 지원한다 (레벨 수는 edge_mag가 결정)
 - 2SD/3SD 디코딩 미구현 (채널 출력까지만)
-- 파이프라인 store 지연(2~3 col) 미재현 — restart 흔들기 전파가 원본과 다소 다를 수 있음
+- 파이프라인 store 지연(2~3 col) 미재현 (restart 흔들기 전파가 원본과 다소 다를 수 있음)
 - BF(1-bit precision) 구간 미구현 (vanilla, BF off 전제)
 - 실물 H-matrix·LLR_MATRIX 실값 미반입 (토이 예시 사용 중)
 - `encoder.encode()`는 실제 인코딩 없이 all-zero 반환하는 임시 함수

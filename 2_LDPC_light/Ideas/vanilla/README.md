@@ -1,4 +1,4 @@
-# vanilla — 원본 대응 reference
+# vanilla: 원본 대응 reference
 
 ## 무엇인가
 
@@ -31,6 +31,6 @@ python -m LDPC_base.run Ideas/vanilla/config.json
 
 ## 주의
 
-- LDPC_base(정본)에는 아이디어 코드를 넣지 않는다 — 베이스 개선은 모든 아이디어에
-  자동 전파되어야 하므로
+- 베이스 개선이 모든 아이디어에 자동 전파되어야 하므로, LDPC_base(정본)에는
+  아이디어 코드를 넣지 않는다
 - 이 vanilla 폴더의 decoder.py도 비워 둔 채(재정의 없음) 유지한다

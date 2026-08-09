@@ -9,7 +9,7 @@ dual-diagonal parity(M=17)가 dv2×16(bidiagonal) + dv3×1(anchor)을 공급하�
 실행: python -m 2_LDPC_light.tools.H_mat_gen.select_irregular
 출력: 이 폴더의 out/ 하위 (irregular_17x144_z256.qc, select_irregular.csv)
 
-주의 (2026-08-07): 이 스크립트는 구 본체 API 기준이라 **현재 실행 불가** — 새 구조
+주의 (2026-08-07): 이 스크립트는 구 본체 API 기준이라 **현재 실행 불가**. 새 구조
 (채널 dict, decoder_main, LLR matrix 필수)로 손질 필요 (TODO 등록됨). import만
 LDPC_base로 돌려놓은 상태다.
 """

@@ -1,4 +1,4 @@
-"""QC lifting — base graph의 각 edge에 circulant shift 부여.
+"""QC lifting: base graph의 각 edge에 circulant shift 부여.
 
 4-cycle 조건: base 4-cycle (i1,j1)-(i1,j2)-(i2,j2)-(i2,j1)에서
   s(i1,j1) - s(i2,j1) + s(i2,j2) - s(i1,j2) ≡ 0 (mod z) 이면 lifted 4-cycle 발생.

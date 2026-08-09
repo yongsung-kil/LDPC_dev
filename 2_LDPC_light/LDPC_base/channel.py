@@ -1,4 +1,4 @@
-"""채널 모델 — original C++ 대응 3종 (2026-08-06 사용자 지시).
+"""채널 모델: original C++ 대응 3종 (2026-08-06 사용자 지시).
 
 | 채널 | original 대응 | 지원 모드 |
 |------|---------------|----------|
@@ -6,7 +6,7 @@
 | fixed_error | MODE_CH_FIXED_ERROR (Make_Dec_Input_Ref_C_Fixed_4KB) | HD |
 | strong_error | MODE_CH_STRONG_ERROR (동 함수) | 2SD |
 
-출력: dict {"mode", "hd", "sd", "cc"} — original의 HD_input/SD_input/CC_input 대응.
+출력: dict {"mode", "hd", "sd", "cc"} (original의 HD_input/SD_input/CC_input 대응).
   hd (B, N_b, z) uint8: read bit. sd: 2SD/3SD strong 플래그. cc: 3SD very 플래그.
   (3SD region: sd=1,cc=1 very strong / 1,0 normal strong / 0,0 normal weak / 0,1 very weak)
 
@@ -22,7 +22,7 @@ _R_OFFSET = {"HD": (), "2SD": (0.35,), "3SD": (0.15, 0.35, 0.55)}
 
 
 def qfunc_inv(p):
-    """역 Q-function — channel.cpp qfunc_inv 계수 그대로 (근사식 동일 유지)."""
+    """역 Q-function. channel.cpp qfunc_inv 계수 그대로 (근사식 동일 유지)."""
     c = (-7.784894002430293e-03, -3.223964580411365e-01,
          -2.400758277161838e+00, -2.549732539343734e+00,
          4.374664141464968e+00, 2.938163982698783e+00)
@@ -71,7 +71,7 @@ def rber_channel(code, cw, rber, random_generator, mode="HD"):
 def _rand_positions(random_generator, batch, N, k):
     """프레임별 무작위 k개 위치 (비복원). 뽑힌 k개의 집합만 균일하고 내부 순서는
     무작위가 아니므로, fixed_error처럼 집합 전체를 같은 방식으로 쓰는 경우 전용
-    (구간 슬라이스로 나눠 쓰면 안 됨 — 리뷰 F1)."""
+    (구간 슬라이스로 나눠 쓰면 안 됨, 리뷰 F1)."""
     return np.argpartition(random_generator.random((batch, N)), max(k - 1, 0), axis=1)[:, :k]
 
 
@@ -96,11 +96,11 @@ def strong_error_channel(code, cw, n_err, random_generator, scr, ser, mode="2SD"
       나머지 에러 (E−e2)개와 정정 c1=(N−E−c2)개는 weak(sd=0)
 
     2단계 추출 (사용자 확정 2026-08-07, 리뷰 F1 후속):
-      ① N개 중 에러 위치 E개 추출 — 집합만 쓰므로 argpartition의 집합 균일성으로 충분
-      ② strong/weak 배정 — 에러 E개는 행별 독립 셔플(random_generator.permuted) 뒤 앞 e2개를
+      ① N개 중 에러 위치 E개 추출: 집합만 쓰므로 argpartition의 집합 균일성으로 충분
+      ② strong/weak 배정: 에러 E개는 행별 독립 셔플(random_generator.permuted) 뒤 앞 e2개를
          strong으로, 정정 (N−E)개는 같은 난수의 여집합 순위 하위 c1개를 weak으로
     원본(Make_Dec_Input_Ref_C_Fixed_4KB: rand_sel_ep 부분 Fisher-Yates + 구간
-    슬라이스)과 통계적으로 등가 — 균일 순열의 앞 k개는 균일 부분집합과 분포가 같다."""
+    슬라이스)과 통계적으로 등가다. 균일 순열의 앞 k개는 균일 부분집합과 분포가 같다."""
     if mode != "2SD":
         raise ValueError("strong_error 채널은 2SD 전용")
     if not (0.0 <= ser <= 1.0) or not (0.0 <= scr <= 1.0):
@@ -128,7 +128,7 @@ def strong_error_channel(code, cw, n_err, random_generator, scr, ser, mode="2SD"
     #    (여집합 내 균일)
     if c1 > 0:
         rand_masked = rand_vals.copy()
-        rand_masked[frame_idx, err_pos] = 2.0   # [0,1) 밖 값 — 에러 위치는 항상 뒤로 밀림
+        rand_masked[frame_idx, err_pos] = 2.0   # [0,1) 밖 값이라 에러 위치는 항상 뒤로 밀림
         weak_cor_pos = np.argpartition(rand_masked, c1 - 1, axis=1)[:, :c1]
         sd[frame_idx, weak_cor_pos] = 0
     return {"mode": "2SD", "hd": hd.reshape(B, code.N_b, code.z),

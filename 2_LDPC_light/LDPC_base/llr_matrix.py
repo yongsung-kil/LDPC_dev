@@ -22,12 +22,12 @@ ch 개수 = HD 1, 2SD 2, 3SD 4 (= 2^(init_n-1)), th 개수 = num_param - ch 개�
   1(CSW)이면 직전 iteration의 check-sum weight를 row별 CSW 임계값과 비교해 row 선택
   (아래에서부터 처음으로 csw <= 임계값인 row, 없으면 그룹 첫 row)
 - restart iteration: CN 상태 클리어(syndrome은 유지) 후 restart row의 값을 그대로 사용.
-  restart row의 -1도 C++ 산술에 그대로 들어간다 — ch=-1(채널 기여 거의 0),
+  restart row의 -1도 C++ 산술에 그대로 들어간다. ch=-1(채널 기여 거의 0),
   th=-1(|V2C|가 항상 th1 이상 → 전부 최대 레벨) → 사실상 순수 syndrome bit-flip
   iteration이 된다. DAO가 이 동작 기준으로 최적화하므로 여기서도 동일하게 따른다
 - 마지막 row의 iter_end가 곧 max_iteration (사용자 확인 2026-08-06)
 
-dv 매핑: column degree가 어느 dv_from/dv_to 구간에도 없으면 에러 (사용자 결정 —
+dv 매핑: column degree가 어느 dv_from/dv_to 구간에도 없으면 에러 (사용자 결정:
 원본 C++의 조용한 col_idx=0 fallback은 재현하지 않음).
 
 _validate의 형식 제약은 DAO 산출 규칙 기준이다 (사용자 확정 2026-08-07). DAO는 실제
@@ -61,7 +61,7 @@ class LLRMatrix:
                  restart_iters, max_value, min_value, rows, name="", edge_mag=None):
         """rows: (values(num_dv*num_param), csw, iter_start, iter_end, floor) 튜플 리스트.
         edge_mag: VNU 출력 magnitude 레벨 (내림차순, 길이 = th 개수 + 1).
-        생략하면 3-bit 기본 {7,5,3,1} (th 3개 구성 전용 — DAO 파일이 이 경우다)."""
+        생략하면 3-bit 기본 {7,5,3,1} (th 3개 구성 전용이며 DAO 파일이 이 경우다)."""
         self.name = name
         self.mode = mode
         self.ch_len = MODE_CH_LEN[mode]
@@ -114,7 +114,7 @@ class LLRMatrix:
             raise ValueError(f"{self.name}: 총 row 수가 그룹별 합과 불일치")
         # 겹침 금지 + 커버리지 검사 (DAO 규칙, 모듈 docstring 참조).
         # 겹침 금지는 _group_of_iter()의 정방향 첫 매칭 순회가 안전하기 위한 전제이기도
-        # 하다 (제약과 순회 방향이 한 쌍 — 겹침을 허용하려면 순회를 C++처럼 역방향으로
+        # 하다 (제약과 순회 방향이 한 쌍이라, 겹침을 허용하려면 순회를 C++처럼 역방향으로
         # 함께 바꿔야 함).
         covered_end = 0                      # 마지막으로 덮인 iteration
         for group_idx, (row_start, row_end) in enumerate(self.group_slices):
@@ -132,7 +132,7 @@ class LLRMatrix:
                     f"덮는 그룹 없음")
             covered_end = iter_end
             # ITER 타입 다중 row 그룹은 내부 row 구간도 같은 규칙(겹침·빈틈 금지)으로
-            # 연속이어야 한다 — 어기면 row_index()가 시뮬 도중에야 실패한다
+            # 연속이어야 한다 (어기면 row_index()가 시뮬 도중에야 실패한다)
             if self.group_type[group_idx] == GROUP_TYPE_ITER and row_end - row_start > 1:
                 prev_end = iter_start - 1
                 for row in range(row_start, row_end):
@@ -157,7 +157,7 @@ class LLRMatrix:
         # 하지만(디코더도 동일 캐스케이드로 맞춤), 작성 실수일 가능성이 높아 알린다.
         if not np.all(self.row_th[:, :, :-1] >= self.row_th[:, :, 1:]):
             warnings.warn(
-                f"{self.name}: th가 내림차순이 아닌 row 존재 — 캐스케이드 의미"
+                f"{self.name}: th가 내림차순이 아닌 row 존재. 캐스케이드 의미"
                 f"(th1부터 순서 비교)로 소비되며, 의도한 값인지 확인할 것")
 
     # ---------- 파일 입출력 ----------
@@ -233,7 +233,7 @@ class LLRMatrix:
           전부 정수라 캐스케이드가 max(min(|raw|, 최대 레벨), 1)과 같아진다
         channel_llr: 채널 LLR magnitude (전 dv 공통)
         max_iter: 최대 iteration (파일 로드 경로와 달리 호출자가 지정)
-        dv_max: H-matrix의 최대 column degree — dv 구간 [1, dv_max] 하나로 전 dv 커버
+        dv_max: H-matrix의 최대 column degree (dv 구간 [1, dv_max] 하나로 전 dv 커버)
         구성: 그룹 1개(ITER, iteration 1..max_iter), restart 없음."""
         top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
         ch_len = MODE_CH_LEN[mode]

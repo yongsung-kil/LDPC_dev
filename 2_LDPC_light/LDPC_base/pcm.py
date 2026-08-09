@@ -5,13 +5,13 @@ base matrix: (M_b, N_b) int 배열. -1 = zero block, 그 외 = circulant shift �
   → VN 정렬 배열 v에서 CN 정렬로: cn = np.roll(v, -s) / CN 정렬 c를 VN 정렬로: vn = np.roll(c, +s)
 
 파일 포맷: Ref-C(원본 C++ ecc_top.cpp Load_PCM)와 동일, 이 포맷만 지원 (2026-08-06
-사용자 결정 — 구 포맷('#' 주석 + 'M_b N_b z' 헤더) 지원 제거):
+사용자 결정으로 구 포맷('#' 주석 + 'M_b N_b z' 헤더) 지원 제거):
   N_b M_b
   J K          (J = 최대 column degree, K = 최대 row degree)
   z
   (빈 줄)
   M_b행 x N_b열 shift 행렬 (-1 = zero block)
-주석 없이 저장 — C++ fscanf("%d")가 그대로 읽을 수 있다.
+주석 없이 저장하므로 C++ fscanf("%d")가 그대로 읽을 수 있다.
 column block은 DV 내림차순 배치를 전제로 한다 (예시 부호도 재배열 완료, 2026-08-06 정정).
 """
 import numpy as np
@@ -59,7 +59,7 @@ class QCCode:
         head = lines[0].split()
         if len(head) != 2:
             raise ValueError(
-                f"{path}: Ref-C 헤더가 아님 (첫 줄 {lines[0]!r} — 'N_b M_b' 정수 2개여야 함)")
+                f"{path}: Ref-C 헤더가 아님 (첫 줄 {lines[0]!r}, 'N_b M_b' 정수 2개여야 함)")
         N_b, M_b = map(int, head)
         J, K = map(int, lines[1].split())
         z = int(lines[2])

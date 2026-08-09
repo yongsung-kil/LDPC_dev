@@ -1,6 +1,6 @@
 {
   "_desc": [
-    "vanilla reference 실험 설정 — 모든 아이디어의 비교 기준선",
+    "vanilla reference 실험 설정: 모든 아이디어의 비교 기준선",
     "이 폴더에서의 상대경로는 이 config 파일 위치 기준 (../../ = 실험 루트)",
     "실행: 실험 루트에서 python -m LDPC_base.run Ideas/vanilla/config.json"
   ],

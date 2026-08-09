@@ -15,12 +15,12 @@ def run_fer_point(code, channel_fn, decoder: MinSumDecoder, random_generator,
     channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
     프레임 에러 수가 max_frame_errors에 도달하거나 max_frames 소진 시 종료.
     print_progress: 측정 결과 한 줄을 콘솔에 출력할지 여부.
-    log: decoder.LOG_ITEMS 부분집합 — 켠 항목만 iteration별로 집계 (속도 비용).
+    log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
-      iter_hist ((max_iter+1,) — [k]=iteration k에 성공한 프레임 수, [0]=실패 프레임 수),
+      iter_hist ((max_iter+1,) 배열로 [k]=iteration k에 성공한 프레임 수, [0]=실패 프레임 수),
       log 지정 시 iteration_totals {active_frames, csw_sum, bit_err_sum, bit_err_by_dv_sum}
-      (iteration별 합계 배열 — 평균은 합/active_frames로 소비측 계산),
+      (iteration별 합계 배열이며, 평균은 합/active_frames로 소비측 계산),
       fail_detail 시 fail_frame_details
       [(프레임 번호, 잔여 에러 bit, 최종 CSW, dv별 잔여 에러), ...].
     """
@@ -30,12 +30,12 @@ def run_fer_point(code, channel_fn, decoder: MinSumDecoder, random_generator,
                         ("max_frames", max_frames),
                         ("frames_per_batch", frames_per_batch)):
         if isinstance(value, bool) or not isinstance(value, numbers.Integral) or value < 1:
-            raise ValueError(f"{name}={value!r} — 1 이상의 정수여야 함")
+            raise ValueError(f"{name}={value!r}: 1 이상의 정수여야 함")
     log = set() if log is None else set(log)
     unknown_log_items = log - LOG_ITEMS      # 허용 목록에 없는 항목 = 오타 검출
     if unknown_log_items:
         raise ValueError(
-            f"log 항목 {sorted(unknown_log_items)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
+            f"log 항목 {sorted(unknown_log_items)} 미지원 (허용: {sorted(LOG_ITEMS)})")
 
     max_iter = decoder.max_iter
     num_dv = decoder.llr_matrix.num_dv
@@ -43,7 +43,7 @@ def run_fer_point(code, channel_fn, decoder: MinSumDecoder, random_generator,
     success_iteration_sum = 0        # 성공 프레임의 수렴 iteration 합 (평균 계산용)
     total_residual_err_bits = 0      # 전 프레임 잔여 에러 bit 합 (post-FEC BER 분자)
     iter_hist = np.zeros(max_iter + 1, np.int64)
-    # iteration별 합계 (배치를 넘어 누적 — 평균은 합/활성 프레임 수로 소비측 계산)
+    # iteration별 합계 (배치를 넘어 누적하며, 평균은 합/활성 프레임 수로 소비측 계산)
     total_active_frames = np.zeros(max_iter, np.int64)
     total_csw = np.zeros(max_iter, np.int64)
     total_bit_err = np.zeros(max_iter, np.int64)

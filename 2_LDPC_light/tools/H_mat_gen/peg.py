@@ -1,4 +1,4 @@
-"""PEG (Progressive Edge Growth) — base graph 생성.
+"""PEG (Progressive Edge Growth): base graph 생성.
 
 column을 순서대로 처리하며, 각 VN의 edge를 "현재 그래프에서 가장 먼(local girth 최대)
 CN + 최저 degree CN" 원칙으로 배치한다 (Hu-Eleftheriou-Arnold 2005의 base graph 적용).
@@ -33,7 +33,7 @@ def peg_base(M, col_degrees, rng, fixed_edges=None):
     """base graph 생성. 반환: connectivity (M, N) bool.
 
     col_degrees: 길이 N. 0인 column은 건너뜀 (fixed_edges로만 연결된 column 허용).
-    fixed_edges: [(row, col), ...] — 사전 고정 edge (예: dual-diagonal parity).
+    fixed_edges: [(row, col), ...] 형태의 사전 고정 edge (예: dual-diagonal parity).
     """
     N = len(col_degrees)
     conn = np.zeros((M, N), bool)

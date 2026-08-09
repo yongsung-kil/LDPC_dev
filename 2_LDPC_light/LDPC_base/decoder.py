@@ -1,7 +1,7 @@
-"""배치 벡터화 quantized min-sum 디코더 — DAO LLR_MATRIX 기반 syndrome-aided (원본 C++ 대응).
+"""배치 벡터화 quantized min-sum 디코더: DAO LLR_MATRIX 기반 syndrome-aided (원본 C++ 대응).
 
 변수명은 원본 C++ 용어를 따른다 (sum_t, vnu_in/vnu_out ↔ VNU_in/VNU_out,
-check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_csw ↔ prev_CSW 등) —
+check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_csw ↔ prev_CSW 등).
 코드만 보고 decoder.cpp의 대응 위치를 찾을 수 있다.
 
 진입 함수는 decoder_main(). 단계별 구성:
@@ -11,15 +11,15 @@ check_sum, edge_sgn, syndrome, min1/min2/min1_pos, prev_csw ↔ prev_CSW 등) �
     ├── _run_iteration()       ← 한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW
     │   └── _process_column()  ← 한 column: C2V 합산 → 판정 → VNU 갱신 (교체용 함수 호출)
     ├── _record_iteration()    ← 로그 집계 + 프레임별 최종 상태 갱신
-    ├── _check_errors()        ← 에러 검사(genie) — 성공/실패 확정 + 배치 압축(마스킹)
+    ├── _check_errors()        ← 에러 검사(genie): 성공/실패 확정 + 배치 압축(마스킹)
     └── _build_result()        ← 반환 dict 조립
 
 syndrome-aided flip/magnitude 도메인 (모든 메시지가 초기 read bit 기준 상대값):
 - read_bit 고정, syndrome = H·read_bit 1회 계산 후 유지 (C++ iteration 0
-  Pre-update와 등가 — 원본은 iter 0에서 V2C sign에 read bit를 실어 check_sum에
+  Pre-update와 등가다. 원본은 iter 0에서 V2C sign에 read bit를 실어 check_sum에
   신드롬을 누적한 뒤 syndrome 레지스터로 복사한다)
 - VN: sum_t = ch(항상 +, iteration/dv별 테이블값) + Σ VNU_in.
-  sum_t <= 0이면 현재 bit를 반전한다 (동점 포함 — VN_Cal_HD 원문과 동일)
+  sum_t <= 0이면 현재 bit를 반전한다 (동점 포함, VN_Cal_HD 원문과 동일)
 - C2V(VNU_in): mag = min1/min2 (EDGE 도메인, RESET=edge_mag[0]),
   sign = syndrome ⊕ check_sum ⊕ edge_sgn (C2V_Cal "Syndrome aided decoding")
 - Edge Clear(iteration 1, restart): CN 상태(min/pos/check_sum/edge_sgn)를 클리어하고
@@ -29,12 +29,12 @@ syndrome-aided flip/magnitude 도메인 (모든 메시지가 초기 read bit 기
   최대 레벨 → 순수 syndrome bit-flip iteration (C++ 동작 그대로)
 - CSW = Σ(check_sum ⊕ syndrome) (Compute_CSW 대응), iteration 1 진입 시
   prev_csw = |syndrome| (iter 0 종료 시점의 Compute_CSW와 동일)
-- 성공 판정: genie — bit 오류 = read_bit ⊕ (sum_t <= 0)를 정답 all-zero와 비교,
+- 성공 판정: genie 방식. bit 오류 = read_bit ⊕ (sum_t <= 0)를 정답 all-zero와 비교하고,
   성공 프레임은 배치에서 제외한다 (마스킹 = 속도 이득, 결과 불변)
 - 조기종료(CRC), HCU, 펑처링, Dual-Update, 파이프라인 store 지연은 범위 밖
   (original과의 차이 전체는 docs/차이.md 참조)
 
-배열 축: (B, N_b, z) — 프레임 배치 B × column block × z lane.
+배열 축: (B, N_b, z). 프레임 배치 B × column block × z lane.
 
 논문 아이디어 교체 지점 (교체 단위 = 원본 C++ 함수 경계):
 "교체 지점"이란 본체가 특정 단계를 별도 함수로 분리해 둬서, 아이디어 버전이
@@ -52,7 +52,7 @@ Ideas/{논문}/decoder.py에 작성, Ideas/registry.py에 등록 → config deco
 | _cnu_update | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
 | _column_order | 메인 루프 스케줄 | layered / informed dynamic scheduling |
 | _is_edge_clear_iter | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
-| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | LLRMatrix.row_index() — LLRMatrix 자식 클래스로 커버 |
+| 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | LLRMatrix.row_index() (LLRMatrix 자식 클래스로 커버) |
 """
 import numpy as np
 
@@ -61,7 +61,7 @@ LOG_ITEMS = {"csw", "bit_err", "bit_err_by_dv", "fail_detail"}
 
 
 class _DecodeState:
-    """decoder_main 한 호출의 작업 상태 묶음 — 단계별 함수 사이를 오가는 배열들.
+    """decoder_main 한 호출의 작업 상태 묶음 (단계별 함수 사이를 오가는 배열들).
     값은 _init_state()가 채우고, iteration 임시값은 _run_iteration()이 매 iteration 갱신."""
     # 설정과 치수
     log: set
@@ -101,14 +101,14 @@ class _DecodeState:
 
 class MinSumDecoder:
     def __init__(self, code, llr_matrix):
-        """code: pcm.QCCode. llr_matrix: llr_matrix.LLRMatrix (필수) —
+        """code: pcm.QCCode. llr_matrix: llr_matrix.LLRMatrix (필수).
         DAO 파일 로드 또는 LLRMatrix.make_internal_uniform_matrix()로 합성해 공급.
         max_iter와 VNU 출력 레벨(edge_mag)은 llr_matrix가 결정한다.
         디코딩 산술은 HD 전용이며 2SD/3SD는 decoder_main에서 에러를 낸다
         (2SD/3SD 산술 구현 시 해제)."""
         if llr_matrix is None:
             raise ValueError(
-                "llr_matrix는 필수 — DAO 파일 로드 또는 내부 합성(make_internal_uniform_matrix)")
+                "llr_matrix는 필수: DAO 파일 로드 또는 내부 합성(make_internal_uniform_matrix)")
         if llr_matrix.mode not in ("HD", "2SD", "3SD"):
             raise NotImplementedError("llr_matrix는 HD/2SD/3SD만 지원")
         self.code = code
@@ -121,7 +121,7 @@ class MinSumDecoder:
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
     def _is_edge_clear_iter(self, iteration):
         """[교체 지점: Is_Iter_Type_Edge_Clear 대응] 이 iteration에서 Edge Clear를 할지.
-        True면 (iteration 1 제외) CN 상태가 클리어된다 (syndrome은 유지 — 엔진 소관)."""
+        True면 (iteration 1 제외) CN 상태가 클리어된다 (syndrome은 유지, 엔진 소관)."""
         return iteration == 1 or self.llr_matrix.is_restart(iteration)
 
     def _column_order(self, iteration):
@@ -144,7 +144,7 @@ class MinSumDecoder:
 
     def _vnu_quantize(self, raw, vnu_in, th):
         """[교체 지점: VN_Cal_HD 양자화부 대응] VNU 출력 양자화.
-        th: (num_active_frames, th 개수) — 프레임별(현재 row의 dv별) 임계값 (내림차순 관례).
+        th: (num_active_frames, th 개수). 프레임별(현재 row의 dv별) 임계값 (내림차순 관례).
         C++ 캐스케이드(decoder.cpp:4112-4115) 그대로: |raw| >= th1 → 최대 레벨,
         아니고 >= th2 → 다음 레벨, ..., 전부 아니면 마지막 레벨
         (비단조 th도 C++와 같은 의미로 소비, 위쪽 th의 참 조건이 우선).
@@ -178,7 +178,7 @@ class MinSumDecoder:
     def _cnu_update(self, edge, edge_clear, new_sgn, new_mag, row_blk,
                     min1, min2, min1_pos, check_sum, edge_sgn):
         """[교체 지점: CNU_Remove_Old_Sgn / CNU_Update_New_Mag 대응] CN 상태 갱신 (in-place).
-        remove old(Edge Clear iteration은 생략) 후 insert new — <= 비교,
+        remove old(Edge Clear iteration은 생략) 후 insert new: <= 비교,
         min1 교체 시 min2=RESET (기존 min1을 min2로 내리지 않는 HW 특성, 원문 그대로)."""
         RESET = np.float32(self._edge_mag[0])
         cur_min1 = min1[:, row_blk, :]
@@ -328,7 +328,7 @@ class MinSumDecoder:
             state.profile.append((state.num_active_frames, float(state.err_bits.mean())))
 
     def _check_errors(self, state, iteration):
-        """에러 검사 (genie: 정답 all-zero와 비교) — 성공/실패 확정 + 성공 프레임
+        """에러 검사 (genie: 정답 all-zero와 비교). 성공/실패 확정 + 성공 프레임
         배치 압축. True 반환 시 루프 종료."""
         ok = ~state.frame_err
         if ok.any():
@@ -368,27 +368,27 @@ class MinSumDecoder:
         """디코딩 진입 함수.
 
         channel_out: channel.py 출력 dict {"mode", "hd", ...}
-        (테스트 편의로 signed LLR 배열도 허용 — 음수 = read bit 1).
-        log: LOG_ITEMS 부분집합 — 켠 항목만 수집 (속도 비용 발생).
+        (테스트 편의로 signed LLR 배열도 허용, 음수 = read bit 1).
+        log: LOG_ITEMS 부분집합. 켠 항목만 수집 (속도 비용 발생).
 
         반환 dict:
-          success:  (B,) bool — max_iter 내 genie 판정 성공
-          decode_success_iteration: (B,) int — 성공한 iteration 번호 (1-base). 실패 프레임은 0
-          final_err_bits: (B,) int — 각 프레임의 마지막 처리 iteration 잔여 에러 bit 수
+          success:  (B,) bool. max_iter 내 genie 판정 성공
+          decode_success_iteration: (B,) int. 성공한 iteration 번호 (1-base). 실패 프레임은 0
+          final_err_bits: (B,) int. 각 프레임의 마지막 처리 iteration 잔여 에러 bit 수
             (성공 프레임 0. post-FEC BER 집계용, 항상 반환)
           profile:  iteration별 (활성 프레임 수, 평균 잔여 에러비트) (collect_profile 시)
           log_active/log_csw_sum/log_err_sum/log_err_by_dv_sum: iteration별 집계
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)
-          final_csw, final_err_by_dv: (B,), (B, num_dv) — fail_detail 시
+          final_csw, final_err_by_dv: (B,), (B, num_dv) (fail_detail 시)
         """
         if self.llr_matrix.mode != "HD":
             raise NotImplementedError(
-                f"{self.llr_matrix.mode} 디코딩 산술 미구현 — 현재 HD만 디코딩 가능 "
+                f"{self.llr_matrix.mode} 디코딩 산술 미구현, 현재 HD만 디코딩 가능 "
                 "(2SD/3SD는 region→채널 LLR 매핑과 SD Edge Clear 규칙 구현 후 해제)")
         log = set() if log is None else set(log)
         unknown_log_items = log - LOG_ITEMS   # 허용 목록에 없는 항목 = 오타 검출
         if unknown_log_items:
-            raise ValueError(f"log 항목 {sorted(unknown_log_items)} 미지원 — 허용: {sorted(LOG_ITEMS)}")
+            raise ValueError(f"log 항목 {sorted(unknown_log_items)} 미지원 (허용: {sorted(LOG_ITEMS)})")
 
         read_bit = self._read_channel_input(channel_out)
         state = self._init_state(read_bit, log)

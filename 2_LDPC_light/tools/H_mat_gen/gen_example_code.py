@@ -2,8 +2,8 @@
 
 실물과 동일 치수 (plan.md §3.1b): base M_b=18 × N_b=147, z=256, rate≈0.878.
 패리티부 구조 (dual-diagonal, 802.16e 계열):
-  - anchor column (첫 패리티 col): row {0, M/2, M-1}, shift {s0, 0, s0} — 재귀 인코딩 가능 조건
-  - 나머지 M-1개: bidiagonal — col P_k가 row {k-1, k}에 shift 0
+  - anchor column (첫 패리티 col): row {0, M/2, M-1}, shift {s0, 0, s0} (재귀 인코딩 가능 조건)
+  - 나머지 M-1개: bidiagonal로 col P_k가 row {k-1, k}에 shift 0
 
 실행: python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 """
