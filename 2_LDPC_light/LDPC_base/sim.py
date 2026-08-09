@@ -4,10 +4,10 @@ import time
 
 import numpy as np
 
-from .decoder import MinSumDecoder, LOG_ITEMS
+from .decoder import BaseDecoder, LOG_ITEMS
 
 
-def run_fer_point(code, channel_fn, decoder: MinSumDecoder, random_generator,
+def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                   max_frame_errors=50, max_frames=20000, frames_per_batch=128,
                   print_progress=False, log=None):
     """한 채널 조건의 FER 측정.

@@ -139,10 +139,18 @@ Sim_Output/260807_133321_fixed_error/
 
 **교체 단위 = 원본 C++ 함수 경계.** "교체 지점"이란 본체가 특정 단계를 일부러
 별도 함수로 분리해 둬서 아이디어 버전이 그 함수만 갈아끼울 수 있게 만든 자리다.
-아이디어는 `LDPC_base`를 고치지 않고 `MinSumDecoder`를
-상속한 자식 클래스에서 교체용 함수만 재정의한다(재정의 = 부모 클래스의 함수를
-자식 클래스에서 다른 내용으로 바꿔 채우는 것). 스크리닝에서 살아남은 아이디어는
-교체용 함수의 C++ 대응 함수가 곧 실물 이식 지점이 된다.
+아이디어는 `LDPC_base`를 고치지 않고 `BaseDecoder`(엔진 + 원본 C++ 대응 기준
+구현)를 상속한 자식 클래스에서 교체용 함수만 재정의한다(재정의 = 부모 클래스의
+함수를 자식 클래스에서 다른 내용으로 바꿔 채우는 것). 스크리닝에서 살아남은
+아이디어는 교체용 함수의 C++ 대응 함수가 곧 실물 이식 지점이 된다.
+
+가져오는 것과 새로 만드는 것의 경계:
+
+- 1. 기본은 전부 상속이다. 아무것도 재정의하지 않으면 vanilla와 같은 동작이다.
+     엔진(배치 처리, genie 판정, 로그, CN 상태 관리)은 실험 인프라라 새로 만들 이유가 없다
+- 2. 논문이 바꾸는 단계가 교체용 함수 6개 중 하나에 해당하면 **그 함수만** 재정의한다
+- 3. 교체 지점에 안 맞는 근본적 변경(직전 iteration 값이 필요한 damping, 진동 억제 등)은
+     `decoder_main` 전체를 재정의한다 (엔진 부품은 골라 재사용 가능)
 
 | 교체용 함수 | C++ 대응 | 커버 논문 유형 |
 |-------------|----------|---------------|
@@ -154,16 +162,14 @@ Sim_Output/260807_133321_fixed_error/
 | `_is_edge_clear_iter` | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
 | 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | `LLRMatrix.row_index()` (LLRMatrix 자식 클래스로 커버) |
 
-damping과 진동 억제처럼 직전 iteration 값이 필요한 아이디어는 교체용 함수가
-이력을 받지 않으므로 `decoder_main` 전체 재정의로 구현한다. 등록 디코더는
-생성자를 `(code, llr_matrix=...)` 형태로 유지한다.
+등록 디코더는 생성자를 `(code, llr_matrix=...)` 형태로 유지한다.
 
 ```
 Ideas/
-├── registry.py       ← {"vanilla": "Ideas.vanilla.decoder:VanillaDecoder", ...}
-└── vanilla/          ← reference (재정의 없음 = 정본). 새 아이디어의 템플릿
-    ├── decoder.py / config.json / README.md
-    └── Sim_Output/   ← 이 아이디어의 실험 결과
+├── registry.py       ← {"vanilla": "LDPC_base.decoder:BaseDecoder", ...}
+└── vanilla/          ← 기준 실험 (재정의 없는 BaseDecoder 그대로). 새 아이디어의 템플릿
+    ├── config.json / README.md
+    └── Sim_Output/   ← 이 실험의 결과
 ```
 
 - ㉮ config `decoder.type`으로 디코더 선택 (기본 "vanilla")

@@ -105,7 +105,7 @@ class _DecodeState:
     cur_th: np.ndarray
 
 
-class MinSumDecoder:
+class BaseDecoder:
     def __init__(self, code, llr_matrix):
         """code: pcm.QCCode. llr_matrix: llr_matrix.LLRMatrix (필수).
         DAO 파일 로드 또는 LLRMatrix.make_internal_uniform_matrix()로 합성해 공급.

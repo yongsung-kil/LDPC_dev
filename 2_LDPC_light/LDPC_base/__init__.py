@@ -4,7 +4,7 @@
 C++ Ref-C와의 절대 FER 일치는 보장하지 않으며, 최종 검증은 실물 C++ 이식으로 수행한다.
 """
 from .pcm import QCCode
-from .decoder import MinSumDecoder
+from .decoder import BaseDecoder
 from . import channel, encoder, sim
 
-__all__ = ["QCCode", "MinSumDecoder", "channel", "encoder", "sim"]
+__all__ = ["QCCode", "BaseDecoder", "channel", "encoder", "sim"]
