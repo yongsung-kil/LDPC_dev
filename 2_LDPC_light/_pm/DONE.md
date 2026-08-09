@@ -1,5 +1,26 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-09 — 2SD/3SD 디코딩 구현 (toy 파일 + 균일 생성 지원)
+HD 전용이던 디코더를 2SD/3SD까지 확장. C++ 원본 정적 분석(파일:라인 근거)으로 설계를 확정했다
+- **배경**: 채널(rber 2SD/3SD, strong_error)과 로더는 준비되어 있었고 디코더 산술만 막혀
+  있었다. 사용자 확정: toy LLR_MATRIX로 개발 후 실물 교체, 균일 생성도 2SD/3SD 지원
+- **변경**:
+  - ㉮ region 매핑 (2SD `1-sd`, 3SD `2(1-sd)+(cc XOR sd)`, ch 열 0..3 = 신뢰 내림차순)과
+    비트별 채널 항 선택. VN 판정과 양자화와 CSW와 row 선택은 HD와 같은 경로임을 확정
+  - ㉯ SD Edge Clear 규칙 (restart만 클리어)과 Pre 단계 (iteration 0과 SD restart에서
+    채널 magnitude를 min1/min2에 시딩, check_sum과 edge sign은 0, restart 판정은
+    read bit로 복귀). 시딩 magnitude는 3-bit 파일 [5,1]/[7,5,3,1] 고정, 균일 n-bit는
+    1..top 균등 분할
+  - ㉰ 균일 생성의 channel_llr를 region별 리스트로 확장 (2SD 2개, 3SD 4개, 강한 쪽부터),
+    생성 파일명에 ch10-3 형식 반영
+  - ㉱ toy 파일 2종 (`LLR_MATRIX_2SD_toy0.txt`, `LLR_MATRIX_3SD_toy0.txt`, restart 포함,
+    반전 가능 조건 ch <= 7·dv 준수)
+- **검증**: HD 회귀 2종 산출물 완전 일치, region 매핑 전 조합, restart의 Pre 재실행 실증
+  (iteration 11 에러 수 = 채널 에러 수), e2e 4종 완주 (rber 2SD/3SD FER 0, strong_error,
+  균일 2SD). 상세: `done/20260809_2SD3SD구현/`
+- **파일**: `LDPC_base/decoder.py`, `LDPC_base/llr_matrix.py`, `LDPC_base/run.py`,
+  `Input/LLR/LLR_MATRIX_{2SD,3SD}_toy0.txt`, `config.json`, `README.md`, `docs/차이.md`
+
 ### 2026-08-08 — 균일 n-bit 양자화 모드 (매트릭스 파일 생성 후 로드)
 사용자 확정 설계: LLR matrix 파일이 없으면 균일 양자화 매트릭스를 **DAO 포맷 파일로
 생성해 저장한 뒤 그 파일을 로드** — 디코더는 파일 로드 단일 경로만 탄다

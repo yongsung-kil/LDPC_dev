@@ -60,6 +60,8 @@ class _DecodeState:
     num_dv: int
     # 프레임 데이터 (genie 마스킹 시 배치 압축 대상)
     read_bit: np.ndarray
+    region: np.ndarray                # 2SD/3SD 비트별 ch 열 인덱스 (HD는 None)
+    seed_mag: np.ndarray              # 2SD/3SD Pre 단계 채널 magnitude (HD는 None)
     decision_bits: np.ndarray
     syndrome: np.ndarray
     prev_csw: np.ndarray
@@ -87,6 +89,7 @@ class _DecodeState:
     err_by_dv: np.ndarray
     edge_clear: bool
     cur_ch: np.ndarray
+    cur_ch_all: np.ndarray            # (활성 프레임, num_dv, ch_len). 2SD/3SD의 region 색인용
     cur_th: np.ndarray
 
 
@@ -95,8 +98,7 @@ class BaseDecoder:
         """code: pcm.QCCode. llr_matrix: llr_matrix.LLRMatrix (필수).
         DAO 파일 로드 또는 LLRMatrix.make_internal_uniform_matrix()로 합성해 공급.
         max_iter와 VNU 출력 레벨(edge_mag)은 llr_matrix가 결정한다.
-        디코딩 산술은 HD 전용이며 2SD/3SD는 decoder_main에서 에러를 낸다
-        (2SD/3SD 산술 구현 시 해제)."""
+        디코딩 모드(HD/2SD/3SD)는 llr_matrix.mode를 따른다."""
         if llr_matrix is None:
             raise ValueError(
                 "llr_matrix는 필수: DAO 파일 로드 또는 내부 합성(make_internal_uniform_matrix)")
@@ -110,12 +112,33 @@ class BaseDecoder:
                             for d in range(llr_matrix.num_dv)]  # dv 구간별 column 목록
         self._edge_mag = np.array(llr_matrix.edge_mag, np.float32)  # VNU 출력 레벨 사본 (내림차순)
         self._uniform_levels = llr_matrix.has_uniform_levels  # 균일 등가식 사용 여부 (값 기반)
+        self._seed_levels = self._channel_seed_levels()  # SD Pre 단계 채널 magnitude (HD는 None)
+
+    def _channel_seed_levels(self):
+        """SD Pre 단계(iteration 0과 restart)가 CN에 심는 채널 magnitude (region 순).
+        3-bit DAO 파일 대응은 C++ Make_LLR의 고정 상수다 (2SD [5, 1]: decoder.cpp:4905,
+        3SD [7, 5, 3, 1]: decoder.cpp:4924. LLR matrix 파일에서 읽지 않는다).
+        균일 n-bit 레벨은 C++ 대응이 없어 1..top을 region 수로 균등 분할한다
+        (3-bit 3SD에서 C++ 값 [7, 5, 3, 1]과 일치)."""
+        if self.llr_matrix.mode == "HD":
+            return None
+        num_regions = self.llr_matrix.ch_len
+        if self._uniform_levels:
+            top = float(self._edge_mag[0])
+            return np.array(
+                [round(1.0 + (top - 1.0) * (num_regions - 1 - k) / (num_regions - 1))
+                 for k in range(num_regions)], np.float32)
+        return np.array({2: [5.0, 1.0], 4: [7.0, 5.0, 3.0, 1.0]}[num_regions], np.float32)
 
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
     def _is_edge_clear_iter(self, iteration):
         """[교체 지점: Is_Iter_Type_Edge_Clear 대응] 이 iteration에서 Edge Clear를 할지.
+        HD는 iteration 1과 restart, 2SD/3SD는 restart만이다 (decoder.cpp:6541-6565.
+        SD는 Pre 단계가 심은 채널 정보가 iteration 1로 그대로 넘어간다).
         True면 (iteration 1 제외) CN 상태가 클리어된다 (syndrome은 유지, 엔진 소관)."""
-        return iteration == 1 or self.llr_matrix.is_restart(iteration)
+        if self.llr_matrix.mode == "HD":
+            return iteration == 1 or self.llr_matrix.is_restart(iteration)
+        return self.llr_matrix.is_restart(iteration)
 
     def _column_order(self, iteration):
         """[교체 지점: 메인 루프 스케줄 대응] 이 iteration의 column block 처리 순서."""
@@ -195,20 +218,34 @@ class BaseDecoder:
 
     # ---------- decoder_main 단계별 함수 ----------
     def _read_channel_input(self, channel_out):
-        """채널 출력 해석 → read_bit (B, N_b, z) uint8."""
+        """채널 출력 해석 → (read_bit, region). 둘 다 (B, N_b, z).
+        region은 2SD/3SD에서 비트별 채널 ch 열 인덱스이며 0이 가장 강한 신뢰다
+        (2SD: 1-sd, 3SD: 2(1-sd) + (cc XOR sd). 매핑 근거는 cpp_sd_analysis.md 1절,
+        Mapper_2/3bit_SD와 VN_Cal_SD). HD는 region이 None이다."""
+        region = None
         if isinstance(channel_out, dict):
             if channel_out["mode"] != self.llr_matrix.mode:
                 raise ValueError(
                     f"채널 출력 모드 {channel_out['mode']} != LLR matrix 모드 {self.llr_matrix.mode}")
             read_bit = np.asarray(channel_out["hd"], np.uint8)
-        else:                                            # signed LLR 배열 (테스트 편의)
+            if self.llr_matrix.mode == "2SD":
+                sd = np.asarray(channel_out["sd"], np.uint8)
+                region = (1 - sd).astype(np.int64)
+            elif self.llr_matrix.mode == "3SD":
+                sd = np.asarray(channel_out["sd"], np.uint8)
+                cc = np.asarray(channel_out["cc"], np.uint8)
+                region = (2 * (1 - sd) + (cc ^ sd)).astype(np.int64)
+        else:                                            # signed LLR 배열 (테스트 편의, HD 전용)
+            if self.llr_matrix.mode != "HD":
+                raise ValueError("signed LLR 배열 입력은 HD 전용 (2SD/3SD는 dict 출력 필요)")
             read_bit = (channel_out < 0).astype(np.uint8)
         _, N_b, z = read_bit.shape
         assert N_b == self.code.N_b and z == self.code.z
-        return read_bit
+        return read_bit, region
 
-    def _init_state(self, read_bit, log):
-        """syndrome 계산(C++ iteration 0 Pre-update 등가) + CN 상태와 결과 버퍼 초기화."""
+    def _init_state(self, read_bit, region, log):
+        """syndrome 계산(C++ iteration 0 Pre-update 등가) + CN 상태와 결과 버퍼 초기화.
+        2SD/3SD는 CN에 채널 magnitude를 심는 Pre 단계까지 수행한다 (HD는 RESET 시작)."""
         code = self.code
         B, _, z = read_bit.shape
         M_b, num_edges = code.M_b, code.E
@@ -221,6 +258,9 @@ class BaseDecoder:
         state.z = z
         state.num_dv = num_dv
         state.read_bit = read_bit
+        state.region = region
+        state.seed_mag = (None if region is None
+                          else self._seed_levels[region])    # (B, N_b, z) float32
         state.decision_bits = read_bit.copy()    # 판정비트 (C++ cwc 대응): 현재 bit 추정, 1=에러
         state.syndrome = code.syndrome(read_bit)             # (B, M_b, z) = H·read_bit
         state.prev_csw = state.syndrome.sum(axis=(-2, -1)).astype(np.int64)
@@ -230,6 +270,8 @@ class BaseDecoder:
         state.min1_pos = np.full((B, M_b, z), -1, np.int32)
         state.check_sum = np.zeros((B, M_b, z), np.uint8)
         state.edge_sgn = np.zeros((B, num_edges, z), np.uint8)
+        if region is not None:
+            self._seed_channel_magnitudes(state)             # SD Pre 단계 (iteration 0 대응)
 
         state.success = np.zeros(B, bool)
         state.decode_success_iteration = np.zeros(B, np.int32)
@@ -244,8 +286,44 @@ class BaseDecoder:
         state.log_err_sum, state.log_err_by_dv_sum = [], []
         return state
 
+    def _seed_channel_magnitudes(self, state):
+        """SD Pre 단계 (C++ VN_Cal_Pre + V2C_Store 대응): 채널 magnitude를
+        min1/min2/min1_pos에 심는다. VNU 출력의 부호는 read_bit, 크기는 region
+        magnitude다 (decoder.cpp:3663, 3666). 심은 뒤 check_sum과 edge sign은 0으로
+        되돌린다 (Pre는 edge sign SRAM에 0을 쓰고, iteration 끝에 check_sum을
+        syndrome으로 복사한 뒤 리셋한다: decoder.cpp:2783-2785, 2993-3008.
+        syndrome 값 자체는 H·read_bit과 같으므로 재계산하지 않는다)."""
+        code = self.code
+        edge_row, edge_shift = code.edge_row, code.edge_shift
+        for col in self._column_order(0):
+            sgn_vn = state.read_bit[:, col, :]
+            mag_vn = np.asarray(state.seed_mag[:, col, :], np.float32)
+            for edge in code.col_edges[col]:
+                row_blk, shift = edge_row[edge], edge_shift[edge]
+                new_sgn = np.roll(sgn_vn, -shift, axis=-1)    # VN 정렬 → CN 정렬
+                new_mag = np.roll(mag_vn, -shift, axis=-1)
+                self._cnu_update(edge, True, new_sgn, new_mag, row_blk,
+                                 state.min1, state.min2, state.min1_pos,
+                                 state.check_sum, state.edge_sgn)
+        state.check_sum.fill(0)
+        state.edge_sgn.fill(0)
+
+    def _collect_error_metrics(self, state):
+        """판정비트 배열 전체를 훑어 프레임별 에러 지표를 만든다 (C++의 cwc[] 전 배열
+        검사와 동일 구조). column 루프 안에서 세지 않으므로 _column_order가 일부
+        column만 방문해도 미방문 column의 에러가 집계에 남는다 (성공 오판정 방지)."""
+        state.frame_err = state.decision_bits.any(axis=(-2, -1))
+        state.err_bits = state.decision_bits.sum(axis=(-2, -1), dtype=np.int64)
+        if state.need_by_dv:
+            state.err_by_dv = np.stack(
+                [state.decision_bits[:, cols, :].sum(axis=(-2, -1), dtype=np.int64)
+                 for cols in self._cols_by_dv], axis=1)
+        else:
+            state.err_by_dv = np.zeros((state.num_active_frames, state.num_dv), np.int64)
+
     def _run_iteration(self, state, iteration):
-        """한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW 갱신."""
+        """한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW 갱신.
+        SD의 restart iteration은 일반 계산 대신 Pre 단계를 다시 돈다."""
         RESET = np.float32(self._edge_mag[0])
         state.num_active_frames = state.read_bit.shape[0]
 
@@ -257,24 +335,25 @@ class BaseDecoder:
             state.min1_pos.fill(-1)
             state.check_sum.fill(0)
             state.edge_sgn.fill(0)
+        if state.seed_mag is not None and self.llr_matrix.is_restart(iteration):
+            # SD restart는 Pre 단계다 (C++ Is_Iter_Type_Init, decoder.cpp:6616-6624):
+            # 그 iteration의 row 값(ch, th)은 쓰이지 않고, 채널 magnitude를 CN에
+            # 다시 심으며, 판정은 read_bit으로 돌아간다 (cwc = Variable_mem,
+            # decoder.cpp:3733-3736). 종료 시 prev_csw는 |syndrome|이 된다
+            self._seed_channel_magnitudes(state)
+            state.decision_bits[:] = state.read_bit
+            self._collect_error_metrics(state)
+            state.prev_csw = (state.check_sum ^ state.syndrome).sum(axis=(-2, -1)).astype(np.int64)
+            return
         table_row_idx = self.llr_matrix.row_index(iteration, state.prev_csw)  # (num_active_frames,)
-        state.cur_ch = self.llr_matrix.row_ch[table_row_idx, :, 0]            # (num_active_frames, num_dv)
+        state.cur_ch_all = self.llr_matrix.row_ch[table_row_idx]              # (num_active_frames, num_dv, ch_len)
+        state.cur_ch = state.cur_ch_all[:, :, 0]                              # (num_active_frames, num_dv) HD용
         state.cur_th = self.llr_matrix.row_th[table_row_idx]                  # (num_active_frames, num_dv, th_len)
 
         for col in self._column_order(iteration):
             self._process_column(state, iteration, col)
 
-        # 에러 집계는 판정비트 배열 전체를 훑는다 (C++의 cwc[] 전 배열 검사와 동일 구조).
-        # column 루프 안에서 세지 않으므로 _column_order가 일부 column만 방문해도
-        # 미방문 column의 에러가 집계에 남는다 (성공 오판정 방지)
-        state.frame_err = state.decision_bits.any(axis=(-2, -1))
-        state.err_bits = state.decision_bits.sum(axis=(-2, -1), dtype=np.int64)
-        if state.need_by_dv:
-            state.err_by_dv = np.stack(
-                [state.decision_bits[:, cols, :].sum(axis=(-2, -1), dtype=np.int64)
-                 for cols in self._cols_by_dv], axis=1)
-        else:
-            state.err_by_dv = np.zeros((state.num_active_frames, state.num_dv), np.int64)
+        self._collect_error_metrics(state)
 
         state.prev_csw = (state.check_sum ^ state.syndrome).sum(axis=(-2, -1)).astype(np.int64)  # Compute_CSW
 
@@ -284,9 +363,17 @@ class BaseDecoder:
         edges = code.col_edges[col]
         edge_row, edge_shift = code.edge_row, code.edge_shift
         dv_idx = self._col_dv_idx[col]
-        # flip 도메인: 채널 항은 항상 +ch (read bit는 syndrome과 genie에만 반영)
-        sum_t = np.broadcast_to(
-            state.cur_ch[:, dv_idx, None], (state.num_active_frames, state.z)).astype(np.float32).copy()
+        # flip 도메인: 채널 항은 항상 +ch (read bit는 syndrome과 genie에만 반영).
+        # HD는 dv별 ch 하나, 2SD/3SD는 비트별 region이 ch 열을 고른다
+        # (VN_Cal_SD 대응, cpp_sd_analysis.md 1절)
+        if state.region is None:
+            sum_t = np.broadcast_to(
+                state.cur_ch[:, dv_idx, None],
+                (state.num_active_frames, state.z)).astype(np.float32).copy()
+        else:
+            sum_t = np.take_along_axis(
+                state.cur_ch_all[:, dv_idx, :], state.region[:, col, :],
+                axis=1).astype(np.float32)
         vnu_in_list = []
         for edge in edges:
             row_blk, shift = edge_row[edge], edge_shift[edge]
@@ -344,6 +431,9 @@ class BaseDecoder:
         state.read_bit, state.syndrome, state.prev_csw = \
             state.read_bit[keep], state.syndrome[keep], state.prev_csw[keep]
         state.decision_bits = state.decision_bits[keep]
+        if state.region is not None:
+            state.region = state.region[keep]
+            state.seed_mag = state.seed_mag[keep]
         state.min1, state.min2, state.min1_pos = state.min1[keep], state.min2[keep], state.min1_pos[keep]
         state.check_sum, state.edge_sgn = state.check_sum[keep], state.edge_sgn[keep]
         return False
@@ -385,17 +475,13 @@ class BaseDecoder:
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)
           final_csw, final_err_by_dv: (B,), (B, num_dv) (fail_detail 시)
         """
-        if self.llr_matrix.mode != "HD":
-            raise NotImplementedError(
-                f"{self.llr_matrix.mode} 디코딩 산술 미구현, 현재 HD만 디코딩 가능 "
-                "(2SD/3SD는 region→채널 LLR 매핑과 SD Edge Clear 규칙 구현 후 해제)")
         log = set() if log is None else set(log)
         unknown_log_items = log - LOG_ITEMS   # 허용 목록에 없는 항목 = 오타 검출
         if unknown_log_items:
             raise ValueError(f"log 항목 {sorted(unknown_log_items)} 미지원 (허용: {sorted(LOG_ITEMS)})")
 
-        read_bit = self._read_channel_input(channel_out)
-        state = self._init_state(read_bit, log)
+        read_bit, region = self._read_channel_input(channel_out)
+        state = self._init_state(read_bit, region, log)
         for iteration in range(1, self.max_iter + 1):
             self._run_iteration(state, iteration)
             self._record_iteration(state, collect_profile)  # 압축 전 인덱스를 쓰므로 _check_errors보다 먼저

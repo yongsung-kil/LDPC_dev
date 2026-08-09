@@ -12,7 +12,7 @@
 | `LDPC_base/` | 코드: pcm, encoder, channel(원본 대응 3종), decoder(syndrome-aided + 논문 교체 지점), sim, run, llr_matrix |
 | `Ideas/` | 논문 아이디어 폴더 (아래 "논문 아이디어 구조" 절). vanilla = reference |
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). column block은 **DV 내림차순 배치** |
-| `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (LLR_MATRIX_HD_0.txt=restart 포함 토이, HD_1.txt=restart 없는 20-iter 테스트용) |
+| `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
 | `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
 | `config.json` | 실험 설정 (아래 스키마 참조) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
@@ -88,7 +88,8 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
   false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
   파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(메시지 양자화
-  bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter,
+  bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통. HD는 정수 하나,
+  2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter,
   mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그 값만 바꿔
   두 방식을 오갈 수 있다). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
   (예: LLR_MATRIX_HD_uniform_6bit_ch8_dv4_iter120.txt).
@@ -160,7 +161,8 @@ dict {"mode", "hd", "sd", "cc"}.
 | fixed_error | MODE_CH_FIXED_ERROR. 프레임마다 정확히 E개 무작위 bit flip | HD | E (에러 bit 수) |
 | strong_error | MODE_CH_STRONG_ERROR. E 중 round(E·SER)개는 strong(sd=1) 에러이고 나머지는 weak, 정정 bit 중 round(C·SCR)개만 strong이고 나머지는 weak | 2SD | E (에러 bit 수) |
 
-- 2SD/3SD는 채널 출력까지만 준비했고, 디코더가 HD 전용이라 현재 실행 불가 (TODO)
+- 2SD/3SD 디코딩: LLR matrix를 2SD/3SD 파일(또는 균일 생성 mode)로 지정하고
+  rber 또는 strong_error 채널과 조합한다
 - 난수는 original XOR25 대신 numpy Generator
 
 ## DAO LLR_MATRIX: syndrome-aided decoding
@@ -174,7 +176,6 @@ dict {"mode", "hd", "sd", "cc"}.
 
 - 사람이 만든 LLR matrix 파일은 3-bit(VNU 출력 레벨 {7,5,3,1}) 전용.
   균일 생성물(파일명 uniform)은 n-bit 레벨을 지원한다 (레벨 수는 edge_mag가 결정)
-- 2SD/3SD 디코딩 미구현 (채널 출력까지만)
 - 파이프라인 store 지연(2~3 col) 미재현 (restart 흔들기 전파가 원본과 다소 다를 수 있음)
 - BF(1-bit precision) 구간 미구현 (vanilla, BF off 전제)
 - 실물 H-matrix와 LLR_MATRIX 실값 미반입 (토이 예시 사용 중)

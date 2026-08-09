@@ -24,8 +24,8 @@ JSON 구조:
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
   decoder.internal_quantize: use_input_llr_matrix=false일 때 필수.
     {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
-    magnitude(전 dv 공통), "max_iter": 최대 iteration(파일 생성에 쓰인다),
-    "mode": "HD"(기본)}
+    magnitude(전 dv 공통. HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트),
+    "max_iter": 최대 iteration(파일 생성에 쓰인다), "mode": "HD"(기본)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널과 포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
@@ -61,7 +61,7 @@ import numpy as np
 
 from . import channel as chan
 from . import encoder
-from .llr_matrix import LLRMatrix
+from .llr_matrix import LLRMatrix, MODE_CH_LEN
 from .pcm import QCCode
 from .sim import run_fer_point, save_csv
 
@@ -181,15 +181,23 @@ def _check_internal_quantize(internal_quantize):
         raise ValueError(
             f"config [decoder.internal_quantize] num_bits={num_bits}: 상한 16 "
             "(레벨 수가 2^(num_bits-1)로 늘어 시간과 메모리가 급증)")
-    _check_int("decoder.internal_quantize", "channel_llr",
-               _require("decoder.internal_quantize", internal_quantize, "channel_llr"), 1)
+    mode = internal_quantize.setdefault("mode", "HD")
+    if mode not in ("HD", "2SD", "3SD"):
+        raise ValueError(
+            f"config [decoder.internal_quantize] mode={mode!r}: HD/2SD/3SD 중 하나여야 함")
+    channel_llr = _require("decoder.internal_quantize", internal_quantize, "channel_llr")
+    region_count = MODE_CH_LEN[mode]
+    if region_count == 1:
+        _check_int("decoder.internal_quantize", "channel_llr", channel_llr, 1)
+    else:
+        if not isinstance(channel_llr, list) or len(channel_llr) != region_count:
+            raise ValueError(
+                f"config [decoder.internal_quantize] channel_llr={channel_llr!r}: "
+                f"{mode}는 region별 {region_count}개 리스트여야 함 (강한 쪽부터)")
+        for value in channel_llr:
+            _check_int("decoder.internal_quantize", "channel_llr 원소", value, 1)
     _check_int("decoder.internal_quantize", "max_iter",
                _require("decoder.internal_quantize", internal_quantize, "max_iter"), 1)
-    mode = internal_quantize.setdefault("mode", "HD")
-    if mode != "HD":
-        raise ValueError(
-            f"config [decoder.internal_quantize] mode={mode!r}: 디코더가 HD 전용이라 "
-            "HD만 허용 (2SD/3SD 산술 구현 시 해제)")
 
 
 def load_config(path):
@@ -336,11 +344,14 @@ def setup(config):
             mode=internal_quantize["mode"])
         generated_dir = os.path.join(config["output"]["dir"], "_generated")
         os.makedirs(generated_dir, exist_ok=True)
+        channel_llr = internal_quantize["channel_llr"]
+        channel_llr_tag = ("-".join(str(v) for v in channel_llr)
+                           if isinstance(channel_llr, list) else str(channel_llr))
         llr_matrix_path = os.path.join(
             generated_dir,
             f"LLR_MATRIX_{internal_quantize['mode']}_uniform"
             f"_{internal_quantize['num_bits']}bit"
-            f"_ch{internal_quantize['channel_llr']}"
+            f"_ch{channel_llr_tag}"
             f"_dv{dv_max}_iter{internal_quantize['max_iter']}.txt")
         synthesized.save(llr_matrix_path)
         print(f"generated LLR matrix: {llr_matrix_path}")

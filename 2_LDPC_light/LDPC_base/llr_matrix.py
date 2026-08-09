@@ -232,19 +232,27 @@ class LLRMatrix:
         num_bits: 메시지 양자화 bit 수 (sign 포함). th는 정수 [최대 레벨..1],
           magnitude 레벨은 uniform_edge_mag 참조 (최소 1). flip 도메인 값이
           전부 정수라 캐스케이드가 max(min(|raw|, 최대 레벨), 1)과 같아진다
-        channel_llr: 채널 LLR magnitude (전 dv 공통)
+        channel_llr: 채널 LLR magnitude (전 dv 공통).
+          HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트
         max_iter: 최대 iteration (파일 로드 경로와 달리 호출자가 지정)
         dv_max: H-matrix의 최대 column degree (dv 구간 [1, dv_max] 하나로 전 dv 커버)
         구성: 그룹 1개(ITER, iteration 1..max_iter), restart 없음."""
         top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
         ch_len = MODE_CH_LEN[mode]
+        if isinstance(channel_llr, (list, tuple)):
+            ch_values = [int(v) for v in channel_llr]
+        else:
+            ch_values = [int(channel_llr)] * ch_len
+        if len(ch_values) != ch_len:
+            raise ValueError(
+                f"channel_llr {channel_llr!r}: {mode}는 region별 {ch_len}개 필요 (강한 쪽부터)")
         th = list(range(top_level, 0, -1))               # 정수 [최대 레벨..1], 내림차순
         edge_mag = uniform_edge_mag(top_level)           # [top_level, ..., 2, 1, 1]
-        values = np.array([channel_llr] * ch_len + th, np.float64)
+        values = np.array(ch_values + th, np.float64)
         num_param = ch_len + top_level
         rows = [(values, -1, 1, int(max_iter), -1)]
         return cls(mode, num_param, [1], [int(dv_max)], [1], [GROUP_TYPE_ITER],
-                   [], [max(top_level, channel_llr)] * num_param, [0] * num_param,
+                   [], [max(top_level, *ch_values)] * num_param, [0] * num_param,
                    rows, name=f"internal_uniform_{num_bits}bit", edge_mag=edge_mag)
 
     def save(self, path):

@@ -20,7 +20,8 @@
       "  생성 위치: output.dir/_generated/, 파일명 LLR_MATRIX_{mode}_uniform_..._dv{max}_...",
       "  (uniform은 사람이 만든 파일이 아니라는 표시, 레벨 인식은 th 값 패턴으로)",
       "internal_quantize: num_bits(메시지 양자화 bit 수, sign 포함),",
-      "  channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter, mode(기본 HD)"
+      "  channel_llr(채널 LLR magnitude, 전 dv 공통. HD는 정수 하나,",
+      "  2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter, mode(기본 HD)"
     ],
     "use_input_llr_matrix": true,
     "llr_matrix": {
