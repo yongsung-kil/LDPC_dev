@@ -66,8 +66,9 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
   파일을 로드**해 디코딩한다 — `internal_quantize`의 num_bits(메시지 양자화
   bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter,
-  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 있어도 무시된다 (플래그만
-  바꿔 토글 가능). 생성 파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**
+  mode(기본 HD)로 파일을 만들며, llr_matrix.file은 쓰지 않고 llr_matrix.dir은
+  생성 파일 저장 폴더로 쓴다 (플래그만 바꿔 토글 가능).
+  생성 파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**
   (예: LLR_MATRIX_HD_uniform_6bit_ch8_iter120.txt)
 - ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널·포인트별 스트림은
@@ -76,8 +77,8 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   항목 키: `type`(rber/fixed_error/strong_error), `points`(스칼라 허용),
   strong_error는 `SER`/`SCR` 추가, 선택 키 `label`은 CSV 파일명 접미사
 - ㉲ `run.max_frame_errors`: 프레임 에러가 이 수에 도달하면 해당 포인트 측정 종료
-- ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용,
-  결과에 영향 없음)
+- ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
+  통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다
 - ㉴ `run.stop_below_fer`: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (null=사용 안 함)
 - ㉵ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
   `_`로 시작하는 키(예: `_desc`)는 **설명용으로 검사에서 무시** — JSON에 주석이 없어
@@ -159,7 +160,8 @@ dict {"mode", "hd", "sd", "cc"}.
 
 ## 남은 근사/제한
 
-- VNU 출력 레벨 {7,5,3,1} 고정 — 3-bit 전용 (사용자 확정: LLR은 3-bit만 사용)
+- 사람이 만든 LLR matrix 파일은 3-bit(VNU 출력 레벨 {7,5,3,1}) 전용.
+  균일 생성물(파일명 uniform)은 n-bit 레벨을 지원한다 (레벨 수는 edge_mag가 결정)
 - 2SD/3SD 디코딩 미구현 (채널 출력까지만)
 - 파이프라인 store 지연(2~3 col) 미재현 — restart 흔들기 전파가 원본과 다소 다를 수 있음
 - BF(1-bit precision) 구간 미구현 (vanilla, BF off 전제)

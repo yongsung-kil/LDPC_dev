@@ -10,7 +10,7 @@
 
 ## 실행
 
-실험 루트(`_test/20260806_setup_구성_실험/`)에서:
+`2_LDPC_light/`에서:
 
 ```bat
 python -m LDPC_base.run Ideas/vanilla/config.json

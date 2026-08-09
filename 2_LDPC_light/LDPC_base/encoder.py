@@ -2,8 +2,9 @@
 
 encode()는 아직 실제 구현 없이 자리만 잡아둔 임시 함수다: all-zero codeword
 확정(plan.md §7 #2)에 따라 msg 내용과 무관하게 all-zero를 반환한다.
-실물 인코더가 필요해지면 이 함수 내용만 채우면 되고, channel.py는 이미 cw를
-그대로 받아 처리하므로 다른 곳은 손댈 필요가 없다.
+성공 판정(genie)도 정답을 all-zero로 전제하므로(decoder.py의 에러 판정),
+실물 인코더를 도입할 때는 이 함수와 함께 디코더의 정답 참조와 sim.py의
+BER 집계도 같이 바꿔야 한다.
 """
 import numpy as np
 

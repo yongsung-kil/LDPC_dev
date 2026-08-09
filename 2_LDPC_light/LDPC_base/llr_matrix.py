@@ -67,8 +67,9 @@ class LLRMatrix:
         if edge_mag is None:
             if self.th_len != 3:
                 raise NotImplementedError(
-                    f"{name}: th {self.th_len}개 — 파일 매트릭스는 3-bit(th 3개) 전용. "
-                    "다른 레벨 구성은 edge_mag를 지정해 합성할 것")
+                    f"{name}: th {self.th_len}개 — edge_mag 미지정은 3-bit(th 3개) 전용. "
+                    "다른 레벨 구성은 edge_mag를 지정해 합성하거나 균일 생성 경로"
+                    "(파일명 uniform)를 쓸 것")
             edge_mag = [7, 5, 3, 1]                      # 3-bit VNU 출력 레벨
         self.edge_mag = np.asarray(edge_mag, np.float32)
         if len(self.edge_mag) != self.th_len + 1:

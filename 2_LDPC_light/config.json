@@ -12,10 +12,11 @@
 
   "decoder": {
     "_desc": [
-      "use_input_llr_matrix: true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
+      "use_input_llr_matrix:",
+      "true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
       "  max_iter는 파일의 마지막 iter_end가 결정 — JSON에 두면 에러)",
       "false면 균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그 파일을",
-      "  로드해 디코딩 (internal_quantize 사용, llr_matrix 키는 무시).",
+      "  로드해 디코딩 (internal_quantize 사용, llr_matrix.file은 쓰지 않음).",
       "  생성 위치: llr_matrix.dir(없으면 Input/LLR), 파일명 LLR_MATRIX_{mode}_uniform_...",
       "  — uniform은 사람이 만든 파일이 아니라는 표시",
       "internal_quantize: num_bits(메시지 양자화 bit 수, sign 포함),",
@@ -40,7 +41,8 @@
     "_desc": [
       "max_frame_errors: 프레임 에러가 이 수에 도달하면 해당 포인트 측정 종료",
       "max_frames: 포인트당 최대 프레임 수",
-      "frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도/메모리용, 결과 영향 없음)",
+      "frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도/메모리용.",
+      "  같은 seed의 수치 재현에는 이 값까지 같아야 함)",
       "stop_below_fer: 측정 FER가 이 값 미만이면 남은 포인트 중단 (null=사용 안 함)"
     ],
     "max_frame_errors": 10,

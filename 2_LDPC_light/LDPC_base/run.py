@@ -14,8 +14,8 @@ JSON 구조:
   decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
   decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
     false면 균일 n-bit 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
-    그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix 키는
-    있어도 무시). 생성 파일은 llr_matrix.dir(없으면 Input/LLR)에
+    그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix.file은
+    쓰지 않는다). 생성 파일은 llr_matrix.dir(없으면 Input/LLR)에
     LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_iter{max_iter}.txt로
     저장된다 — 파일명의 uniform은 사람이 만든 파일이 아니라는 표시
   decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX
@@ -29,8 +29,8 @@ JSON 구조:
   channels: 채널 리스트 — 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
   run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료
-  run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용,
-    결과에 영향 없음)
+  run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
+    통계 결과는 프레임 수가 충분하면 같고, 같은 seed 수치 재현에는 이 값까지 같아야 한다
   run.stop_below_fer: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (선택)
   run.print_progress: 진행 상황 콘솔 출력 여부 (기본 true)
   log: 분석 로그 선택 (전부 선택, 기본 꺼짐 — 켜면 속도 비용):
