@@ -170,7 +170,7 @@ def _check_channel(index, channel_config):
 
 def _check_internal_quantize(internal_quantize):
     """decoder.internal_quantize 블록 검증. use_input_llr_matrix 값과 무관하게
-    형식을 검사해, 같은 config가 토글 방향에 따라 통과/실패가 갈리지 않게 한다."""
+    형식을 검사해, 같은 config의 통과/실패가 플래그 값에 따라 갈리지 않게 한다."""
     if not isinstance(internal_quantize, dict):
         raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
     _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
@@ -226,7 +226,7 @@ def load_config(path):
         decoder_config["llr_matrix"] = _path_pair(
             "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
         if decoder_config.get("internal_quantize") is not None:
-            # 이 분기에서 쓰이지는 않지만 토글과 무관하게 형식은 검증한다
+            # 이 분기에서 쓰이지는 않지만 플래그 값과 무관하게 형식은 검증한다
             _check_internal_quantize(decoder_config["internal_quantize"])
     else:
         _check_internal_quantize(

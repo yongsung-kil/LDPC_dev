@@ -14,7 +14,7 @@
   - [x] 사용자 답변 반영: FER 1.0 조치 불필요, 배치 무관성은 문언 교정으로 종결, llr_tables와 llr_tune 폐기 (2026-08-09)
   - [x] 수리 1차: 문서 사실 교정 6건, frames_per_batch 문언 3곳, llr_tables.py 삭제 (2026-08-09)
   - [x] 결정 1, 2, 4 확정과 구현 (2026-08-09): 균일 레벨 최소 1(개선안, ch=top 공명 해소 실측),
-        생성 LLR은 output.dir/_generated + 실행 폴더 사본 토글(output.save_llr_matrix), 줄표 금지 규칙 등재
+        생성 LLR은 output.dir/_generated + 실행 폴더 사본 저장 선택(output.save_llr_matrix), 줄표 금지 규칙 등재
   - [x] 수리 2차 일부 (2026-08-09): 균일 판정 값 기반 교체, O(1) 등가식, summary.txt 저장 순서와
         그림 실패 보호, git 해시 dirty 표시, num_bits 상한 16, 파일명 dv_max, 고아 uniform 파일 삭제
   - [x] 줄표 일괄 수리 (2026-08-09): 22파일 149건, AST 대조로 로직 무변경 확인 (_pm/과 docs/review/ 이력물은 보존)
@@ -44,8 +44,8 @@
 - [ ] H-matrix와 LLR 테이블 실물 파일 확인 (z_sb=256 대상) 후 실물 파라미터로 교체 (외부 반입 필요, 저장소에 없음)
   - 3-bit internal precision 잔여 갭은 소실된 HW TH/CH 실값 없이는 추정 튜닝 한계. 실값 반입 시 재검증
 - [ ] mpi_runner 슈퍼컴 반입 (재설계 완료 후)
-- [ ] 논문 아이디어 스크리닝 시작 (교체 지점 구조는 2026-08-07 완료 — DONE.md 참조.
-      교체 지점 = 아이디어 버전이 함수만 갈아끼울 수 있게 분리해 둔 자리, 업계 용어 hook.
+- [ ] 논문 아이디어 스크리닝 시작 (교체 지점 구조는 2026-08-07 완료, DONE.md 참조.
+      교체 지점 = 아이디어 버전이 함수만 갈아끼울 수 있게 분리해 둔 자리.
       실물 H-matrix, LLR_MATRIX 반입 후 vanilla reference 커브 확보가 선행 단계)
 - [ ] 유효 아이디어의 실물 C++ 이식과 최종 검증
 

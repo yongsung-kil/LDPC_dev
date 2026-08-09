@@ -89,8 +89,8 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
   파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(메시지 양자화
   bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter,
-  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그만 바꿔 토글
-  가능). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
+  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그 값만 바꿔
+  두 방식을 오갈 수 있다). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
   (예: LLR_MATRIX_HD_uniform_6bit_ch8_dv4_iter120.txt).
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
   파일명이 아니라 th 값 패턴([n..1]이면 균일)으로 한다
@@ -138,8 +138,8 @@ Sim_Output/260807_133321_fixed_error/
 ## 논문 아이디어 구조
 
 **교체 단위 = 원본 C++ 함수 경계.** "교체 지점"이란 본체가 특정 단계를 일부러
-별도 함수로 분리해 둬서 아이디어 버전이 그 함수만 갈아끼울 수 있게 만든 자리다
-(업계 용어로는 hook). 아이디어는 `LDPC_base`를 고치지 않고 `MinSumDecoder`를
+별도 함수로 분리해 둬서 아이디어 버전이 그 함수만 갈아끼울 수 있게 만든 자리다.
+아이디어는 `LDPC_base`를 고치지 않고 `MinSumDecoder`를
 상속한 자식 클래스에서 교체용 함수만 재정의한다(재정의 = 부모 클래스의 함수를
 자식 클래스에서 다른 내용으로 바꿔 채우는 것). 스크리닝에서 살아남은 아이디어는
 교체용 함수의 C++ 대응 함수가 곧 실물 이식 지점이 된다.
