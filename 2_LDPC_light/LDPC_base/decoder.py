@@ -47,12 +47,16 @@ Ideas/{논문}/decoder.py에 작성, Ideas/registry.py에 등록 → config deco
 | 교체용 함수 | C++ 대응 | 커버 논문 유형 |
 |-------------|----------|---------------|
 | _c2v_reconstruct | C2V_Cal | min-sum 변형 (offset/normalized/adjusted), C2V 보정 |
-| _vnu_quantize | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계, damping |
-| _vn_decide | VN_Cal_HD 판정부 | 판정 규칙, 진동 억제 |
+| _vnu_quantize | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계 |
+| _vn_decide | VN_Cal_HD 판정부 | 판정 규칙 |
 | _cnu_update | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
 | _column_order | 메인 루프 스케줄 | layered / informed dynamic scheduling |
 | _is_edge_clear_iter | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
 | 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | LLRMatrix.row_index() (LLRMatrix 자식 클래스로 커버) |
+
+damping과 진동 억제처럼 직전 iteration 값이나 이력이 필요한 아이디어는 교체용
+함수가 iteration 이력을 받지 않으므로 decoder_main 전체 재정의로 구현한다.
+등록 디코더의 생성자 계약: decoder_class(code, llr_matrix=...) (run.py setup이 이 형태로 호출).
 """
 import numpy as np
 
@@ -70,6 +74,7 @@ class _DecodeState:
     num_dv: int
     # 프레임 데이터 (genie 마스킹 시 배치 압축 대상)
     read_bit: np.ndarray
+    decision_bits: np.ndarray
     syndrome: np.ndarray
     prev_csw: np.ndarray
     min1: np.ndarray
@@ -115,7 +120,9 @@ class MinSumDecoder:
         self.llr_matrix = llr_matrix
         self.max_iter = llr_matrix.max_iter              # 마지막 iter_end = max_iter
         self._col_dv_idx = llr_matrix.col_dv_idx(code)   # (N_b,) column→dv 구간 인덱스
-        self._edge_mag = np.asarray(llr_matrix.edge_mag, np.float32)  # VNU 출력 레벨 (내림차순)
+        self._cols_by_dv = [np.flatnonzero(self._col_dv_idx == d)
+                            for d in range(llr_matrix.num_dv)]  # dv 구간별 column 목록
+        self._edge_mag = np.array(llr_matrix.edge_mag, np.float32)  # VNU 출력 레벨 사본 (내림차순)
         self._uniform_levels = llr_matrix.has_uniform_levels  # 균일 등가식 사용 여부 (값 기반)
 
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
@@ -179,7 +186,8 @@ class MinSumDecoder:
                     min1, min2, min1_pos, check_sum, edge_sgn):
         """[교체 지점: CNU_Remove_Old_Sgn / CNU_Update_New_Mag 대응] CN 상태 갱신 (in-place).
         remove old(Edge Clear iteration은 생략) 후 insert new: <= 비교,
-        min1 교체 시 min2=RESET (기존 min1을 min2로 내리지 않는 HW 특성, 원문 그대로)."""
+        min1 교체 시 min2=RESET (기존 min1을 min2로 내리지 않는 HW 특성, 원문 그대로).
+        재정의할 때도 받은 배열을 in-place로 갱신해야 한다 (반환값은 쓰이지 않는다)."""
         RESET = np.float32(self._edge_mag[0])
         cur_min1 = min1[:, row_blk, :]
         cur_min2 = min2[:, row_blk, :]
@@ -226,6 +234,7 @@ class MinSumDecoder:
         state.z = z
         state.num_dv = num_dv
         state.read_bit = read_bit
+        state.decision_bits = read_bit.copy()    # 판정비트 (C++ cwc 대응): 현재 bit 추정, 1=에러
         state.syndrome = code.syndrome(read_bit)             # (B, M_b, z) = H·read_bit
         state.prev_csw = state.syndrome.sum(axis=(-2, -1)).astype(np.int64)
 
@@ -252,9 +261,6 @@ class MinSumDecoder:
         """한 iteration: Edge Clear → 테이블 row 선택 → column 루프 → CSW 갱신."""
         RESET = np.float32(self._edge_mag[0])
         state.num_active_frames = state.read_bit.shape[0]
-        state.frame_err = np.zeros(state.num_active_frames, bool)
-        state.err_bits = np.zeros(state.num_active_frames, np.int64)
-        state.err_by_dv = np.zeros((state.num_active_frames, state.num_dv), np.int64)
 
         state.edge_clear = self._is_edge_clear_iter(iteration)
         if state.edge_clear and iteration > 1:
@@ -271,10 +277,22 @@ class MinSumDecoder:
         for col in self._column_order(iteration):
             self._process_column(state, iteration, col)
 
+        # 에러 집계는 판정비트 배열 전체를 훑는다 (C++의 cwc[] 전 배열 스윕과 동일 구조).
+        # column 루프 안에서 세지 않으므로 _column_order가 일부 column만 방문해도
+        # 미방문 column의 에러가 집계에 남는다 (성공 오판정 방지)
+        state.frame_err = state.decision_bits.any(axis=(-2, -1))
+        state.err_bits = state.decision_bits.sum(axis=(-2, -1), dtype=np.int64)
+        if state.need_by_dv:
+            state.err_by_dv = np.stack(
+                [state.decision_bits[:, cols, :].sum(axis=(-2, -1), dtype=np.int64)
+                 for cols in self._cols_by_dv], axis=1)
+        else:
+            state.err_by_dv = np.zeros((state.num_active_frames, state.num_dv), np.int64)
+
         state.prev_csw = (state.check_sum ^ state.syndrome).sum(axis=(-2, -1)).astype(np.int64)  # Compute_CSW
 
     def _process_column(self, state, iteration, col):
-        """한 column: C2V 합산(sum_t) → 판정(genie 집계) → VNU 출력·CN 갱신."""
+        """한 column: C2V 합산(sum_t) → 판정비트 갱신 → VNU 출력·CN 갱신."""
         code = self.code
         edges = code.col_edges[col]
         edge_row, edge_shift = code.edge_row, code.edge_shift
@@ -294,11 +312,9 @@ class MinSumDecoder:
             sum_t += vnu_in
 
         flip = self._vn_decide(sum_t)
-        bit_err = state.read_bit[:, col, :] ^ flip
-        state.frame_err |= bit_err.any(axis=-1)
-        state.err_bits += bit_err.sum(axis=-1)
-        if state.need_by_dv:
-            state.err_by_dv[:, dv_idx] += bit_err.sum(axis=-1)
+        # 판정비트 갱신: 현재 bit 추정 = read_bit ⊕ flip (정답 all-zero 기준 1 = 에러).
+        # 에러 집계는 _run_iteration이 판정비트 배열 전체로 수행한다
+        state.decision_bits[:, col, :] = state.read_bit[:, col, :] ^ flip
 
         for edge, vnu_in in zip(edges, vnu_in_list):
             row_blk, shift = edge_row[edge], edge_shift[edge]
@@ -340,6 +356,7 @@ class MinSumDecoder:
         state.idx_active = state.idx_active[keep]
         state.read_bit, state.syndrome, state.prev_csw = \
             state.read_bit[keep], state.syndrome[keep], state.prev_csw[keep]
+        state.decision_bits = state.decision_bits[keep]
         state.min1, state.min2, state.min1_pos = state.min1[keep], state.min2[keep], state.min1_pos[keep]
         state.check_sum, state.edge_sgn = state.check_sum[keep], state.edge_sgn[keep]
         return False
@@ -394,7 +411,7 @@ class MinSumDecoder:
         state = self._init_state(read_bit, log)
         for iteration in range(1, self.max_iter + 1):
             self._run_iteration(state, iteration)
-            self._record_iteration(state, collect_profile)
+            self._record_iteration(state, collect_profile)  # 압축 전 인덱스를 쓰므로 _check_errors보다 먼저
             if self._check_errors(state, iteration):
                 break
         return self._build_result(state, collect_profile)

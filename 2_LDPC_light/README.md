@@ -20,6 +20,12 @@
 
 ## 실행 방법
 
+의존 패키지 설치 (최초 1회):
+
+```bat
+pip install -r requirements.txt
+```
+
 이 폴더(`2_LDPC_light/`)에서:
 
 ```bat
@@ -35,6 +41,23 @@ H-matrix 생성 (repo 루트에서, 실험 흐름과 분리된 수동 도구):
 ```bat
 python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 ```
+
+시뮬 실행은 `2_LDPC_light/`, 도구 실행은 repo 루트가 기준 폴더다. 한 파이썬
+프로세스에서 두 기준을 섞으면 같은 모듈이 두 벌 적재될 수 있으므로 섞지 않는다.
+
+## 용어
+
+| 약어 | 원어와 뜻 |
+|------|-----------|
+| LDPC | low-density parity-check code (저밀도 패리티 검사 부호) |
+| QC | quasi-cyclic (순환 시프트 블록 구조) |
+| LLR | log-likelihood ratio (로그 우도비, 비트 신뢰도) |
+| VNU / CNU | variable / check node unit (변수 노드 / 검사 노드 연산부) |
+| dv | variable node degree (변수 노드가 연결된 검사식 수, column degree) |
+| CSW | check-sum weight (불만족 검사식 수) |
+| FER / BER | frame / bit error rate (프레임 / 비트 에러율) |
+| HD / 2SD / 3SD | hard decision / 2-bit, 3-bit soft decision 채널 양자화 |
+| DAO | decoder auto optimizer (LLR 테이블 최적화 외부 도구) |
 
 ## JSON 설정 스키마 (2026-08-07 확정)
 
@@ -80,10 +103,12 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 - ㉲ `run.max_frame_errors`: 프레임 에러가 이 수에 도달하면 해당 포인트 측정 종료
 - ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
   통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다
-- ㉴ `run.stop_below_fer`: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (null=사용 안 함)
-- ㉵ `output.save_llr_matrix`: 사용한 LLR matrix 파일 사본을 실행 폴더에 저장할지
+- ㉴ `run.stop_below_fer`: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 측정 중단
+  (null=사용 안 함, 다음 채널은 계속 진행)
+- ㉵ `run.print_progress`: 진행 상황 콘솔 출력 여부 (기본 true)
+- ㉶ `output.save_llr_matrix`: 사용한 LLR matrix 파일 사본을 실행 폴더에 저장할지
   (기본 true). 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다
-- ㉶ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
+- ㉷ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
   `_`로 시작하는 키(예: `_desc`)는 **설명용으로 검사에서 무시**. JSON에 주석이 없어
   설명은 `_desc` 키로 단다 (문자열 배열 가능)
 
@@ -122,12 +147,16 @@ Sim_Output/260807_133321_fixed_error/
 | 교체용 함수 | C++ 대응 | 커버 논문 유형 |
 |-------------|----------|---------------|
 | `_c2v_reconstruct` | C2V_Cal | min-sum 변형 (offset/normalized/adjusted), C2V 보정 |
-| `_vnu_quantize` | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계, damping |
-| `_vn_decide` | VN_Cal_HD 판정부 | 판정 규칙, 진동 억제 |
+| `_vnu_quantize` | VN_Cal_HD 양자화부 | 양자화 규칙, 비균일 임계 |
+| `_vn_decide` | VN_Cal_HD 판정부 | 판정 규칙 |
 | `_cnu_update` | CNU_Remove_Old_Sgn / CNU_Update_New_Mag | CN 상태 갱신 변형 |
 | `_column_order` | 메인 루프 스케줄 | layered / informed dynamic scheduling |
 | `_is_edge_clear_iter` | Clear_Edge_Restart (Is_Iter_Type_Edge_Clear) | restart, perturbation, post-processing |
 | 테이블 row 선택 | Get_Cur_LLR_Idx_FILE | `LLRMatrix.row_index()` (LLRMatrix 자식 클래스로 커버) |
+
+damping과 진동 억제처럼 직전 iteration 값이 필요한 아이디어는 교체용 함수가
+이력을 받지 않으므로 `decoder_main` 전체 재정의로 구현한다. 등록 디코더는
+생성자 `(code, llr_matrix=...)` 계약을 지킨다.
 
 ```
 Ideas/

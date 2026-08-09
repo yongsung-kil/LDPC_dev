@@ -155,7 +155,8 @@ class LLRMatrix:
                 raise ValueError(f"{self.name}: restart 그룹 뒤에 그룹이 없음")
         # th 내림차순 점검 (경고만): C++ 소비부는 캐스케이드라 비단조 th도 그대로 소비
         # 하지만(디코더도 동일 캐스케이드로 맞춤), 작성 실수일 가능성이 높아 알린다.
-        if not np.all(self.row_th[:, :, :-1] >= self.row_th[:, :, 1:]):
+        self.th_nonmonotonic = not bool(np.all(self.row_th[:, :, :-1] >= self.row_th[:, :, 1:]))
+        if self.th_nonmonotonic:
             warnings.warn(
                 f"{self.name}: th가 내림차순이 아닌 row 존재. 캐스케이드 의미"
                 f"(th1부터 순서 비교)로 소비되며, 의도한 값인지 확인할 것")
@@ -344,4 +345,5 @@ class LLRMatrix:
             for i, (row_start, row_end) in enumerate(self.group_slices))
         return (f"LLRMatrix {self.name}: mode={self.mode} (ch{self.ch_len}+th{self.th_len}), "
                 f"dv={self.dv_from.tolist()}~{self.dv_to.tolist()}, max_iter={self.max_iter}, "
-                f"groups: {groups_str}")
+                f"groups: {groups_str}"
+                + (", th 비단조 주의" if self.th_nonmonotonic else ""))

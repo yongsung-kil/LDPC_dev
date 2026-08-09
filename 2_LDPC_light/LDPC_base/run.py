@@ -29,10 +29,12 @@ JSON 구조:
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널·포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
-  run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료
-  run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
+  run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료 (기본 50)
+  run.max_frames: 포인트당 최대 프레임 수 (기본 20000)
+  run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용, 기본 128).
     통계 결과는 프레임 수가 충분하면 같고, 같은 seed 수치 재현에는 이 값까지 같아야 한다
-  run.stop_below_fer: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (선택)
+  run.stop_below_fer: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 측정 중단
+    (선택, 다음 채널은 계속 진행)
   run.print_progress: 진행 상황 콘솔 출력 여부 (기본 true)
   log: 분석 로그 선택 (전부 선택, 기본 꺼짐이고 켜면 속도 비용):
     csw_per_iter / bit_err_per_iter / bit_err_by_dv: iteration별 집계 CSV
@@ -41,7 +43,7 @@ JSON 구조:
     fer_curve_png: FER 커브 그림 저장
   output.dir 하위에 실행마다 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 결과 일체
   (config 사본, summary.txt, 사용한 LLR matrix 사본, CSV, 로그)를 저장한다.
-  라벨은 output.label (없으면 첫 채널 type)
+  라벨은 output.label (없으면 첫 채널 type), CSV 파일명 접두는 output.csv_prefix (기본 "fer")
   output.save_llr_matrix: 사용한 LLR matrix 파일 사본을 실행 폴더에 남길지
     (기본 true. 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다)
 
@@ -59,7 +61,6 @@ import numpy as np
 
 from . import channel as chan
 from . import encoder
-from .decoder import MinSumDecoder
 from .llr_matrix import LLRMatrix
 from .pcm import QCCode
 from .sim import run_fer_point, save_csv
@@ -81,6 +82,8 @@ _CHANNEL_KEYS = {
 # JSON log 키 → decoder/sim 로그 항목
 _LOG_TO_ITEM = {"csw_per_iter": "csw", "bit_err_per_iter": "bit_err",
                 "bit_err_by_dv": "bit_err_by_dv", "fail_frame_detail": "fail_detail"}
+# run 섹션 기본값 (검증, 소비, 요약이 전부 이 값 하나를 쓴다)
+_RUN_DEFAULTS = {"max_frame_errors": 50, "max_frames": 20000, "frames_per_batch": 128}
 
 
 def _visible(d):
@@ -155,6 +158,38 @@ def _check_channel(index, channel_config):
             if (isinstance(value, bool) or not isinstance(value, (int, float))
                     or not 0.0 <= value <= 1.0):
                 raise ValueError(f"config [{section}] {key}={value!r}: 0~1 범위 수여야 함")
+    label = channel_config.get("label")
+    if label is not None and not isinstance(label, str):
+        raise ValueError(f"config [{section}] label={label!r}: 문자열이어야 함")
+    stream_keys = [int(1e6 * point) for point in points]
+    if len(set(stream_keys)) != len(stream_keys):
+        raise ValueError(
+            f"config [{section}] points {points}: 난수 스트림 파생값 int(1e6*point)가 "
+            "겹치는 포인트가 있음 (같은 스트림으로 중복 측정되고 로그 CSV 파일명이 덮임)")
+
+
+def _check_internal_quantize(internal_quantize):
+    """decoder.internal_quantize 블록 검증. use_input_llr_matrix 값과 무관하게
+    형식을 검사해, 같은 config가 토글 방향에 따라 통과/실패가 갈리지 않게 한다."""
+    if not isinstance(internal_quantize, dict):
+        raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
+    _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
+    num_bits = _check_int(
+        "decoder.internal_quantize", "num_bits",
+        _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
+    if num_bits > 16:
+        raise ValueError(
+            f"config [decoder.internal_quantize] num_bits={num_bits}: 상한 16 "
+            "(레벨 수가 2^(num_bits-1)로 늘어 시간과 메모리가 급증)")
+    _check_int("decoder.internal_quantize", "channel_llr",
+               _require("decoder.internal_quantize", internal_quantize, "channel_llr"), 1)
+    _check_int("decoder.internal_quantize", "max_iter",
+               _require("decoder.internal_quantize", internal_quantize, "max_iter"), 1)
+    mode = internal_quantize.setdefault("mode", "HD")
+    if mode != "HD":
+        raise ValueError(
+            f"config [decoder.internal_quantize] mode={mode!r}: 디코더가 HD 전용이라 "
+            "HD만 허용 (2SD/3SD 산술 구현 시 해제)")
 
 
 def load_config(path):
@@ -190,26 +225,12 @@ def load_config(path):
     if use_input_llr_matrix:
         decoder_config["llr_matrix"] = _path_pair(
             "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
+        if decoder_config.get("internal_quantize") is not None:
+            # 이 분기에서 쓰이지는 않지만 토글과 무관하게 형식은 검증한다
+            _check_internal_quantize(decoder_config["internal_quantize"])
     else:
-        internal_quantize = _require("decoder", decoder_config, "internal_quantize")
-        if not isinstance(internal_quantize, dict):
-            raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
-        _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
-        num_bits = _check_int(
-            "decoder.internal_quantize", "num_bits",
-            _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
-        if num_bits > 16:
-            raise ValueError(
-                f"config [decoder.internal_quantize] num_bits={num_bits}: 상한 16 "
-                "(레벨 수가 2^(num_bits-1)로 늘어 시간과 메모리가 급증)")
-        _check_int("decoder.internal_quantize", "channel_llr",
-                   _require("decoder.internal_quantize", internal_quantize, "channel_llr"), 1)
-        _check_int("decoder.internal_quantize", "max_iter",
-                   _require("decoder.internal_quantize", internal_quantize, "max_iter"), 1)
-        mode = internal_quantize.setdefault("mode", "HD")
-        if mode not in ("HD", "2SD", "3SD"):
-            raise ValueError(
-                f"config [decoder.internal_quantize] mode={mode!r}: HD/2SD/3SD 중 하나여야 함")
+        _check_internal_quantize(
+            _require("decoder", decoder_config, "internal_quantize"))
         # 생성 파일은 setup()이 output.dir 하위 _generated/에 저장한다
         # (파일명에 dv_max가 들어가므로 H-matrix 로드 후에야 확정된다)
     decoder_type = decoder_config.setdefault("type", "vanilla")
@@ -228,12 +249,19 @@ def load_config(path):
     if not isinstance(save_llr_matrix, bool):
         raise ValueError(
             f"config [output] save_llr_matrix={save_llr_matrix!r}: true/false여야 함")
+    for key in ("csv_prefix", "label"):
+        if key in output_config and not isinstance(output_config[key], str):
+            raise ValueError(
+                f"config [output] {key}={output_config[key]!r}: 문자열이어야 함")
 
     run_config = config.setdefault("run", {})
     _check_keys("run", run_config, _RUN_KEYS)
-    _check_int("run", "max_frame_errors", run_config.get("max_frame_errors", 50), 1)
-    _check_int("run", "max_frames", run_config.get("max_frames", 20000), 1)
-    _check_int("run", "frames_per_batch", run_config.get("frames_per_batch", 128), 1)
+    for key in ("max_frame_errors", "max_frames", "frames_per_batch"):
+        _check_int("run", key, run_config.get(key, _RUN_DEFAULTS[key]), 1)
+    print_progress = run_config.setdefault("print_progress", True)
+    if not isinstance(print_progress, bool):
+        raise ValueError(
+            f"config [run] print_progress={print_progress!r}: true/false여야 함")
     stop_below_fer = run_config.get("stop_below_fer")
     if stop_below_fer is not None and (isinstance(stop_below_fer, bool)
                                        or not isinstance(stop_below_fer, (int, float))
@@ -262,17 +290,16 @@ def _resolve_decoder_class(decoder_type):
     """decoder.type → 디코더 클래스 (Ideas/registry.py 조회).
 
     Ideas 패키지는 실행 위치 기준으로 import되므로 2_LDPC_light/에서
-    `python -m LDPC_base.run ...`으로 실행한다. Ideas가 없는 환경에서는
-    "vanilla"가 정본(MinSumDecoder)으로 동작한다."""
+    `python -m LDPC_base.run ...`으로 실행한다. Ideas를 import하지 못하면
+    조용한 대체 없이 에러로 종료한다 (사용자 결정 2026-08-09)."""
     import importlib
     try:
         registry = importlib.import_module("Ideas.registry")
-    except ImportError:
-        if decoder_type == "vanilla":
-            return MinSumDecoder
+    except ImportError as import_error:
         raise ValueError(
-            f"decoder.type={decoder_type!r}: Ideas 패키지를 찾을 수 없음 "
-            "(2_LDPC_light/에서 실행했는지 확인)")
+            f"decoder.type={decoder_type!r}: Ideas 패키지를 import할 수 없음 "
+            f"({import_error}). 2_LDPC_light/에서 python -m LDPC_base.run으로 "
+            "실행했는지 확인할 것") from import_error
     if decoder_type not in registry.DECODERS:
         raise ValueError(
             f"decoder.type={decoder_type!r}: Ideas/registry.py 미등록 "
@@ -294,6 +321,10 @@ def setup(config):
     code = QCCode.load(h_matrix_path)
     if config["decoder"]["use_input_llr_matrix"]:
         llr_matrix_path = config["decoder"]["llr_matrix"]
+        if not os.path.exists(llr_matrix_path):
+            raise FileNotFoundError(
+                f"{llr_matrix_path} 없음. LLR matrix 파일을 준비하거나 "
+                "use_input_llr_matrix를 false로 바꿔 균일 생성을 쓸 것")
     else:
         internal_quantize = config["decoder"]["internal_quantize"]
         dv_max = int(code.col_deg.max())
@@ -322,25 +353,42 @@ def setup(config):
 
 def _experiment_summary_lines(code, decoder, config):
     """실험 요약 (setup 직후 콘솔과 summary.txt 공용):
-    부호 정보, LLR matrix 정보, 디코더 정보, 읽은 config 정보."""
-    channels_desc = ", ".join(
-        f"{channel_config['type']}{channel_config['points']}"
-        for channel_config in config["channels"])
+    부호 정보, LLR matrix 정보와 공급 경로, 디코더 정보, 읽은 config 정보."""
+    def channel_desc(channel_config):
+        desc = f"{channel_config['type']}{channel_config['points']}"
+        if channel_config["type"] == "strong_error":
+            desc += f" SER={channel_config['SER']} SCR={channel_config['SCR']}"
+        if channel_config.get("label"):
+            desc += f"({channel_config['label']})"
+        return desc
+    channels_desc = ", ".join(channel_desc(c) for c in config["channels"])
+    llr_matrix_source = ("파일 로드" if config["decoder"]["use_input_llr_matrix"]
+                         else "균일 생성 후 로드")
+    used_llr_matrix = os.path.basename(
+        config["decoder"].get("_used_llr_matrix_path", ""))
     log_on = sorted(key for key in _LOG_KEYS if config["log"].get(key))
     run_config = config["run"]
     return [
         code.summary(),
         decoder.llr_matrix.summary(),
+        f"H_matrix: {os.path.basename(config['H_matrix'])} | "
+        f"LLR matrix: {llr_matrix_source} ({used_llr_matrix})",
         f"decoder: {config['decoder']['type']} "
         f"({type(decoder).__module__}.{type(decoder).__name__}), "
         f"max_iter={decoder.max_iter}",
         f"config: seed={config['seed']} | channels: {channels_desc}",
-        f"run: max_frame_errors={run_config.get('max_frame_errors', 50)}, "
-        f"max_frames={run_config.get('max_frames', 20000)}, "
-        f"frames_per_batch={run_config.get('frames_per_batch', 128)}, "
+        f"run: max_frame_errors={run_config.get('max_frame_errors', _RUN_DEFAULTS['max_frame_errors'])}, "
+        f"max_frames={run_config.get('max_frames', _RUN_DEFAULTS['max_frames'])}, "
+        f"frames_per_batch={run_config.get('frames_per_batch', _RUN_DEFAULTS['frames_per_batch'])}, "
         f"stop_below_fer={run_config.get('stop_below_fer')}",
         f"log: {', '.join(log_on) if log_on else '(전부 꺼짐)'}",
     ]
+
+
+def print_experiment_summary(code, decoder, config):
+    """실험 요약을 콘솔에 출력."""
+    for line in _experiment_summary_lines(code, decoder, config):
+        print(line)
 
 
 def _check_channel_mode(decoder, channel_type):
@@ -374,14 +422,14 @@ def _make_channel_fn(code, decoder, channel_config, point):
 
 def run_experiment(code, decoder, config):
     """channels 리스트의 각 채널에 대해 각 포인트를 max_frame_errors 도달 또는
-    max_frames 소진까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
+    max_frames까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
 
     난수: 최상위 seed 하나에서 [seed, 채널 인덱스, 포인트]로 스트림을 파생하므로
     포인트 간, 채널 간 독립이며 같은 seed면 재현된다."""
     run_config = config["run"]
-    max_frame_errors = run_config.get("max_frame_errors", 50)
-    max_frames = run_config.get("max_frames", 20000)
-    frames_per_batch = run_config.get("frames_per_batch", 128)
+    max_frame_errors = run_config.get("max_frame_errors", _RUN_DEFAULTS["max_frame_errors"])
+    max_frames = run_config.get("max_frames", _RUN_DEFAULTS["max_frames"])
+    frames_per_batch = run_config.get("frames_per_batch", _RUN_DEFAULTS["frames_per_batch"])
     stop_below_fer = run_config.get("stop_below_fer")
     print_progress = run_config.get("print_progress", True)
     seed = config["seed"]
@@ -605,8 +653,7 @@ def main(argv=None):
 
     config = load_config(argv[0])
     code, decoder = setup(config)
-    for line in _experiment_summary_lines(code, decoder, config):
-        print(line)
+    print_experiment_summary(code, decoder, config)
     results = run_experiment(code, decoder, config)
     report(results, config, argv[0], code, decoder)
 

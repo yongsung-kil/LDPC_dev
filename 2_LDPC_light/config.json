@@ -43,7 +43,8 @@
       "max_frames: 포인트당 최대 프레임 수",
       "frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도/메모리용.",
       "  같은 seed의 수치 재현에는 이 값까지 같아야 함)",
-      "stop_below_fer: 측정 FER가 이 값 미만이면 남은 포인트 중단 (null=사용 안 함)"
+      "stop_below_fer: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 중단",
+      "  (null=사용 안 함, 다음 채널은 계속)"
     ],
     "max_frame_errors": 10,
     "max_frames": 256,

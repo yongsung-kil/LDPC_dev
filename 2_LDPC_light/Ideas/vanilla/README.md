@@ -22,7 +22,8 @@ python -m LDPC_base.run Ideas/vanilla/config.json
 - 2. `decoder.py`: `MinSumDecoder`를 상속한 자식 클래스에서 **교체용 함수만 재정의**
      (재정의 = 부모 클래스의 함수를 자식 클래스에서 다른 내용으로 바꿔 채우는 것.
      교체용 함수 목록과 C++ 대응은 `LDPC_base/decoder.py` 모듈 docstring의 표 참조.
-     교체 지점에 안 들어맞는 근본적 변경만 `decoder_main` 전체 재정의)
+     교체 지점에 안 들어맞는 근본적 변경만 `decoder_main` 전체 재정의.
+     생성자는 `(code, llr_matrix=...)` 계약을 유지한다)
 - 3. `Ideas/registry.py`의 DECODERS에 등록
 - 4. `config.json`의 `decoder.type`을 아이디어명으로 바꾸고 실행
 - 5. `README.md`에 기록: 논문 출처, 요지, 재정의한 교체용 함수, **실물 C++ 이식 시
