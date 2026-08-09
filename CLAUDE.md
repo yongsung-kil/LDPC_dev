@@ -79,6 +79,7 @@
 | C++ 디코더 로직 (revised 포함) | `0_LDPC_original/CLAUDE.md` (상수, 스위치, 실수 포인트) + `docs/architecture.md` |
 | 1_LDPC_revised 속도 최적화 | `1_LDPC_revised/README.md` + `1_LDPC_revised/docs/speed_opt/checklist.md` |
 | 2_LDPC_light | `2_LDPC_light/README.md` (확정 결정 기록 절 포함) |
+| 2_LDPC_light 논문 아이디어 추가 | `2_LDPC_light/docs/새논문적용규칙.md` |
 | 논문 이식성 판정 | `docs/paper_screening_profile.md` |
 | 새 디코딩 모드 추가 | `docs/architecture.md` 전체 + `docs/adr/` 전체 |
 | 빌드, 인프라 | 이 파일만으로 충분 |
