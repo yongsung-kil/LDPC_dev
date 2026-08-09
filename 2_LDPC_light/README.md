@@ -61,15 +61,16 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 
 - ㉮ `H_matrix`, `decoder.llr_matrix`: **폴더와 파일명 분리** `{"dir", "file"}`.
   `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **max_iter는
-  파일의 마지막 iter_end가 결정** — JSON에 decoder.max_iter를 쓰면 에러.
+  파일의 마지막 iter_end가 결정**한다 (JSON에 decoder.max_iter를 쓰면 에러).
   디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
   false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
-  파일을 로드**해 디코딩한다 — `internal_quantize`의 num_bits(메시지 양자화
+  파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(메시지 양자화
   bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter,
-  mode(기본 HD)로 파일을 만들며, llr_matrix.file은 쓰지 않고 llr_matrix.dir은
-  생성 파일 저장 폴더로 쓴다 (플래그만 바꿔 토글 가능).
-  생성 파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**
-  (예: LLR_MATRIX_HD_uniform_6bit_ch8_iter120.txt)
+  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그만 바꿔 토글
+  가능). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
+  (예: LLR_MATRIX_HD_uniform_6bit_ch8_dv4_iter120.txt).
+  파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
+  파일명이 아니라 th 값 패턴([n..1]이면 균일)으로 한다
 - ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널·포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
@@ -80,7 +81,9 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 - ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
   통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다
 - ㉴ `run.stop_below_fer`: 측정 FER가 이 값 미만이면 남은 포인트 측정 중단 (null=사용 안 함)
-- ㉵ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
+- ㉵ `output.save_llr_matrix`: 사용한 LLR matrix 파일 사본을 실행 폴더에 저장할지
+  (기본 true). 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다
+- ㉶ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.
   `_`로 시작하는 키(예: `_desc`)는 **설명용으로 검사에서 무시** — JSON에 주석이 없어
   설명은 `_desc` 키로 단다 (문자열 배열 가능)
 
@@ -93,6 +96,7 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 Sim_Output/260807_133321_fixed_error/
 ├── config.json                  ← 실행에 쓴 설정 사본 (재현성)
 ├── summary.txt                  ← 요약 + 코드 git 커밋 해시
+├── LLR_MATRIX_*.txt             ← 사용한 LLR matrix 사본 (save_llr_matrix 시)
 ├── fer_{라벨}.csv               ← FER 결과 (post_fec_ber 열 포함 — 항상)
 ├── fer_curves.png               ← FER 커브 (fer_curve_png 시)
 ├── log_iter_{라벨}_p{포인트}.csv      ← iteration별 CSW/bit error 평균 (dv별 분해 포함)

@@ -116,6 +116,7 @@ class MinSumDecoder:
         self.max_iter = llr_matrix.max_iter              # 마지막 iter_end = max_iter
         self._col_dv_idx = llr_matrix.col_dv_idx(code)   # (N_b,) column→dv 구간 인덱스
         self._edge_mag = np.asarray(llr_matrix.edge_mag, np.float32)  # VNU 출력 레벨 (내림차순)
+        self._uniform_levels = llr_matrix.has_uniform_levels  # 균일 등가식 사용 여부 (값 기반)
 
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
     def _is_edge_clear_iter(self, iteration):
@@ -146,21 +147,33 @@ class MinSumDecoder:
         th: (num_active_frames, th 개수) — 프레임별(현재 row의 dv별) 임계값 (내림차순 관례).
         C++ 캐스케이드(decoder.cpp:4112-4115) 그대로: |raw| >= th1 → 최대 레벨,
         아니고 >= th2 → 다음 레벨, ..., 전부 아니면 마지막 레벨
-        (비단조 th도 C++와 같은 의미로 소비 — 위쪽 th의 참 조건이 우선).
+        (비단조 th도 C++와 같은 의미로 소비, 위쪽 th의 참 조건이 우선).
         레벨 값과 개수는 llr_matrix.edge_mag가 결정한다 (파일 3-bit {7,5,3,1},
-        내부 균일 n-bit [최대..0]). raw==0이면 sign은 VNU_in에서."""
+        내부 균일 n-bit는 최소 레벨 1). raw==0이면 sign은 VNU_in에서.
+        균일 레벨(has_uniform_levels)이면 등가식 _uniform_saturate로 계산한다."""
         mag_in = np.abs(raw)
         edge_mag = self._edge_mag
-        # 아래 레벨부터 덮어써서 가장 위(작은 k)의 참 조건이 최종값 — elif 체인과 동일
-        mag = np.full_like(mag_in, edge_mag[-1])
-        for k in range(len(edge_mag) - 2, -1, -1):
-            mag = np.where(mag_in >= th[:, k, None], edge_mag[k], mag)
+        if self._uniform_levels:
+            mag = self._uniform_saturate(mag_in)
+        else:
+            # 아래 레벨부터 덮어써서 가장 위(작은 k)의 참 조건이 최종값 (elif 체인과 동일)
+            mag = np.full_like(mag_in, edge_mag[-1])
+            for k in range(len(edge_mag) - 2, -1, -1):
+                mag = np.where(mag_in >= th[:, k, None], edge_mag[k], mag)
         sgn = np.where(raw > 0, np.float32(1.0), np.float32(-1.0))
         zero = raw == 0
         if zero.any():
             sgn_zero = np.where(vnu_in > 0, np.float32(1.0), np.float32(-1.0))
             sgn = np.where(zero, sgn_zero, sgn)
         return sgn * mag
+
+    def _uniform_saturate(self, mag_in):
+        """균일 레벨용 양자화 등가식: max(min(|raw|, 최대 레벨), 1).
+        정수 raw에서 캐스케이드(th [top..1], edge_mag [top..2,1,1])와 완전히 같고,
+        th 개수만큼 돌던 루프가 상수 시간이 된다. 비정수 raw에서는 캐스케이드가
+        내림 동작이라 등가가 아니다 (교체 지점 재정의로 비정수 raw가 생기면
+        이 함수를 함께 재정의하거나 캐스케이드 경로를 쓸 것)."""
+        return np.maximum(np.minimum(mag_in, self._edge_mag[0]), np.float32(1.0))
 
     def _cnu_update(self, edge, edge_clear, new_sgn, new_mag, row_blk,
                     min1, min2, min1_pos, check_sum, edge_sgn):
@@ -253,7 +266,7 @@ class MinSumDecoder:
             state.edge_sgn.fill(0)
         table_row_idx = self.llr_matrix.row_index(iteration, state.prev_csw)  # (num_active_frames,)
         state.cur_ch = self.llr_matrix.row_ch[table_row_idx, :, 0]            # (num_active_frames, num_dv)
-        state.cur_th = self.llr_matrix.row_th[table_row_idx]                  # (num_active_frames, num_dv, 3)
+        state.cur_th = self.llr_matrix.row_th[table_row_idx]                  # (num_active_frames, num_dv, th_len)
 
         for col in self._column_order(iteration):
             self._process_column(state, iteration, col)

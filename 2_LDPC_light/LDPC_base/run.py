@@ -14,10 +14,11 @@ JSON 구조:
   decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
   decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
     false면 균일 n-bit 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
-    그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix.file은
-    쓰지 않는다). 생성 파일은 llr_matrix.dir(없으면 Input/LLR)에
-    LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_iter{max_iter}.txt로
-    저장된다 — 파일명의 uniform은 사람이 만든 파일이 아니라는 표시
+    그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix 키는 무시).
+    생성 파일은 output.dir 하위 _generated/(git 무시 영역)에
+    LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_dv{dv_max}_iter{max_iter}.txt
+    로 저장된다 (파일명의 uniform은 사람이 만든 파일이 아니라는 표시.
+    레벨 구성 인식은 파일명이 아니라 th 값 패턴으로 한다)
   decoder.llr_matrix: {"dir": 폴더, "file": 파일명} — DAO LLR_MATRIX
     (use_input_llr_matrix=true일 때 필수).
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
@@ -39,8 +40,10 @@ JSON 구조:
     fail_frame_detail — 실패 프레임별 잔여 에러·최종 CSW·dv별 분해
     fer_curve_png — FER 커브 그림 저장
   output.dir 하위에 실행마다 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 결과 일체
-  (config 사본, summary.txt, CSV, 로그)를 저장한다. 라벨은 output.label
-  (없으면 첫 채널 type)
+  (config 사본, summary.txt, 사용한 LLR matrix 사본, CSV, 로그)를 저장한다.
+  라벨은 output.label (없으면 첫 채널 type)
+  output.save_llr_matrix: 사용한 LLR matrix 파일 사본을 실행 폴더에 남길지
+    (기본 true. 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다)
 
 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약. "_"로 시작하는
 키(예: _desc)는 설명용으로 검사에서 무시한다.
@@ -67,7 +70,7 @@ _DECODER_KEYS = {"llr_matrix", "type", "use_input_llr_matrix", "internal_quantiz
 _INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress"}
-_OUTPUT_KEYS = {"dir", "csv_prefix", "label"}
+_OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
 _LOG_KEYS = {"csw_per_iter", "bit_err_per_iter", "bit_err_by_dv",
              "iter_histogram", "fer_vs_iter", "fail_frame_detail", "fer_curve_png"}
 _CHANNEL_KEYS = {
@@ -192,8 +195,13 @@ def load_config(path):
         if not isinstance(internal_quantize, dict):
             raise ValueError("config [decoder.internal_quantize] — 객체여야 함")
         _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
-        _check_int("decoder.internal_quantize", "num_bits",
-                   _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
+        num_bits = _check_int(
+            "decoder.internal_quantize", "num_bits",
+            _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
+        if num_bits > 16:
+            raise ValueError(
+                f"config [decoder.internal_quantize] num_bits={num_bits}: 상한 16 "
+                "(레벨 수가 2^(num_bits-1)로 늘어 시간과 메모리가 급증)")
         _check_int("decoder.internal_quantize", "channel_llr",
                    _require("decoder.internal_quantize", internal_quantize, "channel_llr"), 1)
         _check_int("decoder.internal_quantize", "max_iter",
@@ -202,17 +210,8 @@ def load_config(path):
         if mode not in ("HD", "2SD", "3SD"):
             raise ValueError(
                 f"config [decoder.internal_quantize] mode={mode!r} — HD/2SD/3SD 중 하나여야 함")
-        # 생성 파일 경로: llr_matrix.dir(있으면) 또는 Input/LLR, 파일명은 파라미터로 결정
-        generated_dir = "Input/LLR"
-        if isinstance(decoder_config.get("llr_matrix"), dict):
-            generated_dir = decoder_config["llr_matrix"].get("dir", generated_dir)
-        generated_name = (f"LLR_MATRIX_{mode}_uniform_{internal_quantize['num_bits']}bit"
-                          f"_ch{internal_quantize['channel_llr']}"
-                          f"_iter{internal_quantize['max_iter']}.txt")
-        generated_path = os.path.join(generated_dir, generated_name)
-        if not os.path.isabs(generated_path):
-            generated_path = os.path.join(base_dir, generated_path)
-        decoder_config["generated_llr_matrix_path"] = generated_path
+        # 생성 파일은 setup()이 output.dir 하위 _generated/에 저장한다
+        # (파일명에 dv_max가 들어가므로 H-matrix 로드 후에야 확정된다)
     decoder_type = decoder_config.setdefault("type", "vanilla")
     if not isinstance(decoder_type, str) or not decoder_type:
         raise ValueError(
@@ -225,6 +224,10 @@ def load_config(path):
     output_config.setdefault("dir", os.path.join(base_dir, "Sim_Output"))
     if not os.path.isabs(output_config["dir"]):
         output_config["dir"] = os.path.join(base_dir, output_config["dir"])
+    save_llr_matrix = output_config.setdefault("save_llr_matrix", True)
+    if not isinstance(save_llr_matrix, bool):
+        raise ValueError(
+            f"config [output] save_llr_matrix={save_llr_matrix!r}: true/false여야 함")
 
     run_config = config.setdefault("run", {})
     _check_keys("run", run_config, _RUN_KEYS)
@@ -281,27 +284,37 @@ def _resolve_decoder_class(decoder_type):
 def setup(config):
     """H-matrix를 로드하고 LLR matrix를 준비한 뒤 decoder.type의 디코더를 구성한다.
     use_input_llr_matrix=false면 균일 양자화 매트릭스를 DAO 포맷 파일로 생성해
-    저장하고, 그 파일을 로드해 사용한다 (파일 로드 단일 경로 유지).
+    output.dir 하위 _generated/에 저장하고, 그 파일을 로드해 사용한다
+    (파일 로드 단일 경로 유지). 실제 사용한 파일 경로는 config에
+    _used_llr_matrix_path로 남겨 report()가 실행 폴더에 사본을 저장하게 한다.
     H-matrix가 없으면 준비하라는 에러를 낸다 (이 함수는 생성하지 않음)."""
     h_matrix_path = config["H_matrix"]
     if not os.path.exists(h_matrix_path):
-        raise FileNotFoundError(f"{h_matrix_path} 없음 — H-matrix를 먼저 준비할 것")
+        raise FileNotFoundError(f"{h_matrix_path} 없음. H-matrix를 먼저 준비할 것")
     code = QCCode.load(h_matrix_path)
     if config["decoder"]["use_input_llr_matrix"]:
         llr_matrix_path = config["decoder"]["llr_matrix"]
     else:
         internal_quantize = config["decoder"]["internal_quantize"]
+        dv_max = int(code.col_deg.max())
         synthesized = LLRMatrix.make_internal_uniform_matrix(
             num_bits=internal_quantize["num_bits"],
             channel_llr=internal_quantize["channel_llr"],
             max_iter=internal_quantize["max_iter"],
-            dv_max=int(code.col_deg.max()),
+            dv_max=dv_max,
             mode=internal_quantize["mode"])
-        llr_matrix_path = config["decoder"]["generated_llr_matrix_path"]
-        os.makedirs(os.path.dirname(llr_matrix_path), exist_ok=True)
+        generated_dir = os.path.join(config["output"]["dir"], "_generated")
+        os.makedirs(generated_dir, exist_ok=True)
+        llr_matrix_path = os.path.join(
+            generated_dir,
+            f"LLR_MATRIX_{internal_quantize['mode']}_uniform"
+            f"_{internal_quantize['num_bits']}bit"
+            f"_ch{internal_quantize['channel_llr']}"
+            f"_dv{dv_max}_iter{internal_quantize['max_iter']}.txt")
         synthesized.save(llr_matrix_path)
         print(f"generated LLR matrix: {llr_matrix_path}")
     llr_matrix = LLRMatrix.load(llr_matrix_path)
+    config["decoder"]["_used_llr_matrix_path"] = llr_matrix_path
     decoder_class = _resolve_decoder_class(config["decoder"]["type"])
     decoder = decoder_class(code, llr_matrix=llr_matrix)
     return code, decoder
@@ -411,12 +424,20 @@ def run_experiment(code, decoder, config):
 
 
 def _git_commit_hash():
+    """현재 코드의 git 커밋 해시. 작업 트리에 미커밋 변경이 있으면 +dirty를 붙여
+    실행 코드가 커밋과 다를 수 있음을 남긴다."""
     try:
-        return subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=os.path.dirname(os.path.abspath(__file__)),
-            capture_output=True, text=True, timeout=10).stdout.strip() or "(git 없음)"
-    except OSError:
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=cwd,
+            capture_output=True, text=True, timeout=10).stdout.strip()
+        if not commit:
+            return "(git 없음)"
+        status = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=cwd,
+            capture_output=True, text=True, timeout=10).stdout.strip()
+        return f"{commit}+dirty" if status else commit
+    except (OSError, subprocess.SubprocessError):
         return "(git 없음)"
 
 
@@ -516,8 +537,9 @@ def _plot_fer_curves(path, results):
 
 def report(results, config, config_path, code, decoder):
     """실행 폴더 생성(YYMMDD_HHMMSS_{라벨}) 후 결과 일체 저장:
-    config 사본, summary.txt(실험 요약 + 결과 + git 커밋 해시), FER CSV, 로그 CSV,
-    FER 커브 그림."""
+    config 사본, summary.txt(실험 요약 + 결과 + git 커밋 해시), 사용한 LLR matrix
+    사본(output.save_llr_matrix=true), FER CSV, 로그 CSV, FER 커브 그림.
+    그림 저장은 summary 저장 뒤에 시도하며 실패해도 측정 결과는 남는다."""
     output_config = config["output"]
     log_config = config["log"]
     run_label = output_config.get("label", config["channels"][0]["type"])
@@ -558,12 +580,20 @@ def report(results, config, config_path, code, decoder):
                 _write_fail_log(
                     os.path.join(run_dir, f"log_fail_{label}_p{point_result['param']}.csv"),
                     point_result, dv_labels)
-    if log_config.get("fer_curve_png"):
-        png_path = os.path.join(run_dir, "fer_curves.png")
-        _plot_fer_curves(png_path, results)
-        print(f"saved: {png_path}")
     with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+    if output_config.get("save_llr_matrix", True):
+        used_llr_matrix_path = config["decoder"].get("_used_llr_matrix_path")
+        if used_llr_matrix_path and os.path.exists(used_llr_matrix_path):
+            shutil.copy(used_llr_matrix_path,
+                        os.path.join(run_dir, os.path.basename(used_llr_matrix_path)))
+    if log_config.get("fer_curve_png"):
+        png_path = os.path.join(run_dir, "fer_curves.png")
+        try:
+            _plot_fer_curves(png_path, results)
+            print(f"saved: {png_path}")
+        except Exception as exc:
+            print(f"fer_curves.png 저장 실패 (측정 결과와 summary는 저장됨): {exc}")
     print(f"run dir: {run_dir}")
     return results
 

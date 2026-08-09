@@ -1,10 +1,11 @@
 """DAO LLR_MATRIX 텍스트 포맷 로더 + 내부 합성 + iteration/CSW별 테이블 row 선택.
 
 LLRMatrix 공급 경로 2가지:
-- ㉮ 파일 로드 (LLRMatrix.load) — DAO 산출물, 3-bit(th 3개, EDGE {7,5,3,1}) 구성
-- ㉯ 내부 합성 (make_internal_uniform_matrix) — 파일 없이 균일 n-bit 양자화로
-  디코딩할 때. 전 dv 공통 ch, 균일 th 경계, 그룹 1개 구성의 매트릭스를 만들어
-  디코더가 파일 매트릭스와 같은 경로로 소비한다
+- ㉮ 파일 로드 (LLRMatrix.load): DAO 산출물(3-bit, th 3개, EDGE {7,5,3,1})과
+  균일 생성물(th가 [n..1] 패턴이면 값으로 자동 인식)을 모두 읽는다
+- ㉯ 내부 합성 (make_internal_uniform_matrix): 균일 n-bit 양자화 매트릭스를
+  만들어 파일로 저장한 뒤 load()로 읽어 파일 매트릭스와 같은 경로로 소비한다
+  (전 dv 공통 ch, 균일 th 경계, 그룹 1개 구성)
 
 파일 포맷 (DAO_LLR_MATRIX.py Read_Input_LLR_Matrix와 동일, 빈 줄 무시):
   num_parameter_each_set / num_dv / dv_from / dv_to / num_group /
@@ -47,8 +48,12 @@ _NAME_RE = re.compile(r"LLR_MATRIX_(HD|2SD|3SD)_", re.IGNORECASE)
 
 
 def uniform_edge_mag(top_level):
-    """균일 양자화 VNU 출력 레벨 [top_level, ..., 1, 0]."""
-    return list(range(int(top_level), -1, -1))
+    """균일 양자화 VNU 출력 레벨 [top_level, ..., 2, 1, 1]. 최소 레벨은 1이다.
+    C++는 C2V 메시지 크기 0을 두지 않으므로(C2V_Cal이 최소 크기를 EDGE_MAG_1=1로
+    복원, decoder.cpp:2405) 같은 방향으로 맞춘 포화형이고, 마지막 두 항이 모두
+    1인 것은 레벨 개수가 th 개수 + 1이어야 한다는 제약 때문이다.
+    소비 결과는 크기 = max(min(|raw|, top_level), 1)."""
+    return list(range(int(top_level), 0, -1)) + [1]
 
 
 class LLRMatrix:
@@ -67,9 +72,9 @@ class LLRMatrix:
         if edge_mag is None:
             if self.th_len != 3:
                 raise NotImplementedError(
-                    f"{name}: th {self.th_len}개 — edge_mag 미지정은 3-bit(th 3개) 전용. "
+                    f"{name}: th {self.th_len}개. edge_mag 미지정은 3-bit(th 3개) 전용이며, "
                     "다른 레벨 구성은 edge_mag를 지정해 합성하거나 균일 생성 경로"
-                    "(파일명 uniform)를 쓸 것")
+                    "(th [n..1] 패턴)를 쓸 것")
             edge_mag = [7, 5, 3, 1]                      # 3-bit VNU 출력 레벨
         self.edge_mag = np.asarray(edge_mag, np.float32)
         if len(self.edge_mag) != self.th_len + 1:
@@ -158,17 +163,17 @@ class LLRMatrix:
     # ---------- 파일 입출력 ----------
     @classmethod
     def load(cls, path):
-        """DAO 포맷 파일 로드. 파일명 규칙:
-        - 모드: LLR_MATRIX_{HD|2SD|3SD}_*.txt
-        - 파일명에 'uniform'이 있으면 생성된 균일 양자화 매트릭스로 취급 —
-          VNU 출력 레벨을 [th 개수..0]으로 잡는다 (make_internal_uniform_matrix 산출물.
-          사람이 만든 3-bit 파일에는 uniform이라는 단어를 쓰지 않는다)"""
+        """DAO 포맷 파일 로드.
+        - 모드(HD/2SD/3SD)는 파일명 LLR_MATRIX_{HD|2SD|3SD}_*.txt에서 판별한다
+        - VNU 출력 레벨(edge_mag)은 파일에 없으므로 th 값으로 판별한다:
+          restart가 없고 전 row의 th가 [n..1] 연속 정수 내림차순이면 균일 생성물로
+          보고 uniform_edge_mag(n)을, 아니면 3-bit 기본 {7,5,3,1}을 쓴다.
+          파일명에 uniform이 있는데 th가 균일 패턴이 아니면 에러를 낸다"""
         m = _NAME_RE.search(os.path.basename(path))
         if not m:
             raise ValueError(
-                f"{path}: 파일명에서 모드 판별 불가 — LLR_MATRIX_{{HD|2SD|3SD}}_*.txt 형식이어야 함")
+                f"{path}: 파일명에서 모드 판별 불가. LLR_MATRIX_{{HD|2SD|3SD}}_*.txt 형식이어야 함")
         mode = m.group(1).upper()
-        is_uniform = "uniform" in os.path.basename(path).lower()
         with open(path, encoding="utf-8") as f:
             lines = [ln.strip() for ln in f if ln.strip()]
         parsed = [np.array([int(v) for v in ln.split()], np.int64) for ln in lines]
@@ -200,8 +205,18 @@ class LLRMatrix:
                 raise ValueError(f"{path}: row 길이 {len(row_line)} != {num_dv}*{num_param}+4")
             rows.append((row_line[:-4], int(row_line[-4]), int(row_line[-3]),
                          int(row_line[-2]), int(row_line[-1])))
-        edge_mag = (uniform_edge_mag(num_param - MODE_CH_LEN[mode])
-                    if is_uniform else None)
+        th_len = num_param - MODE_CH_LEN[mode]
+        expected_th = np.arange(th_len, 0, -1, dtype=np.int64)
+        rows_th_uniform = (num_restart == 0 and th_len >= 1 and all(
+            np.array_equal(
+                np.asarray(r[0], np.int64).reshape(num_dv, num_param)[:, MODE_CH_LEN[mode]:],
+                np.broadcast_to(expected_th, (num_dv, th_len)))
+            for r in rows))
+        if "uniform" in os.path.basename(path).lower() and not rows_th_uniform:
+            raise ValueError(
+                f"{path}: 파일명은 uniform이나 th가 균일 패턴([{th_len}..1])이 아님. "
+                "파일명 표시와 내용이 어긋나 레벨 구성을 정할 수 없음")
+        edge_mag = uniform_edge_mag(th_len) if rows_th_uniform else None
         return cls(mode, num_param, dv_from, dv_to, group_rows, group_type,
                    restart_iters, max_value, min_value, rows,
                    name=os.path.basename(path), edge_mag=edge_mag)
@@ -213,9 +228,9 @@ class LLRMatrix:
         """균일 n-bit 양자화용 매트릭스 합성. save()로 DAO 포맷 파일로 저장한 뒤
         load()로 읽어 파일 매트릭스와 같은 경로로 소비한다 (run.py setup 참조).
 
-        num_bits: 메시지 양자화 bit 수 (sign 포함). magnitude 레벨은
-          0..(2^(num_bits-1) − 1), th는 정수 [최대 레벨..1] — flip 도메인 값이
-          전부 정수라 캐스케이드가 |값|의 상한 클리핑과 같아진다
+        num_bits: 메시지 양자화 bit 수 (sign 포함). th는 정수 [최대 레벨..1],
+          magnitude 레벨은 uniform_edge_mag 참조 (최소 1). flip 도메인 값이
+          전부 정수라 캐스케이드가 max(min(|raw|, 최대 레벨), 1)과 같아진다
         channel_llr: 채널 LLR magnitude (전 dv 공통)
         max_iter: 최대 iteration (파일 로드 경로와 달리 호출자가 지정)
         dv_max: H-matrix의 최대 column degree — dv 구간 [1, dv_max] 하나로 전 dv 커버
@@ -223,7 +238,7 @@ class LLRMatrix:
         top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
         ch_len = MODE_CH_LEN[mode]
         th = list(range(top_level, 0, -1))               # 정수 [최대 레벨..1], 내림차순
-        edge_mag = uniform_edge_mag(top_level)           # [top_level, ..., 1, 0]
+        edge_mag = uniform_edge_mag(top_level)           # [top_level, ..., 2, 1, 1]
         values = np.array([channel_llr] * ch_len + th, np.float64)
         num_param = ch_len + top_level
         rows = [(values, -1, 1, int(max_iter), -1)]
@@ -300,6 +315,20 @@ class LLRMatrix:
         for row in range(row_start + 1, row_end):
             selected = np.where(prev_csw <= self.row_csw[row], row, selected)
         return selected
+
+    @property
+    def has_uniform_levels(self):
+        """레벨 구성이 균일 n-bit 패턴인지 (값 기반 판별).
+        restart가 없고, edge_mag가 uniform_edge_mag(th_len)이며, 전 row의 th가
+        [th_len..1] 연속 정수 내림차순일 때 True. 디코더가 균일 등가식
+        (max(min(|raw|, top), 1)) 사용 여부를 이 값으로 정한다."""
+        if self.restart_iters:
+            return False
+        expected_mag = np.asarray(uniform_edge_mag(self.th_len), np.float32)
+        if not np.array_equal(self.edge_mag, expected_mag):
+            return False
+        expected_th = np.arange(self.th_len, 0, -1, dtype=np.float32)
+        return bool(np.all(self.row_th == expected_th))
 
     @property
     def needs_csw(self):

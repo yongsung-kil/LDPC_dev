@@ -16,9 +16,9 @@
       "true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
       "  max_iter는 파일의 마지막 iter_end가 결정 — JSON에 두면 에러)",
       "false면 균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그 파일을",
-      "  로드해 디코딩 (internal_quantize 사용, llr_matrix.file은 쓰지 않음).",
-      "  생성 위치: llr_matrix.dir(없으면 Input/LLR), 파일명 LLR_MATRIX_{mode}_uniform_...",
-      "  — uniform은 사람이 만든 파일이 아니라는 표시",
+      "  로드해 디코딩 (internal_quantize 사용, llr_matrix 키는 무시).",
+      "  생성 위치: output.dir/_generated/, 파일명 LLR_MATRIX_{mode}_uniform_..._dv{max}_...",
+      "  (uniform은 사람이 만든 파일이 아니라는 표시, 레벨 인식은 th 값 패턴으로)",
       "internal_quantize: num_bits(메시지 양자화 bit 수, sign 포함),",
       "  channel_llr(채널 LLR magnitude, 전 dv 공통), max_iter, mode(기본 HD)"
     ],
@@ -84,9 +84,11 @@
   "output": {
     "_desc": [
       "dir 하위에 실행마다 YYMMDD_HHMMSS_{label} 폴더 생성",
-      "label 없으면 첫 채널 type 사용"
+      "label 없으면 첫 채널 type 사용",
+      "save_llr_matrix: 사용한 LLR matrix 사본을 실행 폴더에 저장 (기본 true)"
     ],
     "dir": "Sim_Output",
-    "csv_prefix": "fer"
+    "csv_prefix": "fer",
+    "save_llr_matrix": true
   }
 }
