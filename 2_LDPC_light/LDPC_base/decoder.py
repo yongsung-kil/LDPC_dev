@@ -133,11 +133,11 @@ class BaseDecoder:
     # ---------- 논문 아이디어 교체 지점 (모듈 docstring의 표 참조) ----------
     def _is_edge_clear_iter(self, iteration):
         """[교체 지점: Is_Iter_Type_Edge_Clear 대응] 이 iteration에서 Edge Clear를 할지.
-        HD는 iteration 1과 restart, 2SD/3SD는 restart만이다 (decoder.cpp:6541-6565.
-        SD는 Pre 단계가 심은 채널 정보가 iteration 1로 그대로 넘어간다).
-        True면 (iteration 1 제외) CN 상태가 클리어된다 (syndrome은 유지, 엔진 소관)."""
-        if self.llr_matrix.mode == "HD":
-            return iteration == 1 or self.llr_matrix.is_restart(iteration)
+        전 모드에서 restart iteration만 클리어한다 (사용자 결정 2026-08-09.
+        원본 HD의 iteration 1 클리어는 Ref-C와 RTL의 iteration 0 저장 차이를 없애려는
+        보정(decoder.cpp:6570 주석)이고, py는 그 차이가 없어 재현하지 않는다.
+        iteration 1의 CN 상태는 초기값 그대로라 산술 결과도 같다).
+        True면 CN 상태가 클리어된다 (syndrome은 유지, 엔진 소관)."""
         return self.llr_matrix.is_restart(iteration)
 
     def _column_order(self, iteration):
@@ -328,7 +328,7 @@ class BaseDecoder:
         state.num_active_frames = state.read_bit.shape[0]
 
         state.edge_clear = self._is_edge_clear_iter(iteration)
-        if state.edge_clear and iteration > 1:
+        if state.edge_clear:
             # restart: syndrome만 유지하고 CN 상태 클리어 (Clear_Edge_Restart)
             state.min1.fill(RESET)
             state.min2.fill(RESET)
