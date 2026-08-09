@@ -13,7 +13,7 @@
 cw는 encoder.encode()가 만든 (B, N_b, z) {0,1} 송신 codeword
 (encode()는 실제 인코딩 없이 all-zero를 반환하는 임시 함수).
 vanilla 전제: 쇼트닝/펑처링 없음 → len_noPS = N, Set_Real_Err_Pos는 항등.
-난수는 original XOR25 대신 numpy Generator (plan.md 기존 결정과 동일).
+난수는 original XOR25 대신 numpy Generator (사용자 결정 2026-07-29).
 """
 import numpy as np
 

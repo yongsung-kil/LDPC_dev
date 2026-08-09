@@ -1,8 +1,8 @@
 # 2_LDPC_light: 논문 아이디어 스크리닝용 경량 QC-LDPC 시뮬레이터
 
-> 계획·결정 사항·제약: [docs/plan.md](docs/plan.md), original과의 로직 차이: [docs/차이.md](docs/차이.md)
+> 확정 결정 기록: 아래 "확정 결정 기록" 절, original과의 로직 차이: [docs/차이.md](docs/차이.md)
 > **주의**: py는 아이디어 상대 비교(on/off) 전용이라 C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
-> 유효 아이디어의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (plan.md §4).
+> 유효 아이디어의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (확정 결정 기록 참조).
 > 2026-08-07: `_test/20260806_setup_구성_실험/`의 개정본을 본체로 반영 (구 코드는 git 이력에 보존)
 
 ## 구성
@@ -16,7 +16,7 @@
 | `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
 | `config.json` | 실험 설정 (아래 스키마 참조) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
-| `docs/` | plan.md(계획·결정), 차이.md(original 대비 로직 차이), review/ |
+| `docs/` | 차이.md(original 대비 로직 차이), review/(리뷰 기록) |
 
 ## 실행 방법
 
@@ -171,3 +171,19 @@ dict {"mode", "hd", "sd", "cc"}.
 - BF(1-bit precision) 구간 미구현 (vanilla, BF off 전제)
 - 실물 H-matrix·LLR_MATRIX 실값 미반입 (토이 예시 사용 중)
 - `encoder.encode()`는 실제 인코딩 없이 all-zero 반환하는 임시 함수
+
+## 확정 결정 기록
+
+시뮬레이터의 방향을 정한 사용자 결정이다 (상세 경위는 `_pm/DONE.md`와 git 이력).
+
+| 결정 | 내용 |
+|------|------|
+| 2단계 하이브리드 (2026-07-29) | Python으로 아이디어 스크리닝(FER 1e-2~1e-4 영역) 후, 유효 아이디어만 실물 C++에 이식해 최종 검증 |
+| vanilla 형태는 Python에만 (2026-07-29) | 쇼트닝, 펑처링, HCU, CRC 조기종료를 뺀 vanilla는 py 전용. 아이디어가 유효하면 실제 형태의 C++에 적용해 재비교 |
+| 제거 항목 (2026-07-29) | HCU, 쇼트닝/펑처링, CRC 조기종료, timing/SRAM/PMU/TV. GT(Graph Thinning)는 edge 라우팅 테이블일 뿐이라 FER 영향 0을 코드로 확인 후 제거 (2026-07-30) |
+| 성공 판정 (2026-07-30) | genie: 매 iteration 결정을 정답과 bitwise 비교, 일치하면 그 프레임 성공 확정 (CRC 조기종료의 이상화 대응, 미스검출 없음) |
+| codeword (2026-07-30) | all-zero (인코더 포팅 불필요, 대칭 채널과 대칭 복호기 전제) |
+| Dual-Update (2026-07-30) | off (vanilla 취지). 실제 적용 형태와의 격차는 최종 C++ 검증에서 흡수 |
+| 시뮬 방침 (2026-07-30) | max_iter=120 기준, numba 미사용 (numpy 프레임 배치만), 병렬화는 mpi4py로 코어당 sim 1개 (mpi_runner는 재설계 예정) |
+| 실물 치수 | base M_b=18 × N_b=147, z_sb=256, codeword 37,632 bit, rate≈0.878, 정보 33,024 bit(4KB). 전 파라미터는 H-matrix 파일에서 읽는다 |
+| 실물 파라미터 반입 필요 | H-matrix 실물 파일과 LLR 테이블 실값은 저장소에 없다 (LLR 실값은 원본 소스 손상으로 소실, 사용자 공급 필요). 실물 C++ 실행 시 z_sb=256이면 PMU/Clk 경로가 최초로 활성화되는 점 확인 필요 |
