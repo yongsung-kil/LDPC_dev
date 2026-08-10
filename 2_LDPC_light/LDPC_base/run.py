@@ -7,7 +7,7 @@ main()은 4단계로 구성된다:
   4. report:         실행 폴더 생성 + 요약/CSV/로그/그림 저장
 
 실행: workspace/{실험}/run.py (형제 config.json으로 main()을 부르는 런처) 또는
-  2_LDPC_light/에서 python -m LDPC_base.run config.json
+  2_LDPC_light/에서 python -m LDPC_base.run <config.json 경로>
 
 디코더 선택: main(decoder_class=...)로 주입한다 (None이면 BaseDecoder =
   vanilla 기준선). config는 파라미터만 담는다.

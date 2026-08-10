@@ -13,8 +13,6 @@
 | `workspace/` | 실험 공간: 실험마다 폴더 하나, 폴더 안의 run.py로 실행 (아래 "실험 공간 구조" 절). vanilla = reference |
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). 행렬 뒤 내용은 Ref-C fscanf처럼 무시하므로 행렬이 2벌 든 파일은 첫 벌만 사용. column block은 **DV 내림차순 배치** |
 | `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
-| `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
-| `config.json` | 실험 설정 (아래 스키마 참조) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
 | `docs/` | 새논문적용규칙.md(논문 적용 절차 정본), 차이.md(original 대비 로직 차이), review/(리뷰 기록) |
 
@@ -33,14 +31,12 @@ python run.py                    :: 형제 config.json 사용 (예: workspace/va
 python run.py 다른설정.json      :: 인자로 다른 config 지정 (복수 가능)
 ```
 
-이 폴더(`2_LDPC_light/`)의 예시 config로 직접 실행할 수도 있다:
-
-```bat
-python -m LDPC_base.run config.json
-```
+config 경로를 직접 주는 `python -m LDPC_base.run <config 경로>` 실행도 가능하다
+(`2_LDPC_light/`에서, 디코더는 BaseDecoder 고정).
 
 JSON의 상대경로(H_matrix, decoder.llr_matrix, output.dir)는 그 JSON 파일 위치 기준으로
-해석된다. 새 실험은 `workspace/_template/`를 복사해서 만든다.
+해석된다. 새 실험은 `workspace/_template/`를 복사해서 만든다 (config 골자 포함,
+스키마 상세는 아래 절).
 
 H-matrix 생성 (repo 루트에서, 실험 흐름과 분리된 수동 도구):
 

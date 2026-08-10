@@ -1,5 +1,15 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — 루트 config.json 삭제 (config 골자는 workspace/_template로 단일화)
+루트와 template의 config 이중화를 해소 (사용자 결정 2026-08-10)
+- **배경**: 루트 config는 스키마 예시 겸 빠른 실행용이었는데, 스키마 설명은 README가
+  담당하고 실행 표준은 workspace라 역할이 겹쳤다. 스키마 변경 때마다 config 여러 벌을
+  고치는 비용과 어긋남 위험 제거
+- **변경**: config.json 삭제, README 구성 표에서 config.json과 Sim_Output 행 제거,
+  실행 방법을 workspace 중심으로 정리 (python -m은 config 경로 지정 방식으로 안내)
+- **검증**: `python -m LDPC_base.run workspace/vanilla/config.json` 정상 실행
+- **파일**: config.json(삭제), README.md, LDPC_base/run.py(docstring)
+
 ### 2026-08-10 — log 섹션 상위 스위치 (log.enabled) 추가
 로그 전체를 한 키로 on/off (사용자 지시 2026-08-10)
 - **배경**: 하위 항목 7개를 일일이 끄지 않고 로그 수집 여부를 먼저 정하는 상위 스위치 필요
