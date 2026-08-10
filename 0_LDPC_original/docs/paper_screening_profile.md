@@ -1,9 +1,9 @@
-# Prime ECC 3.1 (LDPC_2) — 논문 이식성 판정용 코드 프로파일
+# Prime ECC 3.1 논문 이식성 판정용 코드 프로파일
 
 > 생성일: 2026-07-02
-> **용도**: 논문 분석 agent가 "이 논문 기법을 이 코드(Prime ECC 3.1 = LDPC_2)에 이식 가능한가"를
+> **용도**: 논문 분석 agent가 "이 논문 기법을 이 코드(Prime ECC 3.1)에 이식 가능한가"를
 > 판정할 때 참조하는 **자기완결 요약**. 이 파일 하나로 판정 가능.
-> Prime ECC 3.1 = 현재 LDPC_2 프로젝트 코드다.
+> Prime ECC 3.1 = `0_LDPC_original/src/`의 C++ 코드다.
 > 코드를 실제로 수정/디버깅할 때는 [CLAUDE.md](../CLAUDE.md) / [architecture.md](architecture.md) / [guide/algorithms.md](guide/algorithms.md) 참조 (이 파일은 판정 전용).
 
 ---

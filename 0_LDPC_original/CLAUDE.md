@@ -201,7 +201,7 @@ col 128, mux>=8  → buf[130]
 col 129+         → buf[jj + punct_col_num]
 col 0~126        → buf[jj]
 ```
-odd iter는 G0/G1 교번 (자세한 매핑표는 구 저장소 아카이브 `../../LDPC_2/LDPC_Original/docs/hcu_tv_output_completion/fork_a_result.md`).
+odd iter는 G0/G1 교번.
 
 **decoder.cpp의 두 매핑 블록 (항상 동기화 필요)**:
 - `C2V_Cal` L2482-2504 (변수: `mux_index` / `mux_index_temp`)
@@ -248,9 +248,6 @@ odd iter는 G0/G1 교번 (자세한 매핑표는 구 저장소 아카이브 `../
 ## 참조 문서 (필요시만)
 
 - [docs/architecture.md](docs/architecture.md) (전체 조감도), [docs/guide/](docs/guide/) (알고리즘, 사용법), [docs/adr/](docs/adr/) (설계 결정 기록)
-- 상세 분석 문서는 구 저장소 아카이브(`../../LDPC_2/LDPC_Original/docs/`)에 있다
-  - `ldpc_decoder_understanding/` (전체 디코더 구조, L0~L3 레벨별)
-  - `hcu_tv_output_completion/` (HCU TV 출력 버그 분석. `fork_a_result.md` 버퍼 레이아웃 정합성 우선 참조, `_ldpc_02_불일치분석.md` 쓰기/읽기 불일치 상세)
 
 ---
 

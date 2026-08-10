@@ -1,5 +1,11 @@
 # DONE — 완료 이력 (저장소 공통)
 
+### 2026-08-10 — 현행 문서에서 구 저장소(LDPC_2) 참조 제거
+현행 문서가 구 저장소를 가리키지 않도록 관련 서술 삭제 (구 저장소 폴더 자체는 보존)
+- **배경**: 현 저장소가 구 저장소의 상위 버전이라 문서가 독자를 구 저장소로 보낼 이유가 없음 (사용자 결정 2026-08-10). 이력 기록(_pm/done/, DONE.md, 리뷰 아카이브)의 언급은 이력이므로 보존
+- **변경**: 루트 CLAUDE.md 히스토리 절 삭제, 0_LDPC_original/CLAUDE.md의 아카이브 링크 2곳 제거, paper_screening_profile.md의 코드 정체 서술을 현행 경로(0_LDPC_original/src/)로 갱신
+- **파일**: CLAUDE.md, 0_LDPC_original/CLAUDE.md, 0_LDPC_original/docs/paper_screening_profile.md
+
 ### 2026-08-10 — 루트 docs/를 0_LDPC_original/ 하위로 이동, C++ 소스를 src/로 정리
 루트 docs가 전부 원본 C++ 문서라 원본 폴더 아래로 통합
 - **배경**: 루트 docs/의 문서(architecture, dependency_map, ADR, guide, style, paper_screening_profile)가 모두 원본 C++ 코드베이스를 다루는 내용이라 루트에 둘 이유가 없었음 (사용자 결정 2026-08-10)
