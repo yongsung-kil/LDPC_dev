@@ -55,5 +55,5 @@
 ## 참조
 
 - 확정 결정 기록: `README.md`의 "확정 결정 기록" 절
-- 리뷰 기록: `docs/review/`
+- 리뷰 기록: `_pm/done/` 아래 `{YYYYMMDD}_review/` 폴더
 - 완료 이력: `_pm/DONE.md`
