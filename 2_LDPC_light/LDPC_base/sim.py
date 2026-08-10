@@ -87,7 +87,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                          decode_result["final_err_by_dv"][k].tolist()))
         frames += batch
         if show_live_progress and frames >= next_progress_frames:
-            print(f"\r{line_head}fr={frames:6d}/{max_frames} e={errors:4d}",
+            print(f"\r{line_head}e/fr = {errors:4d}/{frames:<6d}",
                   end="", flush=True)
             next_progress_frames = (frames // 100 + 1) * 100
     elapsed = time.time() - start_time
@@ -107,9 +107,9 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             point_result["fail_frame_details"] = fail_frame_details
     if print_progress:
         print(("\r" if show_live_progress else "")
-              + f"{line_head}fr={frames:6d} e={errors:4d} FER={fer:.2e} "
-              f"BER={point_result['post_fec_ber']:.3e} "
-              f"avg_iter={point_result['avg_decode_success_iteration']:.1f} "
+              + f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
+              f"ber = {point_result['post_fec_ber']:.3e} "
+              f"avg_iter = {point_result['avg_decode_success_iteration']:.1f} "
               f"({point_result['fps']:.1f} f/s)")
     return point_result
 
