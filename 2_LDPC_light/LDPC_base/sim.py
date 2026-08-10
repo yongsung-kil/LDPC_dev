@@ -1,5 +1,6 @@
 """FER 시뮬레이션 하니스: 배치 반복 → genie 판정 집계 → FER/평균 iteration/로그 집계."""
 import numbers
+import os
 import sys
 import time
 
@@ -8,10 +9,18 @@ import numpy as np
 from .decoder import BaseDecoder, LOG_ITEMS
 
 
+def _rewrite_file_tail(path, offset, text):
+    """파일의 offset 이후를 text로 교체 (진행 줄을 제자리 갱신하는 용도)."""
+    with open(path, "r+", encoding="utf-8") as f:
+        f.seek(offset)
+        f.truncate()
+        f.write(text)
+
+
 def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                   max_frame_errors=50, max_frames=20000, frames_per_batch=128,
                   print_progress=False, log=None, progress_label="",
-                  progress_interval_frames=100):
+                  progress_interval_frames=100, summary_path=None):
     """한 채널 조건의 FER 측정.
 
     channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
@@ -22,11 +31,14 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     progress_label: 진행/결과 줄 머리의 "[채널 p=포인트]" 표기 내용
       (괄호는 이 함수가 붙이므로 내용만 전달, 예: "fixed_error p=200").
     progress_interval_frames: 진행 줄 갱신 간격 (프레임 단위, 기본 100).
+    summary_path: 주면 진행 줄과 최종 결과 줄을 이 파일 끝에 실시간 반영한다
+      (진행 줄은 갱신 간격마다 제자리 갱신되다가 최종 결과 줄로 대체된다).
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decoding_iteration
       (프레임당 평균 복호 iteration 수. 성공 프레임은 수렴 iteration, 실패 프레임은
-      max_iter로 집계), sec, fps, summary_line (콘솔 결과 줄과 같은 문자열),
+      max_iter로 집계), sec, fps, ips (초당 합산 복호 iteration 수),
+      summary_line (콘솔 결과 줄과 같은 문자열),
       iter_hist ((max_iter+1,) 배열로 [k]=iteration k에 성공한 프레임 수, [0]=실패 프레임 수),
       log 지정 시 iteration_totals {active_frames, csw_sum, bit_err_sum, bit_err_by_dv_sum}
       (iteration별 합계 배열이며, 평균은 합/active_frames로 소비측 계산),
@@ -63,6 +75,11 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     # 진행 줄 갱신(\r)은 터미널에서만 한다 (파일로 리다이렉트하면 최종 줄만 남긴다)
     show_live_progress = print_progress and sys.stdout.isatty()
     line_head = f" [{progress_label}] " if progress_label else "  "
+    summary_offset = None
+    if summary_path:
+        if not os.path.exists(summary_path):
+            open(summary_path, "w", encoding="utf-8").close()
+        summary_offset = os.path.getsize(summary_path)
     next_progress_frames = progress_interval_frames
     start_time = time.time()
     while frames < max_frames and errors < max_frame_errors:
@@ -91,18 +108,24 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                          int(decode_result["final_csw"][k]),
                          decode_result["final_err_by_dv"][k].tolist()))
         frames += batch
-        if show_live_progress and frames >= next_progress_frames:
-            print(f"\r{line_head}e/fr = {errors:4d}/{frames:<6d}",
-                  end="", flush=True)
+        if (show_live_progress or summary_path) and frames >= next_progress_frames:
+            progress_line = f"{line_head}e/fr = {errors:4d}/{frames:<6d}"
+            if show_live_progress:
+                print(f"\r{progress_line}", end="", flush=True)
+            if summary_path:
+                _rewrite_file_tail(summary_path, summary_offset, progress_line + "\n")
             next_progress_frames = ((frames // progress_interval_frames + 1)
                                     * progress_interval_frames)
     elapsed = time.time() - start_time
     fer = errors / frames
+    # 합산 복호 iteration 수: 성공 프레임은 수렴 iteration, 실패 프레임은 max_iter
+    total_decoding_iterations = success_iteration_sum + errors * max_iter
     point_result = {
         "frames": frames, "errors": errors, "fer": fer,
         "post_fec_ber": total_residual_err_bits / (frames * code.N),
-        "avg_decoding_iteration": (success_iteration_sum + errors * max_iter) / frames,
+        "avg_decoding_iteration": total_decoding_iterations / frames,
         "sec": elapsed, "fps": frames / max(elapsed, 1e-9),
+        "ips": total_decoding_iterations / max(elapsed, 1e-9),
         "iter_hist": iter_hist,
     }
     if log:
@@ -115,9 +138,12 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
         f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
         f"ber = {point_result['post_fec_ber']:.3e} "
         f"decoding_iter = {point_result['avg_decoding_iteration']:.1f} "
-        f"({point_result['fps']:.1f} f/s)")
+        f"({point_result['fps']:.1f} f/s, {point_result['ips']:.0f} it/s)")
     if print_progress:
         print(("\r" if show_live_progress else "") + point_result["summary_line"])
+    if summary_path:
+        _rewrite_file_tail(summary_path, summary_offset,
+                           point_result["summary_line"] + "\n")
     return point_result
 
 

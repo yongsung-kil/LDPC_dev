@@ -1,5 +1,18 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — summary에 진행 줄 실시간 반영 + 초당 iteration 표시
+측정 중 진행 줄까지 summary.txt에 반영하고 처리량에 it/s 추가 (사용자 지시 2026-08-10)
+- **변경**:
+  - ㉮ run_fer_point가 summary_path를 받아 진행 줄을 갱신 간격마다 파일 끝에 제자리
+    갱신하고 (offset 기록 후 tail 교체), 포인트가 끝나면 최종 결과 줄로 대체.
+    콘솔 \r 갱신과 같은 내용이며 터미널 여부와 무관하게 파일에는 항상 반영
+  - ㉯ 결과 줄 처리량에 초당 합산 복호 iteration(it/s) 추가. 합산 iteration은
+    성공 프레임의 수렴 iteration + 실패 프레임의 max_iter (avg_decoding_iteration과
+    같은 분자, point_result 키 ips)
+- **검증**: 백그라운드 실행 중간에 summary 꼬리에서 진행 줄 확인, 종료 후 최종 줄로
+  대체 확인 (290 it/s = 14.5 f/s × 20 iter 일치), 다중 포인트 쌓임 확인
+- **파일**: LDPC_base/sim.py, LDPC_base/run.py
+
 ### 2026-08-10 — summary 실시간 기록과 decoding iteration 지표 변경
 summary.txt를 측정 중에 기록하고 iteration 지표가 실패 프레임을 포함하도록 변경
 (사용자 지시 2026-08-10)

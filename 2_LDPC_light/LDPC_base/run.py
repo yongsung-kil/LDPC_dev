@@ -50,9 +50,9 @@ JSON 구조:
     fail_frame_detail: 실패 프레임별 잔여 에러, 최종 CSW, dv별 분해
     fer_curve_png: FER 커브 그림 저장
   output.dir 하위에 실행 시작 시 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 config 사본과
-  summary.txt 머리(run 표기, code commit, 실험 요약)를 기록하고, 포인트가 끝날
-  때마다 콘솔과 같은 결과 줄을 summary.txt에 덧붙인다. CSV, 로그, 그림, 사용한
-  LLR matrix 사본은 측정 종료 후 저장한다.
+  summary.txt 머리(run 표기, code commit, 실험 요약)를 기록한다. 측정 중에는
+  진행 줄과 포인트 결과 줄을 콘솔과 같은 내용으로 summary.txt 끝에 실시간
+  반영한다. CSV, 로그, 그림, 사용한 LLR matrix 사본은 측정 종료 후 저장한다.
   라벨은 output.label (없으면 첫 채널 type), CSV 파일명 접두는 output.csv_prefix (기본 "fer")
   output.save_llr_matrix: 사용한 LLR matrix 파일 사본을 실행 폴더에 남길지
     (기본 true. 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다)
@@ -442,7 +442,8 @@ def _make_channel_fn(code, decoder, channel_config, point):
 def run_experiment(code, decoder, config, summary_path=None):
     """channels 리스트의 각 채널에 대해 각 포인트를 max_frame_errors 도달 또는
     max_frames까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
-    summary_path를 주면 포인트가 끝날 때마다 콘솔과 같은 결과 줄을 그 파일에 덧붙인다.
+    summary_path를 주면 측정 중 진행 줄과 포인트 결과 줄을 그 파일 끝에
+    실시간 반영한다 (run_fer_point로 전달).
 
     난수: 최상위 seed 하나에서 [seed, 채널 인덱스, 포인트]로 스트림을 파생하므로
     포인트 간, 채널 간 독립이며 같은 seed면 재현된다."""
@@ -484,12 +485,9 @@ def run_experiment(code, decoder, config, summary_path=None):
                 frames_per_batch=frames_per_batch, print_progress=print_progress,
                 progress_label=f"{label} p={point}",
                 progress_interval_frames=progress_interval_frames,
-                log=log_items or None)
+                summary_path=summary_path, log=log_items or None)
             point_result["param"] = point
             point_results.append(point_result)
-            if summary_path:
-                with open(summary_path, "a", encoding="utf-8") as f:
-                    f.write(point_result["summary_line"] + "\n")
             if stop_below_fer is not None and point_result["fer"] < stop_below_fer:
                 break
         results.append((label, point_results))
