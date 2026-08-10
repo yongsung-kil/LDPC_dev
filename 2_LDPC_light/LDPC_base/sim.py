@@ -10,7 +10,7 @@ from .decoder import BaseDecoder, LOG_ITEMS
 
 def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                   max_frame_errors=50, max_frames=20000, frames_per_batch=128,
-                  print_progress=False, log=None):
+                  print_progress=False, log=None, progress_label=""):
     """한 채널 조건의 FER 측정.
 
     channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
@@ -18,6 +18,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     print_progress: 콘솔 출력 여부. 측정 중에는 100프레임 단위로 진행 줄을
       캐리지 리턴으로 같은 자리에 갱신하고 (터미널 출력일 때만), 포인트가 끝나면
       결과 한 줄을 남기고 줄바꿈한다.
+    progress_label: 진행/결과 줄 머리의 "[채널 p=포인트]" 표기 내용
+      (괄호는 이 함수가 붙이므로 내용만 전달, 예: "fixed_error p=200").
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
@@ -55,6 +57,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
 
     # 진행 줄 갱신(\r)은 터미널에서만 한다 (파일로 리다이렉트하면 최종 줄만 남긴다)
     show_live_progress = print_progress and sys.stdout.isatty()
+    line_head = f" [{progress_label}] " if progress_label else "  "
     next_progress_frames = 100
     start_time = time.time()
     while frames < max_frames and errors < max_frame_errors:
@@ -84,7 +87,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                          decode_result["final_err_by_dv"][k].tolist()))
         frames += batch
         if show_live_progress and frames >= next_progress_frames:
-            print(f"\r  frames={frames:6d}/{max_frames} errors={errors:4d}",
+            print(f"\r{line_head}fr={frames:6d}/{max_frames} e={errors:4d}",
                   end="", flush=True)
             next_progress_frames = (frames // 100 + 1) * 100
     elapsed = time.time() - start_time
@@ -104,10 +107,9 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             point_result["fail_frame_details"] = fail_frame_details
     if print_progress:
         print(("\r" if show_live_progress else "")
-              + f"  frames={frames:6d} errors={errors:4d} FER={fer:.3e} "
+              + f"{line_head}fr={frames:6d} e={errors:4d} FER={fer:.2e} "
               f"BER={point_result['post_fec_ber']:.3e} "
-              f"avg_decode_success_iteration="
-              f"{point_result['avg_decode_success_iteration']:.2f} "
+              f"avg_iter={point_result['avg_decode_success_iteration']:.1f} "
               f"({point_result['fps']:.1f} f/s)")
     return point_result
 

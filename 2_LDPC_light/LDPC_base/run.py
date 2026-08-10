@@ -464,8 +464,6 @@ def run_experiment(code, decoder, config):
                 suffix += 1
             label = f"{label}_{suffix}"
         used_labels.add(label)
-        if print_progress:
-            print(f"== channel={channel_type} ({label}) ==")
         point_results = []
         for point in channel_config["points"]:
             random_generator = np.random.default_rng([seed, channel_index, int(1e6 * point)])
@@ -474,7 +472,7 @@ def run_experiment(code, decoder, config):
                 code, channel_fn, decoder, random_generator,
                 max_frame_errors=max_frame_errors, max_frames=max_frames,
                 frames_per_batch=frames_per_batch, print_progress=print_progress,
-                log=log_items or None)
+                progress_label=f"{label} p={point}", log=log_items or None)
             point_result["param"] = point
             point_results.append(point_result)
             if stop_below_fer is not None and point_result["fer"] < stop_below_fer:
