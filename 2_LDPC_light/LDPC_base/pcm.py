@@ -11,7 +11,10 @@ base matrix: (M_b, N_b) int 배열. -1 = zero block, 그 외 = circulant shift �
   z
   (빈 줄)
   M_b행 x N_b열 shift 행렬 (-1 = zero block)
-주석 없이 저장하므로 C++ fscanf("%d")가 그대로 읽을 수 있다.
+  (이후 내용은 무시)
+주석 없이 저장하므로 C++ fscanf("%d")가 그대로 읽을 수 있다. 로드는 Ref-C의
+fscanf처럼 행렬 M_b*N_b개 값까지만 읽으므로, Ref-C H_Matrix 폴더 파일처럼
+행렬이 2벌 들어 있어도 첫 벌만 사용한다.
 column block은 DV 내림차순 배치를 전제로 한다 (예시 부호도 재배열 완료, 2026-08-06 정정).
 """
 import numpy as np
@@ -53,7 +56,11 @@ class QCCode:
 
     @classmethod
     def load(cls, path):
-        """Ref-C 포맷 로드: N_b M_b / J K / z / 빈 줄 / shift 행렬."""
+        """Ref-C 포맷 로드: N_b M_b / J K / z / 빈 줄 / shift 행렬.
+
+        Ref-C(ecc_top.cpp Load_PCM)의 fscanf처럼 행렬 M_b*N_b개 값까지만 읽고
+        이후 내용(두 번째 행렬 등)은 무시한다.
+        """
         with open(path, encoding="utf-8") as f:
             lines = [ln.strip() for ln in f if ln.strip()]
         head = lines[0].split()
@@ -64,9 +71,9 @@ class QCCode:
         J, K = map(int, lines[1].split())
         z = int(lines[2])
         vals = " ".join(lines[3:]).split()
-        base = np.array([int(v) for v in vals], dtype=np.int32)
-        if base.size != M_b * N_b:
-            raise ValueError(f"{path}: 행렬 원소 수 {base.size} != {M_b}x{N_b}")
+        if len(vals) < M_b * N_b:
+            raise ValueError(f"{path}: 행렬 원소 수 {len(vals)} < {M_b}x{N_b}")
+        base = np.array([int(v) for v in vals[:M_b * N_b]], dtype=np.int32)
         code = cls(base.reshape(M_b, N_b), z)
         if code.col_deg.max() > J or code.row_deg.max() > K:
             raise ValueError(

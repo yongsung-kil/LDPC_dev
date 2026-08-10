@@ -11,7 +11,7 @@
 |------|------|
 | `LDPC_base/` | 코드: pcm, encoder, channel(원본 대응 3종), decoder(syndrome-aided + 논문 교체 지점), sim, run, llr_matrix |
 | `Ideas/` | 논문 아이디어 폴더 (아래 "논문 아이디어 구조" 절). vanilla = reference |
-| `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). column block은 **DV 내림차순 배치** |
+| `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). 행렬 뒤 내용은 Ref-C fscanf처럼 무시하므로 행렬이 2벌 든 파일은 첫 벌만 사용. column block은 **DV 내림차순 배치** |
 | `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
 | `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
 | `config.json` | 실험 설정 (아래 스키마 참조) |
