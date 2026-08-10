@@ -114,7 +114,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             progress_line = (
                 f"{line_head}e/fr = {errors:4d}/{frames:<6d} "
                 f"fer = {errors / frames:.2e} "
-                f"ber = {total_residual_err_bits / (frames * code.N):.3e} "
+                f"ber = {total_residual_err_bits / (frames * code.N):.2e} "
                 f"avg_iter = {iterations_so_far / frames:.1f} "
                 f"({frames / elapsed_so_far:.1f} f/s, "
                 f"{iterations_so_far / elapsed_so_far:.0f} it/s)")
@@ -144,7 +144,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             point_result["fail_frame_details"] = fail_frame_details
     point_result["summary_line"] = (
         f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
-        f"ber = {point_result['post_fec_ber']:.3e} "
+        f"ber = {point_result['post_fec_ber']:.2e} "
         f"avg_iter = {point_result['avg_decoding_iteration']:.1f} "
         f"({point_result['fps']:.1f} f/s, {point_result['ips']:.0f} it/s)")
     if print_progress:
