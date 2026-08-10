@@ -73,7 +73,7 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
                                       "max_iter": 120, "mode": "HD" } },
   "seed": 0,
   "run": { "max_frame_errors": 10, "max_frames": 256, "frames_per_batch": 64,
-           "stop_below_fer": null },
+           "stop_below_fer": null, "progress_interval_frames": 100 },
   "channels": [
     { "type": "fixed_error", "points": [200, 300] }
   ],
@@ -110,7 +110,8 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다
 - ㉴ `run.stop_below_fer`: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 측정 중단
   (null=사용 안 함, 다음 채널은 계속 진행)
-- ㉵ `run.print_progress`: 진행 상황 콘솔 출력 여부 (기본 true)
+- ㉵ `run.print_progress`: 진행 상황 콘솔 출력 여부 (기본 true).
+  `run.progress_interval_frames`: 측정 중 진행 줄 갱신 간격 (프레임 단위, 기본 100)
 - ㉶ `output.save_llr_matrix`: 사용한 LLR matrix 파일 사본을 실행 폴더에 저장할지
   (기본 true). 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다
 - ㉷ 설정 검증: 키맵(허용 키 밖이면 에러) + 필수값 + 값 제약.

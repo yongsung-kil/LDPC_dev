@@ -10,16 +10,18 @@ from .decoder import BaseDecoder, LOG_ITEMS
 
 def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                   max_frame_errors=50, max_frames=20000, frames_per_batch=128,
-                  print_progress=False, log=None, progress_label=""):
+                  print_progress=False, log=None, progress_label="",
+                  progress_interval_frames=100):
     """한 채널 조건의 FER 측정.
 
     channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
     프레임 에러 수가 max_frame_errors에 도달하거나 max_frames 소진 시 종료.
-    print_progress: 콘솔 출력 여부. 측정 중에는 100프레임 단위로 진행 줄을
-      캐리지 리턴으로 같은 자리에 갱신하고 (터미널 출력일 때만), 포인트가 끝나면
-      결과 한 줄을 남기고 줄바꿈한다.
+    print_progress: 콘솔 출력 여부. 측정 중에는 progress_interval_frames 단위로
+      진행 줄을 캐리지 리턴으로 같은 자리에 갱신하고 (터미널 출력일 때만),
+      포인트가 끝나면 결과 한 줄을 남기고 줄바꿈한다.
     progress_label: 진행/결과 줄 머리의 "[채널 p=포인트]" 표기 내용
       (괄호는 이 함수가 붙이므로 내용만 전달, 예: "fixed_error p=200").
+    progress_interval_frames: 진행 줄 갱신 간격 (프레임 단위, 기본 100).
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
@@ -33,7 +35,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     # (frames_per_batch가 정수 0이면 무한 대기가 된다)
     for name, value in (("max_frame_errors", max_frame_errors),
                         ("max_frames", max_frames),
-                        ("frames_per_batch", frames_per_batch)):
+                        ("frames_per_batch", frames_per_batch),
+                        ("progress_interval_frames", progress_interval_frames)):
         if isinstance(value, bool) or not isinstance(value, numbers.Integral) or value < 1:
             raise ValueError(f"{name}={value!r}: 1 이상의 정수여야 함")
     log = set() if log is None else set(log)
@@ -58,7 +61,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     # 진행 줄 갱신(\r)은 터미널에서만 한다 (파일로 리다이렉트하면 최종 줄만 남긴다)
     show_live_progress = print_progress and sys.stdout.isatty()
     line_head = f" [{progress_label}] " if progress_label else "  "
-    next_progress_frames = 100
+    next_progress_frames = progress_interval_frames
     start_time = time.time()
     while frames < max_frames and errors < max_frame_errors:
         batch = min(frames_per_batch, max_frames - frames)
@@ -89,7 +92,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
         if show_live_progress and frames >= next_progress_frames:
             print(f"\r{line_head}e/fr = {errors:4d}/{frames:<6d}",
                   end="", flush=True)
-            next_progress_frames = (frames // 100 + 1) * 100
+            next_progress_frames = ((frames // progress_interval_frames + 1)
+                                    * progress_interval_frames)
     elapsed = time.time() - start_time
     fer = errors / frames
     point_result = {

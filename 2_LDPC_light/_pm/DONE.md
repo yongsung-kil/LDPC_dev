@@ -1,5 +1,13 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — 진행 줄 갱신 간격 파라미터화 (run.progress_interval_frames)
+고정 100프레임이던 진행 줄 갱신 간격을 config 키로 이동 (사용자 지시 2026-08-10)
+- **변경**: config `run.progress_interval_frames` (기본 100, 1 이상 정수 검증).
+  run_fer_point 인자로 전달, config 2벌(vanilla, _template)과 README 스키마 반영
+- **검증**: 간격 60 설정으로 64, 128, 192프레임 갱신 후 최종 줄 확인 (가짜 터미널)
+- **파일**: LDPC_base/sim.py, LDPC_base/run.py, workspace/vanilla/config.json,
+  workspace/_template/config.json, README.md
+
 ### 2026-08-10 — 콘솔 출력 정리 (요약 불릿 정렬 + 측정 중 진행 줄 갱신)
 실험 시작 요약과 측정 중 진행 상황을 읽기 쉽게 재구성 (사용자 지시 2026-08-10)
 - **배경**: 시작 요약이 형식이 제각각인 줄 나열이라 잘 안 읽혔고, 측정 중에는

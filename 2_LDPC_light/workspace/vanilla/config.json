@@ -23,7 +23,8 @@
     "max_frame_errors": 10,
     "max_frames": 256,
     "frames_per_batch": 64,
-    "stop_below_fer": null
+    "stop_below_fer": null,
+    "progress_interval_frames": 100
   },
 
   "channels": [

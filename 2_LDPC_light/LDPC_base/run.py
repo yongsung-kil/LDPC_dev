@@ -39,6 +39,7 @@ JSON 구조:
   run.stop_below_fer: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 측정 중단
     (선택, 다음 채널은 계속 진행)
   run.print_progress: 진행 상황 콘솔 출력 여부 (기본 true)
+  run.progress_interval_frames: 측정 중 진행 줄 갱신 간격 (프레임 단위, 기본 100)
   log.enabled: 로그 전체 상위 스위치 (기본 true). false면 아래 항목이 true로
     되어 있어도 전부 끈 것으로 취급한다
   log: 분석 로그 선택 (전부 선택, 기본 꺼짐이고 켜면 속도 비용):
@@ -76,7 +77,7 @@ _TOP_KEYS = {"H_matrix", "decoder", "channels", "run", "output", "seed", "log"}
 _DECODER_KEYS = {"llr_matrix", "use_input_llr_matrix", "internal_quantize"}
 _INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
-             "stop_below_fer", "print_progress"}
+             "stop_below_fer", "print_progress", "progress_interval_frames"}
 _OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
 _LOG_ITEM_KEYS = {"csw_per_iter", "bit_err_per_iter", "bit_err_by_dv",
                   "iter_histogram", "fer_vs_iter", "fail_frame_detail", "fer_curve_png"}
@@ -90,7 +91,8 @@ _CHANNEL_KEYS = {
 _LOG_TO_ITEM = {"csw_per_iter": "csw", "bit_err_per_iter": "bit_err",
                 "bit_err_by_dv": "bit_err_by_dv", "fail_frame_detail": "fail_detail"}
 # run 섹션 기본값 (검증, 소비, 요약이 전부 이 값 하나를 쓴다)
-_RUN_DEFAULTS = {"max_frame_errors": 50, "max_frames": 20000, "frames_per_batch": 128}
+_RUN_DEFAULTS = {"max_frame_errors": 50, "max_frames": 20000, "frames_per_batch": 128,
+                 "progress_interval_frames": 100}
 
 
 def _visible(d):
@@ -266,7 +268,8 @@ def load_config(path):
 
     run_config = config.setdefault("run", {})
     _check_keys("run", run_config, _RUN_KEYS)
-    for key in ("max_frame_errors", "max_frames", "frames_per_batch"):
+    for key in ("max_frame_errors", "max_frames", "frames_per_batch",
+                "progress_interval_frames"):
         _check_int("run", key, run_config.get(key, _RUN_DEFAULTS[key]), 1)
     print_progress = run_config.setdefault("print_progress", True)
     if not isinstance(print_progress, bool):
@@ -444,6 +447,8 @@ def run_experiment(code, decoder, config):
     frames_per_batch = run_config.get("frames_per_batch", _RUN_DEFAULTS["frames_per_batch"])
     stop_below_fer = run_config.get("stop_below_fer")
     print_progress = run_config.get("print_progress", True)
+    progress_interval_frames = run_config.get(
+        "progress_interval_frames", _RUN_DEFAULTS["progress_interval_frames"])
     seed = config["seed"]
     log_config = config["log"]
     log_items = {item for key, item in _LOG_TO_ITEM.items() if log_config.get(key)}
@@ -472,7 +477,9 @@ def run_experiment(code, decoder, config):
                 code, channel_fn, decoder, random_generator,
                 max_frame_errors=max_frame_errors, max_frames=max_frames,
                 frames_per_batch=frames_per_batch, print_progress=print_progress,
-                progress_label=f"{label} p={point}", log=log_items or None)
+                progress_label=f"{label} p={point}",
+                progress_interval_frames=progress_interval_frames,
+                log=log_items or None)
             point_result["param"] = point
             point_results.append(point_result)
             if stop_below_fer is not None and point_result["fer"] < stop_below_fer:
