@@ -1,9 +1,9 @@
 # Claude 세션 컨텍스트: LDPC 디코더 C++ 코드베이스
 
-> 이 폴더([0_LDPC_original/](./))는 LDPC 디코더 C++ 전체 코드베이스. DAO와 대등한 서브프로젝트.
+> 이 폴더([0_LDPC_original/](./))는 LDPC 디코더 C++ 전체 코드베이스. 소스는 [src/](src/) 하위.
 > 이 파일은 **새 Claude 세션이 이 코드로 디버깅/기능 추가/리팩토링할 때 빠르게 컨텍스트 회복하는 용도**.
 > 사람용 문서는 [docs/](docs/) 하위. 이 파일만 읽으면 대부분 작업 시작 가능.
-> DAO 측은 상위 [../CLAUDE.md](../CLAUDE.md) / [../DAO_spec.md](../DAO_spec.md) 참조.
+> 저장소 공통 규칙은 상위 [../CLAUDE.md](../CLAUDE.md) 참조.
 
 ---
 
@@ -201,7 +201,7 @@ col 128, mux>=8  → buf[130]
 col 129+         → buf[jj + punct_col_num]
 col 0~126        → buf[jj]
 ```
-odd iter는 G0/G1 교번 (자세한 매핑표는 `docs/hcu_tv_output_completion/fork_a_result.md`).
+odd iter는 G0/G1 교번 (자세한 매핑표는 구 저장소 아카이브 `../../LDPC_2/LDPC_Original/docs/hcu_tv_output_completion/fork_a_result.md`).
 
 **decoder.cpp의 두 매핑 블록 (항상 동기화 필요)**:
 - `C2V_Cal` L2482-2504 (변수: `mux_index` / `mux_index_temp`)
@@ -247,10 +247,10 @@ odd iter는 G0/G1 교번 (자세한 매핑표는 `docs/hcu_tv_output_completion/
 
 ## 참조 문서 (필요시만)
 
-- [docs/ldpc_decoder_understanding/](docs/ldpc_decoder_understanding/) — 전체 디코더 구조 (L0~L3 레벨별)
-- [docs/hcu_tv_output_completion/](docs/hcu_tv_output_completion/) — HCU TV 출력 버그 분석
-  - `fork_a_result.md` — 버퍼 레이아웃 정합성 (우선 참조)
-  - `_ldpc_02_불일치분석.md` — 쓰기/읽기 불일치 상세
+- [docs/architecture.md](docs/architecture.md) (전체 조감도), [docs/guide/](docs/guide/) (알고리즘, 사용법), [docs/adr/](docs/adr/) (설계 결정 기록)
+- 상세 분석 문서는 구 저장소 아카이브(`../../LDPC_2/LDPC_Original/docs/`)에 있다
+  - `ldpc_decoder_understanding/` (전체 디코더 구조, L0~L3 레벨별)
+  - `hcu_tv_output_completion/` (HCU TV 출력 버그 분석. `fork_a_result.md` 버퍼 레이아웃 정합성 우선 참조, `_ldpc_02_불일치분석.md` 쓰기/읽기 불일치 상세)
 
 ---
 

@@ -37,7 +37,7 @@ desktop.ini
 ideas/**/logs/*.log
 
 # H-matrix data (large binary files) — 원본 한정 (2_LDPC_light/Input/H_matrix는 추적 대상)
-0_LDPC_original/H_Matrix/
+0_LDPC_original/src/H_Matrix/
 
 # Results
 result_*.txt

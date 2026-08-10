@@ -12,5 +12,5 @@ Dual Update 모드에서 parity column을 even/odd로 나눠 교대 처리해야
 - 순차 dual-diagonal: Dual Update 비활성 시 사용 가능하나 성능 열위
 
 ## 영향 파일
-- `0_LDPC_original/encoder.cpp:245-335` — `Column_Reordering_Dual_Update`, `Generate_PCM_encoding`
-- `0_LDPC_original/mode.h:65` — `__SHUFFLED_DUAL_DIAG__` 정의
+- `0_LDPC_original/src/encoder.cpp:245-335` — `Column_Reordering_Dual_Update`, `Generate_PCM_encoding`
+- `0_LDPC_original/src/mode.h:65` — `__SHUFFLED_DUAL_DIAG__` 정의

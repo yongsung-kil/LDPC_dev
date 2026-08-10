@@ -83,7 +83,7 @@ Dual-diagonal 방식의 LDPC 인코딩을 수행한다. Dual Update 모드에서
 ## 파일 구조와 설계 의도
 
 ```
-0_LDPC_original/
+0_LDPC_original/src/
 ├── main.cpp              ← 진입점 (모드 분기만)
 ├── ecc_top.cpp/.h        ← 오케스트레이션 (모든 모듈 조합)
 ├── decoder.cpp/.h        ← 디코딩 핵심 (파이프라인 시뮬)

@@ -210,6 +210,6 @@ col_P4  │ V2C 저장                     │ col_P4
 
 ## 참조
 
-- [CLAUDE.md](../CLAUDE.md) — 빌드, 규칙, AI 역할
-- [ADR 목록](adr/README.md) — 설계 결정 기록
-- [디코더 상세](../0_LDPC_original/CLAUDE.md) — HCU 매핑, 파이프라인, 변수 상세
+- [루트 CLAUDE.md](../../CLAUDE.md) (저장소 규칙, AI 역할)
+- [ADR 목록](adr/README.md) (설계 결정 기록)
+- [디코더 상세](../CLAUDE.md) (HCU 매핑, 파이프라인, 변수 상세)

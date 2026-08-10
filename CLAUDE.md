@@ -9,11 +9,10 @@
 
 | 경로 | 역할 | 작업 진입점 |
 |------|------|------------|
-| `0_LDPC_original/` | 외부 원본 C++ 소스 (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
+| `0_LDPC_original/` | 외부 원본 C++ 소스(`src/`)와 공용 C++ 문서(`docs/`) (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
 | `2_LDPC_light/` | Project 2: 논문 아이디어 스크리닝용 경량 Python 시뮬레이터 | `2_LDPC_light/_pm/TODO.md` |
 | `3_LDPC_ideas/` | Project 3: 스크리닝 통과 아이디어의 본격 적용 (아이디어 대장 포함) | `3_LDPC_ideas/README.md` |
-| `docs/` | 공용 문서 (architecture, ADR, guide, style) | `docs/architecture.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
 
 ---
@@ -76,16 +75,16 @@
 
 | 작업 유형 | 추가로 읽을 것 |
 |-----------|---------------|
-| C++ 디코더 로직 (revised 포함) | `0_LDPC_original/CLAUDE.md` (상수, 스위치, 실수 포인트) + `docs/architecture.md` |
+| C++ 디코더 로직 (revised 포함) | `0_LDPC_original/CLAUDE.md` (상수, 스위치, 실수 포인트) + `0_LDPC_original/docs/architecture.md` |
 | 1_LDPC_revised 속도 최적화 | `1_LDPC_revised/README.md` + `1_LDPC_revised/docs/speed_opt/checklist.md` |
 | 2_LDPC_light | `2_LDPC_light/README.md` (확정 결정 기록 절 포함) |
 | 2_LDPC_light 논문 아이디어 추가 | `2_LDPC_light/docs/새논문적용규칙.md` |
-| 논문 이식성 판정 | `docs/paper_screening_profile.md` |
-| 새 디코딩 모드 추가 | `docs/architecture.md` 전체 + `docs/adr/` 전체 |
+| 논문 이식성 판정 | `0_LDPC_original/docs/paper_screening_profile.md` |
+| 새 디코딩 모드 추가 | `0_LDPC_original/docs/architecture.md` 전체 + `0_LDPC_original/docs/adr/` 전체 |
 | 빌드, 인프라 | 이 파일만으로 충분 |
 
 ---
 
 ## 참조 문서
 
-[루트 TODO](_pm/TODO.md) | [architecture.md](docs/architecture.md) | [dependency_map](docs/dependency_map.md) | [ADR](docs/adr/README.md) | [guide/](docs/guide/) | [0_LDPC_original/CLAUDE.md](0_LDPC_original/CLAUDE.md) | [3_LDPC_ideas/](3_LDPC_ideas/README.md)
+[루트 TODO](_pm/TODO.md) | [architecture.md](0_LDPC_original/docs/architecture.md) | [dependency_map](0_LDPC_original/docs/dependency_map.md) | [ADR](0_LDPC_original/docs/adr/README.md) | [guide/](0_LDPC_original/docs/guide/) | [0_LDPC_original/CLAUDE.md](0_LDPC_original/CLAUDE.md) | [3_LDPC_ideas/](3_LDPC_ideas/README.md)

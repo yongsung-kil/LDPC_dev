@@ -1,5 +1,11 @@
 # DONE — 완료 이력 (저장소 공통)
 
+### 2026-08-10 — 루트 docs/를 0_LDPC_original/ 하위로 이동, C++ 소스를 src/로 정리
+루트 docs가 전부 원본 C++ 문서라 원본 폴더 아래로 통합
+- **배경**: 루트 docs/의 문서(architecture, dependency_map, ADR, guide, style, paper_screening_profile)가 모두 원본 C++ 코드베이스를 다루는 내용이라 루트에 둘 이유가 없었음 (사용자 결정 2026-08-10)
+- **변경**: 0_LDPC_original/src/ 신설 후 C++ 소스와 build.bat 이동, 루트 docs/ 전체를 0_LDPC_original/docs/로 이동. 문서 안의 소스 경로에 src/ 삽입, 구 저장소(LDPC_2) 시절 낡은 참조(DAO 언급, 아카이브로 넘어간 문서 링크)를 아카이브 경로로 수리
+- **파일**: 0_LDPC_original/ (src/, docs/, CLAUDE.md), CLAUDE.md, _pm/TODO.md, .gitignore, 2_LDPC_light/docs/차이.md
+
 ### 2026-08-10 — 루트 ideas/ 폐지, Project 3 폴더 신설 (3_LDPC_ideas/)
 아이디어 대장과 폴더 양식을 3_LDPC_ideas/로 이관하고 루트 ideas/를 삭제
 - **배경**: 루트 ideas/의 역할(아이디어별 코드, 로그, 결과 관리)이 2_LDPC_light/Ideas/ registry 방식과 겹쳤고, Project 3에 흡수될 예정이었음 (사용자 결정 2026-08-10)

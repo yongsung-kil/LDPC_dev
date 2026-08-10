@@ -10,7 +10,7 @@
 ### 빌드 명령
 
 ```bat
-cd LDPC
+cd 0_LDPC_original/src
 build.bat
 ```
 
@@ -19,7 +19,7 @@ build.bat
 cl /EHsc /W3 /O2 /Fe:ldpc_sim.exe *.cpp
 ```
 
-성공 시 `0_LDPC_original/ldpc_sim.exe`가 생성된다.
+성공 시 `0_LDPC_original/src/ldpc_sim.exe`가 생성된다.
 
 > **현재 상태**: 빌드 불가 — 일부 소스 파일에 손상된 텍스트가 포함되어 있어 별도 수정이 필요하다.
 
@@ -27,7 +27,7 @@ cl /EHsc /W3 /O2 /Fe:ldpc_sim.exe *.cpp
 
 ## 실행 모드
 
-실행 모드는 **컴파일 시점**에 결정된다. `0_LDPC_original/mode.h`에서 매크로를 정의/해제한 뒤 다시 빌드해야 한다.
+실행 모드는 **컴파일 시점**에 결정된다. `0_LDPC_original/src/mode.h`에서 매크로를 정의/해제한 뒤 다시 빌드해야 한다.
 
 ### Ref-C 모드 (성능 측정)
 
@@ -121,4 +121,4 @@ HCU column (127, 128)은 별도의 `_HCU` 함수를 통해 출력된다.
 
 - 알고리즘 설명은 [algorithms.md](algorithms.md)
 - 전체 구조는 [overview.md](overview.md)
-- 파라미터 구조체 상세는 `0_LDPC_original/ecc_data.h`의 PARAM_DEC, PARAM_REF_C, PARAM_TV_GEN 참조
+- 파라미터 구조체 상세는 `0_LDPC_original/src/ecc_data.h`의 PARAM_DEC, PARAM_REF_C, PARAM_TV_GEN 참조

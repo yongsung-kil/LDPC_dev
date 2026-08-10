@@ -13,7 +13,7 @@ Col 127, 128을 half로 나눠 2 cycle에 걸쳐 처리 (`__HALF_COL_UPDATE__`).
 - Col 0,1 위치 사용 (`__HALF_COL_MODIFIED__` 미정의): 구형 방식, 현재 col 127,128로 이동 완료
 
 ## 영향 파일
-- `0_LDPC_original/decoder.cpp` — `C2V_cal_HCU()`, `V2C_Cal_HCU()`, `VN_Cal_*_HCU()`, jj_temp 매핑 블록 2개소
-- `0_LDPC_original/decoder.h:91-98` — HCU 전용 메서드
-- `0_LDPC_original/TV_Dec_Inter.cpp` — `Print_TV_*_HCU()` 읽기 함수
-- `0_LDPC_original/common.h:378-383` — `HCU_COL_1_IDX`, `SEPARATE_V_DEG_*`
+- `0_LDPC_original/src/decoder.cpp` — `C2V_cal_HCU()`, `V2C_Cal_HCU()`, `VN_Cal_*_HCU()`, jj_temp 매핑 블록 2개소
+- `0_LDPC_original/src/decoder.h:91-98` — HCU 전용 메서드
+- `0_LDPC_original/src/TV_Dec_Inter.cpp` — `Print_TV_*_HCU()` 읽기 함수
+- `0_LDPC_original/src/common.h:378-383` — `HCU_COL_1_IDX`, `SEPARATE_V_DEG_*`
