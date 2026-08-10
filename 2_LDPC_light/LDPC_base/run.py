@@ -612,11 +612,14 @@ def create_run_dir(config, config_path, code, decoder):
     포인트별 결과 줄은 run_experiment가 측정 중에 콘솔과 같은 내용으로 덧붙인다."""
     output_config = config["output"]
     run_label = output_config.get("label", config["channels"][0]["type"])
-    stamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
+    start_time = datetime.datetime.now()
+    stamp = start_time.strftime("%y%m%d_%H%M%S")
     run_dir = os.path.join(output_config["dir"], f"{stamp}_{run_label}")
     os.makedirs(run_dir, exist_ok=True)
     shutil.copy(config_path, os.path.join(run_dir, "config.json"))
-    lines = [f"run: {stamp}_{run_label}", f"code commit: {_git_commit_hash()}", ""]
+    lines = [f"run: {stamp}_{run_label}",
+             f"code commit: {_git_commit_hash()}",
+             f"start: {start_time.strftime('%Y-%m-%d %H:%M:%S')}", ""]
     lines += _experiment_summary_lines(code, decoder, config)
     lines.append("")
     with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:

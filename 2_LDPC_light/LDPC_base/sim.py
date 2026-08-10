@@ -109,7 +109,12 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                          decode_result["final_err_by_dv"][k].tolist()))
         frames += batch
         if (show_live_progress or summary_path) and frames >= next_progress_frames:
-            progress_line = f"{line_head}e/fr = {errors:4d}/{frames:<6d}"
+            running_avg_iter = (success_iteration_sum + errors * max_iter) / frames
+            progress_line = (
+                f"{line_head}e/fr = {errors:4d}/{frames:<6d} "
+                f"fer = {errors / frames:.2e} "
+                f"ber = {total_residual_err_bits / (frames * code.N):.3e} "
+                f"avg_iter = {running_avg_iter:.1f}")
             if show_live_progress:
                 print(f"\r{progress_line}", end="", flush=True)
             if summary_path:
@@ -137,7 +142,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     point_result["summary_line"] = (
         f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
         f"ber = {point_result['post_fec_ber']:.3e} "
-        f"decoding_iter = {point_result['avg_decoding_iteration']:.1f} "
+        f"avg_iter = {point_result['avg_decoding_iteration']:.1f} "
         f"({point_result['fps']:.1f} f/s, {point_result['ips']:.0f} it/s)")
     if print_progress:
         print(("\r" if show_live_progress else "") + point_result["summary_line"])

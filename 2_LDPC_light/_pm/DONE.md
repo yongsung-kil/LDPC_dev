@@ -1,5 +1,18 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — 진행 줄에 누적 지표 표시 + 시작 시각 기록
+측정 중간에도 최종 줄과 같은 지표가 보이도록 확장 (사용자 지시 2026-08-10)
+- **변경**:
+  - ㉮ 진행 줄에 누적 fer, ber, avg_iter를 표시 (끝나야 보이던 지표를 중간에도 출력,
+    콘솔 \r 갱신과 summary.txt 실시간 반영 양쪽)
+  - ㉯ 표시명 decoding_iter를 avg_iter로 변경 (내부 키 avg_decoding_iteration과
+    CSV 열명은 유지)
+  - ㉰ summary.txt 머리의 code commit 다음 줄에 실험 시작 시각 기록
+    (start: YYYY-MM-DD HH:MM:SS)
+- **검증**: 실행 중간 summary에서 진행 줄의 누적 지표와 start 줄 확인,
+  종료 후 최종 줄 대체 확인
+- **파일**: LDPC_base/sim.py, LDPC_base/run.py
+
 ### 2026-08-10 — summary에 진행 줄 실시간 반영 + 초당 iteration 표시
 측정 중 진행 줄까지 summary.txt에 반영하고 처리량에 it/s 추가 (사용자 지시 2026-08-10)
 - **변경**:
