@@ -39,6 +39,8 @@ JSON 구조:
   run.stop_below_fer: 측정 FER가 이 값 미만이면 해당 채널의 남은 포인트 측정 중단
     (선택, 다음 채널은 계속 진행)
   run.print_progress: 진행 상황 콘솔 출력 여부 (기본 true)
+  log.enabled: 로그 전체 상위 스위치 (기본 true). false면 아래 항목이 true로
+    되어 있어도 전부 끈 것으로 취급한다
   log: 분석 로그 선택 (전부 선택, 기본 꺼짐이고 켜면 속도 비용):
     csw_per_iter / bit_err_per_iter / bit_err_by_dv: iteration별 집계 CSV
     iter_histogram / fer_vs_iter: 수렴 iteration 분포와 "max_iter를 k로 줄였다면"의 FER
@@ -76,8 +78,9 @@ _INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress"}
 _OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
-_LOG_KEYS = {"csw_per_iter", "bit_err_per_iter", "bit_err_by_dv",
-             "iter_histogram", "fer_vs_iter", "fail_frame_detail", "fer_curve_png"}
+_LOG_ITEM_KEYS = {"csw_per_iter", "bit_err_per_iter", "bit_err_by_dv",
+                  "iter_histogram", "fer_vs_iter", "fail_frame_detail", "fer_curve_png"}
+_LOG_KEYS = _LOG_ITEM_KEYS | {"enabled"}
 _CHANNEL_KEYS = {
     "rber": {"type", "points", "label"},
     "fixed_error": {"type", "points", "label"},
@@ -281,6 +284,9 @@ def load_config(path):
     for key in _visible(log_config):
         if not isinstance(log_config[key], bool):
             raise ValueError(f"config [log] {key}={log_config[key]!r}: true/false여야 함")
+    if not log_config.setdefault("enabled", True):
+        for key in _LOG_ITEM_KEYS:   # 상위 스위치 off면 하위 항목이 true여도 전부 off
+            log_config[key] = False
 
     channels = _require("최상위", config, "channels")
     if isinstance(channels, dict):          # 단일 항목은 리스트로 정규화
@@ -357,7 +363,7 @@ def _experiment_summary_lines(code, decoder, config):
                          else "균일 생성 후 로드")
     used_llr_matrix = os.path.basename(
         config["decoder"].get("_used_llr_matrix_path", ""))
-    log_on = sorted(key for key in _LOG_KEYS if config["log"].get(key))
+    log_on = sorted(key for key in _LOG_ITEM_KEYS if config["log"].get(key))
     run_config = config["run"]
     return [
         code.summary(),

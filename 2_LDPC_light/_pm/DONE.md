@@ -1,5 +1,15 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — log 섹션 상위 스위치 (log.enabled) 추가
+로그 전체를 한 키로 on/off (사용자 지시 2026-08-10)
+- **배경**: 하위 항목 7개를 일일이 끄지 않고 로그 수집 여부를 먼저 정하는 상위 스위치 필요
+- **변경**: config `log.enabled` (기본 true). false면 하위 항목이 true여도 전부 끈 것으로
+  취급 (load_config에서 정규화하므로 소비 코드는 무변경). config 3벌과 README 스키마 반영
+- **검증**: enabled=false 실행에서 log CSV와 png 미생성 (필수 산출물 4종만),
+  enabled=true는 기존과 동일 (log_iter CSV가 기준 실행과 일치)
+- **파일**: LDPC_base/run.py, config.json, workspace/vanilla/config.json,
+  workspace/_template/config.json, README.md
+
 ### 2026-08-10 — workspace 전환 (Ideas 개명, registry 폐지, 실험 폴더 run.py 진입점)
 실험 공간을 workspace/로 통일하고 실험 폴더 단독 실행을 제공
 - **배경**: 실험을 폴더 단위로 자유롭게 만들고 그 안의 run.py만 실행하면 되게 하라는

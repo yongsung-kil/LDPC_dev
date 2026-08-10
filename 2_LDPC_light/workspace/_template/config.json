@@ -35,6 +35,8 @@
   ],
 
   "log": {
+    "_desc": "enabled는 전체 상위 스위치. false면 아래 항목이 true여도 전부 끈 것으로 취급",
+    "enabled": true,
     "csw_per_iter": true,
     "bit_err_per_iter": true,
     "bit_err_by_dv": true,

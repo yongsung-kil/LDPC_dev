@@ -81,7 +81,8 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   "channels": [
     { "type": "fixed_error", "points": [200, 300] }
   ],
-  "log": { "csw_per_iter": true, "bit_err_per_iter": true, "bit_err_by_dv": true,
+  "log": { "enabled": true,
+           "csw_per_iter": true, "bit_err_per_iter": true, "bit_err_by_dv": true,
            "iter_histogram": true, "fer_vs_iter": true, "fail_frame_detail": true,
            "fer_curve_png": true },
   "output": { "dir": "Sim_Output", "csv_prefix": "fer" }
@@ -137,7 +138,9 @@ Sim_Output/260807_133321_fixed_error/
 └── log_fail_{라벨}_p{포인트}.csv      ← 실패 프레임별 잔여 에러/최종 CSW/dv별 분해
 ```
 
-- ㉮ 로그 항목별 on/off (`log` 섹션). 켜면 iteration 루프 수집 비용으로 속도가 다소 떨어진다
+- ㉮ `log.enabled`가 로그 전체 상위 스위치다 (false면 하위 항목이 true여도 전부 끈 것으로
+  취급, 기본 true). 항목별 on/off는 그 아래 키로 하며, 켜면 iteration 루프 수집 비용으로
+  속도가 다소 떨어진다
 - ㉯ `post_fec_ber`(복호 후 BER)는 로그와 무관하게 항상 FER CSV에 포함
 - ㉰ `fer_vs_iter`: 프레임별 성공 iteration 기록으로 "max_iter를 k로 줄였다면"의 FER를
   한 번의 실행에서 산출

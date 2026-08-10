@@ -69,11 +69,13 @@
   "log": {
     "_desc": [
       "분석 로그 (기본 꺼짐, 켜면 속도 비용)",
+      "enabled: 전체 상위 스위치. false면 아래 항목이 true여도 전부 끈 것으로 취급",
       "csw_per_iter / bit_err_per_iter / bit_err_by_dv: iteration별 집계 CSV",
       "iter_histogram / fer_vs_iter: 수렴 분포와 max_iter를 k로 줄였다면의 FER",
       "fail_frame_detail: 실패 프레임별 잔여 에러/최종 CSW/dv별 분해",
       "fer_curve_png: FER 커브 그림"
     ],
+    "enabled": true,
     "csw_per_iter": true,
     "bit_err_per_iter": true,
     "bit_err_by_dv": true,
