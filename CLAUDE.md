@@ -12,8 +12,8 @@
 | `0_LDPC_original/` | 외부 원본 C++ 소스 (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
 | `2_LDPC_light/` | Project 2: 논문 아이디어 스크리닝용 경량 Python 시뮬레이터 | `2_LDPC_light/_pm/TODO.md` |
+| `3_LDPC_ideas/` | Project 3: 스크리닝 통과 아이디어의 본격 적용 (아이디어 대장 포함) | `3_LDPC_ideas/README.md` |
 | `docs/` | 공용 문서 (architecture, ADR, guide, style) | `docs/architecture.md` |
-| `ideas/` | 아이디어 저장소 (추후 Project 3, 논문 적용의 씨앗) | `ideas/README.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
 
 ---
@@ -23,7 +23,7 @@
 - ㉮ `0_LDPC_original/`은 외부에서 가져온 원본이며 이 환경에서는 완성 대상이 아니다 (참조 전용)
 - ㉯ `1_LDPC_revised/`에서 기능을 논의, 확정한 것만 외부 저장소로 반영한다 (단방향, 외부에서 이쪽으로 가져오지 않음)
 - ㉰ `2_LDPC_light/`는 외부의 H-matrix와 파라미터를 넣어도 동작하는 것이 목표이며, 외부에서 pull하여 성능을 확인한다
-- ㉱ 추후 Project 3에서 `2_LDPC_light`를 받아 논문 아이디어를 적용한다 (2_LDPC_light가 외부 파라미터로 동작하는 시점에 폴더 신설)
+- ㉱ `3_LDPC_ideas/`(Project 3)는 `2_LDPC_light`를 받아 논문 아이디어를 본격 적용한다 (착수 시점은 2_LDPC_light가 외부 파라미터로 동작하는 때이며, 착수 전에는 아이디어 대장만 운영한다)
 
 ---
 
@@ -88,4 +88,4 @@
 
 ## 참조 문서
 
-[루트 TODO](_pm/TODO.md) | [architecture.md](docs/architecture.md) | [dependency_map](docs/dependency_map.md) | [ADR](docs/adr/README.md) | [guide/](docs/guide/) | [0_LDPC_original/CLAUDE.md](0_LDPC_original/CLAUDE.md) | [ideas/](ideas/README.md)
+[루트 TODO](_pm/TODO.md) | [architecture.md](docs/architecture.md) | [dependency_map](docs/dependency_map.md) | [ADR](docs/adr/README.md) | [guide/](docs/guide/) | [0_LDPC_original/CLAUDE.md](0_LDPC_original/CLAUDE.md) | [3_LDPC_ideas/](3_LDPC_ideas/README.md)
