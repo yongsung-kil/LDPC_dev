@@ -1,5 +1,19 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — summary 실시간 기록과 decoding iteration 지표 변경
+summary.txt를 측정 중에 기록하고 iteration 지표가 실패 프레임을 포함하도록 변경
+(사용자 지시 2026-08-10)
+- **변경**:
+  - ㉮ 실행 폴더와 summary.txt 머리(run 표기, code commit, 실험 요약)를 측정 시작
+    전에 생성하고 (create_run_dir 분리), 포인트가 끝날 때마다 콘솔과 같은 결과 줄을
+    summary.txt에 덧붙인다 (run_experiment의 summary_path). CSV/로그/그림은 종료 후 저장
+  - ㉯ summary.txt의 결과 줄이 콘솔 출력과 동일해졌다 (sim.py가 summary_line으로 공유)
+  - ㉰ avg_decode_success_iteration을 avg_decoding_iteration으로 개명하고 실패
+    프레임을 max_iter로 집계에 포함 (표시명 decoding_iter, CSV 열명도 개명)
+- **검증**: vanilla 실행에서 summary.txt 결과 줄이 콘솔과 문자 단위 동일, 전 프레임
+  실패 실행의 decoding_iter가 0.0에서 20.0(max_iter)으로 바뀜, CSV 열명 확인
+- **파일**: LDPC_base/sim.py, LDPC_base/run.py, README.md
+
 ### 2026-08-10 — 진행 줄 갱신 간격 파라미터화 (run.progress_interval_frames)
 고정 100프레임이던 진행 줄 갱신 간격을 config 키로 이동 (사용자 지시 2026-08-10)
 - **변경**: config `run.progress_interval_frames` (기본 100, 1 이상 정수 검증).

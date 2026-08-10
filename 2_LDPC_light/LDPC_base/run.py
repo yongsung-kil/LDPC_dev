@@ -1,10 +1,12 @@
 """JSON 설정 기반 실험 진입점 (파라미터와 코드를 분리).
 
-main()은 4단계로 구성된다:
+main()은 다음 단계로 구성된다:
   1. load_config:    JSON 파라미터 읽기 + 검증 (키맵, 필수값, 값 제약)
   2. setup:          H-matrix 로드, LLR matrix 로드, 디코더 구성
-  3. run_experiment: msg 생성 -> encode(임시: all-zero 반환) -> channel -> decode 반복
-  4. report:         실행 폴더 생성 + 요약/CSV/로그/그림 저장
+  3. create_run_dir: 실행 폴더 생성 + config 사본과 summary.txt 머리 기록
+  4. run_experiment: msg 생성 -> encode(임시: all-zero 반환) -> channel -> decode 반복.
+     포인트가 끝날 때마다 콘솔과 같은 결과 줄을 summary.txt에 덧붙인다
+  5. report:         측정 종료 후 CSV/로그/그림/LLR matrix 사본 저장
 
 실행: workspace/{실험}/run.py (형제 config.json으로 main()을 부르는 런처) 또는
   2_LDPC_light/에서 python -m LDPC_base.run <config.json 경로>
@@ -47,8 +49,10 @@ JSON 구조:
     iter_histogram / fer_vs_iter: 수렴 iteration 분포와 "max_iter를 k로 줄였다면"의 FER
     fail_frame_detail: 실패 프레임별 잔여 에러, 최종 CSW, dv별 분해
     fer_curve_png: FER 커브 그림 저장
-  output.dir 하위에 실행마다 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 결과 일체
-  (config 사본, summary.txt, 사용한 LLR matrix 사본, CSV, 로그)를 저장한다.
+  output.dir 하위에 실행 시작 시 YYMMDD_HHMMSS_{라벨} 폴더를 만들어 config 사본과
+  summary.txt 머리(run 표기, code commit, 실험 요약)를 기록하고, 포인트가 끝날
+  때마다 콘솔과 같은 결과 줄을 summary.txt에 덧붙인다. CSV, 로그, 그림, 사용한
+  LLR matrix 사본은 측정 종료 후 저장한다.
   라벨은 output.label (없으면 첫 채널 type), CSV 파일명 접두는 output.csv_prefix (기본 "fer")
   output.save_llr_matrix: 사용한 LLR matrix 파일 사본을 실행 폴더에 남길지
     (기본 true. 파일 로드와 균일 생성 어느 경로든 실제 사용된 파일이 남는다)
@@ -435,9 +439,10 @@ def _make_channel_fn(code, decoder, channel_config, point):
     return channel_fn
 
 
-def run_experiment(code, decoder, config):
+def run_experiment(code, decoder, config, summary_path=None):
     """channels 리스트의 각 채널에 대해 각 포인트를 max_frame_errors 도달 또는
     max_frames까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
+    summary_path를 주면 포인트가 끝날 때마다 콘솔과 같은 결과 줄을 그 파일에 덧붙인다.
 
     난수: 최상위 seed 하나에서 [seed, 채널 인덱스, 포인트]로 스트림을 파생하므로
     포인트 간, 채널 간 독립이며 같은 seed면 재현된다."""
@@ -482,6 +487,9 @@ def run_experiment(code, decoder, config):
                 log=log_items or None)
             point_result["param"] = point
             point_results.append(point_result)
+            if summary_path:
+                with open(summary_path, "a", encoding="utf-8") as f:
+                    f.write(point_result["summary_line"] + "\n")
             if stop_below_fer is not None and point_result["fer"] < stop_below_fer:
                 break
         results.append((label, point_results))
@@ -600,36 +608,37 @@ def _plot_fer_curves(path, results):
     plt.close(fig)
 
 
-def report(results, config, config_path, code, decoder):
-    """실행 폴더 생성(YYMMDD_HHMMSS_{라벨}) 후 결과 일체 저장:
-    config 사본, summary.txt(실험 요약 + 결과 + git 커밋 해시), 사용한 LLR matrix
-    사본(output.save_llr_matrix=true), FER CSV, 로그 CSV, FER 커브 그림.
-    그림 저장은 summary 저장 뒤에 시도하며 실패해도 측정 결과는 남는다."""
+def create_run_dir(config, config_path, code, decoder):
+    """실행 폴더(YYMMDD_HHMMSS_{라벨})를 측정 시작 전에 만들고 config 사본과
+    summary.txt 머리(run 표기, code commit, 실험 요약)를 기록한다.
+    포인트별 결과 줄은 run_experiment가 측정 중에 콘솔과 같은 내용으로 덧붙인다."""
     output_config = config["output"]
-    log_config = config["log"]
     run_label = output_config.get("label", config["channels"][0]["type"])
     stamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
     run_dir = os.path.join(output_config["dir"], f"{stamp}_{run_label}")
     os.makedirs(run_dir, exist_ok=True)
     shutil.copy(config_path, os.path.join(run_dir, "config.json"))
-
-    dv_labels = _dv_labels(decoder.llr_matrix)
     lines = [f"run: {stamp}_{run_label}", f"code commit: {_git_commit_hash()}", ""]
     lines += _experiment_summary_lines(code, decoder, config)
     lines.append("")
+    with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    return run_dir
+
+
+def report(results, config, decoder, run_dir):
+    """측정 종료 후 결과 파일 저장: FER CSV, 로그 CSV, 사용한 LLR matrix
+    사본(output.save_llr_matrix=true), FER 커브 그림. summary.txt는 create_run_dir와
+    run_experiment가 측정 시점에 기록한다. 그림 저장은 실패해도 측정 결과는 남는다."""
+    output_config = config["output"]
+    log_config = config["log"]
+    dv_labels = _dv_labels(decoder.llr_matrix)
     prefix = output_config.get("csv_prefix", "fer")
     for label, point_results in results:
         csv_path = os.path.join(run_dir, f"{prefix}_{label}.csv")
         save_csv(point_results, csv_path, param_name="param")
         print(f"saved: {csv_path}")
         for point_result in point_results:
-            lines.append(
-                f"{label} point={point_result['param']}: FER={point_result['fer']:.3e} "
-                f"BER={point_result['post_fec_ber']:.3e} "
-                f"[{point_result['errors']}/{point_result['frames']}] "
-                f"avg_decode_success_iteration="
-                f"{point_result['avg_decode_success_iteration']:.2f} "
-                f"({point_result['sec']:.1f}s)")
             if "iteration_totals" in point_result and (
                     log_config.get("csw_per_iter") or log_config.get("bit_err_per_iter")
                     or log_config.get("bit_err_by_dv")):
@@ -645,8 +654,6 @@ def report(results, config, config_path, code, decoder):
                 _write_fail_log(
                     os.path.join(run_dir, f"log_fail_{label}_p{point_result['param']}.csv"),
                     point_result, dv_labels)
-    with open(os.path.join(run_dir, "summary.txt"), "w", encoding="utf-8") as f:
-        f.write("\n".join(lines) + "\n")
     if output_config.get("save_llr_matrix", True):
         used_llr_matrix_path = config["decoder"].get("_used_llr_matrix_path")
         if used_llr_matrix_path and os.path.exists(used_llr_matrix_path):
@@ -671,8 +678,10 @@ def main(argv=None, decoder_class=None):
     config = load_config(argv[0])
     code, decoder = setup(config, decoder_class)
     print_experiment_summary(code, decoder, config)
-    results = run_experiment(code, decoder, config)
-    report(results, config, argv[0], code, decoder)
+    run_dir = create_run_dir(config, argv[0], code, decoder)
+    results = run_experiment(code, decoder, config,
+                             summary_path=os.path.join(run_dir, "summary.txt"))
+    report(results, config, decoder, run_dir)
 
 
 if __name__ == "__main__":

@@ -126,7 +126,7 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
 ```
 Sim_Output/260807_133321_fixed_error/
 ├── config.json                  ← 실행에 쓴 설정 사본 (재현성)
-├── summary.txt                  ← 요약 + 코드 git 커밋 해시
+├── summary.txt                  ← 요약 + 코드 git 커밋 해시 + 결과 줄 (측정 중 실시간 기록, 콘솔과 동일)
 ├── LLR_MATRIX_*.txt             ← 사용한 LLR matrix 사본 (save_llr_matrix 시)
 ├── fer_{라벨}.csv               ← FER 결과 (post_fec_ber 열 포함, 항상)
 ├── fer_curves.png               ← FER 커브 (fer_curve_png 시)

@@ -24,7 +24,9 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     progress_interval_frames: 진행 줄 갱신 간격 (프레임 단위, 기본 100).
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
-    반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
+    반환 dict: frames, errors, fer, post_fec_ber, avg_decoding_iteration
+      (프레임당 평균 복호 iteration 수. 성공 프레임은 수렴 iteration, 실패 프레임은
+      max_iter로 집계), sec, fps, summary_line (콘솔 결과 줄과 같은 문자열),
       iter_hist ((max_iter+1,) 배열로 [k]=iteration k에 성공한 프레임 수, [0]=실패 프레임 수),
       log 지정 시 iteration_totals {active_frames, csw_sum, bit_err_sum, bit_err_by_dv_sum}
       (iteration별 합계 배열이며, 평균은 합/active_frames로 소비측 계산),
@@ -99,7 +101,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     point_result = {
         "frames": frames, "errors": errors, "fer": fer,
         "post_fec_ber": total_residual_err_bits / (frames * code.N),
-        "avg_decode_success_iteration": success_iteration_sum / max(1, frames - errors),
+        "avg_decoding_iteration": (success_iteration_sum + errors * max_iter) / frames,
         "sec": elapsed, "fps": frames / max(elapsed, 1e-9),
         "iter_hist": iter_hist,
     }
@@ -109,12 +111,13 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             "bit_err_sum": total_bit_err, "bit_err_by_dv_sum": total_bit_err_by_dv}
         if "fail_detail" in log:
             point_result["fail_frame_details"] = fail_frame_details
+    point_result["summary_line"] = (
+        f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
+        f"ber = {point_result['post_fec_ber']:.3e} "
+        f"decoding_iter = {point_result['avg_decoding_iteration']:.1f} "
+        f"({point_result['fps']:.1f} f/s)")
     if print_progress:
-        print(("\r" if show_live_progress else "")
-              + f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
-              f"ber = {point_result['post_fec_ber']:.3e} "
-              f"avg_iter = {point_result['avg_decode_success_iteration']:.1f} "
-              f"({point_result['fps']:.1f} f/s)")
+        print(("\r" if show_live_progress else "") + point_result["summary_line"])
     return point_result
 
 
@@ -123,11 +126,11 @@ def save_csv(point_results, path, param_name="param"):
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([param_name, "fer", "post_fec_ber", "frames", "errors",
-                         "avg_decode_success_iteration", "sec"])
+                         "avg_decoding_iteration", "sec"])
         for point_result in point_results:
             writer.writerow(
                 [point_result["param"], f"{point_result['fer']:.6e}",
                  f"{point_result['post_fec_ber']:.6e}", point_result["frames"],
                  point_result["errors"],
-                 f"{point_result['avg_decode_success_iteration']:.3f}",
+                 f"{point_result['avg_decoding_iteration']:.3f}",
                  f"{point_result['sec']:.1f}"])
