@@ -3,8 +3,9 @@
 ### 2026-08-10 — 진행 줄에 누적 지표 표시 + 시작 시각 기록
 측정 중간에도 최종 줄과 같은 지표가 보이도록 확장 (사용자 지시 2026-08-10)
 - **변경**:
-  - ㉮ 진행 줄에 누적 fer, ber, avg_iter를 표시 (끝나야 보이던 지표를 중간에도 출력,
-    콘솔 \r 갱신과 summary.txt 실시간 반영 양쪽)
+  - ㉮ 진행 줄에 누적 fer, ber, avg_iter, 처리량(f/s, it/s)을 표시 (끝나야 보이던
+    지표를 중간에도 출력, 콘솔 \r 갱신과 summary.txt 실시간 반영 양쪽.
+    진행 줄과 최종 줄의 형식 동일)
   - ㉯ 표시명 decoding_iter를 avg_iter로 변경 (내부 키 avg_decoding_iteration과
     CSV 열명은 유지)
   - ㉰ summary.txt 머리의 code commit 다음 줄에 실험 시작 시각 기록
