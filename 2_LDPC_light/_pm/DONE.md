@@ -1,5 +1,24 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-10 — workspace 전환 (Ideas 개명, registry 폐지, 실험 폴더 run.py 진입점)
+실험 공간을 workspace/로 통일하고 실험 폴더 단독 실행을 제공
+- **배경**: 실험을 폴더 단위로 자유롭게 만들고 그 안의 run.py만 실행하면 되게 하라는
+  사용자 결정 (2026-08-10). registry는 진입점이 config(JSON) 하나이던 시절의
+  이름 변환표라 코드(run.py) 진입점에서는 불필요
+- **변경**:
+  - ㉮ Ideas/를 workspace/로 개명 (git mv), registry.py와 __init__.py 2개 삭제
+  - ㉯ LDPC_base/run.py: main/setup에 decoder_class 주입 (None이면 BaseDecoder),
+    decoder.type 키와 registry 조회 삭제, 요약에 디코더 클래스 이름 출력
+  - ㉰ 상위 탐색 런처 run.py (vanilla와 _template, 복사 후 수정 없이 동작),
+    workspace/README.md와 _template/(config, README 골자) 신설
+  - ㉱ 문서: 새논문적용규칙.md 절차를 run.py 스위치 기준으로 재작성, README 구조/실행/
+    스키마 절 갱신, "아이디어 스크리닝은 2_에서" 류 문구 제거 (3_LDPC_ideas와
+    역할 혼동 방지, 사용자 지시)
+- **검증**: vanilla 재실행이 기존 실행(260808_132800)과 수치 완전 동일 (로그 CSV 6종
+  일치, 차이는 경과시간 열뿐), 변형 디코더 주입 실증, python -m 경로 회귀 확인
+- **파일**: workspace/ (구 Ideas/), LDPC_base/run.py, README.md, __init__.py,
+  docs/새논문적용규칙.md, ../3_LDPC_ideas/README.md, ../CLAUDE.md
+
 ### 2026-08-09 — 2SD/3SD 디코딩 구현 (toy 파일 + 균일 생성 지원)
 HD 전용이던 디코더를 2SD/3SD까지 확장. C++ 원본 정적 분석(파일:라인 근거)으로 설계를 확정했다
 - **배경**: 채널(rber 2SD/3SD, strong_error)과 로더는 준비되어 있었고 디코더 산술만 막혀

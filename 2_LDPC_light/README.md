@@ -1,8 +1,8 @@
-# 2_LDPC_light: 논문 아이디어 스크리닝용 경량 QC-LDPC 시뮬레이터
+# 2_LDPC_light: 경량 QC-LDPC 시뮬레이터
 
 > 확정 결정 기록: 아래 "확정 결정 기록" 절, original과의 로직 차이: [docs/차이.md](docs/차이.md)
-> **주의**: py는 아이디어 상대 비교(on/off) 전용이라 C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
-> 유효 아이디어의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (확정 결정 기록 참조).
+> **주의**: py는 상대 비교(on/off) 전용이라 C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
+> 유효한 기법의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (확정 결정 기록 참조).
 > 2026-08-07: `_test/20260806_setup_구성_실험/`의 개정본을 본체로 반영 (구 코드는 git 이력에 보존)
 
 ## 구성
@@ -10,7 +10,7 @@
 | 경로 | 내용 |
 |------|------|
 | `LDPC_base/` | 코드: pcm, encoder, channel(원본 대응 3종), decoder(syndrome-aided + 논문 교체 지점), sim, run, llr_matrix |
-| `Ideas/` | 논문 아이디어 폴더 (아래 "논문 아이디어 구조" 절). vanilla = reference |
+| `workspace/` | 실험 공간: 실험마다 폴더 하나, 폴더 안의 run.py로 실행 (아래 "실험 공간 구조" 절). vanilla = reference |
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). 행렬 뒤 내용은 Ref-C fscanf처럼 무시하므로 행렬이 2벌 든 파일은 첫 벌만 사용. column block은 **DV 내림차순 배치** |
 | `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
 | `Sim_Output/` | 실험 결과 출력 (git 무시, 실행마다 타임스탬프 폴더 생성) |
@@ -26,15 +26,21 @@
 pip install -r requirements.txt
 ```
 
-이 폴더(`2_LDPC_light/`)에서:
+실험은 `workspace/{실험}/` 폴더에서 (어느 위치에서 실행해도 동작):
+
+```bat
+python run.py                    :: 형제 config.json 사용 (예: workspace/vanilla/)
+python run.py 다른설정.json      :: 인자로 다른 config 지정 (복수 가능)
+```
+
+이 폴더(`2_LDPC_light/`)의 예시 config로 직접 실행할 수도 있다:
 
 ```bat
 python -m LDPC_base.run config.json
-python -m LDPC_base.run Ideas/vanilla/config.json   :: vanilla reference 실험
 ```
 
 JSON의 상대경로(H_matrix, decoder.llr_matrix, output.dir)는 그 JSON 파일 위치 기준으로
-해석된다. 새 실험 설정은 config.json을 복사해서 만든다.
+해석된다. 새 실험은 `workspace/_template/`를 복사해서 만든다.
 
 H-matrix 생성 (repo 루트에서, 실험 흐름과 분리된 수동 도구):
 
@@ -42,8 +48,9 @@ H-matrix 생성 (repo 루트에서, 실험 흐름과 분리된 수동 도구):
 python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 ```
 
-시뮬 실행은 `2_LDPC_light/`, 도구 실행은 repo 루트가 기준 폴더다. 한 파이썬
-프로세스에서 두 기준을 섞으면 같은 모듈이 두 벌 적재될 수 있으므로 섞지 않는다.
+시뮬 실행은 `2_LDPC_light/` 기준(workspace run.py가 자동으로 잡는다), 도구 실행은
+repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 섞으면 같은 모듈이
+두 벌 적재될 수 있으므로 섞지 않는다.
 
 ## 용어
 
@@ -64,8 +71,7 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
 ```json
 {
   "H_matrix": { "dir": "Input/H_matrix", "file": "....qc" },
-  "decoder": { "type": "vanilla",
-               "use_input_llr_matrix": true,
+  "decoder": { "use_input_llr_matrix": true,
                "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" },
                "internal_quantize": { "num_bits": 6, "channel_llr": 8,
                                       "max_iter": 120, "mode": "HD" } },
@@ -95,7 +101,8 @@ python -m 2_LDPC_light.tools.H_mat_gen.gen_example_code [출력경로]
   (예: LLR_MATRIX_HD_uniform_6bit_ch8_dv4_iter120.txt).
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
   파일명이 아니라 th 값 패턴([n..1]이면 균일)으로 한다
-- ㉯ `decoder.type`: 사용할 디코더 (기본 "vanilla", Ideas/registry.py 등록 이름)
+- ㉯ 디코더 선택은 config가 아니라 실험 폴더 run.py의 `DECODER_CLASS`가 한다
+  (None이면 BaseDecoder = vanilla 기준선, config에는 파라미터만 담는다)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
 - ㉱ `channels`: 채널 **리스트**. 항목 1개만으로도 실행 가능하며 순서대로 전부 실행.
@@ -136,19 +143,24 @@ Sim_Output/260807_133321_fixed_error/
   한 번의 실행에서 산출
 - ㉱ 후순위 로그 7종은 미구현 (`_pm/TODO.md` 참조)
 
-## 논문 아이디어 구조
+## 실험 공간 구조
 
-아이디어는 `LDPC_base`를 고치지 않고 `BaseDecoder`를 상속한 자식 클래스에서
+실험마다 `workspace/` 하위에 폴더 하나를 만들고 그 안의 run.py로 실행한다.
+디코더 변형은 `LDPC_base`를 고치지 않고 `BaseDecoder`를 상속한 자식 클래스에서
 교체용 함수만 재정의한다. **새 논문을 붙이는 절차, 교체용 함수 표, 상속 경계
 규칙의 정본은 [docs/새논문적용규칙.md](docs/새논문적용규칙.md)다.**
 
 ```
-Ideas/
-├── registry.py       ← {"vanilla": "LDPC_base.decoder:BaseDecoder", ...}
-└── vanilla/          ← 기준 실험 (재정의 없는 BaseDecoder 그대로). 새 아이디어의 템플릿
-    ├── config.json / README.md
-    └── Sim_Output/   ← 이 실험의 결과
+workspace/
+├── _template/        ← 새 실험 시작 시 복사 (run.py, config.json, README.md)
+├── vanilla/          ← 기준 실험 (재정의 없는 BaseDecoder 그대로, DECODER_CLASS=None)
+│   ├── run.py / config.json / README.md
+│   └── Sim_Output/   ← 이 실험의 결과 (실행별 폴더, git 무시)
+└── {실험}/           ← 논문이나 실험환경별로 자유 생성 (+ 변형이면 decoder.py)
 ```
+
+- run.py는 상위로 올라가며 LDPC_base가 있는 폴더를 찾아 검색 경로에 넣는 런처라
+  복사 후 수정 없이 동작한다. 디코더 선택은 파일 안 `DECODER_CLASS` 한 곳이다
 
 ## 채널 모델: original 대응 3종
 
@@ -187,8 +199,8 @@ dict {"mode", "hd", "sd", "cc"}.
 
 | 결정 | 내용 |
 |------|------|
-| 2단계 하이브리드 (2026-07-29) | Python으로 아이디어 스크리닝(FER 1e-2~1e-4 영역) 후, 유효 아이디어만 실물 C++에 이식해 최종 검증 |
-| vanilla 형태는 Python에만 (2026-07-29) | 쇼트닝, 펑처링, HCU, CRC 조기종료를 뺀 vanilla는 py 전용. 아이디어가 유효하면 실제 형태의 C++에 적용해 재비교 |
+| 2단계 하이브리드 (2026-07-29) | Python으로 후보 기법을 상대 비교(FER 1e-2~1e-4 영역)한 뒤, 유효한 것만 실물 C++에 이식해 최종 검증 |
+| vanilla 형태는 Python에만 (2026-07-29) | 쇼트닝, 펑처링, HCU, CRC 조기종료를 뺀 vanilla는 py 전용. 유효한 기법은 실제 형태의 C++에 적용해 재비교 |
 | 제거 항목 (2026-07-29) | HCU, 쇼트닝/펑처링, CRC 조기종료, timing/SRAM/PMU/TV. GT(Graph Thinning)는 edge 라우팅 테이블일 뿐이라 FER 영향 0을 코드로 확인 후 제거 (2026-07-30) |
 | 성공 판정 (2026-07-30) | genie: 매 iteration 결정을 정답과 bitwise 비교, 일치하면 그 프레임 성공 확정 (CRC 조기종료의 이상화 대응, 미스검출 없음) |
 | codeword (2026-07-30) | all-zero (인코더 포팅 불필요, 대칭 채널과 대칭 복호기 전제) |

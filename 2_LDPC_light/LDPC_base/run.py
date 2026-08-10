@@ -6,12 +6,15 @@ main()은 4단계로 구성된다:
   3. run_experiment: msg 생성 -> encode(임시: all-zero 반환) -> channel -> decode 반복
   4. report:         실행 폴더 생성 + 요약/CSV/로그/그림 저장
 
-실행: 2_LDPC_light/에서 python -m LDPC_base.run config.json
+실행: workspace/{실험}/run.py (형제 config.json으로 main()을 부르는 런처) 또는
+  2_LDPC_light/에서 python -m LDPC_base.run config.json
+
+디코더 선택: main(decoder_class=...)로 주입한다 (None이면 BaseDecoder =
+  vanilla 기준선). config는 파라미터만 담는다.
 
 JSON 구조:
   H_matrix: {"dir": 폴더, "file": 파일명}으로 폴더와 파일명 분리 (Ref-C 포맷,
     폴더는 Input/H_matrix 고정 운용)
-  decoder.type: 사용할 디코더 이름 (기본 "vanilla", Ideas/registry.py 등록 이름)
   decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
     false면 균일 n-bit 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
     그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix 키는 무시).
@@ -61,13 +64,14 @@ import numpy as np
 
 from . import channel as chan
 from . import encoder
+from .decoder import BaseDecoder
 from .llr_matrix import LLRMatrix, MODE_CH_LEN
 from .pcm import QCCode
 from .sim import run_fer_point, save_csv
 
 # 섹션별 허용 키 (키맵). "_" 시작 키는 설명용이라 검사 대상에서 제외된다.
 _TOP_KEYS = {"H_matrix", "decoder", "channels", "run", "output", "seed", "log"}
-_DECODER_KEYS = {"llr_matrix", "type", "use_input_llr_matrix", "internal_quantize"}
+_DECODER_KEYS = {"llr_matrix", "use_input_llr_matrix", "internal_quantize"}
 _INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress"}
@@ -241,11 +245,6 @@ def load_config(path):
             _require("decoder", decoder_config, "internal_quantize"))
         # 생성 파일은 setup()이 output.dir 하위 _generated/에 저장한다
         # (파일명에 dv_max가 들어가므로 H-matrix 로드 후에야 확정된다)
-    decoder_type = decoder_config.setdefault("type", "vanilla")
-    if not isinstance(decoder_type, str) or not decoder_type:
-        raise ValueError(
-            f"config [decoder] type={decoder_type!r}: 아이디어 이름 문자열이어야 함")
-
     config["seed"] = _check_int("최상위", "seed", config.get("seed", 0), 0)
 
     output_config = config.setdefault("output", {})
@@ -294,30 +293,10 @@ def load_config(path):
     return config
 
 
-def _resolve_decoder_class(decoder_type):
-    """decoder.type → 디코더 클래스 (Ideas/registry.py 조회).
-
-    Ideas 패키지는 실행 위치 기준으로 import되므로 2_LDPC_light/에서
-    `python -m LDPC_base.run ...`으로 실행한다. Ideas를 import하지 못하면
-    조용한 대체 없이 에러로 종료한다 (사용자 결정 2026-08-09)."""
-    import importlib
-    try:
-        registry = importlib.import_module("Ideas.registry")
-    except ImportError as import_error:
-        raise ValueError(
-            f"decoder.type={decoder_type!r}: Ideas 패키지를 import할 수 없음 "
-            f"({import_error}). 2_LDPC_light/에서 python -m LDPC_base.run으로 "
-            "실행했는지 확인할 것") from import_error
-    if decoder_type not in registry.DECODERS:
-        raise ValueError(
-            f"decoder.type={decoder_type!r}: Ideas/registry.py 미등록 "
-            f"(등록된 이름: {sorted(registry.DECODERS)})")
-    module_name, class_name = registry.DECODERS[decoder_type].split(":")
-    return getattr(importlib.import_module(module_name), class_name)
-
-
-def setup(config):
-    """H-matrix를 로드하고 LLR matrix를 준비한 뒤 decoder.type의 디코더를 구성한다.
+def setup(config, decoder_class=None):
+    """H-matrix를 로드하고 LLR matrix를 준비한 뒤 디코더를 구성한다.
+    decoder_class가 None이면 BaseDecoder(vanilla 기준선)를 쓴다. 변형 디코더는
+    실험 폴더의 run.py가 클래스를 직접 주입한다.
     use_input_llr_matrix=false면 균일 양자화 매트릭스를 DAO 포맷 파일로 생성해
     output.dir 하위 _generated/에 저장하고, 그 파일을 로드해 사용한다
     (파일 로드 단일 경로 유지). 실제 사용한 파일 경로는 config에
@@ -357,7 +336,8 @@ def setup(config):
         print(f"generated LLR matrix: {llr_matrix_path}")
     llr_matrix = LLRMatrix.load(llr_matrix_path)
     config["decoder"]["_used_llr_matrix_path"] = llr_matrix_path
-    decoder_class = _resolve_decoder_class(config["decoder"]["type"])
+    if decoder_class is None:
+        decoder_class = BaseDecoder
     decoder = decoder_class(code, llr_matrix=llr_matrix)
     return code, decoder
 
@@ -384,8 +364,7 @@ def _experiment_summary_lines(code, decoder, config):
         decoder.llr_matrix.summary(),
         f"H_matrix: {os.path.basename(config['H_matrix'])} | "
         f"LLR matrix: {llr_matrix_source} ({used_llr_matrix})",
-        f"decoder: {config['decoder']['type']} "
-        f"({type(decoder).__module__}.{type(decoder).__name__}), "
+        f"decoder: {type(decoder).__module__}.{type(decoder).__name__}, "
         f"max_iter={decoder.max_iter}",
         f"config: seed={config['seed']} | channels: {channels_desc}",
         f"run: max_frame_errors={run_config.get('max_frame_errors', _RUN_DEFAULTS['max_frame_errors'])}, "
@@ -657,13 +636,13 @@ def report(results, config, config_path, code, decoder):
     return results
 
 
-def main(argv=None):
+def main(argv=None, decoder_class=None):
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
         raise SystemExit("usage: python -m LDPC_base.run <config.json>")
 
     config = load_config(argv[0])
-    code, decoder = setup(config)
+    code, decoder = setup(config, decoder_class)
     print_experiment_summary(code, decoder, config)
     results = run_experiment(code, decoder, config)
     report(results, config, argv[0], code, decoder)

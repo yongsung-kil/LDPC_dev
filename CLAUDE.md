@@ -11,7 +11,7 @@
 |------|------|------------|
 | `0_LDPC_original/` | 외부 원본 C++ 소스(`src/`)와 공용 C++ 문서(`docs/`) (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
-| `2_LDPC_light/` | Project 2: 논문 아이디어 스크리닝용 경량 Python 시뮬레이터 | `2_LDPC_light/_pm/TODO.md` |
+| `2_LDPC_light/` | Project 2: 경량 Python 시뮬레이터 (원본 대응 기준 구현과 실험 공간 workspace/) | `2_LDPC_light/_pm/TODO.md` |
 | `3_LDPC_ideas/` | Project 3: 스크리닝 통과 아이디어의 본격 적용 (아이디어 대장 포함) | `3_LDPC_ideas/README.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
 
