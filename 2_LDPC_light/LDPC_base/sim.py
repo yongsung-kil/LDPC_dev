@@ -1,5 +1,6 @@
 """FER 시뮬레이션 하니스: 배치 반복 → genie 판정 집계 → FER/평균 iteration/로그 집계."""
 import numbers
+import sys
 import time
 
 import numpy as np
@@ -14,7 +15,9 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
 
     channel_fn(batch, random_generator) -> 채널 출력 (channel.py dict).
     프레임 에러 수가 max_frame_errors에 도달하거나 max_frames 소진 시 종료.
-    print_progress: 측정 결과 한 줄을 콘솔에 출력할지 여부.
+    print_progress: 콘솔 출력 여부. 측정 중에는 100프레임 단위로 진행 줄을
+      캐리지 리턴으로 같은 자리에 갱신하고 (터미널 출력일 때만), 포인트가 끝나면
+      결과 한 줄을 남기고 줄바꿈한다.
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
     반환 dict: frames, errors, fer, post_fec_ber, avg_decode_success_iteration, sec, fps,
@@ -50,6 +53,9 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     total_bit_err_by_dv = np.zeros((max_iter, num_dv), np.int64)
     fail_frame_details = []          # 실패 프레임별 (번호, 잔여 에러, 최종 CSW, dv별)
 
+    # 진행 줄 갱신(\r)은 터미널에서만 한다 (파일로 리다이렉트하면 최종 줄만 남긴다)
+    show_live_progress = print_progress and sys.stdout.isatty()
+    next_progress_frames = 100
     start_time = time.time()
     while frames < max_frames and errors < max_frame_errors:
         batch = min(frames_per_batch, max_frames - frames)
@@ -77,6 +83,10 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                          int(decode_result["final_csw"][k]),
                          decode_result["final_err_by_dv"][k].tolist()))
         frames += batch
+        if show_live_progress and frames >= next_progress_frames:
+            print(f"\r  frames={frames:6d}/{max_frames} errors={errors:4d}",
+                  end="", flush=True)
+            next_progress_frames = (frames // 100 + 1) * 100
     elapsed = time.time() - start_time
     fer = errors / frames
     point_result = {
@@ -93,7 +103,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
         if "fail_detail" in log:
             point_result["fail_frame_details"] = fail_frame_details
     if print_progress:
-        print(f"  frames={frames:6d} errors={errors:4d} FER={fer:.3e} "
+        print(("\r" if show_live_progress else "")
+              + f"  frames={frames:6d} errors={errors:4d} FER={fer:.3e} "
               f"BER={point_result['post_fec_ber']:.3e} "
               f"avg_decode_success_iteration="
               f"{point_result['avg_decode_success_iteration']:.2f} "

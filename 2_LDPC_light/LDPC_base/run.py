@@ -348,9 +348,18 @@ def setup(config, decoder_class=None):
     return code, decoder
 
 
+_SUMMARY_DIVIDER = "=" * 64
+
+
+def _degree_hist_str(degrees):
+    """degree 배열 → "{2:17, 3:1, 4:129}" 형태의 히스토그램 문자열."""
+    counts = np.bincount(degrees)
+    return "{" + ", ".join(f"{d}:{c}" for d, c in enumerate(counts) if c) + "}"
+
+
 def _experiment_summary_lines(code, decoder, config):
-    """실험 요약 (setup 직후 콘솔과 summary.txt 공용):
-    부호 정보, LLR matrix 정보와 공급 경로, 디코더 정보, 읽은 config 정보."""
+    """실험 요약 (setup 직후 콘솔과 summary.txt 공용).
+    항목당 "- 이름  값" 불릿 한 줄이며 이름 열을 정렬한다."""
     def channel_desc(channel_config):
         desc = f"{channel_config['type']}{channel_config['points']}"
         if channel_config["type"] == "strong_error":
@@ -365,26 +374,33 @@ def _experiment_summary_lines(code, decoder, config):
         config["decoder"].get("_used_llr_matrix_path", ""))
     log_on = sorted(key for key in _LOG_ITEM_KEYS if config["log"].get(key))
     run_config = config["run"]
-    return [
-        code.summary(),
-        decoder.llr_matrix.summary(),
-        f"H_matrix: {os.path.basename(config['H_matrix'])} | "
-        f"LLR matrix: {llr_matrix_source} ({used_llr_matrix})",
-        f"decoder: {type(decoder).__module__}.{type(decoder).__name__}, "
-        f"max_iter={decoder.max_iter}",
-        f"config: seed={config['seed']} | channels: {channels_desc}",
-        f"run: max_frame_errors={run_config.get('max_frame_errors', _RUN_DEFAULTS['max_frame_errors'])}, "
-        f"max_frames={run_config.get('max_frames', _RUN_DEFAULTS['max_frames'])}, "
-        f"frames_per_batch={run_config.get('frames_per_batch', _RUN_DEFAULTS['frames_per_batch'])}, "
-        f"stop_below_fer={run_config.get('stop_below_fer')}",
-        f"log: {', '.join(log_on) if log_on else '(전부 꺼짐)'}",
+    items = [
+        ("H matrix", os.path.basename(config["H_matrix"])),
+        ("code", f"base {code.M_b}x{code.N_b}, z={code.z}, N={code.N}, "
+                 f"K={code.K}, rate={code.rate:.4f}, E(base)={code.E}"),
+        ("col degree", _degree_hist_str(code.col_deg)),
+        ("row degree", _degree_hist_str(code.row_deg)),
+        ("LLR matrix", f"{used_llr_matrix} ({llr_matrix_source})"),
+        ("max iteration", str(decoder.max_iter)),
+        ("decoder", f"{type(decoder).__module__}.{type(decoder).__name__}"),
+        ("seed", str(config["seed"])),
+        ("channels", channels_desc),
+        ("run", f"max_frame_errors={run_config.get('max_frame_errors', _RUN_DEFAULTS['max_frame_errors'])}, "
+                f"max_frames={run_config.get('max_frames', _RUN_DEFAULTS['max_frames'])}, "
+                f"frames_per_batch={run_config.get('frames_per_batch', _RUN_DEFAULTS['frames_per_batch'])}, "
+                f"stop_below_fer={run_config.get('stop_below_fer')}"),
+        ("log", ", ".join(log_on) if log_on else "(전부 꺼짐)"),
     ]
+    name_width = max(len(name) for name, _ in items)
+    return [f"- {name:<{name_width}}  {value}" for name, value in items]
 
 
 def print_experiment_summary(code, decoder, config):
-    """실험 요약을 콘솔에 출력."""
+    """실험 요약을 콘솔에 출력 (구분선 사이의 불릿 목록)."""
+    print(f"\n\n{_SUMMARY_DIVIDER}")
     for line in _experiment_summary_lines(code, decoder, config):
         print(line)
+    print(f"{_SUMMARY_DIVIDER}\n")
 
 
 def _check_channel_mode(decoder, channel_type):
