@@ -77,6 +77,7 @@ class _DecodeState:
     decode_success_iteration: np.ndarray
     profile: list
     final_err_bits: np.ndarray
+    final_info_err_bits: np.ndarray
     final_csw: np.ndarray
     final_err_by_dv: np.ndarray
     log_active: list
@@ -87,6 +88,7 @@ class _DecodeState:
     num_active_frames: int
     frame_err: np.ndarray
     err_bits: np.ndarray
+    info_err_bits: np.ndarray
     err_by_dv: np.ndarray
     edge_clear: bool
     cur_ch: np.ndarray
@@ -282,6 +284,7 @@ class BaseDecoder:
         # iteration의 값"이 남는다. 성공 프레임은 그 iteration의 값이 기록되며,
         # information 구간은 에러 0이고 parity 구간 잔여 에러는 남을 수 있다)
         state.final_err_bits = np.zeros(B, np.int64)
+        state.final_info_err_bits = np.zeros(B, np.int64)
         state.final_csw = np.zeros(B, np.int64)
         state.final_err_by_dv = np.zeros((B, num_dv), np.int64)
         state.log_active, state.log_csw_sum = [], []
@@ -314,12 +317,14 @@ class BaseDecoder:
         """판정비트 배열을 훑어 프레임별 에러 지표를 만든다. column 루프 안에서
         세지 않으므로 _column_order가 일부 column만 방문해도 미방문 column의 에러가
         집계에 남는다 (성공 오판정 방지).
-        성공 판정(frame_err)은 information 구간(앞쪽 N_b - M_b개 column block)만
-        검사한다 (C++ Check_Genie_CRC의 q < N - M 범위 대응). 에러 bit 수(err_bits)와
-        dv별 집계는 codeword 전체를 센다 (post-FEC BER과 로그 지표용)."""
+        성공 판정(frame_err)과 정보 구간 에러 수(info_err_bits, post-FEC BER 분자)는
+        information 구간(앞쪽 N_b - M_b개 column block)만 검사한다 (C++
+        Check_Genie_CRC의 q < N - M 범위 대응). 전체 에러 bit 수(err_bits)와
+        dv별 집계는 codeword 전체를 센다 (로그와 profile 지표용)."""
         num_info_col_blocks = self.code.N_b - self.code.M_b
-        state.frame_err = \
-            state.decision_bits[:, :num_info_col_blocks, :].any(axis=(-2, -1))
+        info_decision_bits = state.decision_bits[:, :num_info_col_blocks, :]
+        state.frame_err = info_decision_bits.any(axis=(-2, -1))
+        state.info_err_bits = info_decision_bits.sum(axis=(-2, -1), dtype=np.int64)
         state.err_bits = state.decision_bits.sum(axis=(-2, -1), dtype=np.int64)
         if state.need_by_dv:
             state.err_by_dv = np.stack(
@@ -418,6 +423,7 @@ class BaseDecoder:
             if "bit_err_by_dv" in state.log:
                 state.log_err_by_dv_sum.append(state.err_by_dv.sum(axis=0))
         state.final_err_bits[state.idx_active] = state.err_bits
+        state.final_info_err_bits[state.idx_active] = state.info_err_bits
         if "fail_detail" in state.log:
             state.final_csw[state.idx_active] = state.prev_csw
             state.final_err_by_dv[state.idx_active] = state.err_by_dv
@@ -448,7 +454,8 @@ class BaseDecoder:
     def _build_result(self, state, collect_profile):
         """반환 dict 조립 (형식은 decoder_main docstring 참조)."""
         out = {"success": state.success, "decode_success_iteration": state.decode_success_iteration,
-               "final_err_bits": state.final_err_bits}
+               "final_err_bits": state.final_err_bits,
+               "final_info_err_bits": state.final_info_err_bits}
         if collect_profile:
             out["profile"] = state.profile
         if state.log:
@@ -477,7 +484,10 @@ class BaseDecoder:
           decode_success_iteration: (B,) int. 성공한 iteration 번호 (1-base). 실패 프레임은 0
           final_err_bits: (B,) int. 각 프레임의 마지막 처리 iteration 잔여 에러 bit 수
             (codeword 전체 기준. 성공 프레임도 parity 구간 잔여 에러는 남을 수 있다.
-            post-FEC BER 집계용, 항상 반환)
+            진단용, 항상 반환)
+          final_info_err_bits: (B,) int. 각 프레임의 마지막 처리 iteration
+            information 구간 잔여 에러 bit 수 (성공 프레임 0. post-FEC BER 분자,
+            항상 반환)
           profile:  iteration별 (활성 프레임 수, 평균 잔여 에러비트) (collect_profile 시)
           log_active/log_csw_sum/log_err_sum/log_err_by_dv_sum: iteration별 집계
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)

@@ -35,7 +35,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
       (진행 줄은 갱신 간격마다 제자리 갱신되다가 최종 결과 줄로 대체된다).
     log: decoder.LOG_ITEMS 부분집합. 켠 항목만 iteration별로 집계 (속도 비용).
 
-    반환 dict: frames, errors, fer, post_fec_ber, avg_decoding_iteration
+    반환 dict: frames, errors, fer, post_fec_ber (information bit 기준:
+      정보 구간 잔여 에러 bit 합 / (frames * K)), avg_decoding_iteration
       (프레임당 평균 복호 iteration 수. 성공 프레임은 수렴 iteration, 실패 프레임은
       max_iter로 집계), sec, fps, ips (초당 합산 복호 iteration 수),
       summary_line (콘솔 결과 줄과 같은 문자열),
@@ -63,7 +64,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     num_dv = decoder.llr_matrix.num_dv
     frames = errors = 0
     success_iteration_sum = 0        # 성공 프레임의 수렴 iteration 합 (평균 계산용)
-    total_residual_err_bits = 0      # 전 프레임 잔여 에러 bit 합 (post-FEC BER 분자)
+    total_residual_info_err_bits = 0  # 전 프레임 정보 구간 잔여 에러 bit 합 (post-FEC BER 분자)
     iter_hist = np.zeros(max_iter + 1, np.int64)
     # iteration별 합계 (배치를 넘어 누적하며, 평균은 합/활성 프레임 수로 소비측 계산)
     total_active_frames = np.zeros(max_iter, np.int64)
@@ -89,7 +90,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
         success = decode_result["success"]
         errors += int((~success).sum())
         success_iteration_sum += int(decode_result["decode_success_iteration"].sum())
-        total_residual_err_bits += int(decode_result["final_err_bits"].sum())
+        total_residual_info_err_bits += int(decode_result["final_info_err_bits"].sum())
         np.add.at(iter_hist, decode_result["decode_success_iteration"], 1)  # 실패는 [0]
         if log:
             num_iterations_run = len(decode_result["log_active"])
@@ -114,7 +115,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
             progress_line = (
                 f"{line_head}e/fr = {errors:4d}/{frames:<6d} "
                 f"fer = {errors / frames:.2e} "
-                f"ber = {total_residual_err_bits / (frames * code.N):.2e} "
+                f"ber = {total_residual_info_err_bits / (frames * code.K):.2e} "
                 f"avg_iter = {iterations_so_far / frames:.1f} "
                 f"({frames / elapsed_so_far:.1f} f/s, "
                 f"{iterations_so_far / elapsed_so_far:.0f} it/s)")
@@ -130,7 +131,7 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
     total_decoding_iterations = success_iteration_sum + errors * max_iter
     point_result = {
         "frames": frames, "errors": errors, "fer": fer,
-        "post_fec_ber": total_residual_err_bits / (frames * code.N),
+        "post_fec_ber": total_residual_info_err_bits / (frames * code.K),
         "avg_decoding_iteration": total_decoding_iterations / frames,
         "sec": elapsed, "fps": frames / max(elapsed, 1e-9),
         "ips": total_decoding_iterations / max(elapsed, 1e-9),
