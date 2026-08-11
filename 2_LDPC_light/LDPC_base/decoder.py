@@ -29,8 +29,9 @@ syndrome-aided flip/magnitude 도메인 (모든 메시지가 초기 read bit 기
   최대 레벨 → 순수 syndrome bit-flip iteration (C++ 동작 그대로)
 - CSW = Σ(check_sum ⊕ syndrome) (Compute_CSW 대응), iteration 1 진입 시
   prev_csw = |syndrome| (iter 0 종료 시점의 Compute_CSW와 동일)
-- 성공 판정: genie 방식. bit 오류 = read_bit ⊕ (sum_t <= 0)를 정답 all-zero와 비교하고,
-  성공 프레임은 배치에서 제외한다 (마스킹 = 속도 이득, 결과 불변)
+- 성공 판정: genie 방식. bit 오류 = read_bit ⊕ (sum_t <= 0)를 정답 all-zero와
+  information 구간(앞쪽 N_b - M_b개 column block)만 비교하고 (C++ Check_Genie_CRC의
+  q < N - M 범위 대응), 성공 프레임은 배치에서 제외한다 (마스킹 = 속도 이득, 결과 불변)
 - 조기종료(CRC), HCU, 펑처링, Dual-Update, 파이프라인 store 지연은 범위 밖
   (original과의 차이 전체는 docs/차이.md 참조)
 
@@ -278,7 +279,8 @@ class BaseDecoder:
         state.idx_active = np.arange(B)
         state.profile = []
         # 프레임별 최종 상태 (매 iteration 활성 프레임 위치에 덮어써서 "마지막 처리
-        # iteration의 값"이 남는다. 성공 프레임은 그 iteration의 에러 0이 기록됨)
+        # iteration의 값"이 남는다. 성공 프레임은 그 iteration의 값이 기록되며,
+        # information 구간은 에러 0이고 parity 구간 잔여 에러는 남을 수 있다)
         state.final_err_bits = np.zeros(B, np.int64)
         state.final_csw = np.zeros(B, np.int64)
         state.final_err_by_dv = np.zeros((B, num_dv), np.int64)
@@ -309,10 +311,15 @@ class BaseDecoder:
         state.edge_sgn.fill(0)
 
     def _collect_error_metrics(self, state):
-        """판정비트 배열 전체를 훑어 프레임별 에러 지표를 만든다 (C++의 cwc[] 전 배열
-        검사와 동일 구조). column 루프 안에서 세지 않으므로 _column_order가 일부
-        column만 방문해도 미방문 column의 에러가 집계에 남는다 (성공 오판정 방지)."""
-        state.frame_err = state.decision_bits.any(axis=(-2, -1))
+        """판정비트 배열을 훑어 프레임별 에러 지표를 만든다. column 루프 안에서
+        세지 않으므로 _column_order가 일부 column만 방문해도 미방문 column의 에러가
+        집계에 남는다 (성공 오판정 방지).
+        성공 판정(frame_err)은 information 구간(앞쪽 N_b - M_b개 column block)만
+        검사한다 (C++ Check_Genie_CRC의 q < N - M 범위 대응). 에러 bit 수(err_bits)와
+        dv별 집계는 codeword 전체를 센다 (post-FEC BER과 로그 지표용)."""
+        num_info_col_blocks = self.code.N_b - self.code.M_b
+        state.frame_err = \
+            state.decision_bits[:, :num_info_col_blocks, :].any(axis=(-2, -1))
         state.err_bits = state.decision_bits.sum(axis=(-2, -1), dtype=np.int64)
         if state.need_by_dv:
             state.err_by_dv = np.stack(
@@ -418,8 +425,8 @@ class BaseDecoder:
             state.profile.append((state.num_active_frames, float(state.err_bits.mean())))
 
     def _check_errors(self, state, iteration):
-        """에러 검사 (genie: 정답 all-zero와 비교). 성공/실패 확정 + 성공 프레임
-        배치 압축. True 반환 시 루프 종료."""
+        """에러 검사 (genie: information 구간을 정답 all-zero와 비교). 성공/실패 확정 +
+        성공 프레임 배치 압축. True 반환 시 루프 종료."""
         ok = ~state.frame_err
         if ok.any():
             state.success[state.idx_active[ok]] = True
@@ -466,10 +473,11 @@ class BaseDecoder:
         log: LOG_ITEMS 부분집합. 켠 항목만 수집 (속도 비용 발생).
 
         반환 dict:
-          success:  (B,) bool. max_iter 내 genie 판정 성공
+          success:  (B,) bool. max_iter 내 genie 판정 성공 (information 구간 에러 0 기준)
           decode_success_iteration: (B,) int. 성공한 iteration 번호 (1-base). 실패 프레임은 0
           final_err_bits: (B,) int. 각 프레임의 마지막 처리 iteration 잔여 에러 bit 수
-            (성공 프레임 0. post-FEC BER 집계용, 항상 반환)
+            (codeword 전체 기준. 성공 프레임도 parity 구간 잔여 에러는 남을 수 있다.
+            post-FEC BER 집계용, 항상 반환)
           profile:  iteration별 (활성 프레임 수, 평균 잔여 에러비트) (collect_profile 시)
           log_active/log_csw_sum/log_err_sum/log_err_by_dv_sum: iteration별 집계
             (log 항목별. 프레임 평균은 sum/active로 소비측에서 계산)
