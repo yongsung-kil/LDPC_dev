@@ -18,20 +18,32 @@
 
   "decoder": {
     "_desc": [
-      "use_input_llr_matrix (기본 true):",
-      "true면 llr_matrix 파일 사용 (모드는 파일명 HD/2SD/3SD로 판별,",
+      "use_input_llr_matrix: LLR matrix 공급 방법 선택 (기본 true)",
+      "true면 llr_matrix 파일을 로드 (모드는 파일명 HD/2SD/3SD로 판별,",
       "  max_iter는 파일의 마지막 iter_end가 결정하며 JSON에 두면 에러)",
-      "false면 균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그 파일을",
-      "  로드해 디코딩 (internal_quantize 사용, llr_matrix 키는 무시).",
-      "  생성 위치: output.dir/_generated/, 파일명 LLR_MATRIX_{mode}_uniform_..._dv{max}_...",
-      "  (uniform은 사람이 만든 파일이 아니라는 표시, 레벨 인식은 th 값 패턴으로)",
-      "internal_quantize: num_bits(메시지 양자화 bit 수, sign 포함),",
-      "  channel_llr(채널 LLR magnitude, 전 dv 공통. HD는 정수 하나,",
-      "  2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter, mode(기본 HD)"
+      "false면 internal_quantize 값으로 균일 양자화 매트릭스를 만들어 사용",
+      "  (DAO 포맷 파일로 output.dir/_generated/에 저장 후 로드, llr_matrix 키는 무시.",
+      "  파일명의 uniform은 사람이 만든 파일이 아니라는 표시)",
+      "internal_quantize: use_input_llr_matrix=false일 때 필수. 값을 쓸 때는",
+      "  아래 _internal_quantize_example에서 _를 떼고 값을 채운다",
+      "  num_bits: VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의 양자화 bit 수.",
+      "    부호 1bit + 크기 (num_bits-1)bit이고, 크기 레벨은 1부터 2^(num_bits-1)-1까지의",
+      "    균일 정수 (예: 6bit면 1~31). 채널 LLR의 bit 수가 아니다",
+      "  channel_llr: 채널 LLR 크기 (전 dv 공통, num_bits와 별개로 지정).",
+      "    HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트",
+      "  max_iter: 최대 iteration (이 경로에서는 파일이 아니라 이 값이 결정)",
+      "  mode: HD/2SD/3SD (기본 HD)"
     ],
+    "use_input_llr_matrix": true,
     "llr_matrix": {
       "dir": "../../Input/LLR",
       "file": "LLR_MATRIX_HD_1.txt"
+    },
+    "_internal_quantize_example": {
+      "num_bits": 4,
+      "channel_llr": 8,
+      "max_iter": 30,
+      "mode": "HD"
     }
   },
 

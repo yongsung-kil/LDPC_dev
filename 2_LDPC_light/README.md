@@ -90,8 +90,10 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   파일의 마지막 iter_end가 결정**한다 (JSON에 decoder.max_iter를 쓰면 에러).
   디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
   false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
-  파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(메시지 양자화
-  bit 수, sign 포함), channel_llr(채널 LLR magnitude, 전 dv 공통. HD는 정수 하나,
+  파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(VNU와 CNU 사이를
+  오가는 edge 메시지(V2C/C2V)의 양자화 bit 수. 부호 1bit + 크기 (num_bits-1)bit이고
+  크기 레벨은 1부터 2^(num_bits-1)-1까지의 균일 정수, 채널 LLR의 bit 수가 아님),
+  channel_llr(채널 LLR 크기, 전 dv 공통. HD는 정수 하나,
   2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter,
   mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그 값만 바꿔
   두 방식을 오갈 수 있다). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
