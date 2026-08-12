@@ -26,6 +26,15 @@
 
 ---
 
+## 논문 아카이브 (형제 저장소)
+
+- ㉮ 논문 분석 아카이브는 형제 폴더 `../LDPC_Paper_Analysis`에 있다 (별도 git 저장소, 원격 이름 ECC_papers)
+- ㉯ 담긴 것: 논문 PDF와 추출 텍스트(`data/pdfs/`), 메타데이터 DB(`data/papers.db`), 선별 기준과 결과(`criteria/`), 논문 탐색기(`docs/papers.html`, 공개 주소 https://yongsung-kil.github.io/ECC_papers/)
+- ㉰ 아이디어 적용 작업에서 근거 논문의 원문이 필요하면 이 아카이브에서 논문 ID로 찾아 읽는다
+- ㉱ 적용 상태의 정본은 `3_LDPC_ideas/README.md`의 아이디어 대장이며, 상태를 아카이브 탐색기에 반영하는 절차는 아카이브 쪽 `_pm/tasks/20260812_작업공간재구성/재구성계획.md`를 따른다
+
+---
+
 ## 대화 시작 시
 
 - ㉮ 루트 `_pm/TODO.md` 확인 ("새 작업 추가" 섹션에 새 항목이 있으면 작업 목록으로 이동 후 시작 여부 확인)
