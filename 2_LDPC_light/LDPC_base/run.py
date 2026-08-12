@@ -439,6 +439,21 @@ def _make_channel_fn(code, decoder, channel_config, point):
     return channel_fn
 
 
+def _point_label(channel_config, point):
+    """진행 줄과 결과 줄의 포인트 표기 (채널 type별 파라미터 형식).
+    fixed_error: E=주입 에러 수, rber: rber=값,
+    strong_error: E=주입 에러 수, SCR=값, SER=값."""
+    channel_type = channel_config["type"]
+    if channel_type == "fixed_error":
+        return f"E={point}"
+    if channel_type == "rber":
+        return f"rber={point}"
+    if channel_type == "strong_error":
+        return (f"E={point}, SCR={channel_config['SCR']}, "
+                f"SER={channel_config['SER']}")
+    return f"p={point}"
+
+
 def run_experiment(code, decoder, config, summary_path=None):
     """channels 리스트의 각 채널에 대해 각 포인트를 max_frame_errors 도달 또는
     max_frames까지 측정한다. 반환: [(라벨, [포인트별 결과, ...]), ...].
@@ -483,7 +498,7 @@ def run_experiment(code, decoder, config, summary_path=None):
                 code, channel_fn, decoder, random_generator,
                 max_frame_errors=max_frame_errors, max_frames=max_frames,
                 frames_per_batch=frames_per_batch, print_progress=print_progress,
-                progress_label=f"{label} p={point}",
+                progress_label=f"{label} {_point_label(channel_config, point)}",
                 progress_interval_frames=progress_interval_frames,
                 summary_path=summary_path, log=log_items or None)
             point_result["param"] = point

@@ -9,6 +9,15 @@ import numpy as np
 from .decoder import BaseDecoder, LOG_ITEMS
 
 
+def _format_duration(seconds):
+    """경과 시간을 hh:mm:ss로 표시. 100시간 이상이면 시 자릿수가 그대로 늘어난다
+    (예: 123:45:06)."""
+    total_seconds = int(seconds)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+
 def _rewrite_file_tail(path, offset, text):
     """파일의 offset 이후를 text로 교체 (진행 줄을 제자리 갱신하는 용도)."""
     with open(path, "r+", encoding="utf-8") as f:
@@ -118,7 +127,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
                 f"ber = {total_residual_info_err_bits / (frames * code.K):.2e} "
                 f"avg_iter = {iterations_so_far / frames:.1f} "
                 f"({frames / elapsed_so_far:.1f} f/s, "
-                f"{iterations_so_far / elapsed_so_far:.0f} it/s)")
+                f"{iterations_so_far / elapsed_so_far:.0f} it/s, "
+                f"elapsed: {_format_duration(elapsed_so_far)})")
             if show_live_progress:
                 print(f"\r{progress_line}", end="", flush=True)
             if summary_path:
@@ -147,7 +157,8 @@ def run_fer_point(code, channel_fn, decoder: BaseDecoder, random_generator,
         f"{line_head}e/fr = {errors:4d}/{frames:<6d} fer = {fer:.2e} "
         f"ber = {point_result['post_fec_ber']:.2e} "
         f"avg_iter = {point_result['avg_decoding_iteration']:.1f} "
-        f"({point_result['fps']:.1f} f/s, {point_result['ips']:.0f} it/s)")
+        f"({point_result['fps']:.1f} f/s, {point_result['ips']:.0f} it/s, "
+        f"elapsed: {_format_duration(elapsed)})")
     if print_progress:
         print(("\r" if show_live_progress else "") + point_result["summary_line"])
     if summary_path:
