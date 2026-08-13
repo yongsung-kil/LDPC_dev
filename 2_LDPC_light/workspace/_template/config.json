@@ -83,16 +83,16 @@
   "channels": {
     "_desc": [
       "type이 측정할 채널을 고른다 (문자열 하나 또는 리스트로 여러 개 순차 측정).",
-      "type별 값 공간은 자리를 미리 만들어 두고 고른 type의 것만 소비된다",
+      "값 공간은 자리를 미리 만들어 두고 고른 type이 쓰는 것만 소비된다",
       "rber: RBER 값 리스트 (HD/2SD/3SD)",
-      "fixed_error: 프레임당 에러 bit 수 리스트 (HD)",
-      "strong_error: 에러 bit 수 리스트(errors)와 SER/SCR (2SD 전용)"
+      "fixed_error: 프레임당 에러 bit 수 리스트",
+      "  (fixed_error type(HD)과 strong_error type(2SD)이 공용으로 소비)",
+      "strong_ratios: strong_error 채널의 SER/SCR (에러 bit 수는 fixed_error 공간 사용)"
     ],
     "type": "fixed_error",
     "rber": [0.001, 0.002],
     "fixed_error": [200, 300],
-    "strong_error": {
-      "errors": [200, 300],
+    "strong_ratios": {
       "SER": 0.5,
       "SCR": 0.5
     }

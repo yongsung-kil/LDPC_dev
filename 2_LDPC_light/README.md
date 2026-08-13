@@ -80,7 +80,7 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   "channels": { "type": "fixed_error",
                 "rber": [0.001, 0.002],
                 "fixed_error": [200, 300],
-                "strong_error": { "errors": [200, 300], "SER": 0.5, "SCR": 0.5 } },
+                "strong_ratios": { "SER": 0.5, "SCR": 0.5 } },
   "log": { "enabled": true,
            "items": { "csw_per_iter": true, "bit_err_per_iter": true,
                       "bit_err_by_dv": true, "iter_histogram": true,
@@ -118,10 +118,12 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
 - ㉰ `run.seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
 - ㉱ `channels`: **객체**. `type`(문자열 또는 문자열 리스트, 리스트면 순서대로 전부
-  실행)이 측정할 채널을 고르고, type별 값 공간은 자리를 미리 만들어 둔다
-  (고른 type의 공간만 소비하며 그것이 필수, 존재하는 공간은 전부 형식 검사):
-  `rber`(RBER 값 리스트, HD/2SD/3SD), `fixed_error`(프레임당 에러 bit 수 리스트, HD),
-  `strong_error`(`{"errors": 에러 bit 수 리스트, "SER": 0~1, "SCR": 0~1}`, 2SD 전용)
+  실행)이 측정할 채널을 고르고, 값 공간은 자리를 미리 만들어 둔다
+  (고른 type이 쓰는 공간만 소비하며 그것이 필수, 존재하는 공간은 전부 형식 검사):
+  `rber`(RBER 값 리스트, HD/2SD/3SD), `fixed_error`(프레임당 에러 bit 수 리스트,
+  fixed_error type(HD)과 strong_error type(2SD)이 **공용으로 소비**),
+  `strong_ratios`(`{"SER": 0~1, "SCR": 0~1}`, strong_error type이 fixed_error
+  공간과 함께 소비)
 - ㉲ `run.max_frame_errors`: 프레임 에러가 이 수에 도달하면 해당 포인트 측정 종료
 - ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
   통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다

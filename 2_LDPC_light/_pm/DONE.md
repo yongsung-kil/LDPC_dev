@@ -24,9 +24,11 @@ edge 메시지 레벨을 bit 수와 최대값 두 축으로 분리하고, config
     경로에서만 소비 (파일 로드 경로는 파일명과 파일 iter_end가 결정,
     "decoder.max_iter를 두면 에러" 규칙은 이 소비 구분으로 대체)
   - ㉲ channels 스키마: 리스트를 폐기하고 객체로. type(문자열 또는 리스트)이
-    측정 채널을 고르고 값 공간 rber/fixed_error/strong_error{errors, SER, SCR}는
-    자리를 미리 만들어 둔다 (고른 type의 공간만 소비, 존재하는 공간은 전부 형식
-    검사, points와 label 키 폐기)
+    측정 채널을 고르고 값 공간은 자리를 미리 만들어 둔다 (고른 type이 쓰는 공간만
+    소비, 존재하는 공간은 전부 형식 검사, points와 label 키 폐기).
+    rber는 RBER 값 리스트, fixed_error는 프레임당 에러 bit 수 리스트로
+    fixed_error type과 strong_error type이 공용 소비하고, strong_ratios가
+    strong_error의 SER/SCR를 담는다 (에러 개수 자리 공유는 사용자 결정)
   - ㉳ log 스키마: enabled(상위 스위치)와 items(항목 묶음)로 분리.
     seed는 최상위에서 run.seed로 이동
   - ㉴ 설명 정본은 workspace/_template/config.json (실험 폴더 config는 정본 참조

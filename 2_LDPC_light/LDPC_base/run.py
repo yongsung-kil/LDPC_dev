@@ -46,10 +46,13 @@ JSON 구조:
   run.seed: 실험 전체 난수 seed 하나 (기본 0). 채널과 포인트별 난수 스트림은
     여기서 파생
   channels: 객체. "type"(문자열 또는 문자열 리스트)이 측정할 채널을 고르고,
-    type별 값 공간은 자리를 미리 만들어 둔다 (고른 type의 공간만 소비, 존재하는
+    값 공간은 자리를 미리 만들어 둔다 (고른 type이 쓰는 공간만 소비, 존재하는
     공간은 전부 형식 검사):
-    "rber": [RBER 값...], "fixed_error": [에러 bit 수...],
-    "strong_error": {"errors": [에러 bit 수...], "SER": 0~1, "SCR": 0~1}
+    "rber": [RBER 값...] (rber type이 소비),
+    "fixed_error": [프레임당 에러 bit 수...] (fixed_error와 strong_error type이
+    공용 소비),
+    "strong_ratios": {"SER": 0~1, "SCR": 0~1} (strong_error type이 fixed_error
+    공간과 함께 소비)
   run.max_frame_errors: 이 프레임 에러 수에 도달하면 해당 포인트 측정 종료 (기본 50)
   run.max_frames: 포인트당 최대 프레임 수 (기본 20000)
   run.frames_per_batch: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용, 기본 128).
@@ -104,8 +107,8 @@ _OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
 _LOG_ITEM_KEYS = {"csw_per_iter", "bit_err_per_iter", "bit_err_by_dv",
                   "iter_histogram", "fer_vs_iter", "fail_frame_detail", "fer_curve_png"}
 _LOG_KEYS = {"enabled", "items"}
-_CHANNELS_KEYS = {"type", "rber", "fixed_error", "strong_error"}
-_STRONG_ERROR_KEYS = {"errors", "SER", "SCR"}
+_CHANNELS_KEYS = {"type", "rber", "fixed_error", "strong_ratios"}
+_STRONG_RATIOS_KEYS = {"SER", "SCR"}
 # JSON log 키 → decoder/sim 로그 항목
 _LOG_TO_ITEM = {"csw_per_iter": "csw", "bit_err_per_iter": "bit_err",
                 "bit_err_by_dv": "bit_err_by_dv", "fail_frame_detail": "fail_detail"}
@@ -179,12 +182,13 @@ def _check_channel_values(section, channel_type, values):
 
 def _check_channels(channels_config):
     """channels 섹션 검증과 내부 소비 형태 정규화. type이 고른 채널만 측정 항목이
-    되고, 값 공간(rber/fixed_error/strong_error)은 존재하면 전부 형식을 검사해
-    통과/실패가 type 선택에 따라 갈리지 않게 한다.
+    되고, 값 공간은 존재하면 전부 형식을 검사해 통과/실패가 type 선택에 따라
+    갈리지 않게 한다. 에러 bit 수 공간(fixed_error)은 fixed_error와 strong_error
+    type이 공용으로 소비하고, strong_ratios는 strong_error의 SER/SCR를 담는다.
     반환: [{"type", "points", (strong_error면 "SER", "SCR")}] 리스트."""
     if not isinstance(channels_config, dict):
         raise ValueError(
-            'config [channels]: 객체여야 함 ("type"으로 채널을 고르고 type별 값 공간을 채움)')
+            'config [channels]: 객체여야 함 ("type"으로 채널을 고르고 값 공간을 채움)')
     _check_keys("channels", channels_config, _CHANNELS_KEYS)
     selected = _require("channels", channels_config, "type")
     if isinstance(selected, str):
@@ -205,35 +209,41 @@ def _check_channels(channels_config):
         if space in channels_config:
             channels_config[space] = _check_channel_values(
                 f"channels.{space}", space, channels_config[space])
-    strong_error = channels_config.get("strong_error")
-    if strong_error is not None:
-        if not isinstance(strong_error, dict):
+    strong_ratios = channels_config.get("strong_ratios")
+    if strong_ratios is not None:
+        if not isinstance(strong_ratios, dict):
             raise ValueError(
-                'config [channels.strong_error]: {"errors", "SER", "SCR"} 객체여야 함')
-        _check_keys("channels.strong_error", strong_error, _STRONG_ERROR_KEYS)
-        strong_error["errors"] = _check_channel_values(
-            "channels.strong_error.errors", "strong_error",
-            _require("channels.strong_error", strong_error, "errors"))
+                'config [channels.strong_ratios]: {"SER", "SCR"} 객체여야 함')
+        _check_keys("channels.strong_ratios", strong_ratios, _STRONG_RATIOS_KEYS)
         for key in ("SER", "SCR"):
-            value = _require("channels.strong_error", strong_error, key)
+            value = _require("channels.strong_ratios", strong_ratios, key)
             if (isinstance(value, bool) or not isinstance(value, (int, float))
                     or not 0.0 <= value <= 1.0):
                 raise ValueError(
-                    f"config [channels.strong_error] {key}={value!r}: 0~1 범위 수여야 함")
+                    f"config [channels.strong_ratios] {key}={value!r}: 0~1 범위 수여야 함")
     normalized = []
     for channel_type in selected:
-        if channel_type == "strong_error":
-            if strong_error is None:
+        if channel_type == "rber":
+            if "rber" not in channels_config:
                 raise ValueError(
-                    "config [channels] strong_error 공간 없음 (type이 골랐으므로 필수)")
-            normalized.append({"type": channel_type, "points": strong_error["errors"],
-                               "SER": strong_error["SER"], "SCR": strong_error["SCR"]})
-        else:
-            if channel_type not in channels_config:
-                raise ValueError(
-                    f"config [channels] {channel_type} 공간 없음 (type이 골랐으므로 필수)")
+                    "config [channels] rber 공간 없음 (type이 골랐으므로 필수)")
             normalized.append({"type": channel_type,
-                               "points": channels_config[channel_type]})
+                               "points": channels_config["rber"]})
+            continue
+        # fixed_error와 strong_error는 에러 bit 수 공간(fixed_error)을 공용 소비
+        if "fixed_error" not in channels_config:
+            raise ValueError(
+                f"config [channels] fixed_error 공간 없음 "
+                f"({channel_type} type이 에러 bit 수로 쓰므로 필수)")
+        entry = {"type": channel_type, "points": channels_config["fixed_error"]}
+        if channel_type == "strong_error":
+            if strong_ratios is None:
+                raise ValueError(
+                    "config [channels] strong_ratios 공간 없음 "
+                    "(strong_error type의 SER/SCR이므로 필수)")
+            entry["SER"] = strong_ratios["SER"]
+            entry["SCR"] = strong_ratios["SCR"]
+        normalized.append(entry)
     return normalized
 
 
