@@ -6,18 +6,24 @@ edge 메시지 레벨을 bit 수와 최대값 두 축으로 분리 (사용자 �
   레벨 배치 {7,5,3,1}(최대 7을 4개 레벨로 벌린 형태)을 표현할 수 없었다.
   채널 LLR 대비 edge 무게(최대값)와 해상도(레벨 수)는 별개의 실험 축이다
 - **변경**:
-  - ㉮ internal_quantize 키 개편: use_default_edge_quantization(기본 true,
-    bits 3 + max 7 = C++ 3bit 레벨. false면 아래 두 키를 읽음),
+  - ㉮ internal_quantize를 양자화 값 묶음으로 재편: use_default_edge_quantization
+    (기본 true, bits 3 + max 7 = C++ 3bit 레벨. false면 아래 두 키를 읽음),
     edge_resolution_bits(기본 3), edge_max_value(2^n-1 형태, 기본 7,
-    2^(bits-1)-1 미만이면 오류). num_bits 키는 폐기
-  - ㉯ 레벨 배치는 max부터 (max+1)/2^(bits-1) 간격의 내림차순 균일
+    2^(bits-1)-1 미만이면 오류), channel_llr(리스트 정식, 길이 = mode의 region 수,
+    HD는 정수 하나도 허용). num_bits 키는 폐기
+  - ㉯ mode와 max_iter는 양자화 값이 아니므로 decoder 레벨 키로 이동 (사용자 지시).
+    균일 생성 경로에서만 소비되고 파일 로드 경로에서는 파일명과 파일 iter_end가
+    결정 ("decoder.max_iter를 두면 에러" 규칙은 이 소비 구분으로 대체)
+  - ㉰ 레벨 배치는 max부터 (max+1)/2^(bits-1) 간격의 내림차순 균일
     (edge_quantization_levels). th는 레벨값과 동일 (C++는 th가 LLR matrix의
     튜닝 데이터라 고정 규칙이 없고, 간격 1에서 th=[top..1]인 기존 균일 경로의
     확장으로 사용자 결정)
-  - ㉰ load()의 균일 생성물 인식을 [n..1] 패턴에서 등차 감소(마지막 항 2d-1)
+  - ㉱ load()의 균일 생성물 인식을 [n..1] 패턴에서 등차 감소(마지막 항 2d-1)
     패턴으로 일반화해 벌린 레벨 파일도 왕복 복원
-  - ㉱ 생성 파일명에 max 표기 추가 (uniform_{bits}bit_max{max}), config 템플릿과
-    README 스키마 갱신, 확정 결정 기록에 등재
+  - ㉲ 생성 파일명에 max 표기 추가 (uniform_{bits}bit_max{max}), config 템플릿과
+    README 스키마 갱신, 확정 결정 기록에 등재. 템플릿의 decoder 키들은 기본값으로
+    채워 두어 use_input_llr_matrix만 false로 바꾸면 동작 (설명 정본은
+    workspace/_template/config.json, 실험 폴더 config는 정본 참조 한 줄만)
 - **검증**: 단위 24건(레벨 생성, 오류 조건, 저장/로드 왕복 4조합, DAO 파일 회귀,
   uniform 파일명 불일치 에러) + E2E 4경로 실행 (파일 로드, 기본, bits3 max15,
   bits4 max7). bits3 max15의 전량 실패는 채널 LLR을 같은 배율(16)로 올리면

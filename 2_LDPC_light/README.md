@@ -69,9 +69,10 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   "H_matrix": { "dir": "Input/H_matrix", "file": "....qc" },
   "decoder": { "use_input_llr_matrix": true,
                "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" },
+               "mode": "HD", "max_iter": 120,
                "internal_quantize": { "use_default_edge_quantization": true,
                                       "edge_resolution_bits": 3, "edge_max_value": 7,
-                                      "channel_llr": 8, "max_iter": 120, "mode": "HD" } },
+                                      "channel_llr": [8] } },
   "seed": 0,
   "run": { "max_frame_errors": 10, "max_frames": 256, "frames_per_batch": 64,
            "stop_below_fer": null, "progress_interval_frames": 100 },
@@ -87,11 +88,13 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
 ```
 
 - ㉮ `H_matrix`, `decoder.llr_matrix`: **폴더와 파일명 분리** `{"dir", "file"}`.
-  `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **max_iter는
-  파일의 마지막 iter_end가 결정**한다 (JSON에 decoder.max_iter를 쓰면 에러).
-  디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
-  false면 **균일 배치 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
-  파일을 로드**해 디코딩한다. `internal_quantize`의 키:
+  `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **mode는
+  파일명(HD/2SD/3SD)이, max_iter는 파일의 마지막 iter_end가 결정**한다
+  (decoder.mode와 decoder.max_iter는 이 경로에서 읽지 않는다).
+  false면 **decoder.mode(기본 HD), decoder.max_iter(이 경로에서 필수),
+  internal_quantize로 균일 배치 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤
+  그 파일을 로드**해 디코딩한다 (llr_matrix 키는 무시, 플래그 값만 바꿔 두 방식을
+  오갈 수 있다). `internal_quantize`(양자화 값 묶음)의 키:
   use_default_edge_quantization(true(기본)면 기본 edge 양자화(bits 3, max 7,
   레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 아래 두 키를 읽지 않음),
   edge_resolution_bits(VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의 양자화
@@ -99,10 +102,9 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   edge_max_value(edge magnitude 최대 레벨 값, 2^n-1 형태, 기본 7. 레벨은 max부터
   (max+1)/레벨수 간격의 내림차순 균일 배치이고 th는 레벨값과 같음.
   예: bits 3, max 15면 {15,11,7,3}. 2^(bits-1)-1보다 작으면 오류),
-  channel_llr(채널 LLR 크기, 전 dv 공통. HD는 정수 하나,
-  2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter,
-  mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그 값만 바꿔
-  두 방식을 오갈 수 있다). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
+  channel_llr(채널 LLR 크기 리스트, 전 dv 공통, 길이는 mode의 region 수
+  (HD 1개, 2SD 2개, 3SD 4개, 강한 region부터). HD는 정수 하나도 허용).
+  생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
   (예: LLR_MATRIX_HD_uniform_3bit_max7_ch8_dv4_iter120.txt).
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
   파일명이 아니라 th 값 패턴(공차 d의 등차 감소이고 마지막 항이 2d-1이면 균일)으로 한다

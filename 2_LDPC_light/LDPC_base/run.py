@@ -26,8 +26,12 @@ JSON 구조:
     레벨 구성 인식은 파일명이 아니라 th 값 패턴으로 한다)
   decoder.llr_matrix: {"dir": 폴더, "file": 파일명}. DAO LLR_MATRIX
     (use_input_llr_matrix=true일 때 필수).
-    max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
-  decoder.internal_quantize: use_input_llr_matrix=false일 때 필수.
+    max_iter는 이 파일의 마지막 iter_end가 결정한다
+  decoder.mode: HD/2SD/3SD (기본 HD). 균일 생성 경로에서만 소비된다
+    (파일 로드 경로는 파일명이 결정)
+  decoder.max_iter: 최대 iteration. 균일 생성 경로에서만 소비되며 그 경로에서
+    필수다 (파일 로드 경로는 파일의 마지막 iter_end가 결정)
+  decoder.internal_quantize: 양자화 값 묶음, use_input_llr_matrix=false일 때 필수.
     {"use_default_edge_quantization": true(기본)면 기본 edge 양자화(bits 3, max 7,
     레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 아래 두 키를 읽지 않는다.
     false면 두 키로 레벨을 만든다,
@@ -35,9 +39,8 @@ JSON 구조:
     기본 3. 레벨 수 = 2^(bits-1)),
     "edge_max_value": magnitude 최대 레벨 값(2^n-1 형태, 기본 7. 레벨은 균일 간격
     내림차순 배치, th는 레벨값과 동일. edge_quantization_levels 참조),
-    "channel_llr": 채널 LLR magnitude(전 dv 공통. HD는 정수 하나,
-    2SD/3SD는 강한 region부터 2개/4개 리스트),
-    "max_iter": 최대 iteration(파일 생성에 쓰인다), "mode": "HD"(기본)}
+    "channel_llr": 채널 LLR magnitude 리스트(전 dv 공통, 길이 = mode의 region 수:
+    HD 1개, 2SD 2개, 3SD 4개, 강한 region부터. HD는 정수 하나도 허용)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널과 포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
     "points": [...]}. strong_error는 "SER"/"SCR" 추가, 선택 키 "label"
@@ -85,9 +88,10 @@ from .sim import run_fer_point, save_csv
 
 # 섹션별 허용 키 (키맵). "_" 시작 키는 설명용이라 검사 대상에서 제외된다.
 _TOP_KEYS = {"H_matrix", "decoder", "channels", "run", "output", "seed", "log"}
-_DECODER_KEYS = {"llr_matrix", "use_input_llr_matrix", "internal_quantize"}
+_DECODER_KEYS = {"llr_matrix", "use_input_llr_matrix", "internal_quantize",
+                 "mode", "max_iter"}
 _INTERNAL_QUANTIZE_KEYS = {"use_default_edge_quantization", "edge_resolution_bits",
-                           "edge_max_value", "channel_llr", "max_iter", "mode"}
+                           "edge_max_value", "channel_llr"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress", "progress_interval_frames"}
 _OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
@@ -189,9 +193,10 @@ def _check_channel(index, channel_config):
             "겹치는 포인트가 있음 (같은 스트림으로 중복 측정되고 로그 CSV 파일명이 덮임)")
 
 
-def _check_internal_quantize(internal_quantize):
-    """decoder.internal_quantize 블록 검증. use_input_llr_matrix 값과 무관하게
-    형식을 검사해, 같은 config의 통과/실패가 플래그 값에 따라 갈리지 않게 한다."""
+def _check_internal_quantize(internal_quantize, mode):
+    """decoder.internal_quantize 블록(양자화 값 묶음) 검증. use_input_llr_matrix
+    값과 무관하게 형식을 검사해, 같은 config의 통과/실패가 플래그 값에 따라
+    갈리지 않게 한다. mode는 decoder 레벨 키(channel_llr 길이 판정에 사용)."""
     if not isinstance(internal_quantize, dict):
         raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
     _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
@@ -217,23 +222,21 @@ def _check_internal_quantize(internal_quantize):
             edge_quantization_levels(edge_resolution_bits, edge_max_value)
         except ValueError as error:
             raise ValueError(f"config [decoder.internal_quantize] {error}") from None
-    mode = internal_quantize.setdefault("mode", "HD")
-    if mode not in ("HD", "2SD", "3SD"):
-        raise ValueError(
-            f"config [decoder.internal_quantize] mode={mode!r}: HD/2SD/3SD 중 하나여야 함")
     channel_llr = _require("decoder.internal_quantize", internal_quantize, "channel_llr")
     region_count = MODE_CH_LEN[mode]
-    if region_count == 1:
-        _check_int("decoder.internal_quantize", "channel_llr", channel_llr, 1)
-    else:
-        if not isinstance(channel_llr, list) or len(channel_llr) != region_count:
+    if isinstance(channel_llr, list):
+        if len(channel_llr) != region_count:
             raise ValueError(
                 f"config [decoder.internal_quantize] channel_llr={channel_llr!r}: "
                 f"{mode}는 region별 {region_count}개 리스트여야 함 (강한 쪽부터)")
         for value in channel_llr:
             _check_int("decoder.internal_quantize", "channel_llr 원소", value, 1)
-    _check_int("decoder.internal_quantize", "max_iter",
-               _require("decoder.internal_quantize", internal_quantize, "max_iter"), 1)
+    elif region_count == 1:
+        _check_int("decoder.internal_quantize", "channel_llr", channel_llr, 1)
+    else:
+        raise ValueError(
+            f"config [decoder.internal_quantize] channel_llr={channel_llr!r}: "
+            f"{mode}는 region별 {region_count}개 리스트여야 함 (강한 쪽부터)")
 
 
 def load_config(path):
@@ -257,24 +260,28 @@ def load_config(path):
                                     base_dir)
 
     decoder_config = config.setdefault("decoder", {})
-    if "max_iter" in decoder_config:
-        raise ValueError(
-            "decoder.max_iter는 LLR matrix 파일(또는 internal_quantize.max_iter)이 "
-            "결정하므로 JSON에 두지 않는다")
     _check_keys("decoder", decoder_config, _DECODER_KEYS)
     use_input_llr_matrix = decoder_config.setdefault("use_input_llr_matrix", True)
     if not isinstance(use_input_llr_matrix, bool):
         raise ValueError(
             f"config [decoder] use_input_llr_matrix={use_input_llr_matrix!r}: true/false여야 함")
+    # mode와 max_iter는 균일 생성 경로에서만 소비된다 (파일 로드 경로에서는 mode를
+    # 파일명이, max_iter를 파일의 마지막 iter_end가 결정). 형식은 항상 검증한다
+    mode = decoder_config.setdefault("mode", "HD")
+    if mode not in ("HD", "2SD", "3SD"):
+        raise ValueError(f"config [decoder] mode={mode!r}: HD/2SD/3SD 중 하나여야 함")
+    if "max_iter" in decoder_config:
+        _check_int("decoder", "max_iter", decoder_config["max_iter"], 1)
     if use_input_llr_matrix:
         decoder_config["llr_matrix"] = _path_pair(
             "decoder.llr_matrix", _require("decoder", decoder_config, "llr_matrix"), base_dir)
         if decoder_config.get("internal_quantize") is not None:
             # 이 분기에서 쓰이지는 않지만 플래그 값과 무관하게 형식은 검증한다
-            _check_internal_quantize(decoder_config["internal_quantize"])
+            _check_internal_quantize(decoder_config["internal_quantize"], mode)
     else:
+        _require("decoder", decoder_config, "max_iter")
         _check_internal_quantize(
-            _require("decoder", decoder_config, "internal_quantize"))
+            _require("decoder", decoder_config, "internal_quantize"), mode)
         # 생성 파일은 setup()이 output.dir 하위 _generated/에 저장한다
         # (파일명에 dv_max가 들어가므로 H-matrix 로드 후에야 확정된다)
     config["seed"] = _check_int("최상위", "seed", config.get("seed", 0), 0)
@@ -350,6 +357,8 @@ def setup(config, decoder_class=None):
                 "use_input_llr_matrix를 false로 바꿔 균일 생성을 쓸 것")
     else:
         internal_quantize = config["decoder"]["internal_quantize"]
+        mode = config["decoder"]["mode"]
+        max_iter = config["decoder"]["max_iter"]
         dv_max = int(code.col_deg.max())
         if internal_quantize["use_default_edge_quantization"]:
             edge_resolution_bits, edge_max_value = 3, 7    # 기본: C++ 3bit 레벨 {7,5,3,1}
@@ -360,9 +369,9 @@ def setup(config, decoder_class=None):
             edge_resolution_bits=edge_resolution_bits,
             edge_max_value=edge_max_value,
             channel_llr=internal_quantize["channel_llr"],
-            max_iter=internal_quantize["max_iter"],
+            max_iter=max_iter,
             dv_max=dv_max,
-            mode=internal_quantize["mode"])
+            mode=mode)
         generated_dir = os.path.join(config["output"]["dir"], "_generated")
         os.makedirs(generated_dir, exist_ok=True)
         channel_llr = internal_quantize["channel_llr"]
@@ -370,10 +379,10 @@ def setup(config, decoder_class=None):
                            if isinstance(channel_llr, list) else str(channel_llr))
         llr_matrix_path = os.path.join(
             generated_dir,
-            f"LLR_MATRIX_{internal_quantize['mode']}_uniform"
+            f"LLR_MATRIX_{mode}_uniform"
             f"_{edge_resolution_bits}bit_max{edge_max_value}"
             f"_ch{channel_llr_tag}"
-            f"_dv{dv_max}_iter{internal_quantize['max_iter']}.txt")
+            f"_dv{dv_max}_iter{max_iter}.txt")
         synthesized.save(llr_matrix_path)
         print(f"generated LLR matrix: {llr_matrix_path}")
     llr_matrix = LLRMatrix.load(llr_matrix_path)
