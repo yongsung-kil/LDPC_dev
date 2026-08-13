@@ -2,10 +2,11 @@
 
 LLRMatrix 공급 경로 2가지:
 - ㉮ 파일 로드 (LLRMatrix.load): DAO 산출물(3-bit, th 3개, EDGE {7,5,3,1})과
-  균일 생성물(th가 [n..1] 패턴이면 값으로 자동 인식)을 모두 읽는다
-- ㉯ 내부 합성 (make_internal_uniform_matrix): 균일 n-bit 양자화 매트릭스를
-  만들어 파일로 저장한 뒤 load()로 읽어 파일 매트릭스와 같은 경로로 소비한다
-  (전 dv 공통 ch, 균일 th 경계, 그룹 1개 구성)
+  균일 생성물(th가 등차 감소 패턴이면 값으로 자동 인식)을 모두 읽는다
+- ㉯ 내부 합성 (make_internal_uniform_matrix): edge 양자화 레벨을 균일 간격으로
+  배치한 매트릭스를 만들어 파일로 저장한 뒤 load()로 읽어 파일 매트릭스와 같은
+  경로로 소비한다 (레벨 배치는 edge_quantization_levels, 전 dv 공통 ch,
+  th는 레벨값과 동일, 그룹 1개 구성)
 
 파일 포맷 (DAO_LLR_MATRIX.py Read_Input_LLR_Matrix와 동일, 빈 줄 무시):
   num_parameter_each_set / num_dv / dv_from / dv_to / num_group /
@@ -48,12 +49,75 @@ _NAME_RE = re.compile(r"LLR_MATRIX_(HD|2SD|3SD)_", re.IGNORECASE)
 
 
 def uniform_edge_mag(top_level):
-    """균일 양자화 VNU 출력 레벨 [top_level, ..., 2, 1, 1]. 최소 레벨은 1이다.
+    """간격 1 균일 양자화 VNU 출력 레벨 [top_level, ..., 2, 1, 1]. 최소 레벨은 1이다.
     C++는 C2V 메시지 크기 0을 두지 않으므로(C2V_Cal이 최소 크기를 EDGE_MAG_1=1로
     복원, decoder.cpp:2405) 같은 방향으로 하한을 1로 막은 구성이고, 마지막 두 항이
     모두 1인 것은 레벨 개수가 th 개수 + 1이어야 한다는 제약 때문이다.
     소비 결과는 크기 = max(min(|raw|, top_level), 1)."""
     return list(range(int(top_level), 0, -1)) + [1]
+
+
+def edge_quantization_levels(edge_resolution_bits, edge_max_value):
+    """edge 메시지(V2C/C2V) 양자화의 magnitude 레벨과 th 경계를 만든다.
+
+    레벨 수는 2^(edge_resolution_bits-1)개이고, edge_max_value(2^n-1 형태)부터
+    간격 step = (edge_max_value+1) / 레벨 수 의 내림차순 균일 배치다.
+    th는 레벨값과 같다 (|V2C 합|이 레벨에 못 미치면 아래 레벨로 내린다.
+    C++는 th를 LLR matrix의 튜닝 값으로 받으므로 고정 배치 규칙이 없고,
+    이 배치는 간격 1에서 th=[top..1]인 저장소 균일 경로의 자연 확장이다.
+    사용자 결정 2026-08-13).
+
+    - 기본 (bits 3, max 7): 레벨 {7,5,3,1} (C++ 3bit 빌드의 EDGE 도메인과 동일)
+    - 간격 1 (max = 2^(bits-1)-1): uniform_edge_mag와 같은 [top..1, 1] 구성
+    - 간격 2 이상: 최소 레벨은 1이 아니라 step-1이다 (예: bits 3, max 15 → {15,11,7,3})
+    반환: (edge_mag, th) 내림차순 리스트 쌍, len(edge_mag) = len(th) + 1."""
+    bits = int(edge_resolution_bits)
+    max_value = int(edge_max_value)
+    if bits < 2:
+        raise ValueError(f"edge_resolution_bits={bits}: 2 이상이어야 함 (부호 1bit + 크기)")
+    if max_value < 1 or (max_value + 1) & max_value != 0:
+        raise ValueError(f"edge_max_value={max_value}: 2^n-1 형태여야 함 (예: 3, 7, 15, 31)")
+    level_count = 2 ** (bits - 1)
+    if max_value < level_count - 1:
+        raise ValueError(
+            f"edge_max_value={max_value}: 레벨 {level_count}개를 담을 정수 자리가 부족함 "
+            f"(2^(edge_resolution_bits-1)-1 = {level_count - 1} 이상이어야 함)")
+    step = (max_value + 1) // level_count
+    if step == 1:
+        return uniform_edge_mag(max_value), list(range(max_value, 0, -1))
+    edge_mag = list(range(max_value, 0, -step))
+    return edge_mag, edge_mag[:-1]
+
+
+def _detect_uniform_edge_mag(rows, num_dv, num_param, ch_len, num_restart):
+    """균일 생성물 판별과 레벨 복원. 전 row와 전 dv의 th가 같고, 그 th가 공차
+    d(1 이상)로 감소하는 등차 수열이며 마지막 항이 2d-1이면 th를 레벨값 목록으로
+    보고(edge_quantization_levels가 만드는 형태) edge_mag = th + [최소 레벨]로
+    복원한다 (d=1이면 1 중복, d 2 이상이면 d-1). 아니면 None (DAO 산출물로 간주,
+    DAO 파일은 dv별 th가 달라 여기 걸리지 않는다)."""
+    th_len = num_param - ch_len
+    if num_restart != 0 or th_len < 1:
+        return None
+    first_th = np.asarray(rows[0][0], np.int64).reshape(num_dv, num_param)[0, ch_len:]
+    if th_len == 1:
+        if int(first_th[0]) % 2 != 1:
+            return None
+        d = (int(first_th[0]) + 1) // 2
+    else:
+        diffs = first_th[:-1] - first_th[1:]
+        d = int(diffs[0])
+        if d < 1 or not bool(np.all(diffs == d)):
+            return None
+    if int(first_th[-1]) != 2 * d - 1:
+        return None
+    same_everywhere = all(
+        np.array_equal(
+            np.asarray(r[0], np.int64).reshape(num_dv, num_param)[:, ch_len:],
+            np.broadcast_to(first_th, (num_dv, th_len)))
+        for r in rows)
+    if not same_everywhere:
+        return None
+    return [int(v) for v in first_th] + [max(d - 1, 1)]
 
 
 class LLRMatrix:
@@ -167,8 +231,8 @@ class LLRMatrix:
         """DAO 포맷 파일 로드.
         - 모드(HD/2SD/3SD)는 파일명 LLR_MATRIX_{HD|2SD|3SD}_*.txt에서 판별한다
         - VNU 출력 레벨(edge_mag)은 파일에 없으므로 th 값으로 판별한다:
-          restart가 없고 전 row의 th가 [n..1] 연속 정수 내림차순이면 균일 생성물로
-          보고 uniform_edge_mag(n)을, 아니면 3-bit 기본 {7,5,3,1}을 쓴다.
+          균일 생성물 패턴이면 th에서 레벨을 복원하고 (_detect_uniform_edge_mag
+          참조), 아니면 3-bit 기본 {7,5,3,1}을 쓴다.
           파일명에 uniform이 있는데 th가 균일 패턴이 아니면 에러를 낸다"""
         m = _NAME_RE.search(os.path.basename(path))
         if not m:
@@ -206,38 +270,35 @@ class LLRMatrix:
                 raise ValueError(f"{path}: row 길이 {len(row_line)} != {num_dv}*{num_param}+4")
             rows.append((row_line[:-4], int(row_line[-4]), int(row_line[-3]),
                          int(row_line[-2]), int(row_line[-1])))
-        th_len = num_param - MODE_CH_LEN[mode]
-        expected_th = np.arange(th_len, 0, -1, dtype=np.int64)
-        rows_th_uniform = (num_restart == 0 and th_len >= 1 and all(
-            np.array_equal(
-                np.asarray(r[0], np.int64).reshape(num_dv, num_param)[:, MODE_CH_LEN[mode]:],
-                np.broadcast_to(expected_th, (num_dv, th_len)))
-            for r in rows))
-        if "uniform" in os.path.basename(path).lower() and not rows_th_uniform:
+        edge_mag = _detect_uniform_edge_mag(
+            rows, num_dv, num_param, MODE_CH_LEN[mode], num_restart)
+        if "uniform" in os.path.basename(path).lower() and edge_mag is None:
             raise ValueError(
-                f"{path}: 파일명은 uniform이나 th가 균일 패턴([{th_len}..1])이 아님. "
-                "파일명 표시와 내용이 어긋나 레벨 구성을 정할 수 없음")
-        edge_mag = uniform_edge_mag(th_len) if rows_th_uniform else None
+                f"{path}: 파일명은 uniform이나 th가 균일 배치 패턴(등차 감소, "
+                "마지막 항 2d-1)이 아님. 파일명 표시와 내용이 어긋나 레벨 구성을 "
+                "정할 수 없음")
         return cls(mode, num_param, dv_from, dv_to, group_rows, group_type,
                    restart_iters, max_value, min_value, rows,
                    name=os.path.basename(path), edge_mag=edge_mag)
 
-    # ---------- 균일 n-bit 양자화 매트릭스 합성 (파일로 저장 후 로드해 사용) ----------
+    # ---------- 균일 배치 양자화 매트릭스 합성 (파일로 저장 후 로드해 사용) ----------
     @classmethod
-    def make_internal_uniform_matrix(cls, num_bits, channel_llr, max_iter, dv_max,
-                                     mode="HD"):
-        """균일 n-bit 양자화용 매트릭스 합성. save()로 DAO 포맷 파일로 저장한 뒤
+    def make_internal_uniform_matrix(cls, edge_resolution_bits, edge_max_value,
+                                     channel_llr, max_iter, dv_max, mode="HD"):
+        """균일 배치 edge 양자화 매트릭스 합성. save()로 DAO 포맷 파일로 저장한 뒤
         load()로 읽어 파일 매트릭스와 같은 경로로 소비한다 (run.py setup 참조).
 
-        num_bits: 메시지 양자화 bit 수 (sign 포함). th는 정수 [최대 레벨..1],
-          magnitude 레벨은 uniform_edge_mag 참조 (최소 1). flip 도메인 값이
-          전부 정수라 캐스케이드가 max(min(|raw|, 최대 레벨), 1)과 같아진다
+        edge_resolution_bits: edge 메시지(V2C/C2V)의 양자화 bit 수 (부호 1bit 포함)
+        edge_max_value: magnitude 최대 레벨 값 (2^n-1 형태).
+          레벨과 th 배치는 edge_quantization_levels 참조. 기본 조합(bits 3, max 7)이
+          C++ 3bit 빌드의 {7,5,3,1}과 같고, 간격 1 조합이면 캐스케이드가
+          max(min(|raw|, 최대 레벨), 1)과 같아진다
         channel_llr: 채널 LLR magnitude (전 dv 공통).
           HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트
         max_iter: 최대 iteration (파일 로드 경로와 달리 호출자가 지정)
         dv_max: H-matrix의 최대 column degree (dv 구간 [1, dv_max] 하나로 전 dv 커버)
         구성: 그룹 1개(ITER, iteration 1..max_iter), restart 없음."""
-        top_level = 2 ** (int(num_bits) - 1) - 1         # magnitude 최대 레벨
+        edge_mag, th = edge_quantization_levels(edge_resolution_bits, edge_max_value)
         ch_len = MODE_CH_LEN[mode]
         if isinstance(channel_llr, (list, tuple)):
             ch_values = [int(v) for v in channel_llr]
@@ -246,14 +307,13 @@ class LLRMatrix:
         if len(ch_values) != ch_len:
             raise ValueError(
                 f"channel_llr {channel_llr!r}: {mode}는 region별 {ch_len}개 필요 (강한 쪽부터)")
-        th = list(range(top_level, 0, -1))               # 정수 [최대 레벨..1], 내림차순
-        edge_mag = uniform_edge_mag(top_level)           # [top_level, ..., 2, 1, 1]
         values = np.array(ch_values + th, np.float64)
-        num_param = ch_len + top_level
+        num_param = ch_len + len(th)
         rows = [(values, -1, 1, int(max_iter), -1)]
+        name = f"internal_uniform_{edge_resolution_bits}bit_max{edge_max_value}"
         return cls(mode, num_param, [1], [int(dv_max)], [1], [GROUP_TYPE_ITER],
-                   [], [max(top_level, *ch_values)] * num_param, [0] * num_param,
-                   rows, name=f"internal_uniform_{num_bits}bit", edge_mag=edge_mag)
+                   [], [max(int(edge_max_value), *ch_values)] * num_param,
+                   [0] * num_param, rows, name=name, edge_mag=edge_mag)
 
     def save(self, path):
         """DAO LLR_MATRIX 텍스트 포맷으로 저장 (load()가 읽는 형식 그대로).

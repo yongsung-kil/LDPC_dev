@@ -69,8 +69,9 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   "H_matrix": { "dir": "Input/H_matrix", "file": "....qc" },
   "decoder": { "use_input_llr_matrix": true,
                "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" },
-               "internal_quantize": { "num_bits": 6, "channel_llr": 8,
-                                      "max_iter": 120, "mode": "HD" } },
+               "internal_quantize": { "use_default_edge_quantization": true,
+                                      "edge_resolution_bits": 3, "edge_max_value": 7,
+                                      "channel_llr": 8, "max_iter": 120, "mode": "HD" } },
   "seed": 0,
   "run": { "max_frame_errors": 10, "max_frames": 256, "frames_per_batch": 64,
            "stop_below_fer": null, "progress_interval_frames": 100 },
@@ -89,17 +90,22 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   `use_input_llr_matrix`가 true(기본)면 llr_matrix 파일이 필수이고 **max_iter는
   파일의 마지막 iter_end가 결정**한다 (JSON에 decoder.max_iter를 쓰면 에러).
   디코딩 모드는 파일명(HD/2SD/3SD)으로 판별.
-  false면 **균일 n-bit 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
-  파일을 로드**해 디코딩한다. `internal_quantize`의 num_bits(VNU와 CNU 사이를
-  오가는 edge 메시지(V2C/C2V)의 양자화 bit 수. 부호 1bit + 크기 (num_bits-1)bit이고
-  크기 레벨은 1부터 2^(num_bits-1)-1까지의 균일 정수, 채널 LLR의 bit 수가 아님),
+  false면 **균일 배치 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤 그
+  파일을 로드**해 디코딩한다. `internal_quantize`의 키:
+  use_default_edge_quantization(true(기본)면 기본 edge 양자화(bits 3, max 7,
+  레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 아래 두 키를 읽지 않음),
+  edge_resolution_bits(VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의 양자화
+  bit 수. 부호 1bit 포함, 기본 3, 레벨 수 = 2^(bits-1), 채널 LLR의 bit 수가 아님),
+  edge_max_value(edge magnitude 최대 레벨 값, 2^n-1 형태, 기본 7. 레벨은 max부터
+  (max+1)/레벨수 간격의 내림차순 균일 배치이고 th는 레벨값과 같음.
+  예: bits 3, max 15면 {15,11,7,3}. 2^(bits-1)-1보다 작으면 오류),
   channel_llr(채널 LLR 크기, 전 dv 공통. HD는 정수 하나,
   2SD/3SD는 강한 region부터 2개/4개 리스트), max_iter,
   mode(기본 HD)로 파일을 만들며, llr_matrix 키는 무시된다 (플래그 값만 바꿔
   두 방식을 오갈 수 있다). 생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
-  (예: LLR_MATRIX_HD_uniform_6bit_ch8_dv4_iter120.txt).
+  (예: LLR_MATRIX_HD_uniform_3bit_max7_ch8_dv4_iter120.txt).
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
-  파일명이 아니라 th 값 패턴([n..1]이면 균일)으로 한다
+  파일명이 아니라 th 값 패턴(공차 d의 등차 감소이고 마지막 항이 2d-1이면 균일)으로 한다
 - ㉯ 디코더 선택은 config가 아니라 실험 폴더 run.py의 `DECODER_CLASS`가 한다
   (None이면 BaseDecoder = vanilla 기준선, config에는 파라미터만 담는다)
 - ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
@@ -210,3 +216,4 @@ dict {"mode", "hd", "sd", "cc"}.
 | 시뮬 방침 (2026-07-30) | max_iter=120 기준, numba 미사용 (numpy 프레임 배치만), 병렬화는 mpi4py로 코어당 sim 1개 (mpi_runner는 재설계 예정) |
 | 실물 치수 | base M_b=18 × N_b=147, z_sb=256, codeword 37,632 bit, rate≈0.878, 정보 33,024 bit(4KB). 전 파라미터는 H-matrix 파일에서 읽는다 |
 | 실물 파라미터 반입 필요 | H-matrix 실물 파일과 LLR 테이블 실값은 저장소에 없다 (LLR 실값은 원본 소스 손상으로 소실, 사용자 공급 필요). 실물 C++ 실행 시 z_sb=256이면 PMU/Clk 경로가 최초로 활성화되는 점 확인 필요 |
+| edge 양자화 파라미터 분리 (2026-08-13) | internal_quantize의 edge 레벨을 bit 수(edge_resolution_bits)와 최대값(edge_max_value)으로 분리, 기본은 C++ 3bit 레벨 {7,5,3,1}. th 배치는 레벨값과 동일 (C++는 th가 LLR matrix의 튜닝 데이터라 고정 규칙이 없고, 간격 1에서 th=[top..1]인 기존 균일 경로의 확장으로 결정) |

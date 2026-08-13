@@ -18,18 +18,25 @@ JSON 구조:
   H_matrix: {"dir": 폴더, "file": 파일명}으로 폴더와 파일명 분리 (Ref-C 포맷,
     폴더는 Input/H_matrix 고정 운용)
   decoder.use_input_llr_matrix: true(기본)면 지정한 LLR matrix 파일을 사용,
-    false면 균일 n-bit 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
+    false면 균일 배치 양자화 매트릭스를 **DAO 포맷 파일로 생성해 저장한 뒤
     그 파일을 로드**해 디코딩 (internal_quantize 설정 사용, llr_matrix 키는 무시).
     생성 파일은 output.dir 하위 _generated/(git 무시 영역)에
-    LLR_MATRIX_{mode}_uniform_{num_bits}bit_ch{channel_llr}_dv{dv_max}_iter{max_iter}.txt
+    LLR_MATRIX_{mode}_uniform_{bits}bit_max{max}_ch{channel_llr}_dv{dv_max}_iter{max_iter}.txt
     로 저장된다 (파일명의 uniform은 사람이 만든 파일이 아니라는 표시.
     레벨 구성 인식은 파일명이 아니라 th 값 패턴으로 한다)
   decoder.llr_matrix: {"dir": 폴더, "file": 파일명}. DAO LLR_MATRIX
     (use_input_llr_matrix=true일 때 필수).
     max_iter는 이 파일의 마지막 iter_end가 결정 (JSON에 max_iter를 두면 에러)
   decoder.internal_quantize: use_input_llr_matrix=false일 때 필수.
-    {"num_bits": 메시지 양자화 bit 수(sign 포함, 예: 6), "channel_llr": 채널 LLR
-    magnitude(전 dv 공통. HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트),
+    {"use_default_edge_quantization": true(기본)면 기본 edge 양자화(bits 3, max 7,
+    레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 아래 두 키를 읽지 않는다.
+    false면 두 키로 레벨을 만든다,
+    "edge_resolution_bits": edge 메시지(V2C/C2V)의 양자화 bit 수(부호 1bit 포함,
+    기본 3. 레벨 수 = 2^(bits-1)),
+    "edge_max_value": magnitude 최대 레벨 값(2^n-1 형태, 기본 7. 레벨은 균일 간격
+    내림차순 배치, th는 레벨값과 동일. edge_quantization_levels 참조),
+    "channel_llr": 채널 LLR magnitude(전 dv 공통. HD는 정수 하나,
+    2SD/3SD는 강한 region부터 2개/4개 리스트),
     "max_iter": 최대 iteration(파일 생성에 쓰인다), "mode": "HD"(기본)}
   seed: 실험 전체 난수 seed 하나 (기본 0). 채널과 포인트별 난수 스트림은 여기서 파생
   channels: 채널 리스트. 각 항목 {"type": rber|fixed_error|strong_error,
@@ -72,14 +79,15 @@ import numpy as np
 from . import channel as chan
 from . import encoder
 from .decoder import BaseDecoder
-from .llr_matrix import LLRMatrix, MODE_CH_LEN
+from .llr_matrix import LLRMatrix, MODE_CH_LEN, edge_quantization_levels
 from .pcm import QCCode
 from .sim import run_fer_point, save_csv
 
 # 섹션별 허용 키 (키맵). "_" 시작 키는 설명용이라 검사 대상에서 제외된다.
 _TOP_KEYS = {"H_matrix", "decoder", "channels", "run", "output", "seed", "log"}
 _DECODER_KEYS = {"llr_matrix", "use_input_llr_matrix", "internal_quantize"}
-_INTERNAL_QUANTIZE_KEYS = {"num_bits", "channel_llr", "max_iter", "mode"}
+_INTERNAL_QUANTIZE_KEYS = {"use_default_edge_quantization", "edge_resolution_bits",
+                           "edge_max_value", "channel_llr", "max_iter", "mode"}
 _RUN_KEYS = {"max_frame_errors", "max_frames", "frames_per_batch",
              "stop_below_fer", "print_progress", "progress_interval_frames"}
 _OUTPUT_KEYS = {"dir", "csv_prefix", "label", "save_llr_matrix"}
@@ -187,13 +195,28 @@ def _check_internal_quantize(internal_quantize):
     if not isinstance(internal_quantize, dict):
         raise ValueError("config [decoder.internal_quantize]: 객체여야 함")
     _check_keys("decoder.internal_quantize", internal_quantize, _INTERNAL_QUANTIZE_KEYS)
-    num_bits = _check_int(
-        "decoder.internal_quantize", "num_bits",
-        _require("decoder.internal_quantize", internal_quantize, "num_bits"), 2)
-    if num_bits > 16:
+    use_default = internal_quantize.setdefault("use_default_edge_quantization", True)
+    if not isinstance(use_default, bool):
         raise ValueError(
-            f"config [decoder.internal_quantize] num_bits={num_bits}: 상한 16 "
-            "(레벨 수가 2^(num_bits-1)로 늘어 시간과 메모리가 급증)")
+            f"config [decoder.internal_quantize] "
+            f"use_default_edge_quantization={use_default!r}: true/false여야 함")
+    edge_resolution_bits = _check_int(
+        "decoder.internal_quantize", "edge_resolution_bits",
+        internal_quantize.setdefault("edge_resolution_bits", 3), 2)
+    if edge_resolution_bits > 16:
+        raise ValueError(
+            f"config [decoder.internal_quantize] edge_resolution_bits="
+            f"{edge_resolution_bits}: 상한 16 (레벨 수가 2^(bits-1)로 늘어 "
+            "시간과 메모리가 급증)")
+    edge_max_value = _check_int(
+        "decoder.internal_quantize", "edge_max_value",
+        internal_quantize.setdefault("edge_max_value", 7), 1)
+    if not use_default:
+        # 조합 제약(2^n-1 형태, 레벨 수 대비 정수 자리)은 레벨 생성부가 판정한다
+        try:
+            edge_quantization_levels(edge_resolution_bits, edge_max_value)
+        except ValueError as error:
+            raise ValueError(f"config [decoder.internal_quantize] {error}") from None
     mode = internal_quantize.setdefault("mode", "HD")
     if mode not in ("HD", "2SD", "3SD"):
         raise ValueError(
@@ -328,8 +351,14 @@ def setup(config, decoder_class=None):
     else:
         internal_quantize = config["decoder"]["internal_quantize"]
         dv_max = int(code.col_deg.max())
+        if internal_quantize["use_default_edge_quantization"]:
+            edge_resolution_bits, edge_max_value = 3, 7    # 기본: C++ 3bit 레벨 {7,5,3,1}
+        else:
+            edge_resolution_bits = internal_quantize["edge_resolution_bits"]
+            edge_max_value = internal_quantize["edge_max_value"]
         synthesized = LLRMatrix.make_internal_uniform_matrix(
-            num_bits=internal_quantize["num_bits"],
+            edge_resolution_bits=edge_resolution_bits,
+            edge_max_value=edge_max_value,
             channel_llr=internal_quantize["channel_llr"],
             max_iter=internal_quantize["max_iter"],
             dv_max=dv_max,
@@ -342,7 +371,7 @@ def setup(config, decoder_class=None):
         llr_matrix_path = os.path.join(
             generated_dir,
             f"LLR_MATRIX_{internal_quantize['mode']}_uniform"
-            f"_{internal_quantize['num_bits']}bit"
+            f"_{edge_resolution_bits}bit_max{edge_max_value}"
             f"_ch{channel_llr_tag}"
             f"_dv{dv_max}_iter{internal_quantize['max_iter']}.txt")
         synthesized.save(llr_matrix_path)

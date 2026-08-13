@@ -26,10 +26,17 @@
       "  파일명의 uniform은 사람이 만든 파일이 아니라는 표시)",
       "internal_quantize: use_input_llr_matrix=false일 때 필수. 값을 쓸 때는",
       "  아래 _internal_quantize_example에서 _를 떼고 값을 채운다",
-      "  num_bits: VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의 양자화 bit 수.",
-      "    부호 1bit + 크기 (num_bits-1)bit이고, 크기 레벨은 1부터 2^(num_bits-1)-1까지의",
-      "    균일 정수 (예: 6bit면 1~31). 채널 LLR의 bit 수가 아니다",
-      "  channel_llr: 채널 LLR 크기 (전 dv 공통, num_bits와 별개로 지정).",
+      "  use_default_edge_quantization: true(기본)면 기본 edge 양자화를 쓰고",
+      "    아래 두 키를 읽지 않는다 (bits 3, max 7, 레벨 {7,5,3,1} = C++ 3bit 빌드와 동일).",
+      "    false면 edge_resolution_bits와 edge_max_value로 레벨을 만든다",
+      "  edge_resolution_bits: VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의",
+      "    양자화 bit 수 (부호 1bit 포함, 기본 3). 레벨 수 = 2^(bits-1).",
+      "    채널 LLR의 bit 수가 아니다",
+      "  edge_max_value: edge magnitude 최대 레벨 값 (2^n-1 형태, 기본 7).",
+      "    레벨은 max부터 (max+1)/레벨수 간격의 내림차순 균일 배치이고 th는 레벨값과 같다.",
+      "    예: bits 3, max 15면 {15,11,7,3}. bits 4, max 7이면 {7,6,...,1}.",
+      "    2^(bits-1)-1보다 작으면 오류 (레벨 수를 담을 정수 자리 부족)",
+      "  channel_llr: 채널 LLR 크기 (전 dv 공통, edge 양자화와 별개로 지정).",
       "    HD는 정수 하나, 2SD/3SD는 강한 region부터 2개/4개 리스트",
       "  max_iter: 최대 iteration (이 경로에서는 파일이 아니라 이 값이 결정)",
       "  mode: HD/2SD/3SD (기본 HD)"
@@ -40,7 +47,9 @@
       "file": "LLR_MATRIX_HD_1.txt"
     },
     "_internal_quantize_example": {
-      "num_bits": 4,
+      "use_default_edge_quantization": true,
+      "edge_resolution_bits": 3,
+      "edge_max_value": 7,
       "channel_llr": 8,
       "max_iter": 30,
       "mode": "HD"
