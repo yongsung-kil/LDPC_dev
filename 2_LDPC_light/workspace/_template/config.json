@@ -24,8 +24,8 @@
       "false면 internal_quantize 값으로 균일 양자화 매트릭스를 만들어 사용",
       "  (DAO 포맷 파일로 output.dir/_generated/에 저장 후 로드, llr_matrix 키는 무시.",
       "  파일명의 uniform은 사람이 만든 파일이 아니라는 표시)",
-      "internal_quantize: use_input_llr_matrix=false일 때 필수. 값을 쓸 때는",
-      "  아래 _internal_quantize_example에서 _를 떼고 값을 채운다",
+      "internal_quantize: use_input_llr_matrix=false일 때 쓰는 값 (true면 읽지 않음).",
+      "  아래 블록이 기본값으로 채워져 있어 플래그만 false로 바꾸면 동작한다",
       "  use_default_edge_quantization: true(기본)면 기본 edge 양자화를 쓰고",
       "    아래 두 키를 읽지 않는다 (bits 3, max 7, 레벨 {7,5,3,1} = C++ 3bit 빌드와 동일).",
       "    false면 edge_resolution_bits와 edge_max_value로 레벨을 만든다",
@@ -46,7 +46,7 @@
       "dir": "../../Input/LLR",
       "file": "LLR_MATRIX_HD_1.txt"
     },
-    "_internal_quantize_example": {
+    "internal_quantize": {
       "use_default_edge_quantization": true,
       "edge_resolution_bits": 3,
       "edge_max_value": 7,
