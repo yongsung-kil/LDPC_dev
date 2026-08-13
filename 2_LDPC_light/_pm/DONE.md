@@ -1,5 +1,19 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-13 — 논문 ieee:9496601 적용 실험 (minsum_dual_clip)
+CNU min1/min2 이중 상한 클리핑(P ≤ Q)을 workspace 실험으로 적용, 토이 조건 판정 보류
+- **배경**: 논문 아카이브 stage5 산출물(IEEE TCAD 2022, NAND 저비트폭 min-sum)을
+  2_LDPC_light 교체 지점 구조로 첫 적용. 베이스 refactor 4건의 수치 불변도
+  worktree 교차 실행으로 사전 검증
+- **변경**: workspace/minsum_dual_clip/ 신설 (decoder.py의 MinSumDualClipDecoder,
+  `_c2v_reconstruct`만 재정의, P와 Q는 클래스 속성, scan.py로 (P,Q) 10쌍 스캔).
+  LDPC_base 무변경
+- **결과**: (7,7) 무효과 조건에서 vanilla와 수치 완전 일치(구현 검증). 유효
+  클리핑은 전부 악화, 원인은 토이 스케일(채널 LLR 8, 상한 7)에서 반전 가능 조건이
+  ch ≤ P × dv로 줄어드는 것. P<Q가 P=Q보다 낫다는 구조 주장은 방향 재현.
+  실물 파라미터 반입 후 재실험 (상세: done/20260813_minsum_dual_clip/)
+- **파일**: 2_LDPC_light/workspace/minsum_dual_clip/ (신규), _pm/tasks → done 이동
+
 ### 2026-08-13 — edge 양자화 파라미터 분리 + config 스키마 재편
 edge 메시지 레벨을 bit 수와 최대값 두 축으로 분리하고, config를 "자리를 미리
 만들어 두고 플래그가 필요한 것만 골라 읽는" 구조로 재편 (사용자 설계 확정)
