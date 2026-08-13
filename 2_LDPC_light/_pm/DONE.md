@@ -1,35 +1,44 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
-### 2026-08-13 — internal_quantize의 edge 양자화 파라미터 분리
-edge 메시지 레벨을 bit 수와 최대값 두 축으로 분리 (사용자 설계 확정 2026-08-13)
+### 2026-08-13 — edge 양자화 파라미터 분리 + config 스키마 재편
+edge 메시지 레벨을 bit 수와 최대값 두 축으로 분리하고, config를 "자리를 미리
+만들어 두고 플래그가 필요한 것만 골라 읽는" 구조로 재편 (사용자 설계 확정)
 - **배경**: 기존 num_bits는 레벨 수와 최대값(2^(n-1)-1)이 묶여 있어 C++ 3bit의
   레벨 배치 {7,5,3,1}(최대 7을 4개 레벨로 벌린 형태)을 표현할 수 없었다.
-  채널 LLR 대비 edge 무게(최대값)와 해상도(레벨 수)는 별개의 실험 축이다
+  채널 LLR 대비 edge 무게(최대값)와 해상도(레벨 수)는 별개의 실험 축이다.
+  또 사용자가 값 자리를 재구성하지 않고 스위치만 바꿔 경로를 오가는 config를 원했다
 - **변경**:
-  - ㉮ internal_quantize를 양자화 값 묶음으로 재편: use_default_edge_quantization
-    (기본 true, bits 3 + max 7 = C++ 3bit 레벨. false면 아래 두 키를 읽음),
-    edge_resolution_bits(기본 3), edge_max_value(2^n-1 형태, 기본 7,
-    2^(bits-1)-1 미만이면 오류), channel_llr(리스트 정식, 길이 = mode의 region 수,
-    HD는 정수 하나도 허용). num_bits 키는 폐기
-  - ㉯ mode와 max_iter는 양자화 값이 아니므로 decoder 레벨 키로 이동 (사용자 지시).
-    균일 생성 경로에서만 소비되고 파일 로드 경로에서는 파일명과 파일 iter_end가
-    결정 ("decoder.max_iter를 두면 에러" 규칙은 이 소비 구분으로 대체)
-  - ㉰ 레벨 배치는 max부터 (max+1)/2^(bits-1) 간격의 내림차순 균일
+  - ㉮ edge 양자화 분리: use_default_edge_quantization(decoder 레벨, 기본 true =
+    bits 3 + max 7 = C++ 3bit 레벨 {7,5,3,1})이 false면 edge_quantization 블록
+    {edge_resolution_bits(기본 3), edge_max_value(2^n-1 형태, 기본 7,
+    2^(bits-1)-1 미만이면 오류)}를 읽는다. num_bits와 internal_quantize 키는 폐기
+  - ㉯ 레벨 배치는 max부터 (max+1)/2^(bits-1) 간격의 내림차순 균일
     (edge_quantization_levels). th는 레벨값과 동일 (C++는 th가 LLR matrix의
     튜닝 데이터라 고정 규칙이 없고, 간격 1에서 th=[top..1]인 기존 균일 경로의
     확장으로 사용자 결정)
-  - ㉱ load()의 균일 생성물 인식을 [n..1] 패턴에서 등차 감소(마지막 항 2d-1)
-    패턴으로 일반화해 벌린 레벨 파일도 왕복 복원
-  - ㉲ 생성 파일명에 max 표기 추가 (uniform_{bits}bit_max{max}), config 템플릿과
-    README 스키마 갱신, 확정 결정 기록에 등재. 템플릿의 decoder 키들은 기본값으로
-    채워 두어 use_input_llr_matrix만 false로 바꾸면 동작 (설명 정본은
-    workspace/_template/config.json, 실험 폴더 config는 정본 참조 한 줄만)
+  - ㉰ load()의 균일 생성물 인식을 [n..1] 패턴에서 등차 감소(마지막 항 2d-1)
+    패턴으로 일반화해 벌린 레벨 파일도 왕복 복원. 생성 파일명에 max 표기 추가
+    (uniform_{bits}bit_max{max})
+  - ㉱ decoder 스키마: mode, max_iter, channel_llr_HD/_2SD/_3SD(mode별 자리,
+    강한 region부터, 길이 = region 수 1/2/4)를 decoder 레벨에 두고 균일 생성
+    경로에서만 소비 (파일 로드 경로는 파일명과 파일 iter_end가 결정,
+    "decoder.max_iter를 두면 에러" 규칙은 이 소비 구분으로 대체)
+  - ㉲ channels 스키마: 리스트를 폐기하고 객체로. type(문자열 또는 리스트)이
+    측정 채널을 고르고 값 공간 rber/fixed_error/strong_error{errors, SER, SCR}는
+    자리를 미리 만들어 둔다 (고른 type의 공간만 소비, 존재하는 공간은 전부 형식
+    검사, points와 label 키 폐기)
+  - ㉳ log 스키마: enabled(상위 스위치)와 items(항목 묶음)로 분리.
+    seed는 최상위에서 run.seed로 이동
+  - ㉴ 설명 정본은 workspace/_template/config.json (실험 폴더 config는 정본 참조
+    한 줄만). 템플릿 전 키가 기본값으로 채워져 있어 플래그만 바꾸면 동작.
+    vanilla config도 새 스키마로 이행
 - **검증**: 단위 24건(레벨 생성, 오류 조건, 저장/로드 왕복 4조합, DAO 파일 회귀,
-  uniform 파일명 불일치 에러) + E2E 4경로 실행 (파일 로드, 기본, bits3 max15,
-  bits4 max7). bits3 max15의 전량 실패는 채널 LLR을 같은 배율(16)로 올리면
-  해소됨을 확인 (스케일 효과, 코드 문제 아님)
+  uniform 파일명 불일치 에러) + 스키마 14건(실파일 3종, 경로 전환, mode 전환,
+  길이/범위/2^n-1 위반, type 리스트, 공간 누락, log 무력화, 구 스키마 거부) +
+  E2E 3경로(파일 로드, 기본, bits3 max15 + ch 16). edge_max_value를 키울 때
+  channel_llr을 같은 배율로 키우지 않으면 복호가 무너지는 스케일 효과 확인
 - **파일**: LDPC_base/llr_matrix.py, LDPC_base/run.py, README.md,
-  workspace/_template/config.json
+  workspace/_template/config.json, workspace/vanilla/config.json
 
 ### 2026-08-10 — 진행 줄에 누적 지표 표시 + 시작 시각 기록
 측정 중간에도 최종 줄과 같은 지표가 보이도록 확장 (사용자 지시 2026-08-10)

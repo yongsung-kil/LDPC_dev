@@ -70,19 +70,22 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   "decoder": { "use_input_llr_matrix": true,
                "llr_matrix": { "dir": "Input/LLR", "file": "LLR_MATRIX_HD_x.txt" },
                "mode": "HD", "max_iter": 120,
-               "internal_quantize": { "use_default_edge_quantization": true,
-                                      "edge_resolution_bits": 3, "edge_max_value": 7,
-                                      "channel_llr": [8] } },
-  "seed": 0,
-  "run": { "max_frame_errors": 10, "max_frames": 256, "frames_per_batch": 64,
-           "stop_below_fer": null, "progress_interval_frames": 100 },
-  "channels": [
-    { "type": "fixed_error", "points": [200, 300] }
-  ],
+               "channel_llr_HD": [8], "channel_llr_2SD": [6, 10],
+               "channel_llr_3SD": [4, 6, 8, 10],
+               "use_default_edge_quantization": true,
+               "edge_quantization": { "edge_resolution_bits": 3, "edge_max_value": 7 } },
+  "run": { "seed": 0, "max_frame_errors": 10, "max_frames": 256,
+           "frames_per_batch": 64, "stop_below_fer": null,
+           "progress_interval_frames": 100 },
+  "channels": { "type": "fixed_error",
+                "rber": [0.001, 0.002],
+                "fixed_error": [200, 300],
+                "strong_error": { "errors": [200, 300], "SER": 0.5, "SCR": 0.5 } },
   "log": { "enabled": true,
-           "csw_per_iter": true, "bit_err_per_iter": true, "bit_err_by_dv": true,
-           "iter_histogram": true, "fer_vs_iter": true, "fail_frame_detail": true,
-           "fer_curve_png": true },
+           "items": { "csw_per_iter": true, "bit_err_per_iter": true,
+                      "bit_err_by_dv": true, "iter_histogram": true,
+                      "fer_vs_iter": true, "fail_frame_detail": true,
+                      "fer_curve_png": true } },
   "output": { "dir": "Sim_Output", "csv_prefix": "fer" }
 }
 ```
@@ -92,29 +95,33 @@ repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 
   파일명(HD/2SD/3SD)이, max_iter는 파일의 마지막 iter_end가 결정**한다
   (decoder.mode와 decoder.max_iter는 이 경로에서 읽지 않는다).
   false면 **decoder.mode(기본 HD), decoder.max_iter(이 경로에서 필수),
-  internal_quantize로 균일 배치 양자화 매트릭스를 DAO 포맷 파일로 생성해 저장한 뒤
-  그 파일을 로드**해 디코딩한다 (llr_matrix 키는 무시, 플래그 값만 바꿔 두 방식을
-  오갈 수 있다). `internal_quantize`(양자화 값 묶음)의 키:
-  use_default_edge_quantization(true(기본)면 기본 edge 양자화(bits 3, max 7,
-  레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 아래 두 키를 읽지 않음),
+  decoder.channel_llr_{mode}, edge 양자화 키로 균일 배치 양자화 매트릭스를
+  DAO 포맷 파일로 생성해 저장한 뒤 그 파일을 로드**해 디코딩한다
+  (llr_matrix 키는 무시, 플래그 값만 바꿔 두 방식을 오갈 수 있다).
+  decoder.channel_llr_HD/_2SD/_3SD는 mode별 채널 LLR 크기 리스트
+  (전 dv 공통, 강한 region부터, 길이 = region 수 HD 1개 / 2SD 2개 / 3SD 4개)이고
+  현재 mode의 것만 소비된다.
+  decoder.use_default_edge_quantization이 true(기본)면 기본 edge 양자화(bits 3,
+  max 7, 레벨 {7,5,3,1} = C++ 3bit 빌드와 동일)를 쓰고 edge_quantization 블록을
+  읽지 않으며, false면 `edge_quantization`의 키로 레벨을 만든다:
   edge_resolution_bits(VNU와 CNU 사이를 오가는 edge 메시지(V2C/C2V)의 양자화
   bit 수. 부호 1bit 포함, 기본 3, 레벨 수 = 2^(bits-1), 채널 LLR의 bit 수가 아님),
   edge_max_value(edge magnitude 최대 레벨 값, 2^n-1 형태, 기본 7. 레벨은 max부터
   (max+1)/레벨수 간격의 내림차순 균일 배치이고 th는 레벨값과 같음.
-  예: bits 3, max 15면 {15,11,7,3}. 2^(bits-1)-1보다 작으면 오류),
-  channel_llr(채널 LLR 크기 리스트, 전 dv 공통, 길이는 mode의 region 수
-  (HD 1개, 2SD 2개, 3SD 4개, 강한 region부터). HD는 정수 하나도 허용).
+  예: bits 3, max 15면 {15,11,7,3}. 2^(bits-1)-1보다 작으면 오류).
   생성 파일은 `output.dir` 하위 `_generated/`(git 무시 영역)에 저장된다
   (예: LLR_MATRIX_HD_uniform_3bit_max7_ch8_dv4_iter120.txt).
   파일명의 **uniform은 사람이 만든 파일이 아니라는 표시**이고, 레벨 구성 인식은
   파일명이 아니라 th 값 패턴(공차 d의 등차 감소이고 마지막 항이 2d-1이면 균일)으로 한다
 - ㉯ 디코더 선택은 config가 아니라 실험 폴더 run.py의 `DECODER_CLASS`가 한다
   (None이면 BaseDecoder = vanilla 기준선, config에는 파라미터만 담는다)
-- ㉰ `seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
+- ㉰ `run.seed`: 실험 전체 난수 seed **하나** (기본 0). 채널과 포인트별 스트림은
   [seed, 채널 인덱스, 포인트]로 파생
-- ㉱ `channels`: 채널 **리스트**. 항목 1개만으로도 실행 가능하며 순서대로 전부 실행.
-  항목 키: `type`(rber/fixed_error/strong_error), `points`(스칼라 허용),
-  strong_error는 `SER`/`SCR` 추가, 선택 키 `label`은 CSV 파일명 접미사
+- ㉱ `channels`: **객체**. `type`(문자열 또는 문자열 리스트, 리스트면 순서대로 전부
+  실행)이 측정할 채널을 고르고, type별 값 공간은 자리를 미리 만들어 둔다
+  (고른 type의 공간만 소비하며 그것이 필수, 존재하는 공간은 전부 형식 검사):
+  `rber`(RBER 값 리스트, HD/2SD/3SD), `fixed_error`(프레임당 에러 bit 수 리스트, HD),
+  `strong_error`(`{"errors": 에러 bit 수 리스트, "SER": 0~1, "SCR": 0~1}`, 2SD 전용)
 - ㉲ `run.max_frame_errors`: 프레임 에러가 이 수에 도달하면 해당 포인트 측정 종료
 - ㉳ `run.frames_per_batch`: 한 번에 동시 복호하는 프레임 수 (속도와 메모리 조절용).
   통계 결과는 프레임 수가 충분하면 같고, 같은 seed의 수치 재현에는 이 값까지 같아야 한다
@@ -145,9 +152,9 @@ Sim_Output/260807_133321_fixed_error/
 └── log_fail_{라벨}_p{포인트}.csv      ← 실패 프레임별 잔여 에러/최종 CSW/dv별 분해
 ```
 
-- ㉮ `log.enabled`가 로그 전체 상위 스위치다 (false면 하위 항목이 true여도 전부 끈 것으로
-  취급, 기본 true). 항목별 on/off는 그 아래 키로 하며, 켜면 iteration 루프 수집 비용으로
-  속도가 다소 떨어진다
+- ㉮ `log.enabled`가 로그 전체 상위 스위치다 (false면 `log.items`가 true여도 전부 끈
+  것으로 취급, 기본 true). 항목별 on/off는 `log.items` 묶음 안의 키로 하며, 켜면
+  iteration 루프 수집 비용으로 속도가 다소 떨어진다
 - ㉯ `post_fec_ber`(복호 후 BER)는 로그와 무관하게 항상 FER CSV에 포함
 - ㉰ `fer_vs_iter`: 프레임별 성공 iteration 기록으로 "max_iter를 k로 줄였다면"의 FER를
   한 번의 실행에서 산출
