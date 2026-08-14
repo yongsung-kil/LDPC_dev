@@ -22,7 +22,7 @@
 
 | # | 날짜 | 제목 | 출처 | 상태 | 디렉토리 |
 |---|------|------|------|------|---------|
-| 1 | 2026-08-13 | CNU min1/min2 이중 상한 클리핑 | 논문 ieee:9496601 (IEEE TCAD 2022) | 대기 (py 토이 보류, 실물 파라미터 반입 후 재실험. `2_LDPC_light/workspace/minsum_dual_clip/` 참조) | |
+| 1 | 2026-08-13 | CNU min1/min2 이중 상한 클리핑 | 논문 ieee:9496601 (IEEE TCAD 2022) | 대기 (py 환경 대조로 조건부 유효 확인: ch 대비 edge 상한 여유가 있을 때만 이득. 실물 파라미터 반입 후 최종 판정. `2_LDPC_light/workspace/minsum_dual_clip/` 참조) | |
 
 ### 반영 완료
 

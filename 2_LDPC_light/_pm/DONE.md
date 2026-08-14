@@ -1,5 +1,25 @@
 # DONE — 완료 이력 (2_LDPC_light)
 
+### 2026-08-14 — minsum_dual_clip 원인 규명 정정과 환경 대조, 실험 로그 신설
+클리핑 악화 원인을 dv별 로그와 LLR 파일 실값으로 확정하고, 환경 대조로 논문
+delta의 유효 조건을 재현. workspace 공통 실험 로그와 슬롯 config 체계 신설
+- **배경**: 어제 결론의 원인 서술(채널 LLR 8, dv=2 반전 불능)이 균일 생성 경로
+  값을 잘못 인용한 것이었음 (실험은 LLR 파일 로드, dv별 ch 5/10/13/28).
+  H-matrix 품질이나 edge 양자화 자체가 원인 아니냐는 사용자 질문에서 출발
+- **변경**:
+  - ㉮ 원인 정정: 사망 경계는 dv 열 최대 extrinsic `Q + (dv-1)·P` < ch (dv별).
+    지배 열 dv=4(ch=10)가 (2,3)에서 9로 사망, (2,5)는 11로 생존, dv별 에러
+    로그로 직접 확인. dv=2(ch=28)는 무클립에서도 반전 불능(기지 위반)이라
+    on/off 차이와 무관
+  - ㉯ 환경 대조: headroom(edge 상한 15, ch=8)에서 무클립 붕괴를 논문 가이드
+    (4,8)이 0/256로 복구, balanced(ch=16)에서는 역전. 클리핑 득실은 ch 대비
+    edge 상한 여유가 결정한다는 인사이트 확보
+  - ㉰ `workspace/실험로그.md` 신설 (실험 환경과 인사이트 상설 기록, 사용자 지시)
+  - ㉱ 슬롯 config 체계: config_headroom/balanced/real.json 준비, scan.py를
+    config와 쌍 목록 인자로 일반화. 실물 파일명 두 개만 채우면 즉시 실행
+- **파일**: workspace/minsum_dual_clip/ (README, scan.py, config 3종),
+  workspace/실험로그.md, _pm/done/20260813_minsum_dual_clip/, 3_LDPC_ideas/README.md
+
 ### 2026-08-13 — 논문 ieee:9496601 적용 실험 (minsum_dual_clip)
 CNU min1/min2 이중 상한 클리핑(P ≤ Q)을 workspace 실험으로 적용, 토이 조건 판정 보류
 - **배경**: 논문 아카이브 stage5 산출물(IEEE TCAD 2022, NAND 저비트폭 min-sum)을

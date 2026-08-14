@@ -1,7 +1,10 @@
 """(P,Q) 정수 스캔 실행기.
 
-config.json을 바탕으로 label만 dualclip_p{P}q{Q}로 바꾼 임시 config를 만들어
-쌍마다 순차 실행한다. 실행: 이 폴더에서 python scan.py
+config를 바탕으로 label만 dualclip_p{P}q{Q}로 바꾼 임시 config를 만들어
+쌍마다 순차 실행한다. 실행 (이 폴더에서):
+    python scan.py                          기본 config.json + 기본 쌍 목록
+    python scan.py config_headroom.json     다른 config + 기본 쌍 목록
+    python scan.py config_headroom.json 15,15 8,11 4,8    쌍 목록 지정
 """
 import json
 import os
@@ -28,7 +31,10 @@ from decoder import MinSumDualClipDecoder
 PAIRS = [(7, 7), (5, 7), (5, 5), (3, 7), (3, 5), (3, 3), (2, 5), (2, 3), (1, 3), (1, 1)]
 
 if __name__ == "__main__":
-    with open(os.path.join(EXPERIMENT_DIR, "config.json"), encoding="utf-8") as f:
+    config_name = sys.argv[1] if len(sys.argv) > 1 else "config.json"
+    if len(sys.argv) > 2:
+        PAIRS = [tuple(int(v) for v in arg.split(",")) for arg in sys.argv[2:]]
+    with open(os.path.join(EXPERIMENT_DIR, config_name), encoding="utf-8") as f:
         base_config = json.load(f)
     scan_config_path = os.path.join(EXPERIMENT_DIR, "config_scan.json")
     try:
