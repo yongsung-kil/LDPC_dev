@@ -13,7 +13,6 @@
 | `workspace/` | 실험 공간: 실험마다 폴더 하나, 폴더 안의 run.py로 실행 (아래 "실험 공간 구조" 절). base_run = reference |
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). 행렬 뒤 내용은 Ref-C fscanf처럼 무시하므로 행렬이 2벌 든 파일은 첫 벌만 사용. column block은 **DV 내림차순 배치** |
 | `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
-| `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
 | `docs/` | 차이.md(original 대비 로직 차이), review/(리뷰 기록). 논문 적용 절차 정본은 `3_LDPC_ideas/새논문적용규칙.md` |
 
 ## 실행 방법
@@ -38,15 +37,9 @@ JSON의 상대경로(H_matrix, decoder.llr_matrix, output.dir)는 그 JSON 파�
 해석된다. 새 실험은 `workspace/_template/`를 복사해서 만든다 (config 골자 포함,
 스키마 상세는 아래 절).
 
-H-matrix 생성 (repo 루트에서, 실험 흐름과 분리된 수동 도구):
-
-```bat
-python -m 2_LDPC_base.tools.H_mat_gen.gen_example_code [출력경로]
-```
-
-시뮬 실행은 `2_LDPC_base/` 기준(workspace run.py가 자동으로 잡는다), 도구 실행은
-repo 루트가 기준 폴더다. 한 파이썬 프로세스에서 두 기준을 섞으면 같은 모듈이
-두 벌 적재될 수 있으므로 섞지 않는다.
+H-matrix 생성 도구는 `4_H_matrix_tool/` 프로젝트가 담당한다 (실험 흐름과 분리,
+`4_H_matrix_tool/README.md` 참조). 실험 실행 흐름은 H-matrix를 생성하지 않고
+파일로만 받는다.
 
 ## 용어
 

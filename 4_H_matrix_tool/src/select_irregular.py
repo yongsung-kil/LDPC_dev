@@ -6,27 +6,41 @@ dual-diagonal parity(M=17)가 dv2×16(bidiagonal) + dv3×1(anchor)을 공급하�
 
 절차: 후보 SEEDS개 생성 → 스크리닝 포인트(FER≈1e-2)에서 전수 비교 →
 상위 2개를 딥 포인트(FER≈1e-3 부근)에서 재측정 → 승자 저장.
-실행: python -m 2_LDPC_base.tools.H_mat_gen.select_irregular
-출력: 이 폴더의 out/ 하위 (irregular_17x144_z256.qc, select_irregular.csv)
+실행: python 4_H_matrix_tool/src/select_irregular.py
+출력: 4_H_matrix_tool/out/ 하위 (irregular_17x144_z256.qc, select_irregular.csv)
 
 주의 (2026-08-07): 이 스크립트는 구 본체 API 기준이라 **현재 실행 불가**. 새 구조
 (채널 dict, decoder_main, LLR matrix 필수)로 손질 필요 (TODO 등록됨). import만
-src로 돌려놓은 상태다.
+현행 경로로 돌려놓은 상태다.
 """
 import csv
 import math
 import os
+import sys
 import time
 
 import numpy as np
 
-from ...src.decoder import BaseDecoder
-from ...src import channel as chan
-from ...src.sim import run_fer_point
-from .gen_example_code import build_code
+TOOL_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-HERE = os.path.dirname(__file__)
-OUT = os.path.join(HERE, "out")
+_root = TOOL_ROOT
+while not os.path.isdir(os.path.join(_root, "2_LDPC_base", "src")):
+    _parent = os.path.dirname(_root)
+    if _parent == _root:
+        raise SystemExit("상위 폴더에서 2_LDPC_base/src를 찾지 못함 "
+                         "(이 파일은 LDPC_dev 하위에 있어야 함)")
+    _root = _parent
+_base_root = os.path.join(_root, "2_LDPC_base")
+if _base_root not in sys.path:
+    sys.path.insert(0, _base_root)
+
+from src.decoder import BaseDecoder
+from src import channel as chan
+from src.sim import run_fer_point
+
+from gen_example_code import build_code
+
+OUT = os.path.join(TOOL_ROOT, "out")
 WINNER_FILE = os.path.join(OUT, "irregular_17x144_z256.qc")
 
 M, N, Z = 17, 144, 256

@@ -5,16 +5,30 @@
   - anchor column (첫 패리티 col): row {0, M/2, M-1}, shift {s0, 0, s0} (재귀 인코딩 가능 조건)
   - 나머지 M-1개: bidiagonal로 col P_k가 row {k-1, k}에 shift 0
 
-실행: python -m 2_LDPC_base.tools.H_mat_gen.gen_example_code [출력경로]
+실행: python 4_H_matrix_tool/src/gen_example_code.py [출력경로]
 """
 import os
 import sys
 
 import numpy as np
 
-from ...src.pcm import QCCode
-from .peg import peg_base
-from .lifting import lift_greedy
+TOOL_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+_root = TOOL_ROOT
+while not os.path.isdir(os.path.join(_root, "2_LDPC_base", "src")):
+    _parent = os.path.dirname(_root)
+    if _parent == _root:
+        raise SystemExit("상위 폴더에서 2_LDPC_base/src를 찾지 못함 "
+                         "(이 파일은 LDPC_dev 하위에 있어야 함)")
+    _root = _parent
+_base_root = os.path.join(_root, "2_LDPC_base")
+if _base_root not in sys.path:
+    sys.path.insert(0, _base_root)
+
+from src.pcm import QCCode
+
+from peg import peg_base
+from lifting import lift_greedy
 
 
 def build_code(z, M, N, info_col_degrees, seed):
@@ -50,7 +64,7 @@ def build_example(z=256, M=18, N=147, dv_info=4, seed=20260730):
 
 
 def main():
-    default_out = os.path.join(os.path.dirname(__file__), "out", "example_18x147_z256.qc")
+    default_out = os.path.join(TOOL_ROOT, "out", "example_18x147_z256.qc")
     out = sys.argv[1] if len(sys.argv) > 1 else default_out
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     code = build_example()

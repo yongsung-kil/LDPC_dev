@@ -29,9 +29,6 @@
 - [ ] LLR matrix 최적화 시 dv range 상한 고려 (사용자 지시 2026-08-07)
   - 반전 가능 조건 `ch ≤ 7·dv` (3-bit 기준, EDGE_MAG 최대 7 × 해당 비트의 dv)를 최적화 탐색 범위에 반영
   - 현 토이 파일의 dv=2 ch=28 위반은 파라미터 수정 시점에 함께 처리 (벤더 참고값: dv=2 ch=10)
-- [ ] `tools/H_mat_gen/select_irregular.py`를 새 구조(채널 dict, decoder_main, LLR matrix 필수)로 손질
-  - 현재 실행 불가 (구 API 기준, import만 src로 보정된 상태)
-  - irregular 재현 시드(103)는 `done/20260807_리뷰후속수정/` 문서 §6에 기록됨
 - [ ] mpi_runner 재설계 (사용자 확정 2026-08-07: 나중에 진행)
   - 구버전은 본체 반영 때 삭제하고, 새 구조(src.run) 기준으로 새로 설계
 - [ ] src 후순위 분석 로그 항목 (2026-08-07 핵심 세트 구현 시 잔류분)

@@ -1,6 +1,6 @@
 # TODO — 저장소 공통 작업
 
-> Claude 마지막 확인: 2026-08-10 10:58:18
+> Claude 마지막 확인: 2026-08-14 13:58:43
 
 > 이 파일은 저장소 공통 작업만 관리한다.
 > 프로젝트별 작업은 각 프로젝트의 `_pm/TODO.md`를 볼 것.
@@ -25,3 +25,5 @@
 | 1_LDPC_revised (Project 1) | `1_LDPC_revised/_pm/TODO.md` |
 | 2_LDPC_base (Project 2) | `2_LDPC_base/_pm/TODO.md` |
 | 3_LDPC_ideas (Project 3) | `3_LDPC_ideas/_pm/TODO.md` |
+| 4_H_matrix_tool (Project 4) | `4_H_matrix_tool/_pm/TODO.md` |
+| 5_DAO (Project 5) | `5_DAO/_pm/TODO.md` |

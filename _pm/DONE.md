@@ -1,5 +1,11 @@
 # DONE — 완료 이력 (저장소 공통)
 
+### 2026-08-14 — Project 4 (4_H_matrix_tool), Project 5 (5_DAO) 신설
+H-matrix 설계 툴을 독립 프로젝트로 승격하고, SSS의 DAO를 반입
+- **배경**: H-matrix 설계 도구와 DAO를 각각 독립 프로젝트로 발전시키기로 함 (사용자 결정 2026-08-14)
+- **변경**: 2_LDPC_base/tools/H_mat_gen/의 4개 모듈을 4_H_matrix_tool/src/로 이동 (import는 2_LDPC_base/src 상위 탐색 부트스트랩으로 전환, 생성 결과가 기존 정본과 동일함을 확인). SSS 저장소의 DAO를 5_DAO/로 반입 (원형 스냅샷은 reference/에 보존, __pycache__와 msmpisetup.exe 제외). select_irregular 손질 TODO를 4번으로 이전
+- **파일**: 4_H_matrix_tool/, 5_DAO/, 2_LDPC_base/ (README.md, __init__.py, _pm/TODO.md, tools/ 삭제), CLAUDE.md, .gitignore, _pm/TODO.md
+
 ### 2026-08-10 — 현행 문서에서 구 저장소(LDPC_2) 참조 제거
 현행 문서가 구 저장소를 가리키지 않도록 관련 서술 삭제 (구 저장소 폴더 자체는 보존)
 - **배경**: 현 저장소가 구 저장소의 상위 버전이라 문서가 독자를 구 저장소로 보낼 이유가 없음 (사용자 결정 2026-08-10). 이력 기록(_pm/done/, DONE.md, 리뷰 아카이브)의 언급은 이력이므로 보존
