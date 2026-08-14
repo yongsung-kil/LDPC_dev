@@ -13,14 +13,15 @@ import sys
 EXPERIMENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _root = EXPERIMENT_DIR
-while not os.path.isdir(os.path.join(_root, "LDPC_base")):
+while not os.path.isdir(os.path.join(_root, "2_LDPC_light", "LDPC_base")):
     _parent = os.path.dirname(_root)
     if _parent == _root:
-        raise SystemExit("상위 폴더에서 LDPC_base를 찾지 못함 "
-                         "(이 파일은 2_LDPC_light 하위 실험 폴더에 있어야 함)")
+        raise SystemExit("상위 폴더에서 2_LDPC_light/LDPC_base를 찾지 못함 "
+                         "(이 파일은 LDPC_dev 하위 아이디어 폴더에 있어야 함)")
     _root = _parent
-if _root not in sys.path:
-    sys.path.insert(0, _root)
+_base_root = os.path.join(_root, "2_LDPC_light")
+if _base_root not in sys.path:
+    sys.path.insert(0, _base_root)
 
 from LDPC_base.run import main
 

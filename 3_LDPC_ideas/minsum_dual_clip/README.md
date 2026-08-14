@@ -26,8 +26,8 @@ CNU에서 min1은 상한 P로, min2는 상한 Q로 각각 클리핑(1 ≤ P ≤ 
 | config_balanced.json | ch/edge 비율 복원 대조 (균일 ch=16, edge 상한 15) | 없음 | `python scan.py config_balanced.json 15,15 8,15 4,8` |
 | config_real.json | 실물 파라미터 최종 판정 | H_matrix.file, decoder.llr_matrix.file 두 개 | `python scan.py config_real.json 7,7 5,7 3,5 2,3` |
 
-config_real.json은 실물 H-matrix와 LLR 파일을 `Input/H_matrix/`, `Input/LLR/`에
-넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에 (7,7)을 포함하면 무클립
+config_real.json은 실물 H-matrix와 LLR 파일을 `2_LDPC_light/Input/H_matrix/`,
+`2_LDPC_light/Input/LLR/`에 넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에 (7,7)을 포함하면 무클립
 기준선이 같은 스캔 안에서 나온다 (3-bit 파일 기준. edge 상한이 다른 파일이면
 무클립 쌍은 (상한, 상한)으로 바꾼다).
 

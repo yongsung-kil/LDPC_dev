@@ -14,7 +14,7 @@
 | `Input/H_matrix/` | H-matrix(.qc) 파일 보관. **Ref-C 헤더 전용** (N_b M_b / J K / z / 빈 줄 / 행렬). 행렬 뒤 내용은 Ref-C fscanf처럼 무시하므로 행렬이 2벌 든 파일은 첫 벌만 사용. column block은 **DV 내림차순 배치** |
 | `Input/LLR/` | LLR 파일 보관. **DAO LLR_MATRIX 형식만 사용** (HD_0=restart 포함 토이, HD_1=restart 없는 20-iter 테스트용, 2SD_toy0/3SD_toy0=2SD/3SD restart 포함 토이) |
 | `tools/H_mat_gen/` | H-matrix 설계 툴 모음 (peg, lifting, gen_example_code, select_irregular). 실험 흐름과 분리된 수동 도구 |
-| `docs/` | 새논문적용규칙.md(논문 적용 절차 정본), 차이.md(original 대비 로직 차이), review/(리뷰 기록) |
+| `docs/` | 차이.md(original 대비 로직 차이), review/(리뷰 기록). 논문 적용 절차 정본은 `3_LDPC_ideas/새논문적용규칙.md` |
 
 ## 실행 방법
 
@@ -164,10 +164,11 @@ Sim_Output/260807_133321_fixed_error/
 
 ## 실험 공간 구조
 
-실험마다 `workspace/` 하위에 폴더 하나를 만들고 그 안의 run.py로 실행한다.
+`workspace/`는 기준 실험(vanilla) 전용이고, 논문 아이디어 실험은
+`3_LDPC_ideas/` 아이디어 폴더에서 LDPC_base를 import해 수행한다.
 디코더 변형은 `LDPC_base`를 고치지 않고 `BaseDecoder`를 상속한 자식 클래스에서
 교체용 함수만 재정의한다. **새 논문을 붙이는 절차, 교체용 함수 표, 상속 경계
-규칙의 정본은 [docs/새논문적용규칙.md](docs/새논문적용규칙.md)다.**
+규칙의 정본은 [3_LDPC_ideas/새논문적용규칙.md](../3_LDPC_ideas/%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.md)다.**
 
 ```
 workspace/

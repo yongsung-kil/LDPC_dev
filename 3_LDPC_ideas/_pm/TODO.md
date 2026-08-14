@@ -1,15 +1,23 @@
 # TODO — 3_LDPC_ideas (Project 3)
 
+> Claude 마지막 확인: 2026-08-14 11:05:05
+
 > 이 파일은 Project 3 전용 작업만 관리한다.
 
 ---
 
 ## 작업 목록
 
-- [ ] 본격 착수
-  - 시점: `2_LDPC_light`가 외부 H-matrix와 파라미터로 동작하는 것이 확인된 뒤
-  - 착수 시 `2_LDPC_light`를 받아 구성
-  - 착수 전에는 README의 아이디어 대장만 운영
+- [ ] minsum_dual_clip (ieee:9496601) 실물 파라미터 최종 판정
+  - 선행: 실물 H-matrix와 LLR 반입 (2_LDPC_light TODO의 반입 항목)
+  - 실행: `minsum_dual_clip/config_real.json`에 파일명 두 개 채우고
+    `python scan.py config_real.json 7,7 5,7 3,5 2,3`
+  - 사전 지표: 실물 LLR set의 dv별 ch / (edge상한 × dv) 비율이 1에 가까우면
+    클리핑 여지 없음 (실험로그.md 2026-08-14 항목 참조)
+
+- [ ] 논문 아이디어 스크리닝 계속 (아카이브 stage5 산출물 순서대로 py 실험,
+      실물 파라미터 반입 후에는 vanilla reference 커브 확보를 선행)
+- [ ] 유효 아이디어의 실물 C++ 이식과 최종 검증
 
 ## 새 작업 추가
 

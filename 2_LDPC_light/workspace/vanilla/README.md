@@ -21,5 +21,5 @@ python run.py
 ## 새 실험 추가
 
 절차, 교체용 함수 표, 상속 경계 규칙, 지킬 규칙의 정본은
-[docs/새논문적용규칙.md](../../docs/새논문적용규칙.md)다.
-새 실험은 `../_template/`를 복사해 시작한다.
+[3_LDPC_ideas/새논문적용규칙.md](../../../3_LDPC_ideas/%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.md)다.
+논문 아이디어 실험은 `3_LDPC_ideas/_template/`를 복사해 시작한다.
