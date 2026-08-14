@@ -23,5 +23,5 @@
 | 프로젝트 | TODO 위치 |
 |----------|-----------|
 | 1_LDPC_revised (Project 1) | `1_LDPC_revised/_pm/TODO.md` |
-| 2_LDPC_light (Project 2) | `2_LDPC_light/_pm/TODO.md` |
+| 2_LDPC_base (Project 2) | `2_LDPC_base/_pm/TODO.md` |
 | 3_LDPC_ideas (Project 3) | `3_LDPC_ideas/_pm/TODO.md` |

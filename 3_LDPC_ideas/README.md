@@ -1,7 +1,7 @@
 # Project 3: 논문 아이디어 적용
 
 > 아이디어의 접수(현황표), py 스크리닝 실험, 실물(C++) 적용까지 아이디어의 전 생애를 담는 프로젝트.
-> py 실험은 `2_LDPC_light`의 LDPC_base 정본을 import해 수행한다.
+> py 실험은 `2_LDPC_base`의 src 정본을 import해 수행한다.
 
 ---
 
@@ -9,11 +9,11 @@
 
 - ㉮ 이 폴더는 아이디어 현황표(모든 출처의 아이디어 접수와 상태 추적)와 아이디어별
   실험 폴더를 담는다
-- ㉯ py 실험의 본체(LDPC_base)는 `2_LDPC_light`에 정본 하나만 둔다. 아이디어
-  폴더의 run.py가 상위로 올라가며 `2_LDPC_light/LDPC_base`를 찾아 import하므로
+- ㉯ py 실험의 본체(src)는 `2_LDPC_base`에 정본 하나만 둔다. 아이디어
+  폴더의 run.py가 상위로 올라가며 `2_LDPC_base/src`를 찾아 import하므로
   베이스 수리가 모든 아이디어 실험에 자동 전파된다 (복사 금지, 사본은 베이스
   수리에서 누락되어 비교를 오염시킨다)
-- ㉰ 기준선(vanilla)은 `2_LDPC_light/workspace/vanilla/`다 (재정의 0개가 보증).
+- ㉰ 기준선(base_run)은 `2_LDPC_base/workspace/base_run/`다 (재정의 0개가 보증).
   스캔에 무클립 쌍을 포함하면 기준선을 같은 스캔 안에서 얻을 수도 있다
 - ㉱ 실험 절차 정본은 [새논문적용규칙.md](%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.md)
 
@@ -28,7 +28,7 @@
 
 | # | 날짜 | 제목 | 출처 | 상태 | 디렉토리 |
 |---|------|------|------|------|---------|
-| 1 | 2026-08-13 | CNU min1/min2 이중 상한 클리핑 | 논문 ieee:9496601 (IEEE TCAD 2022) | 실험중 (py 환경 대조로 조건부 유효: ch 대비 edge 상한 여유가 있을 때만 이득. 실물 파라미터 반입 후 최종 판정) | `minsum_dual_clip/` |
+| 1 | 2026-08-13 | CNU min1/min2 이중 상한 클리핑 | 논문 ieee:9496601 (IEEE TCAD 2022) | 실험중 (py 환경 대조로 조건부 유효: ch 대비 edge 상한 여유가 있을 때만 이득. 실물 파라미터 반입 후 최종 판정) | `001_minsum_dual_clip/` |
 
 ### 반영 완료
 
@@ -45,9 +45,10 @@
 - ㉯ 실행은 아이디어 폴더에서 `python run.py` (형제 config.json 사용, 인자로
   다른 config 지정 가능). 어느 위치에서 실행해도 동작한다
 - ㉰ 파라미터 스캔이 필요한 실험은 scan.py를 두고 config와 값 목록을 인자로
-  받게 한다 (예: `minsum_dual_clip/scan.py`)
+  받게 한다 (예: `001_minsum_dual_clip/scan.py`)
 - ㉱ 실험이 끝나면 [실험로그.md](%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.md)에 환경(H-matrix, LLR set, edge 양자화,
   seed)과 인사이트를 기록한다
 - ㉲ 결과는 각 폴더의 `Sim_Output/`에 실행별로 쌓인다 (git 무시). 입력은 공용
-  `2_LDPC_light/Input/`을 쓴다 (config의 `../../2_LDPC_light/Input/...`)
-- ㉳ 실물 C++ 이식 단계의 수정 파일 사본은 아이디어 폴더의 `src/`에 둔다
+  `2_LDPC_base/Input/`을 쓴다 (config의 `../../2_LDPC_base/Input/...`)
+- ㉳ 실물 C++ 이식 단계의 수정 파일 사본은 아이디어 폴더의 `cpp/`에 둔다
+  (본체 파이썬 패키지 `src`와 이름이 겹치지 않게 유지)

@@ -8,4 +8,4 @@ TODO에 작업을 추가할 때 `_pm/tasks/{작업명}/` 폴더를 만들고 상
 - ㉱ 완료 시 `_pm/done/{YYYYMMDD}_{주제}/`로 이동하고 `DONE.md` 상단에 요약 추가
 - ㉲ 비기술적 단순 작업(문서 정리 등)은 tasks 문서 없이 TODO만 등록
 
-이 규칙은 루트 `_pm/`과 각 프로젝트 `_pm/` (1_LDPC_revised, 2_LDPC_light)에 동일하게 적용한다.
+이 규칙은 루트 `_pm/`과 각 프로젝트 `_pm/` (1_LDPC_revised, 2_LDPC_base)에 동일하게 적용한다.

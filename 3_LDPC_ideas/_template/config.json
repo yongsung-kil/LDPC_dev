@@ -1,6 +1,6 @@
 {
   "_desc": [
-    "실험 설정 골자: 필요한 값만 바꿔 쓴다 (스키마 정본은 2_LDPC_light/README.md)",
+    "실험 설정 골자: 필요한 값만 바꿔 쓴다 (스키마 정본은 2_LDPC_base/README.md)",
     "상대경로는 이 config 파일 위치 기준 (../../ = 저장소 루트 LDPC_dev)",
     "실행: 이 폴더에서 python run.py (런처가 이 config를 사용)",
     "디코더 선택은 config가 아니라 run.py의 DECODER_CLASS가 한다",
@@ -11,7 +11,7 @@
       "H-matrix 파일 (Ref-C 포맷)",
       "폴더는 Input/H_matrix 고정 운용"
     ],
-    "dir": "../../2_LDPC_light/Input/H_matrix",
+    "dir": "../../2_LDPC_base/Input/H_matrix",
     "file": "example_18x147_z256.qc"
   },
   "decoder": {
@@ -44,7 +44,7 @@
     ],
     "use_input_llr_matrix": true,
     "llr_matrix": {
-      "dir": "../../2_LDPC_light/Input/LLR",
+      "dir": "../../2_LDPC_base/Input/LLR",
       "file": "LLR_MATRIX_HD_1.txt"
     },
     "mode": "HD",

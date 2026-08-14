@@ -9,20 +9,20 @@ import sys
 EXPERIMENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _root = EXPERIMENT_DIR
-while not os.path.isdir(os.path.join(_root, "2_LDPC_light", "LDPC_base")):
+while not os.path.isdir(os.path.join(_root, "2_LDPC_base", "src")):
     _parent = os.path.dirname(_root)
     if _parent == _root:
-        raise SystemExit("상위 폴더에서 2_LDPC_light/LDPC_base를 찾지 못함 "
-                         "(이 파일은 LDPC_dev 하위 아이디어 폴더에 있어야 함)")
+        raise SystemExit("상위 폴더에서 2_LDPC_base/src를 찾지 못함 "
+                         "(이 파일은 LDPC_dev 하위 실험 폴더에 있어야 함)")
     _root = _parent
-_base_root = os.path.join(_root, "2_LDPC_light")
+_base_root = os.path.join(_root, "2_LDPC_base")
 if _base_root not in sys.path:
     sys.path.insert(0, _base_root)
 
-from LDPC_base.run import main
+from src.run import main
 
 DECODER_CLASS = None
-# None이면 LDPC_base의 BaseDecoder (vanilla 기준선).
+# None이면 src 본체의 BaseDecoder (base_run 기준선).
 # 변형 디코더는 이 폴더의 decoder.py에 BaseDecoder 자식으로 만들고 이렇게 지정한다:
 #   from decoder import MyDecoder
 #   DECODER_CLASS = MyDecoder

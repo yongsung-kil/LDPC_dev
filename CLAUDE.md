@@ -11,7 +11,7 @@
 |------|------|------------|
 | `0_LDPC_original/` | 외부 원본 C++ 소스(`src/`)와 공용 C++ 문서(`docs/`) (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
-| `2_LDPC_light/` | Project 2: 경량 Python 시뮬레이터 (LDPC_base 정본과 기준 실험 workspace/) | `2_LDPC_light/_pm/TODO.md` |
+| `2_LDPC_base/` | Project 2: 경량 Python 시뮬레이터 (src 정본과 기준 실험 workspace/) | `2_LDPC_base/_pm/TODO.md` |
 | `3_LDPC_ideas/` | Project 3: 논문 아이디어의 접수(현황표), py 스크리닝 실험, 실물 적용 | `3_LDPC_ideas/README.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
 
@@ -21,8 +21,8 @@
 
 - ㉮ `0_LDPC_original/`은 외부에서 가져온 원본이며 이 환경에서는 완성 대상이 아니다 (참조 전용)
 - ㉯ `1_LDPC_revised/`에서 기능을 논의, 확정한 것만 외부 저장소로 반영한다 (단방향, 외부에서 이쪽으로 가져오지 않음)
-- ㉰ `2_LDPC_light/`는 외부의 H-matrix와 파라미터를 넣어도 동작하는 것이 목표이며, 외부에서 pull하여 성능을 확인한다
-- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 현황표와 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_light`의 LDPC_base 정본을 import해 수행하고(복사 금지), 유효 아이디어를 실물 C++로 이식한다
+- ㉰ `2_LDPC_base/`는 외부의 H-matrix와 파라미터를 넣어도 동작하는 것이 목표이며, 외부에서 pull하여 성능을 확인한다
+- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 현황표와 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_base`의 src 정본을 import해 수행하고(복사 금지), 유효 아이디어를 실물 C++로 이식한다
 
 ---
 
@@ -44,7 +44,7 @@
 
 ## 공통 규칙
 
-- ㉮ C++ 빌드와 실행은 이 환경에서 하지 않는다 (원본 소스 일부 손상, 검증은 외부에서 수행). Python(`2_LDPC_light/`)은 로컬 실행 가능
+- ㉮ C++ 빌드와 실행은 이 환경에서 하지 않는다 (원본 소스 일부 손상, 검증은 외부에서 수행). Python(`2_LDPC_base/`)은 로컬 실행 가능
 - ㉯ 변경 금지 대상: TV 출력 hex 포맷, HCU 버퍼 레이아웃, Partial CRC 다항식, H-matrix 파일 포맷 (상세: `0_LDPC_original/CLAUDE.md`)
 - ㉰ 변경 등급을 지킨다 (아래 표)
 
@@ -78,7 +78,7 @@
 |-----------|---------------|
 | C++ 디코더 로직 (revised 포함) | `0_LDPC_original/CLAUDE.md` (상수, 스위치, 실수 포인트) + `0_LDPC_original/docs/architecture.md` |
 | 1_LDPC_revised 속도 최적화 | `1_LDPC_revised/README.md` + `1_LDPC_revised/docs/speed_opt/checklist.md` |
-| 2_LDPC_light | `2_LDPC_light/README.md` (확정 결정 기록 절 포함) |
+| 2_LDPC_base | `2_LDPC_base/README.md` (확정 결정 기록 절 포함) |
 | 논문 아이디어 추가 (3_LDPC_ideas) | `3_LDPC_ideas/새논문적용규칙.md` + `3_LDPC_ideas/README.md` |
 | 논문 이식성 판정 | `0_LDPC_original/docs/paper_screening_profile.md` |
 | 새 디코딩 모드 추가 | `0_LDPC_original/docs/architecture.md` 전체 + `0_LDPC_original/docs/adr/` 전체 |
