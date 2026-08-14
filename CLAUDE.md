@@ -12,7 +12,7 @@
 | `0_LDPC_original/` | 외부 원본 C++ 소스(`src/`)와 공용 C++ 문서(`docs/`) (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
 | `2_LDPC_light/` | Project 2: 경량 Python 시뮬레이터 (LDPC_base 정본과 기준 실험 workspace/) | `2_LDPC_light/_pm/TODO.md` |
-| `3_LDPC_ideas/` | Project 3: 논문 아이디어의 접수(대장), py 스크리닝 실험, 실물 적용 | `3_LDPC_ideas/README.md` |
+| `3_LDPC_ideas/` | Project 3: 논문 아이디어의 접수(현황표), py 스크리닝 실험, 실물 적용 | `3_LDPC_ideas/README.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
 
 ---
@@ -22,7 +22,7 @@
 - ㉮ `0_LDPC_original/`은 외부에서 가져온 원본이며 이 환경에서는 완성 대상이 아니다 (참조 전용)
 - ㉯ `1_LDPC_revised/`에서 기능을 논의, 확정한 것만 외부 저장소로 반영한다 (단방향, 외부에서 이쪽으로 가져오지 않음)
 - ㉰ `2_LDPC_light/`는 외부의 H-matrix와 파라미터를 넣어도 동작하는 것이 목표이며, 외부에서 pull하여 성능을 확인한다
-- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 대장과 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_light`의 LDPC_base 정본을 import해 수행하고(복사 금지), 유효 아이디어를 실물 C++로 이식한다
+- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 현황표와 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_light`의 LDPC_base 정본을 import해 수행하고(복사 금지), 유효 아이디어를 실물 C++로 이식한다
 
 ---
 
@@ -31,7 +31,7 @@
 - ㉮ 논문 분석 아카이브는 형제 폴더 `../LDPC_Paper_Analysis`에 있다 (별도 git 저장소, 원격 이름 ECC_papers)
 - ㉯ 담긴 것: 논문 PDF와 추출 텍스트(`data/pdfs/`), 메타데이터 DB(`data/papers.db`), 선별 기준과 결과(`criteria/`), 논문 탐색기(`docs/papers.html`, 공개 주소 https://yongsung-kil.github.io/ECC_papers/)
 - ㉰ 아이디어 적용 작업에서 근거 논문의 원문이 필요하면 이 아카이브에서 논문 ID로 찾아 읽는다
-- ㉱ 적용 상태의 정본은 `3_LDPC_ideas/README.md`의 아이디어 대장이며, 상태를 아카이브 탐색기에 반영하는 절차는 아카이브 쪽 `_pm/tasks/20260812_작업공간재구성/재구성계획.md`를 따른다
+- ㉱ 적용 상태의 정본은 `3_LDPC_ideas/README.md`의 아이디어 현황표이며, 상태를 아카이브 탐색기에 반영하는 절차는 아카이브 쪽 `_pm/tasks/20260812_작업공간재구성/재구성계획.md`를 따른다
 
 ---
 
