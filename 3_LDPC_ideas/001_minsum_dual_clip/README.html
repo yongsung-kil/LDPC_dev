@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑</title>
+<style>
+:root {
+    --text: #24292f;
+    --muted: #57606a;
+    --border: #d0d7de;
+    --surface: #f6f8fa;
+    --accent: #0969da;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    max-width: 880px;
+    color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    background: #ffffff;
+}
+h1, h2, h3, h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
+h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
+h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+h3 { font-size: 1.15em; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+p, ul, ol { margin: 0.6em 0; }
+li { margin: 0.25em 0; }
+blockquote {
+    margin: 0.8em 0;
+    padding: 0.4em 1em;
+    border-left: 4px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+}
+table {
+    border-collapse: collapse;
+    margin: 1em 0;
+    display: block;
+    overflow-x: auto;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+th { background: var(--surface); }
+tr:nth-child(even) td { background: #fbfcfd; }
+code {
+    font-family: Consolas, "D2Coding", monospace;
+    font-size: 0.9em;
+    background: var(--surface);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+}
+pre code { background: none; padding: 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+</style>
+</head>
+<body>
+<h1>001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑</h1>
+<p>날짜: 2026-08-14 | 출처: ieee:9496601 | 상태: 조건부 유효 (실물 파라미터로 최종 판정 대기)</p>
+<h2>📌 요약</h2>
+<ul>
+<li><strong>논문이 제안하는 것</strong>: min-sum LDPC 디코더의 검사 노드 연산(CNU, Check Node
+  Unit)은 매 반복마다 각 검사식에 들어온 메시지 크기의 최솟값(min1)과 둘째
+  최솟값(min2)만 골라 되돌려 준다. 논문은 이 두 값을 서로 다른 상한으로
+  잘라내자고 제안한다: min1은 상한 P로, min2는 상한 Q로 (1 ≤ P ≤ Q).
+  단일 상한(P=Q) 하나보다 두 상한을 따로 두는 쪽이 낫다는 것이 핵심 주장이다</li>
+<li><strong>왜 효과가 있다고 보는지</strong>: 비트 수가 적은 디코더에서는 반복이 진행될수록
+  내부 메시지 진폭이 채널에서 받은 정보보다 훨씬 크게 자라 "과확신" 상태가
+  된다. 초반의 잘못된 확신이 한번 커지면 뒤에서 바로잡기 어렵다. 상한으로
+  진폭 성장을 늦추면 잘못된 확신이 굳기 전에 교정할 기회가 남는다</li>
+<li><strong>성공하면 무엇이 바뀌는지</strong>: 저비트폭 환경에서 무클립 대비 FER(Frame Error
+  Rate, 프레임 오류율) 개선. 논문 가이드값은 P = 상한의 1/4, Q = 상한의 1/2
+  근방. 구현 비용은 C++ 기준 min 확정 직후 clip 2줄이라 사실상 공짜</li>
+<li><strong>무엇으로 확인하는지</strong>: on/off FER 비교에 더해, 클리핑이 과할 때 나타나는
+  "특정 열 오류 동결" 현상을 dv별 오류 로그로 잡는다 (아래 지표 계획 표).
+  dv는 변수 노드 차수, 즉 한 비트가 몇 개의 검사식에 연결되어 있는지다</li>
+</ul>
+<h2>📄 출처 상세</h2>
+<ul>
+<li>논문: A Low Bit-Width LDPC Min-Sum Decoding Scheme for NAND Flash,
+  IEEE TCAD 2022 (아카이브 ID ieee:9496601)</li>
+<li>핵심 아이디어: CNU에서 min1, min2를 각각 상한 P, Q로 클리핑하는 이중 상한
+  구조. 저비트폭(예: 3-bit) 디코더의 성능 손실을 완화한다</li>
+</ul>
+<h2>📊 지표 계획</h2>
+<table>
+<thead>
+<tr>
+<th>지표</th>
+<th>무엇을 판별하는지</th>
+<th>수집 방법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FER, BER, avg_iter</td>
+<td>on/off 최종 성능과 수렴 속도</td>
+<td>항상 수집</td>
+</tr>
+<tr>
+<td>무클립 쌍의 수치 완전 일치</td>
+<td>구현 동등성 (클리핑을 무효값으로 두면 base_run과 같아야 한다)</td>
+<td>스캔에 무클립 쌍 포함</td>
+</tr>
+<tr>
+<td>dv별 비트 오류의 iteration 궤적</td>
+<td>클리핑 과다로 특정 dv 열이 반전 불능이 되는 오류 동결 탐지</td>
+<td><code>log={"bit_err_by_dv"}</code></td>
+</tr>
+<tr>
+<td>반전 가능 조건 <code>Q + (dv-1)·P &gt; ch</code></td>
+<td>사망 경계의 사전 예측 (extrinsic 최대 합이 채널 LLR 크기 ch를 넘어야 초기 판정을 뒤집을 수 있다)</td>
+<td>실험 전 수식 점검</td>
+</tr>
+</tbody>
+</table>
+<h2>🔬 1단계: py 스크리닝 실험</h2>
+<h3>바꾼 것</h3>
+<ul>
+<li>디코더: decoder.py의 MinSumDualClipDecoder, 재정의 함수: <code>_c2v_reconstruct</code>
+  (C++ 대응: C2V_Cal). P, Q는 클래스 속성 CLIP_P, CLIP_Q로 전달</li>
+<li>설정: config.json은 base_run과 동일 조건 (seed 0, fixed_error [200, 300],
+  frames_per_batch 64), label만 변경</li>
+<li>(P,Q) 스캔은 scan.py로 실행. config 파일과 쌍 목록을 인자로 받는다:
+  <code>python scan.py [config파일] [P,Q P,Q ...]</code></li>
+</ul>
+<h3>실험 환경 이름</h3>
+<ul>
+<li>㉮ <strong>원본 LLR 환경</strong>: 원본 C++에서 가져온 기본 조건. LLR 파일
+  LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기 ch 5/10/13/28), edge 메시지 상한 7</li>
+<li>㉯ <strong>상한 여유 환경</strong>: 균일 ch=8, edge 상한 15. 채널 정보 대비 edge 상한에
+  여유가 있어 메시지 진폭이 크게 자랄 수 있는 조건 (config_headroom.json)</li>
+<li>㉰ <strong>비율 복원 환경</strong>: 균일 ch=16, edge 상한 15. ch와 edge 상한의 비율을
+  원본 LLR 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)</li>
+</ul>
+<h3>준비된 실험 (config 슬롯)</h3>
+<table>
+<thead>
+<tr>
+<th>config</th>
+<th>확인하려는 것</th>
+<th>채울 슬롯</th>
+<th>실행</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>config.json</td>
+<td>원본 LLR 환경 on/off</td>
+<td>없음 (바로 실행)</td>
+<td><code>python scan.py</code></td>
+</tr>
+<tr>
+<td>config_headroom.json</td>
+<td>상한 여유 환경 (클리핑 이득 조건 재현)</td>
+<td>없음</td>
+<td><code>python scan.py config_headroom.json 15,15 8,11 4,8</code></td>
+</tr>
+<tr>
+<td>config_balanced.json</td>
+<td>비율 복원 환경 (이득 소멸 대조)</td>
+<td>없음</td>
+<td><code>python scan.py config_balanced.json 15,15 8,15 4,8</code></td>
+</tr>
+<tr>
+<td>config_real.json</td>
+<td>실물 파라미터 최종 판정</td>
+<td>H_matrix.file, decoder.llr_matrix.file 두 개</td>
+<td><code>python scan.py config_real.json 7,7 5,7 3,5 2,3</code></td>
+</tr>
+</tbody>
+</table>
+<p>config_real.json은 실물 H-matrix와 LLR 파일을 <code>2_LDPC_base/Input/H_matrix/</code>,
+<code>2_LDPC_base/Input/LLR/</code>에 넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에
+(7,7)을 포함하면 무클립 기준선이 같은 스캔 안에서 나온다 (3-bit 파일 기준.
+edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바꾼다).</p>
+<h3>결과 (E=200 FER, 2026-08-13 ~ 08-14)</h3>
+<p>원본 LLR 환경:</p>
+<table>
+<thead>
+<tr>
+<th>(P,Q)</th>
+<th>FER</th>
+<th>BER</th>
+<th>avg_iter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base_run</td>
+<td>4.84e-01</td>
+<td>2.51e-05</td>
+<td>12.2</td>
+</tr>
+<tr>
+<td>(7,7) 클리핑 무효과</td>
+<td>4.84e-01</td>
+<td>2.51e-05</td>
+<td>12.2</td>
+</tr>
+<tr>
+<td>(5,7)</td>
+<td>5.16e-01</td>
+<td>2.55e-05</td>
+<td>12.6</td>
+</tr>
+<tr>
+<td>(5,5)</td>
+<td>9.38e-01</td>
+<td>1.21e-04</td>
+<td>19.0</td>
+</tr>
+<tr>
+<td>(3,7)</td>
+<td>8.59e-01</td>
+<td>8.61e-05</td>
+<td>17.9</td>
+</tr>
+<tr>
+<td>(3,5)</td>
+<td>9.38e-01</td>
+<td>1.45e-04</td>
+<td>19.2</td>
+</tr>
+<tr>
+<td>(3,3)</td>
+<td>1.00e+00</td>
+<td>2.45e-03</td>
+<td>20.0</td>
+</tr>
+<tr>
+<td>(2,5)</td>
+<td>9.69e-01</td>
+<td>1.81e-04</td>
+<td>19.6</td>
+</tr>
+<tr>
+<td>(2,3) 논문 가이드 근방</td>
+<td>1.00e+00</td>
+<td>2.40e-03</td>
+<td>20.0</td>
+</tr>
+<tr>
+<td>(1,3)</td>
+<td>1.00e+00</td>
+<td>2.42e-03</td>
+<td>20.0</td>
+</tr>
+<tr>
+<td>(1,1)</td>
+<td>1.00e+00</td>
+<td>5.33e-03</td>
+<td>20.0</td>
+</tr>
+</tbody>
+</table>
+<p>(7,7)이 base_run과 수치 완전 일치하여 구현 동등성이 검증됨 (지표 계획 2행).
+유효 클리핑은 전부 악화.</p>
+<p>환경 대조 (edge 상한 15, 균일 LLR 생성):</p>
+<table>
+<thead>
+<tr>
+<th>환경</th>
+<th>무클립 (15,15)</th>
+<th>(8,11)</th>
+<th>논문 가이드 (4,8)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>상한 여유 (ch=8)</td>
+<td>1.00e+00 (BER 6.69e-02, 붕괴)</td>
+<td>6.41e-01</td>
+<td><strong>0.00e+00 (0/256)</strong></td>
+</tr>
+<tr>
+<td>비율 복원 (ch=16)</td>
+<td>0.00e+00 (0/256, 건강)</td>
+<td>2.50e-01</td>
+<td>1.00e+00</td>
+</tr>
+</tbody>
+</table>
+<h2>✅ 결론</h2>
+<p>클리핑의 득실은 <strong>채널 LLR 스케일 대비 edge magnitude 상한의 여유</strong>가 결정한다.</p>
+<ul>
+<li>㉮ 반전 가능 조건이 사망 경계를 정확히 예측한다 (지표 계획 4행): dv 열의
+  최대 extrinsic <code>Q + (dv-1)·P</code>가 그 dv의 ch보다 작으면 반전 불능. 원본 LLR
+  환경의 지배 열 dv=4(147개 중 129개)는 ch=10이라 (2,3)은 9로 사망(FER 1.0),
+  (2,5)는 11로 겨우 생존(9.69e-01). dv별 오류 로그(지표 계획 3행)로 직접
+  확인됨 ((2,3)에서 dv=4 오류가 iter 2부터 79.2로 동결)</li>
+<li>㉯ 원본 LLR 환경의 dv별 ch(10/13/28)는 edge 상한 7 기준 반전 조건에 빠듯하게
+  튜닝되어 있어 클리핑 여지가 없다 (dv=2는 ch=28 &gt; 14라 무클립에서도 반전
+  불능, 기지 위반). 반면 무클립이 과확신으로 붕괴하는 상한 여유 환경에서는
+  논문 가이드값(P=상한/4, Q=상한/2)이 FER 1.0을 0으로 되돌린다: 논문의 이득
+  조건 (내부 진폭이 채널 LLR보다 크게 성장하는 저비트폭 환경)이 재현됨</li>
+<li>㉰ 같은 P에서 Q를 키우면 일관 개선: 이중 상한(P&lt;Q)이 단일 상한(P=Q)보다
+  낫다는 논문의 구조 주장은 모든 환경에서 방향 재현</li>
+<li>㉱ 실물 판정 사전 지표: 실물 LLR set의 dv별 <code>ch / (edge상한 × dv)</code> 비율이
+  1에 가까우면 클리핑 여지가 없고, 낮으면 (P,Q) 스캔 가치가 있다</li>
+</ul>
+<h2>🛠 2단계: 실물 C++ 이식 (유효 판정 시)</h2>
+<ul>
+<li>이식 지점: <code>decoder.cpp</code> <code>CNU_Update_New_Mag()</code>에 min1/min2 확정 직후
+  clip 2줄 (<code>M1m=min(M1m,P)</code>, <code>M2m=min(M2m,Q)</code>)</li>
+<li>선행 조건: 실물 H-matrix와 LLR 파일로 config_real.json 스캔 (위 표)</li>
+</ul>
+<h2>⏭ 후속</h2>
+<ul>
+<li>실물 파라미터 반입 후 config_real.json 스캔으로 최종 판정</li>
+<li>판정 기준: 결론 ㉱의 사전 지표로 클리핑 여지를 먼저 보고, 스캔에서 무클립
+  대비 개선 시 이식 진행</li>
+</ul>
+</body>
+</html>

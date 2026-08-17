@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 3: 논문 아이디어 적용</title>
+<style>
+:root {
+    --text: #24292f;
+    --muted: #57606a;
+    --border: #d0d7de;
+    --surface: #f6f8fa;
+    --accent: #0969da;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    max-width: 880px;
+    color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    background: #ffffff;
+}
+h1, h2, h3, h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
+h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
+h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+h3 { font-size: 1.15em; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+p, ul, ol { margin: 0.6em 0; }
+li { margin: 0.25em 0; }
+blockquote {
+    margin: 0.8em 0;
+    padding: 0.4em 1em;
+    border-left: 4px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+}
+table {
+    border-collapse: collapse;
+    margin: 1em 0;
+    display: block;
+    overflow-x: auto;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+th { background: var(--surface); }
+tr:nth-child(even) td { background: #fbfcfd; }
+code {
+    font-family: Consolas, "D2Coding", monospace;
+    font-size: 0.9em;
+    background: var(--surface);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+}
+pre code { background: none; padding: 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+</style>
+</head>
+<body>
+<h1>Project 3: 논문 아이디어 적용</h1>
+<blockquote>
+<p>아이디어의 접수(현황표), py 스크리닝 실험, 실물(C++) 적용까지 아이디어의 전 생애를 담는 프로젝트.
+py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</p>
+</blockquote>
+<hr />
+<h2>역할 경계</h2>
+<ul>
+<li>㉮ 이 폴더는 아이디어 현황표(모든 출처의 아이디어 접수와 상태 추적)와 아이디어별
+  실험 폴더를 담는다</li>
+<li>㉯ py 실험의 본체(src)는 <code>2_LDPC_base</code>에 정본 하나만 둔다. 아이디어
+  폴더의 run.py가 상위로 올라가며 <code>2_LDPC_base/src</code>를 찾아 import하므로
+  베이스 수리가 모든 아이디어 실험에 자동 전파된다 (복사 금지, 사본은 베이스
+  수리에서 누락되어 비교를 오염시킨다)</li>
+<li>㉰ 기준선(base_run)은 <code>2_LDPC_base/workspace/base_run/</code>다 (재정의 0개가 보증).
+  스캔에 무클립 쌍을 포함하면 기준선을 같은 스캔 안에서 얻을 수도 있다</li>
+<li>㉱ 실험 절차 정본은 <a href="%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새논문적용규칙.md</a></li>
+</ul>
+<hr />
+<h2>아이디어 현황표</h2>
+<p>출처 유형: 논문 / 특허 / 제안(사람) / 컨퍼런스 / 기타
+상태: 대기 → 실험중 → 성공 / 실패 / 폐기 → 반영됨</p>
+<h3>전체</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>날짜</th>
+<th>제목</th>
+<th>출처</th>
+<th>상태</th>
+<th>디렉토리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2026-08-13</td>
+<td>CNU min1/min2 이중 상한 클리핑</td>
+<td>논문 ieee:9496601 (IEEE TCAD 2022)</td>
+<td>실험중 (py 환경 대조로 조건부 유효: ch 대비 edge 상한 여유가 있을 때만 이득. 실물 파라미터 반입 후 최종 판정)</td>
+<td><code>001_minsum_dual_clip/</code></td>
+</tr>
+</tbody>
+</table>
+<h3>반영 완료</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>반영일</th>
+<th>제목</th>
+<th>ADR</th>
+<th>원본 디렉토리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>폴더 규칙</h2>
+<ul>
+<li>㉮ 아이디어마다 폴더 하나를 만들고 상세, 코드, 로그, 결과를 한곳에 둔다
+  (폴더 양식은 <code>_template/</code>를 복사해 시작)</li>
+<li>㉯ 실행은 아이디어 폴더에서 <code>python run.py</code> (형제 config.json 사용, 인자로
+  다른 config 지정 가능). 어느 위치에서 실행해도 동작한다</li>
+<li>㉰ 파라미터 스캔이 필요한 실험은 scan.py를 두고 config와 값 목록을 인자로
+  받게 한다 (예: <code>001_minsum_dual_clip/scan.py</code>)</li>
+<li>㉱ 실험이 끝나면 <a href="%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.html">실험로그.md</a>에 환경(H-matrix, LLR set, edge 양자화,
+  seed)과 인사이트를 기록한다</li>
+<li>㉲ 결과는 각 폴더의 <code>Sim_Output/</code>에 실행별로 쌓인다 (git 무시). 입력은 공용
+  <code>2_LDPC_base/Input/</code>을 쓴다 (config의 <code>../../2_LDPC_base/Input/...</code>)</li>
+<li>㉳ 실물 C++ 이식 단계의 수정 파일 사본은 아이디어 폴더의 <code>cpp/</code>에 둔다
+  (본체 파이썬 패키지 <code>src</code>와 이름이 겹치지 않게 유지)</li>
+<li>㉴ 문서는 md가 정본이고, md를 고치면 <code>python render.py</code>로 형제 html을 다시
+  만들어 함께 커밋한다 (html은 열람용. README 작성 규칙은
+  <a href="%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새논문적용규칙.md</a> 6절)</li>
+</ul>
+</body>
+</html>

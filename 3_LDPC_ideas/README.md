@@ -52,3 +52,6 @@
   `2_LDPC_base/Input/`을 쓴다 (config의 `../../2_LDPC_base/Input/...`)
 - ㉳ 실물 C++ 이식 단계의 수정 파일 사본은 아이디어 폴더의 `cpp/`에 둔다
   (본체 파이썬 패키지 `src`와 이름이 겹치지 않게 유지)
+- ㉴ 문서는 md가 정본이고, md를 고치면 `python render.py`로 형제 html을 다시
+  만들어 함께 커밋한다 (html은 열람용. README 작성 규칙은
+  [새논문적용규칙.md](%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.md) 6절)
