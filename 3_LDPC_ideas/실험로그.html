@@ -78,6 +78,70 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 나중에 "어떤 환경에서 얻은 인사이트인지"를 재현 가능하게 남긴다.</p>
 </blockquote>
 <hr />
+<h2>2026-08-17 minsum_dynamic_normalization: 동적 정규화는 격차 임계 T 튜닝이 급소, 클리핑과 결합 시 최량</h2>
+<ul>
+<li><strong>실험 폴더</strong>: <code>002_minsum_dynamic_normalization/</code> (ieee:6865103, min1/min2
+  격차 기반 동적 정규화 + 이중 상한)</li>
+<li><strong>환경</strong>: H-matrix <code>example_18x147_z256.qc</code>, seed 0, fixed_error [200, 300],
+  frames_per_batch 64, max_iter 20. LLR set과 edge 양자화는 001과 같은 세 조합
+  (원본 LLR 환경 edge 레벨 {7,5,3,1}, 상한 여유와 비율 복원 환경 {15,11,7,3})</li>
+<li><strong>결과</strong> (FER, E=200 / E=300):</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>환경</th>
+<th>무보정</th>
+<th>고정 0.75</th>
+<th>동적 (75/100, T=레벨 간격)</th>
+<th>클리핑(4,8)+동적</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>원본 LLR 환경</td>
+<td>4.84e-01 / 9.84e-01</td>
+<td>1.00 / 1.00</td>
+<td>7.97e-01 / 1.00 (악화)</td>
+<td>미실행 (클리핑 사망 기지)</td>
+</tr>
+<tr>
+<td>상한 여유 환경</td>
+<td>1.00 / 1.00 (붕괴)</td>
+<td>0.00 / 1.00</td>
+<td>0.00 / 4.53e-01</td>
+<td><strong>0.00 / 5.21e-02 (전 조합 최량)</strong></td>
+</tr>
+<tr>
+<td>비율 복원 환경</td>
+<td>0.00 / 1.17e-02 (건강)</td>
+<td>1.56e-02 / 8.59e-02</td>
+<td>3.91e-03 / 5.73e-02 (악화)</td>
+<td>1.00 / 1.00 (사망)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>인사이트</strong>:</li>
+<li>㉮ 격차 임계 T는 본체의 min2=RESET 승격 근사 때문에 튜닝이 급소다: min1
+    교체 시 min2가 실제 둘째 최솟값이 아니라 RESET으로 올라가 격차가
+    과대평가되므로, T가 인접 레벨 격차 이하이면 알파 high 선택율이 0.99로
+    쏠려 무보정으로 퇴화한다. T = edge 레벨 간격(두 레벨 이상 차이)이 가이드</li>
+<li>㉯ 이득 조건에서 동적 선택은 고정 정규화를 명확히 이긴다 (상한 여유 환경
+    E=300: 고정 1.00, 동적 4.53e-01). 이득의 원천이 정규화 자체가 아니라
+    격차 기반 선택임이 분리 확인됨</li>
+<li>㉰ 클리핑(001)과 결합하면 각자 단독보다 크게 낫다 (E=300 5.21e-02):
+    클리핑이 E=200 수렴을 주도(avg_iter 3.8)하고 동적 정규화가 E=300 실패
+    프레임을 추가로 살린다. 실물 이식 기본형은 결합형</li>
+<li>㉱ 알파 low에 문턱 거동이 있다: 0.75는 포화 붕괴 루프를 끊지만 0.85는 못
+    끊어 무보정과 같아진다 (감쇠가 포화 분포를 바꿔 선택율 자체가 되먹임:
+    같은 T=4에서 0.75면 선택율 0.321, 0.85면 0.983). 0.5는 과감쇠로 손해</li>
+<li>㉲ 조건 구조는 001과 동일: ch 대비 edge 상한 여유가 없으면(원본 LLR,
+    비율 복원 환경) 어떤 정규화도 손해. 실물 사전 지표 <code>ch / (edge상한 × dv)</code>
+    공유</li>
+<li><strong>상세</strong>: <code>002_minsum_dynamic_normalization/README.md</code>, 재현은 scan.py +
+  config_headroom.json (조합 표기 P,Q,알파low%,알파high%,격차T)</li>
+</ul>
 <h2>2026-08-14 minsum_dual_clip: 클리핑 효과는 ch 대비 edge 상한 여유가 결정</h2>
 <ul>
 <li><strong>실험 폴더</strong>: <code>001_minsum_dual_clip/</code> (ieee:9496601, CNU min1/min2 이중 상한 클리핑)</li>
