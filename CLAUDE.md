@@ -12,7 +12,7 @@
 | `0_LDPC_original/` | 외부 원본 C++ 소스(`src/`)와 공용 C++ 문서(`docs/`) (참조 전용, 일부 손상으로 빌드 불가) | `0_LDPC_original/CLAUDE.md` |
 | `1_LDPC_revised/` | Project 1: 원본의 속도, 메모리 최적화 (수정 파일만 보관) | `1_LDPC_revised/_pm/TODO.md` |
 | `2_LDPC_base/` | Project 2: 경량 Python 시뮬레이터 (src 정본과 기준 실험 workspace/) | `2_LDPC_base/_pm/TODO.md` |
-| `3_LDPC_ideas/` | Project 3: 논문 아이디어의 접수(현황표), py 스크리닝 실험, 실물 적용 | `3_LDPC_ideas/README.md` |
+| `3_LDPC_ideas/` | Project 3: 논문 아이디어의 접수(현황표)와 py 스크리닝 실험 | `3_LDPC_ideas/README.md` |
 | `4_H_matrix_tool/` | Project 4: H-matrix 설계 툴 (PEG, lifting, 부호 선별) | `4_H_matrix_tool/_pm/TODO.md` |
 | `5_DAO/` | Project 5: DAO(Decoder Auto Optimizer, LLR matrix 자동 최적화기) 발전 (원형 스냅샷은 `reference/`) | `5_DAO/_pm/TODO.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
@@ -24,7 +24,7 @@
 - ㉮ `0_LDPC_original/`은 외부에서 가져온 원본이며 이 환경에서는 완성 대상이 아니다 (참조 전용)
 - ㉯ `1_LDPC_revised/`에서 기능을 논의, 확정한 것만 외부 저장소로 반영한다 (단방향, 외부에서 이쪽으로 가져오지 않음)
 - ㉰ `2_LDPC_base/`는 외부의 H-matrix와 파라미터를 넣어도 동작하는 것이 목표이며, 외부에서 pull하여 성능을 확인한다
-- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 현황표와 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_base`의 src 정본을 import해 수행하고(복사 금지), 유효 아이디어를 실물 C++로 이식한다
+- ㉱ `3_LDPC_ideas/`(Project 3)는 아이디어 현황표와 아이디어별 실험을 담당한다. py 실험은 `2_LDPC_base`의 src 정본을 import해 수행한다 (복사 금지)
 - ㉲ `4_H_matrix_tool/`(Project 4)은 H-matrix 설계 도구를 담당한다. 디코딩과 FER 측정은 `2_LDPC_base`의 src 정본을 import해 수행하고(복사 금지), 결과는 Ref-C 포맷 파일로 공급한다
 - ㉳ `5_DAO/`(Project 5)는 SSS 저장소에서 반입한 DAO를 발전시킨다. 반입 시점 원형은 `5_DAO/reference/`에 보존한다 (참조 전용, 수정 금지)
 

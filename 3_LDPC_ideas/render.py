@@ -8,7 +8,7 @@
     - 각 {이름}.md 옆에 {이름}.html을 만든다 (md가 정본, html은 열람용 파생물)
     - 문서 안의 .md 링크는 .html 링크로 바꿔서 html끼리 이동이 이어지게 한다
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md.
-      제외: _pm/, _template/, Sim_Output/, cpp/, __pycache__/
+      제외: _pm/, _template/, Sim_Output/, __pycache__/
 
 필요 패키지: markdown (pip install markdown)
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 import markdown
 
 IDEAS_DIR = Path(__file__).resolve().parent
-EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "cpp", "__pycache__"}
+EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 
 PAGE_STYLE = """
 :root {

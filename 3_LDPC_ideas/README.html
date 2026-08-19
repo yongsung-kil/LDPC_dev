@@ -73,7 +73,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 <body>
 <h1>Project 3: 논문 아이디어 적용</h1>
 <blockquote>
-<p>아이디어의 접수(현황표), py 스크리닝 실험, 실물(C++) 적용까지 아이디어의 전 생애를 담는 프로젝트.
+<p>아이디어의 접수(현황표)와 py 스크리닝 실험을 담는 프로젝트.
 py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</p>
 </blockquote>
 <hr />
@@ -98,7 +98,6 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 <thead>
 <tr>
 <th>#</th>
-<th>날짜</th>
 <th>제목</th>
 <th>출처</th>
 <th>상태</th>
@@ -108,7 +107,6 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 <tbody>
 <tr>
 <td>1</td>
-<td>2026-08-13</td>
 <td>CNU min1/min2 이중 상한 클리핑</td>
 <td>논문 ieee:9496601 (IEEE TCAD 2022)</td>
 <td>실험중 (py 환경 대조로 조건부 유효: ch 대비 edge 상한 여유가 있을 때만 이득. 실물 파라미터 반입 후 최종 판정)</td>
@@ -116,7 +114,6 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 </tr>
 <tr>
 <td>2</td>
-<td>2026-08-17</td>
 <td>min1/min2 격차 기반 동적 정규화 + 이중 상한</td>
 <td>논문 ieee:6865103 (IEEE 2014)</td>
 <td>실험중 (py 환경 대조로 조건부 유효: 이득 조건은 001과 동일하고, 그 조건에서 클리핑과 결합 시 전 조합 최량. 격차 임계 T는 edge 레벨 간격으로 튜닝 필수. 실물 파라미터 반입 후 최종 판정)</td>
@@ -129,7 +126,6 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 <thead>
 <tr>
 <th>#</th>
-<th>반영일</th>
 <th>제목</th>
 <th>ADR</th>
 <th>원본 디렉토리</th>
@@ -137,7 +133,6 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 </thead>
 <tbody>
 <tr>
-<td></td>
 <td></td>
 <td></td>
 <td></td>
@@ -158,8 +153,8 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
   seed)과 인사이트를 기록한다</li>
 <li>㉲ 결과는 각 폴더의 <code>Sim_Output/</code>에 실행별로 쌓인다 (git 무시). 입력은 공용
   <code>2_LDPC_base/Input/</code>을 쓴다 (config의 <code>../../2_LDPC_base/Input/...</code>)</li>
-<li>㉳ 실물 C++ 이식 단계의 수정 파일 사본은 아이디어 폴더의 <code>cpp/</code>에 둔다
-  (본체 파이썬 패키지 <code>src</code>와 이름이 겹치지 않게 유지)</li>
+<li>㉳ 문서에는 날짜를 적지 않는다 (시점 기록은 git 이력과 <code>_pm/</code>이 담당하고,
+  실험 시점 기록이 필요하면 <a href="%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.html">실험로그.md</a>에 둔다)</li>
 <li>㉴ 문서는 md가 정본이고, md를 고치면 <code>python render.py</code>로 형제 html을 다시
   만들어 함께 커밋한다 (html은 열람용. README 작성 규칙은
   <a href="%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새논문적용규칙.md</a> 6절)</li>

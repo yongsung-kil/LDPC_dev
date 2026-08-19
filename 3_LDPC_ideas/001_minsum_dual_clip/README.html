@@ -72,7 +72,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 </head>
 <body>
 <h1>001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑</h1>
-<p>날짜: 2026-08-14 | 출처: ieee:9496601 | 상태: 조건부 유효 (실물 파라미터로 최종 판정 대기)</p>
+<p>출처: ieee:9496601 | 상태: 조건부 유효 (실물 파라미터로 최종 판정 대기)</p>
 <h2>📌 요약</h2>
 <ul>
 <li><strong>논문이 제안하는 것</strong>: min-sum LDPC 디코더의 검사 노드 연산(CNU, Check Node
@@ -130,7 +130,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 </tr>
 </tbody>
 </table>
-<h2>🔬 1단계: py 스크리닝 실험</h2>
+<h2>🔬 py 스크리닝 실험</h2>
 <h3>바꾼 것</h3>
 <ul>
 <li>디코더: decoder.py의 MinSumDualClipDecoder, 재정의 함수: <code>_c2v_reconstruct</code>
@@ -190,7 +190,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 <code>2_LDPC_base/Input/LLR/</code>에 넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에
 (7,7)을 포함하면 무클립 기준선이 같은 스캔 안에서 나온다 (3-bit 파일 기준.
 edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바꾼다).</p>
-<h3>결과 (E=200 FER, 2026-08-13 ~ 08-14)</h3>
+<h3>결과 (E=200 FER)</h3>
 <p>원본 LLR 환경:</p>
 <table>
 <thead>
@@ -315,17 +315,11 @@ edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바�
 <li>㉱ 실물 판정 사전 지표: 실물 LLR set의 dv별 <code>ch / (edge상한 × dv)</code> 비율이
   1에 가까우면 클리핑 여지가 없고, 낮으면 (P,Q) 스캔 가치가 있다</li>
 </ul>
-<h2>🛠 2단계: 실물 C++ 이식 (유효 판정 시)</h2>
-<ul>
-<li>이식 지점: <code>decoder.cpp</code> <code>CNU_Update_New_Mag()</code>에 min1/min2 확정 직후
-  clip 2줄 (<code>M1m=min(M1m,P)</code>, <code>M2m=min(M2m,Q)</code>)</li>
-<li>선행 조건: 실물 H-matrix와 LLR 파일로 config_real.json 스캔 (위 표)</li>
-</ul>
 <h2>⏭ 후속</h2>
 <ul>
 <li>실물 파라미터 반입 후 config_real.json 스캔으로 최종 판정</li>
 <li>판정 기준: 결론 ㉱의 사전 지표로 클리핑 여지를 먼저 보고, 스캔에서 무클립
-  대비 개선 시 이식 진행</li>
+  대비 개선이 나오면 유효로 판정한다</li>
 </ul>
 </body>
 </html>
