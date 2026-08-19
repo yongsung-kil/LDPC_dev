@@ -20,9 +20,6 @@ Release/
 x64/
 x86/
 
-# Test outputs
-_test/
-
 # IDE
 .idea/
 .vscode/
