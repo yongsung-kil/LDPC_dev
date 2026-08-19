@@ -1,7 +1,6 @@
 """minsum_dual_clip: CNU min1/min2 이중 상한 클리핑 (ieee:9496601, IEEE TCAD 2022).
 
 재정의: _c2v_reconstruct (C++ 대응: C2V_Cal)
-실물 C++ 이식 지점: decoder.cpp CNU_Update_New_Mag() (min1/min2 확정 직후 clip 2줄)
 
 min1은 CLIP_P로, min2는 CLIP_Q로 클리핑한다 (1 <= CLIP_P <= CLIP_Q).
 저장 상태(min1/min2)는 그대로 두고 C2V 재구성 시점에 클리핑한다.

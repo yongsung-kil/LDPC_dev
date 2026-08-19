@@ -72,7 +72,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 </head>
 <body>
 <h1>001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑</h1>
-<p>출처: ieee:9496601 | 상태: 조건부 유효 (실물 파라미터로 최종 판정 대기)</p>
+<p>출처: ieee:9496601 | 상태: 조건부 유효 (평가 대상 파라미터로 최종 판정 대기)</p>
 <h2>📌 요약</h2>
 <ul>
 <li><strong>논문이 제안하는 것</strong>: min-sum LDPC 디코더의 검사 노드 연산(CNU, Check Node
@@ -179,14 +179,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 <td><code>python scan.py config_balanced.json 15,15 8,15 4,8</code></td>
 </tr>
 <tr>
-<td>config_real.json</td>
-<td>실물 파라미터 최종 판정</td>
+<td>config_target.json</td>
+<td>평가 대상 파라미터 최종 판정</td>
 <td>H_matrix.file, decoder.llr_matrix.file 두 개</td>
-<td><code>python scan.py config_real.json 7,7 5,7 3,5 2,3</code></td>
+<td><code>python scan.py config_target.json 7,7 5,7 3,5 2,3</code></td>
 </tr>
 </tbody>
 </table>
-<p>config_real.json은 실물 H-matrix와 LLR 파일을 <code>2_LDPC_base/Input/H_matrix/</code>,
+<p>config_target.json은 평가할 H-matrix와 LLR 파일을 <code>2_LDPC_base/Input/H_matrix/</code>,
 <code>2_LDPC_base/Input/LLR/</code>에 넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에
 (7,7)을 포함하면 무클립 기준선이 같은 스캔 안에서 나온다 (3-bit 파일 기준.
 edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바꾼다).</p>
@@ -312,12 +312,12 @@ edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바�
   조건 (내부 진폭이 채널 LLR보다 크게 성장하는 저비트폭 환경)이 재현됨</li>
 <li>㉰ 같은 P에서 Q를 키우면 일관 개선: 이중 상한(P&lt;Q)이 단일 상한(P=Q)보다
   낫다는 논문의 구조 주장은 모든 환경에서 방향 재현</li>
-<li>㉱ 실물 판정 사전 지표: 실물 LLR set의 dv별 <code>ch / (edge상한 × dv)</code> 비율이
+<li>㉱ 판정 사전 지표: 평가할 LLR set의 dv별 <code>ch / (edge상한 × dv)</code> 비율이
   1에 가까우면 클리핑 여지가 없고, 낮으면 (P,Q) 스캔 가치가 있다</li>
 </ul>
 <h2>⏭ 후속</h2>
 <ul>
-<li>실물 파라미터 반입 후 config_real.json 스캔으로 최종 판정</li>
+<li>평가 대상 파라미터로 config_target.json 스캔을 돌려 최종 판정</li>
 <li>판정 기준: 결론 ㉱의 사전 지표로 클리핑 여지를 먼저 보고, 스캔에서 무클립
   대비 개선이 나오면 유효로 판정한다</li>
 </ul>

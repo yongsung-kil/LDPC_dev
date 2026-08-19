@@ -2,7 +2,6 @@
 
 > 확정 결정 기록: 아래 "확정 결정 기록" 절, original과의 로직 차이: [docs/차이.md](docs/차이.md)
 > **주의**: py는 상대 비교(on/off) 전용이라 C++ Ref-C와의 절대 FER 일치는 보장하지 않는다.
-> 유효한 기법의 최종 검증은 실물 C++(실제 형태)에 이식하여 수행한다 (확정 결정 기록 참조).
 > 2026-08-07: `_test/20260806_setup_구성_실험/`의 개정본을 본체로 반영 (구 코드는 git 이력에 보존)
 
 ## 구성
@@ -203,7 +202,8 @@ dict {"mode", "hd", "sd", "cc"}.
   균일 생성물(파일명 uniform)은 n-bit 레벨을 지원한다 (레벨 수는 edge_mag가 결정)
 - 파이프라인 store 지연(2~3 col) 미재현 (restart 흔들기 전파가 원본과 다소 다를 수 있음)
 - BF(1-bit precision) 구간 미구현 (단순화 형태, BF off 전제)
-- 실물 H-matrix와 LLR_MATRIX 실값 미반입 (토이 예시 사용 중)
+- 저장소에 담긴 H-matrix와 LLR_MATRIX는 예시 파일이다 (평가할 파일은 `Input/`에
+  넣고 config에서 파일명으로 지정한다)
 - `encoder.encode()`는 실제 인코딩 없이 all-zero 반환하는 임시 함수
 
 ## 확정 결정 기록
@@ -212,13 +212,13 @@ dict {"mode", "hd", "sd", "cc"}.
 
 | 결정 | 내용 |
 |------|------|
-| 2단계 하이브리드 (2026-07-29) | Python으로 후보 기법을 상대 비교(FER 1e-2~1e-4 영역)한 뒤, 유효한 것만 실물 C++에 이식해 최종 검증 |
+| 상대 비교 전용 (2026-07-29) | Python은 후보 기법의 on/off 상대 비교(FER 1e-2~1e-4 영역)를 맡는다 |
 | 단순화 형태는 Python에만 (2026-07-29) | 쇼트닝, 펑처링, HCU, CRC 조기종료를 뺀 단순화 형태는 py 전용. 유효한 기법은 실제 형태의 C++에 적용해 재비교 |
 | 제거 항목 (2026-07-29) | HCU, 쇼트닝/펑처링, CRC 조기종료, timing/SRAM/PMU/TV. GT(Graph Thinning)는 edge 라우팅 테이블일 뿐이라 FER 영향 0을 코드로 확인 후 제거 (2026-07-30) |
 | 성공 판정 (2026-07-30) | genie: 매 iteration 결정을 정답과 bitwise 비교, 일치하면 그 프레임 성공 확정 (CRC 조기종료의 이상화 대응, 미스검출 없음) |
 | codeword (2026-07-30) | all-zero (인코더 포팅 불필요, 대칭 채널과 대칭 복호기 전제) |
 | Dual-Update (2026-07-30) | off (단순화 취지). 실제 적용 형태와의 격차는 최종 C++ 검증에서 흡수 |
 | 시뮬 방침 (2026-07-30) | max_iter=120 기준, numba 미사용 (numpy 프레임 배치만), 병렬화는 mpi4py로 코어당 sim 1개 (mpi_runner는 재설계 예정) |
-| 실물 치수 | base M_b=18 × N_b=147, z_sb=256, codeword 37,632 bit, rate≈0.878, 정보 33,024 bit(4KB). 전 파라미터는 H-matrix 파일에서 읽는다 |
-| 실물 파라미터 반입 필요 | H-matrix 실물 파일과 LLR 테이블 실값은 저장소에 없다 (LLR 실값은 원본 소스 손상으로 소실, 사용자 공급 필요). 실물 C++ 실행 시 z_sb=256이면 PMU/Clk 경로가 최초로 활성화되는 점 확인 필요 |
+| 기준 치수 | base M_b=18 × N_b=147, z_sb=256, codeword 37,632 bit, rate≈0.878, 정보 33,024 bit(4KB). 전 파라미터는 H-matrix 파일에서 읽는다 |
+| 입력 파일은 외부 공급 | H-matrix와 LLR 테이블은 저장소에 담지 않는다 (LLR 값은 원본 소스 손상으로 소실되어 사용자가 `Input/`에 넣는다). z_sb=256이면 C++ 쪽 PMU/Clk 경로가 최초로 활성화되는 점 확인 필요 |
 | edge 양자화 파라미터 분리 (2026-08-13) | internal_quantize의 edge 레벨을 bit 수(edge_resolution_bits)와 최대값(edge_max_value)으로 분리, 기본은 C++ 3bit 레벨 {7,5,3,1}. th 배치는 레벨값과 동일 (C++는 th가 LLR matrix의 튜닝 데이터라 고정 규칙이 없고, 간격 1에서 th=[top..1]인 기존 균일 경로의 확장으로 결정) |

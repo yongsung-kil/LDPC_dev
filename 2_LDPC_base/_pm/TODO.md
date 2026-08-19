@@ -3,7 +3,7 @@
 > Claude 마지막 확인: 2026-08-13 16:23:33
 
 > 목표: 외부의 H-matrix와 최적화된 파라미터를 넣어도 동작하게 만들고, 외부에서 pull하여 성능을 확인한다.
-> py는 아이디어 상대 비교 전용, 유효 아이디어의 최종 검증은 실물 C++ 이식으로 수행 (`docs/plan.md` §4).
+> py는 아이디어 상대 비교 전용이다 (`docs/plan.md` §4).
 
 ---
 
@@ -35,10 +35,10 @@
   - bit_err_by_col, flip_count_per_iter, table_row_history, min_sum_stats,
     fail_frame_positions, fail_frame_seed, channel_stats
   - 상세: `_pm/done/20260807_출력폴더_로그기능/` 후보표 참조
-- [ ] H-matrix와 LLR 테이블 실물 파일 확인 (z_sb=256 대상) 후 실물 파라미터로 교체 (외부 반입 필요, 저장소에 없음)
-  - 3-bit internal precision 잔여 갭은 소실된 HW TH/CH 실값 없이는 추정 튜닝 한계. 실값 반입 시 재검증
-  - 반입 후 minsum_dual_clip(ieee:9496601) 최종 판정은 3_LDPC_ideas TODO가 관리 (`3_LDPC_ideas/001_minsum_dual_clip/` 참조)
-- [ ] mpi_runner 슈퍼컴 반입 (재설계 완료 후)
+- [ ] 평가 대상 H-matrix와 LLR 테이블(z_sb=256 대상)을 `Input/`에 넣고 config 기본값 교체
+  - 3-bit internal precision 잔여 갭은 소실된 HW TH/CH 값 없이는 추정 튜닝 한계. 값을 받으면 재검증
+  - 교체 후 minsum_dual_clip(ieee:9496601) 최종 판정은 3_LDPC_ideas TODO가 관리 (`3_LDPC_ideas/001_minsum_dual_clip/` 참조)
+- [ ] mpi_runner 슈퍼컴 이관 (재설계 완료 후)
 
 ## 새 작업 추가
 

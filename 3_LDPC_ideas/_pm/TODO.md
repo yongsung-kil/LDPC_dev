@@ -8,23 +8,23 @@
 
 ## 작업 목록
 
-- [ ] minsum_dual_clip (ieee:9496601) 실물 파라미터 최종 판정
-  - 선행: 실물 H-matrix와 LLR 반입 (2_LDPC_base TODO의 반입 항목)
-  - 실행: `001_minsum_dual_clip/config_real.json`에 파일명 두 개 채우고
-    `python scan.py config_real.json 7,7 5,7 3,5 2,3`
-  - 사전 지표: 실물 LLR set의 dv별 ch / (edge상한 × dv) 비율이 1에 가까우면
+- [ ] minsum_dual_clip (ieee:9496601) 평가 대상 파라미터 최종 판정
+  - 선행: 평가할 H-matrix와 LLR을 `2_LDPC_base/Input/`에 배치 (2_LDPC_base TODO의 교체 항목)
+  - 실행: `001_minsum_dual_clip/config_target.json`에 파일명 두 개 채우고
+    `python scan.py config_target.json 7,7 5,7 3,5 2,3`
+  - 사전 지표: 평가할 LLR set의 dv별 ch / (edge상한 × dv) 비율이 1에 가까우면
     클리핑 여지 없음 (실험로그.md 2026-08-14 항목 참조)
 
 - [ ] 논문 아이디어 스크리닝 계속 (아카이브 stage5 산출물 순서대로 py 실험,
-      실물 파라미터 반입 후에는 base_run reference 커브 확보를 선행)
+      파라미터를 교체한 뒤에는 base_run reference 커브 확보를 선행)
   - 후보 10건 선별 완료 (2026-08-17, 조건: 양자화 hard-1bit/soft-2~3bit,
     rate > 0.6, 길이 8192bit 이상. stage3 6214건 중 148건 통과 후 접점 기준 선별):
     - 1. ieee:6865103 (2014) min1/min2 상한 + 비균일 양자화 + 동적 정규화,
          `_c2v_reconstruct`. 001 직계 확장이라 즉시성 최상
          [x] 2026-08-17 스크리닝 완료 → `002_minsum_dynamic_normalization/`,
              조건부 유효 (이득 조건에서 001 클리핑과 결합 시 전 조합 최량,
-             격차 임계 T는 edge 레벨 간격으로 튜닝 필수). 실물 파라미터 반입
-             후 config_real.json 스캔으로 최종 판정 (001과 같은 선행 조건)
+             격차 임계 T는 edge 레벨 간격으로 튜닝 필수). 평가 대상 파라미터로
+             config_target.json 스캔을 돌려 최종 판정 (001과 같은 선행 조건)
     - 2. arxiv:2206.11532v1 (2022, ieee:9979226 동일 논문) 저차수 VN 메시지
          가중으로 error floor 감소, `_c2v_reconstruct` (dv별 가중)
     - 3. ieee:10001160 (2022) 상호정보 최대화 LUT 양자화 (RCQ 계열),

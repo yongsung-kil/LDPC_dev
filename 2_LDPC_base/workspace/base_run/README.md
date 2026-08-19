@@ -7,7 +7,7 @@
   그대로 쓴다 (run.py의 `DECODER_CLASS = None`이 그 연결이라 이 폴더에 decoder.py가 없다.
   재정의 0개가 곧 "본체와 완전히 같다"는 보증이다)
 - ㉯ 모든 논문 아이디어의 on/off 비교에서 "off" 쪽이 이 실험이다
-- ㉰ reference 실험(실물 H-matrix, LLR_MATRIX 반입 후 기준 FER 커브 확보 등)은
+- ㉰ reference 실험(평가 대상 H-matrix와 LLR_MATRIX의 기준 FER 커브 확보 등)은
   이 폴더의 config.json으로 수행하고, 결과는 이 폴더의 `Sim_Output/`에 쌓는다
 
 ## 실행

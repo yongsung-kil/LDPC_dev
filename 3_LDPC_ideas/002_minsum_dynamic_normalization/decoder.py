@@ -1,7 +1,6 @@
 """minsum_dynamic_normalization: min1/min2 격차 기반 동적 정규화 + 이중 상한 (ieee:6865103, 2014).
 
 재정의: _c2v_reconstruct (C++ 대응: C2V_Cal)
-실물 C++ 이식 지점: decoder.cpp C2V_Cal() (재구성 magnitude에 정규화와 클리핑 적용)
 
 논문의 세 기법 중 FER에 작용하는 두 가지를 조합해 재정의한다:
   1. 동적 정규화: 격차(gap) = min2 - min1이 GAP_THRESHOLD보다 크면 min1이

@@ -1,6 +1,6 @@
 """예시 QC-LDPC 생성: PEG(정보부) + dual-diagonal(패리티부) + greedy lifting.
 
-실물과 동일 치수 (README 확정 결정 기록): base M_b=18 × N_b=147, z=256, rate≈0.878.
+기준 치수 (README 확정 결정 기록): base M_b=18 × N_b=147, z=256, rate≈0.878.
 패리티부 구조 (dual-diagonal, 802.16e 계열):
   - anchor column (첫 패리티 col): row {0, M/2, M-1}, shift {s0, 0, s0} (재귀 인코딩 가능 조건)
   - 나머지 M-1개: bidiagonal로 col P_k가 row {k-1, k}에 shift 0

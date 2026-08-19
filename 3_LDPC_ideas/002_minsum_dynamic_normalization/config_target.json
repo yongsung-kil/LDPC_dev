@@ -1,20 +1,20 @@
 {
   "_desc": [
-    "실물 파라미터 실험용 슬롯 config: 아래 두 값만 채우면 바로 실행된다",
-    "  1. H_matrix.file: 실물 H-matrix 파일명 (2_LDPC_base/Input/H_matrix/에 넣을 것)",
-    "  2. decoder.llr_matrix.file: 실물 LLR matrix 파일명 (2_LDPC_base/Input/LLR/에 넣을 것)",
-    "실행: python run.py config_real.json (클래스 속성 기본값 사용)",
-    "스캔: python scan.py config_real.json 7,7,100,100,1 7,7,50,100,1 등",
+    "평가 대상 파라미터용 슬롯 config: 아래 두 값만 채우면 바로 실행된다",
+    "  1. H_matrix.file: H-matrix 파일명 (2_LDPC_base/Input/H_matrix/에 넣을 것)",
+    "  2. decoder.llr_matrix.file: LLR matrix 파일명 (2_LDPC_base/Input/LLR/에 넣을 것)",
+    "실행: python run.py config_target.json (클래스 속성 기본값 사용)",
+    "스캔: python scan.py config_target.json 7,7,100,100,1 7,7,50,100,1 등",
     "  (조합 = P,Q,알파low%,알파high%,격차T. (상한,상한,100,100,*)=무효과 기준선)"
   ],
   "H_matrix": {
     "dir": "../../2_LDPC_base/Input/H_matrix",
-    "file": "실물_H_matrix_파일명을_여기에.qc"
+    "file": "H_matrix_파일명을_여기에.qc"
   },
   "decoder": {
     "llr_matrix": {
       "dir": "../../2_LDPC_base/Input/LLR",
-      "file": "실물_LLR_MATRIX_파일명을_여기에.txt"
+      "file": "LLR_MATRIX_파일명을_여기에.txt"
     }
   },
   "run": {
@@ -48,6 +48,6 @@
     "_desc": "결과는 이 아이디어 폴더 아래 Sim_Output/에 쌓인다",
     "dir": "Sim_Output",
     "csv_prefix": "fer",
-    "label": "real"
+    "label": "target"
   }
 }

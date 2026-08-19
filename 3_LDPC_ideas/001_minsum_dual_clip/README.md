@@ -1,6 +1,6 @@
 # 001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑
 
-출처: ieee:9496601 | 상태: 조건부 유효 (실물 파라미터로 최종 판정 대기)
+출처: ieee:9496601 | 상태: 조건부 유효 (평가 대상 파라미터로 최종 판정 대기)
 
 ## 📌 요약
 
@@ -63,9 +63,9 @@
 | config.json | 원본 LLR 환경 on/off | 없음 (바로 실행) | `python scan.py` |
 | config_headroom.json | 상한 여유 환경 (클리핑 이득 조건 재현) | 없음 | `python scan.py config_headroom.json 15,15 8,11 4,8` |
 | config_balanced.json | 비율 복원 환경 (이득 소멸 대조) | 없음 | `python scan.py config_balanced.json 15,15 8,15 4,8` |
-| config_real.json | 실물 파라미터 최종 판정 | H_matrix.file, decoder.llr_matrix.file 두 개 | `python scan.py config_real.json 7,7 5,7 3,5 2,3` |
+| config_target.json | 평가 대상 파라미터 최종 판정 | H_matrix.file, decoder.llr_matrix.file 두 개 | `python scan.py config_target.json 7,7 5,7 3,5 2,3` |
 
-config_real.json은 실물 H-matrix와 LLR 파일을 `2_LDPC_base/Input/H_matrix/`,
+config_target.json은 평가할 H-matrix와 LLR 파일을 `2_LDPC_base/Input/H_matrix/`,
 `2_LDPC_base/Input/LLR/`에 넣고 파일명 두 개만 채우면 바로 실행된다. 스캔에
 (7,7)을 포함하면 무클립 기준선이 같은 스캔 안에서 나온다 (3-bit 파일 기준.
 edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바꾼다).
@@ -114,11 +114,11 @@ edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바�
   조건 (내부 진폭이 채널 LLR보다 크게 성장하는 저비트폭 환경)이 재현됨
 - ㉰ 같은 P에서 Q를 키우면 일관 개선: 이중 상한(P<Q)이 단일 상한(P=Q)보다
   낫다는 논문의 구조 주장은 모든 환경에서 방향 재현
-- ㉱ 실물 판정 사전 지표: 실물 LLR set의 dv별 `ch / (edge상한 × dv)` 비율이
+- ㉱ 판정 사전 지표: 평가할 LLR set의 dv별 `ch / (edge상한 × dv)` 비율이
   1에 가까우면 클리핑 여지가 없고, 낮으면 (P,Q) 스캔 가치가 있다
 
 ## ⏭ 후속
 
-- 실물 파라미터 반입 후 config_real.json 스캔으로 최종 판정
+- 평가 대상 파라미터로 config_target.json 스캔을 돌려 최종 판정
 - 판정 기준: 결론 ㉱의 사전 지표로 클리핑 여지를 먼저 보고, 스캔에서 무클립
   대비 개선이 나오면 유효로 판정한다
