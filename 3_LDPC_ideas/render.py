@@ -10,10 +10,7 @@
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md.
       제외: _pm/, _template/, Sim_Output/, __pycache__/
 
-산출 html은 브라우저 열람과 Confluence 붙여넣기를 함께 감당한다. 그래서 모든 CSS
-선택자를 최상위 래퍼 id(WRAPPER_ID) 아래로 가두고, 붙여넣을 범위를 주석으로 표시한다.
-Confluence에 올릴 때는 <!doctype html>부터가 아니라 "복사 시작"과 "복사 끝" 사이만
-복사한다 (<body> 태그가 딸려 가면 Confluence 페이지 전체가 물든다).
+모든 CSS 선택자를 최상위 래퍼 id(WRAPPER_ID) 아래로 가둔다.
 
 필요 패키지: markdown (pip install markdown)
 """
@@ -100,12 +97,10 @@ PAGE_FRAME = """<!doctype html>
 <title>{title}</title>
 </head>
 <body>
-<!-- ############################## 복사 시작 ############################## -->
 <div id="{wrapper_id}">
 <style>{style}</style>
 {body}
 </div>
-<!-- ############################## 복사 끝 ############################## -->
 </body>
 </html>
 """
