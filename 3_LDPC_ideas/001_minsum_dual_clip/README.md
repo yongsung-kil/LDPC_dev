@@ -49,18 +49,18 @@
 
 ### 실험 환경 이름
 
-- ㉮ **원본 LLR 환경**: LLR 파일 LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기
+- ㉮ **LLR_MATRIX_HD_1 환경**: LLR 파일 LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기
   ch 5/10/13/28), edge 메시지 상한 7 (config.json)
 - ㉯ **상한 여유 환경**: 균일 ch=8, edge 상한 15. 채널 정보 대비 edge 상한에
   여유가 있어 메시지 진폭이 크게 자랄 수 있는 조건 (config_headroom.json)
 - ㉰ **비율 복원 환경**: 균일 ch=16, edge 상한 15. ch와 edge 상한의 비율을
-  원본 LLR 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)
+  LLR_MATRIX_HD_1 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)
 
 ### 준비된 실험 (config 슬롯)
 
 | config | 확인하려는 것 | 채울 슬롯 | 실행 |
 |--------|--------------|-----------|------|
-| config.json | 원본 LLR 환경 on/off | 없음 (바로 실행) | `python scan.py` |
+| config.json | LLR_MATRIX_HD_1 환경 on/off | 없음 (바로 실행) | `python scan.py` |
 | config_headroom.json | 상한 여유 환경 (클리핑 이득 조건 재현) | 없음 | `python scan.py config_headroom.json 15,15 8,11 4,8` |
 | config_balanced.json | 비율 복원 환경 (이득 소멸 대조) | 없음 | `python scan.py config_balanced.json 15,15 8,15 4,8` |
 | config_target.json | 평가 대상 파라미터 최종 판정 | H_matrix.file, decoder.llr_matrix.file 두 개 | `python scan.py config_target.json 7,7 5,7 3,5 2,3` |
@@ -72,7 +72,7 @@ edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바�
 
 ### 결과 (E=200 FER)
 
-원본 LLR 환경:
+LLR_MATRIX_HD_1 환경:
 
 | (P,Q) | FER | BER | avg_iter |
 |-------|-----|-----|----------|
@@ -103,12 +103,12 @@ edge 상한이 다른 파일이면 무클립 쌍은 (상한, 상한)으로 바�
 클리핑의 득실은 **채널 LLR 스케일 대비 edge magnitude 상한의 여유**가 결정한다.
 
 - ㉮ 반전 가능 조건이 사망 경계를 정확히 예측한다 (지표 계획 4행): dv 열의
-  최대 extrinsic `Q + (dv-1)·P`가 그 dv의 ch보다 작으면 반전 불능. 원본 LLR
-  환경의 지배 열 dv=4(147개 중 129개)는 ch=10이라 (2,3)은 9로 사망(FER 1.0),
-  (2,5)는 11로 겨우 생존(9.69e-01). dv별 오류 로그(지표 계획 3행)로 직접
-  확인됨 ((2,3)에서 dv=4 오류가 iter 2부터 79.2로 동결)
-- ㉯ 원본 LLR 환경의 dv별 ch(10/13/28)는 edge 상한 7 기준 반전 조건에 빠듯하게
-  튜닝되어 있어 클리핑 여지가 없다 (dv=2는 ch=28 > 14라 무클립에서도 반전
+  최대 extrinsic `Q + (dv-1)·P`가 그 dv의 ch보다 작으면 반전 불능.
+  LLR_MATRIX_HD_1 환경의 지배 열 dv=4(147개 중 129개)는 ch=10이라 (2,3)은
+  9로 사망(FER 1.0), (2,5)는 11로 겨우 생존(9.69e-01). dv별 오류 로그(지표
+  계획 3행)로 직접 확인됨 ((2,3)에서 dv=4 오류가 iter 2부터 79.2로 동결)
+- ㉯ LLR_MATRIX_HD_1 환경의 dv별 ch(10/13/28)는 edge 상한 7 기준 반전 조건에
+  빠듯하게 튜닝되어 있어 클리핑 여지가 없다 (dv=2는 ch=28 > 14라 무클립에서도 반전
   불능, 기지 위반). 반면 무클립이 과확신으로 붕괴하는 상한 여유 환경에서는
   논문 가이드값(P=상한/4, Q=상한/2)이 FER 1.0을 0으로 되돌린다: 논문의 이득
   조건 (내부 진폭이 채널 LLR보다 크게 성장하는 저비트폭 환경)이 재현됨

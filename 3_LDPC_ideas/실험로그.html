@@ -84,7 +84,7 @@
   격차 기반 동적 정규화 + 이중 상한)</li>
 <li><strong>환경</strong>: H-matrix <code>example_18x147_z256.qc</code>, seed 0, fixed_error [200, 300],
   frames_per_batch 64, max_iter 20. LLR set과 edge 양자화는 001과 같은 세 조합
-  (원본 LLR 환경 edge 레벨 {7,5,3,1}, 상한 여유와 비율 복원 환경 {15,11,7,3})</li>
+  (LLR_MATRIX_HD_1 환경 edge 레벨 {7,5,3,1}, 상한 여유와 비율 복원 환경 {15,11,7,3})</li>
 <li><strong>결과</strong> (FER, E=200 / E=300):</li>
 </ul>
 <table>
@@ -99,7 +99,7 @@
 </thead>
 <tbody>
 <tr>
-<td>원본 LLR 환경</td>
+<td>LLR_MATRIX_HD_1 환경</td>
 <td>4.84e-01 / 9.84e-01</td>
 <td>1.00 / 1.00</td>
 <td>7.97e-01 / 1.00 (악화)</td>
@@ -136,7 +136,7 @@
 <li>㉱ 알파 low에 문턱 거동이 있다: 0.75는 포화 붕괴 루프를 끊지만 0.85는 못
     끊어 무보정과 같아진다 (감쇠가 포화 분포를 바꿔 선택율 자체가 되먹임:
     같은 T=4에서 0.75면 선택율 0.321, 0.85면 0.983). 0.5는 과감쇠로 손해</li>
-<li>㉲ 조건 구조는 001과 동일: ch 대비 edge 상한 여유가 없으면(원본 LLR,
+<li>㉲ 조건 구조는 001과 동일: ch 대비 edge 상한 여유가 없으면(LLR_MATRIX_HD_1,
     비율 복원 환경) 어떤 정규화도 손해. 사전 지표 <code>ch / (edge상한 × dv)</code>
     공유</li>
 <li><strong>상세</strong>: <code>002_minsum_dynamic_normalization/README.md</code>, 재현은 scan.py +
@@ -162,7 +162,7 @@
 </thead>
 <tbody>
 <tr>
-<td>원본 LLR 환경</td>
+<td>LLR_MATRIX_HD_1 환경</td>
 <td>파일 (dv별 ch 5/10/13/28)</td>
 <td>7</td>
 <td>4.84e-01</td>
@@ -187,16 +187,16 @@
 <ul>
 <li><strong>인사이트</strong>:</li>
 <li>㉮ 클리핑의 득실은 H-matrix 품질이 아니라 <strong>채널 LLR 스케일 대비 edge magnitude
-    상한의 여유(성장 여지)</strong>가 결정한다. 여유가 없으면(원본 LLR 환경, 비율 복원
+    상한의 여유(성장 여지)</strong>가 결정한다. 여유가 없으면(LLR_MATRIX_HD_1 환경, 비율 복원
     환경) 클리핑은 반전 가능성만 깎아 악화시키고, 여유가 커서 무클립이 과확신으로
     붕괴하는 상한 여유 환경에서는 논문 가이드값이 FER 1.0을 0으로 되돌린다</li>
 <li>㉯ 사망 경계는 반전 가능 조건으로 정확히 예측된다: dv 열의 최대 extrinsic
     <code>Q + (dv-1)·P</code>가 그 dv의 ch보다 작으면 해당 열은 채널 결정을 영원히 반전
-    불능. 관측 전례와 일치 (원본 LLR 환경 dv=4 ch=10: (2,3)은 9로 사망, (2,5)는
+    불능. 관측 전례와 일치 (LLR_MATRIX_HD_1 환경 dv=4 ch=10: (2,3)은 9로 사망, (2,5)는
     11로 생존. 비율 복원 환경 dv=4 ch=16: (4,8)은 16 동률로 사실상 사망)</li>
 <li>㉰ 같은 P에서 Q를 키우면 일관 개선: 이중 상한(P&lt;Q)이 단일 상한(P=Q)보다
     낫다는 논문 구조 주장은 세 환경 모두에서 방향 재현</li>
-<li>㉱ dv=2 열(ch=28, 상한 7×2=14)은 원본 LLR 환경에서 클리핑과 무관하게 처음부터 반전
+<li>㉱ dv=2 열(ch=28, 상한 7×2=14)은 LLR_MATRIX_HD_1 환경에서 클리핑과 무관하게 처음부터 반전
     불능 (전 실행에서 에러 22.7개 동결, TODO의 기지 위반). 성공 판정이
     information 구간만 검사하므로 FER에는 직접 안 걸림</li>
 <li>㉲ 적용 판단 기준 도출: 평가할 LLR set에서 dv별 <code>ch / (7·dv)</code> 비율을 먼저

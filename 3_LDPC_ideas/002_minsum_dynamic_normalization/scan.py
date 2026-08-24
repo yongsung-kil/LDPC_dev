@@ -32,7 +32,7 @@ from src.run import main
 
 from decoder import MinSumDynamicNormalizationDecoder
 
-# (P, Q, 알파low%, 알파high%, 격차T). 기본 목록은 원본 LLR 환경(edge 상한 7)용:
+# (P, Q, 알파low%, 알파high%, 격차T). 기본 목록은 LLR_MATRIX_HD_1 환경(edge 상한 7)용:
 # 동등성 검증 1개 + 고정 정규화 대조군 + 동적 정규화 변형
 COMBOS = [
     (7, 7, 100, 100, 1),   # 무효과 = base_run 동등성 검증

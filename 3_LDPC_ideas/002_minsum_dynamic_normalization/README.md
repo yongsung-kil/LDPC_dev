@@ -66,18 +66,18 @@ ieee:11476755가 구현 참고용).
 
 ### 실험 환경 이름 (001과 동일)
 
-- ㉮ **원본 LLR 환경**: LLR 파일 LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기
+- ㉮ **LLR_MATRIX_HD_1 환경**: LLR 파일 LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기
   ch 5/10/13/28), edge 메시지 상한 7 (config.json)
 - ㉯ **상한 여유 환경**: 균일 ch=8, edge 상한 15. 채널 정보 대비 edge 상한에
   여유가 있어 메시지 진폭이 크게 자랄 수 있는 조건 (config_headroom.json)
 - ㉰ **비율 복원 환경**: 균일 ch=16, edge 상한 15. ch와 edge 상한의 비율을
-  원본 LLR 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)
+  LLR_MATRIX_HD_1 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)
 
 ### 준비된 실험 (config 슬롯)
 
 | config | 확인하려는 것 | 채울 슬롯 | 실행 |
 |--------|--------------|-----------|------|
-| config.json | 원본 LLR 환경 on/off | 없음 (바로 실행) | `python scan.py` |
+| config.json | LLR_MATRIX_HD_1 환경 on/off | 없음 (바로 실행) | `python scan.py` |
 | config_headroom.json | 상한 여유 환경 (감쇠 이득 조건에서 동적 정규화와 클리핑 비교) | 없음 | `python scan.py config_headroom.json 15,15,100,100,1 15,15,75,75,1 15,15,50,100,1 4,8,100,100,1 4,8,50,100,1 4,8,75,100,1` |
 | config_balanced.json | 비율 복원 환경 (건강한 기준선을 해치지 않는지) | 없음 | `python scan.py config_balanced.json 15,15,100,100,1 15,15,75,75,1 15,15,75,100,1 15,15,50,100,1` |
 | config_target.json | 평가 대상 파라미터 최종 판정 | H_matrix.file, decoder.llr_matrix.file 두 개 | `python scan.py config_target.json 7,7,100,100,1 7,7,75,75,1 7,7,75,100,1 7,7,50,100,1` |
@@ -86,7 +86,7 @@ ieee:11476755가 구현 참고용).
 
 조합 표기: (P, Q, 알파low%, 알파high%, 격차T). 선택율 = 알파 high 선택율.
 
-원본 LLR 환경 (edge 레벨 {7,5,3,1}, 레벨 간격 2):
+LLR_MATRIX_HD_1 환경 (edge 레벨 {7,5,3,1}, 레벨 간격 2):
 
 | 조합 | E=200 | E=300 | 선택율 | 비고 |
 |------|-------|-------|--------|------|
@@ -155,7 +155,7 @@ ieee:11476755가 구현 참고용).
   T < 레벨 간격이면 무보정으로, T가 너무 크면 고정 정규화로 퇴화한다.
   가이드: T = edge 레벨 간격 (두 레벨 이상 차이일 때만 알파 high)
 - ㉰ 알파 가이드: low 0.75, high 1.0. low 0.85는 문턱을 못 넘고 0.5는 과함
-- ㉱ 여유가 없는 환경(원본 LLR, 비율 복원)에서는 001과 마찬가지로 손해.
+- ㉱ 여유가 없는 환경(LLR_MATRIX_HD_1, 비율 복원)에서는 001과 마찬가지로 손해.
   판정 사전 지표도 001과 공유: 평가할 LLR set의 dv별 `ch / (edge상한 × dv)`
   비율이 1에 가까우면 여지 없음
 

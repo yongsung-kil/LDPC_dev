@@ -76,7 +76,7 @@
 README와 코드 docstring은 이 문서를 가리키기만 한다.</p>
 <hr />
 <h2>1. 구조 한눈에</h2>
-<pre><code>2_LDPC_base/src/decoder.py 의 BaseDecoder   ← 유일한 디코더 클래스 (엔진 + 원본 C++ 대응 기준 구현)
+<pre><code>2_LDPC_base/src/decoder.py 의 BaseDecoder   ← 유일한 디코더 클래스 (엔진 + C++ 대응 기준 구현)
         ▲ 상속 (run.py가 상위로 올라가며 2_LDPC_base를 찾아 import)
 3_LDPC_ideas/{아이디어}/decoder.py                 ← 논문마다 새로 만들고, 바꾸는 교체용 함수만 재정의
 
@@ -84,7 +84,7 @@ README와 코드 docstring은 이 문서를 가리키기만 한다.</p>
 2_LDPC_base/workspace/base_run/                    ← 기준 실험: DECODER_CLASS=None(BaseDecoder), decoder.py 없음
 </code></pre>
 <ul>
-<li>㉮ <strong>교체 단위 = 원본 C++ 함수 경계.</strong> "교체 지점"이란 본체가 특정 단계를 일부러
+<li>㉮ <strong>교체 단위 = C++ 함수 경계.</strong> "교체 지점"이란 본체가 특정 단계를 일부러
   별도 함수로 분리해 둬서 아이디어 버전이 그 함수만 갈아끼울 수 있게 만든 자리다</li>
 <li>㉯ 디코더 선택은 실험 폴더 run.py의 <code>DECODER_CLASS</code>가 한다 (config.json에는
   파라미터만 담는다)</li>
@@ -116,7 +116,7 @@ README와 코드 docstring은 이 문서를 가리키기만 한다.</p>
 <tr>
 <th>논문이 바꾸는 것</th>
 <th>재정의할 함수</th>
-<th>원본 C++ 대응</th>
+<th>C++ 대응</th>
 </tr>
 </thead>
 <tbody>
@@ -278,7 +278,7 @@ DECODER_CLASS = NoTieFlipDecoder
 <li>㉯ <strong>용어는 처음 나올 때 풀어 정의한다.</strong> 업계 약어(CNU, dv, FER 등)는 첫
   등장에서 원어와 뜻을 함께 적는다</li>
 <li>㉰ <strong>실험 환경에 자체 조어를 만들면 정의부터 적는다.</strong> 조어만 단독으로 쓰지
-  않는다 (예: "원 토이 환경" 대신 "원본 LLR 파일 환경 (LLR_MATRIX_HD_1,
+  않는다 (예: "원 토이 환경" 대신 "LLR_MATRIX_HD_1 환경 (dv별 ch 5/10/13/28,
   edge 상한 7)"처럼 실체를 함께 적는다)</li>
 <li>㉱ <strong>섹션 제목에 이모지를 하나씩 붙인다</strong> (📌 요약, 📄 출처, 📊 지표와 결과,
   🔬 실험, ✅ 결론 수준의 절제된 사용. 본문에는 붙이지 않는다)</li>
