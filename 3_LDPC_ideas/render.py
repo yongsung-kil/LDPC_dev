@@ -10,6 +10,11 @@
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md.
       제외: _pm/, _template/, Sim_Output/, __pycache__/
 
+산출 html은 브라우저 열람과 Confluence 붙여넣기를 함께 감당한다. 그래서 모든 CSS
+선택자를 최상위 래퍼 id(WRAPPER_ID) 아래로 가두고, 붙여넣을 범위를 주석으로 표시한다.
+Confluence에 올릴 때는 <!doctype html>부터가 아니라 "복사 시작"과 "복사 끝" 사이만
+복사한다 (<body> 태그가 딸려 가면 Confluence 페이지 전체가 물든다).
+
 필요 패키지: markdown (pip install markdown)
 """
 import re
@@ -21,16 +26,15 @@ import markdown
 IDEAS_DIR = Path(__file__).resolve().parent
 EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 
+WRAPPER_ID = "ldpcDocRoot"
+
 PAGE_STYLE = """
-:root {
+#ldpcDocRoot {
     --text: #24292f;
     --muted: #57606a;
     --border: #d0d7de;
     --surface: #f6f8fa;
     --accent: #0969da;
-}
-* { box-sizing: border-box; }
-body {
     margin: 0 auto;
     padding: 32px 24px 80px;
     max-width: 880px;
@@ -40,51 +44,52 @@ body {
     line-height: 1.7;
     background: #ffffff;
 }
-h1, h2, h3, h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
-h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
-h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
-h3 { font-size: 1.15em; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-p, ul, ol { margin: 0.6em 0; }
-li { margin: 0.25em 0; }
-blockquote {
+#ldpcDocRoot *, #ldpcDocRoot *::before, #ldpcDocRoot *::after { box-sizing: border-box; }
+#ldpcDocRoot h1, #ldpcDocRoot h2, #ldpcDocRoot h3, #ldpcDocRoot h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
+#ldpcDocRoot h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
+#ldpcDocRoot h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+#ldpcDocRoot h3 { font-size: 1.15em; }
+#ldpcDocRoot a { color: var(--accent); text-decoration: none; }
+#ldpcDocRoot a:hover { text-decoration: underline; }
+#ldpcDocRoot p, #ldpcDocRoot ul, #ldpcDocRoot ol { margin: 0.6em 0; }
+#ldpcDocRoot li { margin: 0.25em 0; }
+#ldpcDocRoot blockquote {
     margin: 0.8em 0;
     padding: 0.4em 1em;
     border-left: 4px solid var(--border);
     color: var(--muted);
     background: var(--surface);
 }
-table {
+#ldpcDocRoot table {
     border-collapse: collapse;
     margin: 1em 0;
     display: block;
     overflow-x: auto;
 }
-th, td {
+#ldpcDocRoot th, #ldpcDocRoot td {
     border: 1px solid var(--border);
     padding: 6px 12px;
     text-align: left;
     white-space: nowrap;
 }
-th { background: var(--surface); }
-tr:nth-child(even) td { background: #fbfcfd; }
-code {
+#ldpcDocRoot th { background: var(--surface); }
+#ldpcDocRoot tr:nth-child(even) td { background: #fbfcfd; }
+#ldpcDocRoot code {
     font-family: Consolas, "D2Coding", monospace;
     font-size: 0.9em;
     background: var(--surface);
     padding: 0.15em 0.4em;
     border-radius: 4px;
 }
-pre {
+#ldpcDocRoot pre {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 12px 16px;
     overflow-x: auto;
 }
-pre code { background: none; padding: 0; }
-hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+#ldpcDocRoot pre code { background: none; padding: 0; }
+#ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 """
 
 PAGE_FRAME = """<!doctype html>
@@ -93,10 +98,14 @@ PAGE_FRAME = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<style>{style}</style>
 </head>
 <body>
+<!-- ############################## 복사 시작 ############################## -->
+<div id="{wrapper_id}">
+<style>{style}</style>
 {body}
+</div>
+<!-- ############################## 복사 끝 ############################## -->
 </body>
 </html>
 """
@@ -127,6 +136,7 @@ def render_file(md_path):
     body = redirect_md_links_to_html(body)
     page = PAGE_FRAME.format(
         title=extract_title(md_text, md_path.stem),
+        wrapper_id=WRAPPER_ID,
         style=PAGE_STYLE,
         body=body,
     )
