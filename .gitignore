@@ -47,3 +47,6 @@ __pycache__/
 
 # 테스트/예시 작업 공간
 _test/
+
+# 글로벌 CLAUDE.md 사본 (원본: ~/.claude/, 동기화 규칙으로 갱신)
+_claude/
