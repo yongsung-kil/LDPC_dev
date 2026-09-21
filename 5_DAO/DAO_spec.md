@@ -48,7 +48,7 @@ LLR_MATRIX
 | `CSW`            | int            | CSW 값 (-1 또는 8~1408, 8의 배수)   |
 | `iter_start`     | int            | 적용 시작 iteration                 |
 | `iter_end`       | int            | 적용 종료 iteration                 |
-| `floor_flag`     | int            | 플로어 플래그 (현재 항상 -1)         |
+| `floor_flag`     | int            | SW 분기 index. -1은 분기 없음, 0 이상은 구간 안의 분기 번호 (3.7절) |
 | `is_group_restart` | bool         | Restart 그룹 여부                   |
 
 ---
@@ -67,17 +67,22 @@ LLR_MATRIX
 | H3 | `num_group == len(type_each_group)` | "num_group mismatch with type_each_group length" |
 | H4 | `len(max_value) == num_parameter_each_set` | "max_value length mismatch" |
 | H5 | `len(min_value) == num_parameter_each_set` | "min_value length mismatch" |
+| H6 | `num_group == len(groups)` | "num_group mismatch with groups" |
+| H8 | `type_each_group[g]`가 10 이상이면 일의 자리 == 그룹의 분기 index, 십의 자리 == 그 구간의 분기 수. 0과 1은 검사하지 않음 | "Group {idx} header type {t} says branch {b} but rows carry {c}" |
 
 ### 3.2 그룹/행 구조 검증
 
 | 규칙 | 검증 내용 | 에러 메시지 |
 |------|----------|-------------|
 | G1 | 그룹이 비어있지 않음 | "Group {idx} is empty" |
-| G2 | 그룹의 iter_start == 이전 그룹 iter_end + 1 | "Group {idx} iter_start must be exactly one greater than previous group's iter_end" |
+| G2 | 그룹의 iter_start가 SW 분기 배치 규칙(3.7절)에 맞음. 분기가 없으면 이전 그룹 iter_end + 1 | "Group {idx} iter_start must be {expected} (SW branch {b}), got {start}" |
 | G3 | 그룹 내 모든 row의 iter_start 동일 | "Group {idx} iteration_start mismatch" |
 | G4 | 그룹 내 모든 row의 iter_end 동일 | "Group {idx} iteration_end mismatch" |
 | G5 | iter_end >= iter_start | "Group {idx} iteration_end < iteration_start" |
 | G6 | 총 행 수 == sum(num_row_each_group) | "Total row count mismatch" |
+| G7 | 그룹의 행 수 == `num_row_each_group[g]` | "Group {idx} row count mismatch" |
+| G9 | 그룹 안 모든 row의 `floor_flag`가 같음 | "Group {idx} rows carry different SW branch index (floor_flag)" |
+| G10 | 한 구간의 모든 분기가 구간 시작과 끝을 똑같이 덮음 (3.7절) | "SW branch {b} ends at iteration {e} but its span ends at {s}" |
 
 ### 3.3 Restart 그룹 규칙
 
@@ -85,13 +90,15 @@ LLR_MATRIX
 |------|----------|-------------|
 | R1 | Restart 그룹은 정확히 1개의 row만 가짐 | "Restart Group {idx} must have exactly 1 row" |
 | R2 | Restart 그룹의 iter_start == iter_end | "Restart Group {idx} row must have iter_start == iter_end" |
+| R3 | Restart row 길이 == `num_parameter_each_set * num_dv` | "Restart Group {idx} row length mismatch" |
+| R4 | Restart row CSW == -1 | "Restart Group {idx} row CSW must be -1" |
 
 ### 3.4 Row 검증
 
 | 규칙 | 검증 내용 | 에러 메시지 |
 |------|----------|-------------|
 | RW1 | `len(ch_th_values) == num_parameter_each_set * num_dv` | "Group {g} Row {r} length mismatch" |
-| RW2 | `floor_flag == -1` | "Group {g} Row {r} invalid floor_flag" |
+| RW2 | `floor_flag`가 -1 또는 0 이상 MAX_SW_BRANCH(9) 이하 | "Group {g} Row {r} invalid SW branch index (floor_flag)" |
 | RW3 | CH 값들 >= 0 | "CH values must be positive" |
 | RW4 | TH 값들 >= 0 | "TH values must be positive" |
 | RW5 | TH 값들 내림차순 (non-increasing) | "TH values must be non-increasing" |
@@ -112,6 +119,42 @@ LLR_MATRIX
 |------|------|----------|
 | HBF1 | `is_HBF_OPT == True` | maxDv(dv_idx=0)의 TH 값은 모두 상수(`HBF_OPT_TH_CONSTANT_VAL`) |
 | HBF2 | `is_HBF_OPT == True` | max_iteration <= HBF_MAX_ITERATION |
+
+---
+
+### 3.7 SW 분기와 묶음
+
+SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 분기로 갈라 디코더가 프레임마다 하나를 고르게 하는 구조다. DAO는 분기를 만들거나 없애거나 옮기지 않고, 사용자가 입력 매트릭스로 정한 분기를 읽어 묶음 단위로 변이한다.
+
+**표기** (파일 형식은 바뀌지 않는다)
+
+- ㉮ 각 row의 마지막 칸 `floor_flag`가 분기 index다. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호
+- ㉯ 헤더 `type_each_group`은 디코더용이다. `{분기 수}{분기 index}` 두 자리(예: 20, 21) 또는 원래 값(0, 1). DAO는 읽은 값을 그대로 보존해 다시 쓰고, 10 이상일 때만 row 꼬리와 대조하며(H8) 구간 경계 판정에 쓴다
+
+**용어**
+
+- ㉮ **묶음(bundle)**: 분기 index가 같은 연속 그룹. 분기 index가 -1이면 그룹 하나가 묶음 하나다. 묶음은 헤더와 무관하다 (헤더가 1이어도 꼬리 0이 이어지면 묶음이다)
+- ㉯ **구간(span)**: index 0으로 시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위. index 0이 그대로 이어지는데 헤더의 분기 표시(10 이상인 값의 일의 자리)가 바뀌는 자리도 구간 경계다 (예: 헤더 1인 그룹 뒤에 헤더 20인 그룹). 구간 안에서 index가 1 늘면 iteration은 구간 시작으로 되돌아간다. 모든 분기는 구간의 시작과 끝을 똑같이 덮는다(G10). 구간 끝은 분기 0이 덮는 끝이다
+
+`Build_SW_Branch_Layout()`이 groups만 보고 그룹별 분기 index, 묶음, 구간을 계산한다. `Is_LLR_Valid()`가 이 계산으로 G2와 G10을 검사한다.
+
+**예** (`Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`)
+
+| 그룹 | 헤더 | 꼬리 | iteration | 뜻 |
+|------|------|------|-----------|-----|
+| 0, 1 | 20, 20 | 0, 0 | 1~1, 2~4 | 구간 1~4의 분기 0 (두 그룹이 한 묶음) |
+| 2 | 21 | 1 | 1~4 | 구간 1~4의 분기 1 |
+| 3 | 20 | 0 | 5~8 | 구간 5~8의 분기 0 |
+| 4, 5 | 21, 21 | 1, 1 | 5~5, 6~8 | 구간 5~8의 분기 1 (한 묶음) |
+| 6~11 | 1 | -1 | 9~124 | 분기 없음 |
+
+**최적화 규칙**
+
+- ㉮ 타겟 목록(`target_group_indices`)은 묶음 단위다. 묶음은 첫 그룹 index 하나로 들어가고, `INITIAL_TARGET_GROUP_IDX`가 묶음 중간이면 그 묶음의 첫 그룹으로 당긴다
+- ㉯ 분기 그룹이 하나라도 있는 매트릭스에서는 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 다른 모드가 시퀀스에 있으면 `Set_Gen_Trial_LLR_Mode`가 오류로 멈춘다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다
+- ㉰ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다. 다른 분기가 타겟이면 오류로 멈춘다
+- ㉱ MUTATE_MATRIX는 묶음의 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CHTH`개까지 변이하고, `Correct_LLR_Matrix`가 row마다 정렬한다. MUTATE_CSW는 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CSW`개까지 변이하고 그룹 안에서 정렬한다
+- ㉲ HBF(Hybrid Bit Flipping)는 지금 HD 복호의 iteration 1~4를 뜻한다. HBF 최적화 모드(`IS_HBF_OPT`)와 SW 분기의 결합은 다루지 않는다
 
 ---
 

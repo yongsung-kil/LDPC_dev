@@ -195,3 +195,14 @@ MULTI_ROUND_INIT_FUNC: dict[int, str] = {
     GenLLRMode.DELETE_ROW: 'Init_Delete_Row_Mode',
     GenLLRMode.INSERT_RESTART_GROUP: 'Init_Insert_Restart_Group_Mode',
 }
+
+# SW(Syndrome Weight) 분기: 각 row의 마지막 칸(floor_flag)이 분기 index다
+SW_BRANCH_NONE = -1          # 분기 없음
+MAX_SW_BRANCH = 9            # 한 구간의 분기 index 상한 (파일 헤더가 한 자리씩 끊어 읽는다)
+
+# SW 분기 그룹이 하나라도 있는 매트릭스에서 허용되는 모드. 나머지 모드는 이웃 그룹의 iteration을
+# 빌리거나 재배치해 구간 정렬을 깨뜨리므로 Set_Gen_Trial_LLR_Mode가 오류로 멈춘다
+SW_BRANCH_ALLOWED_MODES: set[int] = {
+    GenLLRMode.MUTATE_MATRIX,
+    GenLLRMode.MUTATE_CSW,
+}

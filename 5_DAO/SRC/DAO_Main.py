@@ -617,6 +617,7 @@ class LLR_OPT:
         self.current_test_mode = TestMode.FULL
         self.current_target_group_idx: int = -1
         self.current_target_group_list_index: int = -1
+        self.current_target_bundle: list[int] = []   # 타겟 그룹이 속한 묶음 (SW 분기 index가 같은 연속 그룹)
         self.current_trial_idx: int = 0
         self.is_update_at_last_trial: bool = False
         self.is_previous_trial_updated: bool = False
@@ -838,6 +839,7 @@ class LLR_OPT:
                     self.max_modification_trial,
                     self.current_target_group_idx,
                     self.current_target_group_list_index,
+                    self.current_target_bundle,
                 ) if self.is_root else None,
                 comm_name="Bcast_Trial_LLR_Mode"
             )
@@ -849,6 +851,7 @@ class LLR_OPT:
                 self.max_modification_trial,
                 self.current_target_group_idx,
                 self.current_target_group_list_index,
+                self.current_target_bundle,
             ) = mode_info
         except Exception as e:
             self.Write_MPI_Error_Snapshot(e, "Bcast_Trial_LLR_Mode")
@@ -2286,11 +2289,23 @@ class LLR_OPT:
         # - 그룹 수가 줄어 목록이 비면 마지막 그룹 하나를 타겟으로 둔다
         if self.optimal_LLR_matrix is not None:
             base_matrix = self.optimal_LLR_matrix
-            new_target_indices = list(range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, len(base_matrix.groups)))
-            if not new_target_indices:
-                new_target_indices = [len(base_matrix.groups) - 1]
+            base_matrix.Build_SW_Branch_Layout()
+            candidate_indices = list(range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, len(base_matrix.groups)))
+            if not candidate_indices:
+                candidate_indices = [len(base_matrix.groups) - 1]
+            # 묶음(SW 분기 index가 같은 연속 그룹)은 첫 그룹 하나로 타겟 목록에 넣는다. 시작 index가 묶음 중간이면 그 묶음의 첫 그룹으로 당긴다
+            new_target_indices = []
+            for idx in candidate_indices:
+                bundle_head = base_matrix.bundle_of_group[idx][0]
+                if bundle_head not in new_target_indices:
+                    new_target_indices.append(bundle_head)
             self.target_group_indices = new_target_indices
-            self.Write_Log_Lines(f"\t- Updated target_group_indices: {self.target_group_indices} (from optimal_LLR_matrix)")
+            targets_str = ", ".join(
+                f"g{head}" if len(base_matrix.bundle_of_group[head]) == 1
+                else "{" + ", ".join(f"g{member}" for member in base_matrix.bundle_of_group[head]) + "}"
+                for head in new_target_indices
+            )
+            self.Write_Log_Lines(f"\t- Updated target_group_indices: {self.target_group_indices} (from optimal_LLR_matrix; targets: {targets_str})")
 
         # 모드와 타겟 그룹은 갱신된 target_group_indices 위에서 정한다
         self.Set_Gen_Trial_LLR_Mode()
@@ -7064,6 +7079,16 @@ class LLR_OPT:
 
         self.Write_Log_Lines(message)
 
+    def _Get_Target_Bundle_Groups(self, matrix: LLR_MATRIX) -> list[int]:
+        """변이할 그룹 index 목록. 타겟 그룹이 묶음에 속하면 묶음 전체, 아니면 그 그룹 하나다. -1은 마지막 그룹을 뜻한다."""
+        if not matrix.groups:
+            return []
+        target_group_idx = self.current_target_group_idx
+        if target_group_idx == -1 or target_group_idx >= len(matrix.groups):
+            target_group_idx = len(matrix.groups) - 1
+        matrix.Build_SW_Branch_Layout()
+        return list(matrix.bundle_of_group[target_group_idx])
+
     def Generate_Random_Mutation(self, matrix: LLR_MATRIX) -> list[tuple[int, int, int, int, int]]:
         """
         LLR 매트릭스에 적용할 랜덤 mutation을 생성하는 함수.
@@ -7079,49 +7104,35 @@ class LLR_OPT:
             list[tuple[int, int, int, int, int]]: (group_idx, row_idx, col_idx, old_value, new_value)
         """
 
-        # Set_Gen_Trial_LLR_Mode에서 계산된 target_group_idx 사용
-        target_group_idx = self.current_target_group_idx
-
-        element_pool = []
-        for group_idx, group in enumerate(matrix.groups):
-
-            # target_group_idx가 -1이면 마지막 그룹, 아니면 지정된 그룹만
-            if target_group_idx == -1:
-                # 마지막 그룹만
-                if group_idx != len(matrix.groups) - 1:
-                    continue
-            else:
-                # 특정 그룹만
-                if group_idx != target_group_idx:
-                    continue
-
+        # 타겟 묶음의 그룹마다 따로 NUM_ELEMENTS_TO_MUTATE_CHTH개까지 고른다 (묶음이 아니면 그룹 하나)
+        chosen: list[tuple[int, int, int]] = []
+        for group_idx in self._Get_Target_Bundle_Groups(matrix):
+            group = matrix.groups[group_idx]
             skip_max_row_idx = 0
             if self.now_enable_CSW_update_limit:
                 skip_max_row_idx = self.Get_Mutate_Matrix_Skip_Row_Idx(group)
 
+            element_pool = []
             for row_idx, row in enumerate(group):
                 if row_idx < skip_max_row_idx:
                     continue
                 for col_idx in range(len(row.ch_th_values)):
                     element_pool.append((group_idx, row_idx, col_idx))
 
-        if not element_pool:
+            # HBF_OPT 모드: immutable 범위의 element 제외
+            if DAO_CONFIG.IS_HBF_OPT and matrix.HBF_immutable_col_range is not None:
+                immutable_start, immutable_end = matrix.HBF_immutable_col_range
+                element_pool = [
+                    (g, r, c) for g, r, c in element_pool
+                    if not (immutable_start <= c < immutable_end)
+                ]
+
+            num_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH, len(element_pool))
+            if num_changes > 0:
+                chosen.extend(random.sample(element_pool, num_changes))
+
+        if not chosen:
             return []
-
-        # HBF_OPT 모드: immutable 범위의 element 제외
-        if DAO_CONFIG.IS_HBF_OPT and matrix.HBF_immutable_col_range is not None:
-            immutable_start, immutable_end = matrix.HBF_immutable_col_range
-            element_pool = [
-                (g, r, c) for g, r, c in element_pool
-                if not (immutable_start <= c < immutable_end)
-            ]
-
-        num_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH, len(element_pool))
-        if num_changes == 0:
-            return []
-
-        # === 무작위 element 선택 ===
-        chosen = random.sample(element_pool, num_changes)
 
         # MUTATION_RANGE=0이면 mutation 불가
         if MUTATE_CONFIG.MUTATION_RANGE == 0:
@@ -7149,40 +7160,18 @@ class LLR_OPT:
         최대 K개까지 -J ~ +J 범위 내에서 랜덤하게 변경하는 함수
         """
 
-        # Set_Gen_Trial_LLR_Mode에서 계산된 target_group_idx 사용
-        target_group_idx = self.current_target_group_idx
+        # 타겟 묶음의 그룹마다 따로 NUM_ELEMENTS_TO_MUTATE_CSW개까지 row를 고른다 (묶음이 아니면 그룹 하나). 첫 row(CSW -1)는 제외
+        chosen: list[tuple[int, int]] = []
+        for group_idx in self._Get_Target_Bundle_Groups(matrix):
+            element_pool = [(group_idx, row_idx) for row_idx in range(1, len(matrix.groups[group_idx]))]
+            max_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CSW, len(element_pool))
+            if max_changes == 0:
+                continue
+            num_changes = random.randint(1, max_changes)
+            chosen.extend(random.sample(element_pool, num_changes))
 
-        element_pool = []
-        for group_idx, group in enumerate(matrix.groups):
-
-            # target_group_idx가 -1이면 마지막 그룹, 아니면 지정된 그룹만
-            if target_group_idx == -1:
-                # 마지막 그룹만
-                if group_idx != len(matrix.groups) - 1:
-                    continue
-            else:
-                # 특정 그룹만
-                if group_idx != target_group_idx:
-                    continue
-
-            for row_idx, row in enumerate(group):
-                if row_idx == 0:
-                    continue
-                element_pool.append((group_idx, row_idx))
-
-        if not element_pool:
+        if not chosen:
             return []
-
-        max_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CSW, len(element_pool))
-        if max_changes == 0:
-            return []
-        num_changes = random.randint(1, max_changes)
-
-        # === 무작위 element 선택. HD HBF 모드 시 max Dv의 Th값은 변화 없도록 수정 ===
-        chosen = []
-        while len(chosen) < num_changes:
-            group_idx, row_idx = random.choice(element_pool)
-            chosen.append((group_idx, row_idx))
 
         # MUTATION_RANGE=0이면 mutation 불가
         if MUTATE_CONFIG.MUTATION_RANGE == 0:
@@ -7261,6 +7250,8 @@ class LLR_OPT:
         """
         self.Write_Log_Lines(f"[current_gen_trial_LLR_mode]: {self.current_gen_trial_LLR_mode_name} ({self.current_gen_trial_LLR_mode})  {self.Get_Mode_Sequence_Str()}")
         self.Write_Log_Lines(f"[target_group_indices]: {self.current_target_group_idx}  {self.Get_Target_Group_Indices_Str()}")
+        if len(self.current_target_bundle) > 1:
+            self.Write_Log_Lines(f"[target_bundle]: {self.current_target_bundle} (SW 분기 index가 같은 연속 그룹을 한 묶음으로 변이)")
         self.Write_Log_Lines(f"[is_update_at_last_trial]: {self.is_update_at_last_trial}")
 
     def Print_Stage_Info(self):
@@ -8336,6 +8327,37 @@ class LLR_OPT:
             self.now_enable_CSW_update_limit = False
             self.CSW_update_limit_value = MAX_CSW
     
+    def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_idx: int) -> Optional[str]:
+        """SW 분기가 있는 매트릭스에서 이 모드와 타겟이 허용되는지 본다.
+
+        분기 그룹이 하나라도 있으면 SW_BRANCH_ALLOWED_MODES(MUTATE_MATRIX, MUTATE_CSW)만 허용한다. 다른 모드는
+        이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨린다. 타겟이 여러 분기로 갈라진 구간 안에
+        있으면 마지막 분기만 갱신한다. 분기 구조를 만들거나 없애는 일은 사용자가 입력 매트릭스로 한다.
+
+        Returns:
+            Optional[str]: 막는 이유. 허용되면 None
+        """
+        matrix.Build_SW_Branch_Layout()
+        if not matrix.has_sw_branch:
+            return None
+        allowed_values = {int(mode) for mode in SW_BRANCH_ALLOWED_MODES}
+        if int(selected_mode) not in allowed_values:
+            allowed_names = ", ".join(GenLLRMode(value).name for value in sorted(allowed_values))
+            return (
+                f"matrix has SW branch groups, so mode {GenLLRMode(selected_mode).name} ({int(selected_mode)}) is not allowed. "
+                f"Allowed modes: {allowed_names}. Set Gen_LLR_Mode_SEQUENCE accordingly"
+            )
+        span = matrix.span_of_group[target_group_idx]
+        if span is not None:
+            last_branch = span[2] - 1
+            branch = matrix.group_branch_idx[target_group_idx]
+            if branch != last_branch:
+                return (
+                    f"target g{target_group_idx} is SW branch {branch} of the span iteration {span[0]}~{span[1]} "
+                    f"({span[2]} branches); DAO updates only the last branch ({last_branch})"
+                )
+        return None
+
     def Set_Gen_Trial_LLR_Mode(self):
         if self.is_root:
             if DAO_CONFIG.IS_HBF_OPT:
@@ -8371,6 +8393,14 @@ class LLR_OPT:
             if self.optimal_LLR_matrix and self.current_target_group_idx >= len(self.optimal_LLR_matrix.groups):
                 self.Write_Log_Lines(f"\t- WARNING: current_target_group_idx ({self.current_target_group_idx}) exceeds group count ({len(self.optimal_LLR_matrix.groups)}), using last group")
                 self.current_target_group_idx = len(self.optimal_LLR_matrix.groups) - 1
+
+            # SW 분기: 타겟 묶음을 정하고, 분기 매트릭스에서 허용되지 않는 모드나 마지막이 아닌 분기를 막는다
+            self.current_target_bundle = [self.current_target_group_idx]
+            if self.optimal_LLR_matrix is not None:
+                sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.current_target_group_idx)
+                if sw_error is not None:
+                    self.MPI_Abort(f"Set_Gen_Trial_LLR_Mode: {sw_error}")
+                self.current_target_bundle = list(self.optimal_LLR_matrix.bundle_of_group[self.current_target_group_idx])
 
             # Stage skip 조건 체크
             is_skip_this_stage = False
@@ -10265,7 +10295,7 @@ class LLR_OPT:
         # 랜덤 row 생성
         row_values = self._generate_random_row(new_matrix)
         iteration = SINGLE_ROW_CONFIG.CANDIDATE_ITERATION
-        floor_flag = src.groups[0][0].floor_flag if src.groups and src.groups[0] else 0
+        floor_flag = src.groups[0][0].floor_flag if src.groups and src.groups[0] else SW_BRANCH_NONE
 
         new_row = LLR_Row(
             ch_th_values=row_values,

@@ -28,7 +28,7 @@ class LLR_Row:
     CSW: int
     iter_start: int
     iter_end: int
-    floor_flag: int
+    floor_flag: int           # SW 분기 index. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호. 같은 값이 이어지는 그룹들은 한 묶음으로 변이한다
     is_group_restart: bool = False
 
 class LLR_MATRIX:
@@ -55,6 +55,13 @@ class LLR_MATRIX:
         self.header: LLR_Header
         self.groups: list[list[LLR_Row]] = []  # 그룹별 행 컨테이너
         self.restart_groups: list[int] = []
+
+        # SW 분기 배치 (Build_SW_Branch_Layout이 groups에서 계산한다. 헤더는 보지 않는다)
+        self.group_branch_idx: list[int] = []                      # 그룹별 분기 index (첫 row의 floor_flag)
+        self.bundle_of_group: list[list[int]] = []                 # 그룹별 묶음 (같은 분기 index가 이어지는 그룹 index 목록)
+        self.span_of_group: list[Optional[tuple[int, int, int]]] = []  # 그룹별 (구간 시작, 구간 끝, 분기 수). 분기 없으면 None
+        self.has_sw_branch: bool = False
+        self.sw_layout_error: Optional[str] = None
 
         # ===== FER 변수 설명 =====
         # - raw_FER:  LOAD_NONE 모드에서 측정됨 (seed 없이 ECC 테스트), 다른 모드에서는 1.0
@@ -89,6 +96,131 @@ class LLR_MATRIX:
             return True
         return bool(np.all(values[:-1] >= values[1:]))
     
+    def Build_SW_Branch_Layout(self) -> Optional[str]:
+        """groups에서 SW 분기 배치(그룹별 분기 index, 묶음, 구간)를 다시 계산한다.
+
+        분기 index는 각 row의 마지막 칸(floor_flag)이다. 구간은 분기 index 0으로 시작해 index가 0으로 되돌아가거나
+        -1이 나오기 전까지의 그룹들이 덮는 iteration 범위다. 분기 0이 그대로 이어지는 두 구간은 헤더 type_each_group의
+        분기 표시(10 이상이면 일의 자리가 분기 index)가 바뀌는 자리에서 갈린다. 구간 안에서 index가 1 늘면 iteration은
+        구간 시작으로 되돌아가고, 모든 분기는 구간의 시작과 끝을 똑같이 덮는다. 묶음은 한 구간 안에서 분기 index가
+        같은 그룹들이고, 분기가 없는 그룹은 그룹 하나가 묶음 하나다.
+
+        Returns:
+            Optional[str]: 배치가 규칙에 어긋나면 그 이유 (sw_layout_error에도 남는다). 문제 없으면 None
+        """
+        num_groups = len(self.groups)
+        self.group_branch_idx = [int(group[0].floor_flag) if group else SW_BRANCH_NONE for group in self.groups]
+        self.has_sw_branch = any(idx != SW_BRANCH_NONE for idx in self.group_branch_idx)
+        self.bundle_of_group = [[g] for g in range(num_groups)]
+        self.span_of_group = [None] * num_groups
+        self.sw_layout_error = None
+        if self.groups and all(self.groups):
+            self.max_iteration = max(group[-1].iter_end for group in self.groups)
+
+        header_types = list(self.header.type_each_group) if len(self.header.type_each_group) == num_groups else [0] * num_groups
+
+        def header_branch(g: int) -> Optional[int]:
+            type_value = int(header_types[g])
+            return type_value % 10 if type_value >= 10 else None
+
+        def fail(message: str) -> str:
+            self.sw_layout_error = message
+            return message
+
+        span_members: list[int] = []
+        span_start = None
+        span_end = None
+        current_branch = None          # None이면 구간 밖
+        current_bundle: list[int] = []
+        prev_end = None
+        prev_group_idx = None
+
+        def close_span() -> Optional[str]:
+            nonlocal span_end
+            if current_branch == 0:
+                span_end = prev_end
+            elif prev_end != span_end:
+                return f"SW branch {current_branch} ends at iteration {prev_end} but its span ends at {span_end}"
+            for member in span_members:
+                self.span_of_group[member] = (span_start, span_end, current_branch + 1)
+            return None
+
+        for g_idx, group in enumerate(self.groups):
+            if not group:
+                continue
+            branch = self.group_branch_idx[g_idx]
+            start = int(group[0].iter_start)
+            end = int(group[-1].iter_end)
+
+            if branch == SW_BRANCH_NONE:
+                if current_branch is not None:
+                    error = close_span()
+                    if error is not None:
+                        return fail(error)
+                    expected_start = span_end + 1
+                    span_members = []
+                    current_branch = None
+                else:
+                    expected_start = start if prev_end is None else prev_end + 1
+                current_bundle = [g_idx]
+            else:
+                if current_branch is None:
+                    starts_new_span = True
+                elif branch == 0 and current_branch > 0:
+                    starts_new_span = True
+                elif branch == 0 and current_branch == 0 and header_branch(g_idx) != header_branch(prev_group_idx):
+                    # 분기 0이 이어지지만 헤더의 분기 표시가 바뀌면 새 구간이다 (묶음만 있는 구간 뒤에 분기 구간이 오는 경우)
+                    starts_new_span = True
+                else:
+                    starts_new_span = False
+
+                if starts_new_span:
+                    if branch != 0:
+                        return fail(f"Group {g_idx} opens an SW span with branch {branch}; a span must start with branch 0")
+                    if current_branch is not None:
+                        error = close_span()
+                        if error is not None:
+                            return fail(error)
+                        expected_start = span_end + 1
+                    else:
+                        expected_start = start if prev_end is None else prev_end + 1
+                    span_start = start
+                    span_end = None
+                    current_branch = 0
+                    span_members = []
+                    current_bundle = []
+                elif branch == current_branch:
+                    expected_start = prev_end + 1
+                elif branch == current_branch + 1:
+                    if branch > MAX_SW_BRANCH:
+                        return fail(f"Group {g_idx} branch {branch} exceeds MAX_SW_BRANCH {MAX_SW_BRANCH}")
+                    if current_branch == 0:
+                        span_end = prev_end
+                    elif prev_end != span_end:
+                        return fail(f"SW branch {current_branch} ends at iteration {prev_end} but its span ends at {span_end}")
+                    expected_start = span_start
+                    current_branch = branch
+                    current_bundle = []
+                else:
+                    return fail(
+                        f"Group {g_idx} branch {branch} follows branch {current_branch}; "
+                        f"the branch index must stay, increase by 1, or return to 0"
+                    )
+                span_members.append(g_idx)
+                current_bundle.append(g_idx)
+
+            if start != expected_start:
+                return fail(f"Group {g_idx} iter_start must be {expected_start} (SW branch {branch}), got {start}")
+            self.bundle_of_group[g_idx] = current_bundle
+            prev_end = end
+            prev_group_idx = g_idx
+
+        if current_branch is not None:
+            error = close_span()
+            if error is not None:
+                return fail(error)
+        return None
+
     def Build_LLR_Matrix_Output_Lines(self, compare_with: Optional['LLR_MATRIX'] = None) -> list[str]:
         """LLR 매트릭스를 파일 저장용 문자열로 변환한다.
 
@@ -293,7 +425,6 @@ class LLR_MATRIX:
             return False, output_msg
 
         total_row_count = 0
-        previous_group_end = None
         for g_idx, group in enumerate(self.groups):
             total_row_count += len(group)
             starts = [row.iter_start for row in group]
@@ -309,18 +440,11 @@ class LLR_MATRIX:
                 output_msg = f"Group {g_idx} row count mismatch: header {int(h.num_row_each_group[g_idx])}, actual {len(group)}"
                 return False, output_msg
 
-            # Iteration 끝과 다음 group의 iteration 시작 차이가 1인지 확인
-            if previous_group_end is not None:
-                group_start = starts[0]
-                if group_start != previous_group_end + 1:
-                    output_msg = (
-                        f"Group {g_idx} iter_start must be exactly one greater than previous group's iter_end: "
-                        f"{group_start} vs {previous_group_end}"
-                    )
-                    return False, output_msg
-
-            if ends:
-                previous_group_end = ends[-1]
+            # 그룹 안 모든 row의 분기 index(floor_flag)가 같아야 한 묶음으로 다룰 수 있다 (G9)
+            branch_values = {int(row.floor_flag) for row in group}
+            if len(branch_values) != 1:
+                output_msg = f"Group {g_idx} rows carry different SW branch index (floor_flag): {sorted(branch_values)}"
+                return False, output_msg
 
             # Restart group 판단: restart_groups 리스트 또는 is_group_restart 플래그
             is_restart_group = (g_idx + 1) in self.restart_groups
@@ -356,9 +480,9 @@ class LLR_MATRIX:
                     output_msg = f"Group {g_idx} Row {r} length mismatch. Expected {expected_len}"
                     return False, output_msg
                 
-                # Floor flag
-                if row.floor_flag != -1:
-                    output_msg = f"Group {g_idx} Row {r} invalid floor_flag {row.floor_flag}"
+                # SW 분기 index: -1(분기 없음) 또는 0 이상 MAX_SW_BRANCH 이하 (RW2)
+                if row.floor_flag != SW_BRANCH_NONE and not (0 <= row.floor_flag <= MAX_SW_BRANCH):
+                    output_msg = f"Group {g_idx} Row {r} invalid SW branch index (floor_flag) {row.floor_flag}"
                     return False, output_msg
 
                 for dv_idx in range(h.num_dv):
@@ -454,7 +578,26 @@ class LLR_MATRIX:
             output_msg = "Matrix has no groups or last group is empty"
             return False, output_msg
 
-        self.max_iteration = self.groups[-1][-1].iter_end
+        # SW 분기 배치: iteration 이어짐(G2), 분기 순서, 구간 덮기(G10)
+        layout_error = self.Build_SW_Branch_Layout()
+        if layout_error is not None:
+            return False, layout_error
+
+        # 헤더 type_each_group이 {분기 수}{분기 index} 두 자리이면 row 꼬리와 대조한다 (H8). 0과 1은 디코더용 원래 뜻이라 검사하지 않는다
+        for g_idx in range(len(self.groups)):
+            type_value = int(h.type_each_group[g_idx])
+            if type_value < 10:
+                continue
+            branch = self.group_branch_idx[g_idx]
+            span = self.span_of_group[g_idx]
+            if branch != type_value % 10:
+                output_msg = f"Group {g_idx} header type {type_value} says branch {type_value % 10} but rows carry {branch}"
+                return False, output_msg
+            if span is None or span[2] != type_value // 10:
+                output_msg = f"Group {g_idx} header type {type_value} says {type_value // 10} branches but the span has {span[2] if span else 0}"
+                return False, output_msg
+
+        self.max_iteration = max(group[-1].iter_end for group in self.groups)
         if self.is_HBF_OPT:
             if self.max_iteration > HBF_OPT_CONFIG.HBF_MAX_ITERATION:
                 output_msg = (
@@ -561,6 +704,8 @@ class LLR_MATRIX:
 
         else:
             self.HBF_immutable_col_range = None
+
+        self.Build_SW_Branch_Layout()
 
     def Save_Matrix(self, save_dir: str) -> None:
         lines = self.Build_LLR_Matrix_Output_Lines()
