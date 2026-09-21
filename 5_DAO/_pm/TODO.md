@@ -21,8 +21,12 @@
 
 - [ ] DAO 파이썬 스크립트 가독성과 문제점 라이트 리뷰
   - 상세: `_pm/tasks/20260921_DAO_readability_review/`
-  - [ ] Round 1 관점 도출, Round 2 분석 (기록: `_pm/tasks/20260921_DAO_readability_review/review/`)
-  - [ ] 리뷰 결과 중 개선 작업으로 옮길 항목 결정 (사용자)
+  - [x] Round 1 관점 도출 (2026-09-21 15:02, 에이전트 3개, 관점 90개를 30개로 통합, 기록: `_pm/tasks/20260921_DAO_readability_review/review/r1_round1_lv1_perspectives/`)
+  - [x] Round 2 분석 (2026-09-21 15:35, lv2 4팀 리더 4개와 워커 12개, 기록: `_pm/tasks/20260921_DAO_readability_review/review/r2_round2_lv2_analysis/`)
+    - 문제점 129건 (CRITICAL 11, HIGH 21, MEDIUM 61, LOW 36, 팀 간 중복 정리 뒤 CRITICAL 9), 가독성 개선안 60건 (상 26, 중 29, 하 5), 8단계 적용 순서
+    - 종합 판정: 수정 필요. 라이트 리뷰라 Round 3 검증은 생략, 수리 전 검증 확장 권고. 사용자 결정 4건은 `r2_round2_lv2_analysis/report.md` 끝 절
+  - [ ] 사용자 결정 4건 (HBF 경로 존폐, 매트릭스 모델 정리 4건의 선행 여부, Prime_ECC_3.0 규격, 후속 작업 갈래)
+  - [ ] 결정에 따라 수리 태스크와 가독성 태스크 등록
 
 ## 새 작업 추가
 
