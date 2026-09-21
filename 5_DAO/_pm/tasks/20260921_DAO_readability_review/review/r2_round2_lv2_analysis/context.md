@@ -63,7 +63,7 @@ Round 1의 "실마리" 절(r1 report.md 끝)은 검증 전 관찰이다. 관련 
 - Two-stage 테스트: Partial(적은 uncor로 빠른 선별) 뒤 Full(정확 평가). uncor는 uncorrectable frame(복호 실패 프레임)이며 파일로 세션 디렉토리에 복사, 분배, 병합된다
 - 멀티라운드 모드 4개(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 dataclass 상태(`ReorderState` 등)를 `MULTI_ROUND_MODES` 표로 찾아 root가 갱신하고 bcast한다
 - 종료 신호는 파일(`8_End_flag/*.txt`)로 주고받는다. 사용자가 파일을 만들면 root가 읽고 bcast한다
-- 용어: FER(Frame Error Rate), LLR(Log Likelihood Ratio), CSW(Column Selection Weight 문턱), DV(Degree Variable), HBF(Hard-decision Bit Flipping), Ref_C(외부 C++ ECC 실행 파일)
+- 용어: FER(Frame Error Rate), LLR(Log Likelihood Ratio), CSW(Column Selection Weight 문턱), DV(Degree Variable), HBF(Hybrid Bit Flipping), Ref_C(외부 C++ ECC 실행 파일)
 - 이 환경에서 C++ 빌드와 MPI 실행은 하지 않는다. 코드를 읽어 판단한다. Python 3.11, numpy, mpi4py는 설치되어 있어 문법 검사나 작은 단위 실행(`python -c`, `py_compile`)은 가능하다
 - 프로젝트 문장 규칙(줄표와 가운뎃점 금지, 긍정문, 이름은 목적 우선, 수리는 다시 쓰기)과 파일 참조 규칙(markdown link)은 루트 `CLAUDE.md`를 따른다. 워커와 리더의 문서도 이 규칙을 지킨다
 

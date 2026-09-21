@@ -45,5 +45,5 @@ DAO(Decoder Auto Optimizer, LLR matrix 자동 최적화기)의 파이썬 소스.
 
 - MPI(mpi4py): rank 0이 master(LLR 생성, 최적 판정), 나머지가 worker. 모든 rank가 ECC exe를 각자 실행해 FER를 측정하고 gather한다
 - Two-stage 테스트: Partial(적은 uncor로 빠른 선별) 뒤 Full(정확 평가). uncor = uncorrectable frame(복호 실패 프레임)
-- 용어: FER(Frame Error Rate), LLR(Log Likelihood Ratio), CSW(Column Selection Weight 문턱), DV(Degree Variable), HBF(Hard-decision Bit Flipping), Ref_C(외부 C++ ECC 실행 파일)
+- 용어: FER(Frame Error Rate), LLR(Log Likelihood Ratio), CSW(Column Selection Weight 문턱), DV(Degree Variable), HBF(Hybrid Bit Flipping), Ref_C(외부 C++ ECC 실행 파일)
 - 프로젝트 문장 규칙(줄표와 가운뎃점 금지, 긍정문, 이름은 목적 우선)과 파일 참조 규칙(markdown link)은 루트 `CLAUDE.md`를 따른다

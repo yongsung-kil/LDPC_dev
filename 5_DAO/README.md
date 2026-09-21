@@ -947,7 +947,7 @@ class DAO_CONFIG:
 
     # ========== 기타 설정 ==========
     IS_HBF_OPT: bool = False
-    """HBF (Hybrid Belief-propagation and Flipping) 최적화 모드
+    """HBF (Hybrid Bit Flipping) 최적화 모드
     - True: HBF 전용 GenLLRMode 시퀀스 사용
     - False: 일반 시퀀스 사용
     """
