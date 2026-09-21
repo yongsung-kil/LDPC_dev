@@ -185,8 +185,9 @@ def _write_error_log(
     os.makedirs(error_dir, exist_ok=True)
     log_path = os.path.join(error_dir, ERROR_LOG_FILE_TEMPLATE.format(process_idx=process_idx))
 
+    # 지역 변수는 크기 제한 없이 찍히므로 담지 않는다 (uncor 목록 하나가 수 MB). 상태는 state_text 요약이 담는다
     traceback_lines = "".join(
-        traceback.TracebackException.from_exception(exc, capture_locals=True).format()
+        traceback.TracebackException.from_exception(exc, capture_locals=False).format()
     )
 
     try:
@@ -433,6 +434,16 @@ def Update_RefC_Configs():
         REFC_CONFIG.NUM_TARGET_CHANNELS = len(REFC_CONFIG.num_fixed_errs)
         REFC_CONFIG.RBERs = [0.0] * REFC_CONFIG.NUM_TARGET_CHANNELS
         REFC_CONFIG.fixed_erasure_ratios = [0] * REFC_CONFIG.NUM_TARGET_CHANNELS
+        # SCR과 SER은 채널별 값이다. 값이 하나뿐이면 모든 채널에 같은 값을 쓰고, 개수가 다르면 시작 시점에 바로 알린다
+        for field_name in ("fixed_SCRs", "fixed_SERs"):
+            values = list(getattr(REFC_CONFIG, field_name))
+            if len(values) == 1:
+                values = values * REFC_CONFIG.NUM_TARGET_CHANNELS
+            if len(values) != REFC_CONFIG.NUM_TARGET_CHANNELS:
+                raise ValueError(
+                    f"Update_RefC_Configs: {field_name} has {len(values)} values; ch_type 3 needs 1 or NUM_TARGET_CHANNELS ({REFC_CONFIG.NUM_TARGET_CHANNELS})"
+                )
+            setattr(REFC_CONFIG, field_name, values)
     else:
         raise ValueError(f"Update_RefC_Configs: Unsupported ch_type={REFC_CONFIG.ch_type}. Valid: 1, 2, 3")
 
@@ -473,10 +484,11 @@ def Update_Insert_Group_Configs():
     INSERT_MUTATED_GROUP_CONFIG.ENABLE_INSERT_RESTART = enable
 
 def Update_Configs():
+    # LOAD_UNCOR_MODE를 먼저 정해야 Update_RefC_Configs가 벡터 길이(LEN_NO_PS, NUM_LINES_PER_UNCOR)를 맞게 계산한다
+    Update_Exit_After_Run_Configs()
     Update_RefC_Configs()
     Update_Insert_Group_Configs()
     Update_Path_Configs()
-    Update_Exit_After_Run_Configs()
     
 class LLR_OPT:
     def __init__(self):
@@ -2168,6 +2180,14 @@ class LLR_OPT:
         PATH_CONFIG.RUN_ECC_END_FLAG_FILE_PATH = os.path.join(self.end_flag_dir, RUN_ECC_END_FLAG_FILE_NAME)
         if self.is_root:
             self._Write_End_Flag(PATH_CONFIG.RUN_ECC_END_FLAG_FILE_PATH, False)
+            # 지난 채널 테스트의 ack 파일을 비워 이번 테스트의 응답만 센다 (호출처는 배리어 사이라 안전)
+            ack_dir = os.path.join(self.end_flag_dir, "run_ecc_ack")
+            if os.path.isdir(ack_dir):
+                for fname in os.listdir(ack_dir):
+                    try:
+                        os.remove(os.path.join(ack_dir, fname))
+                    except OSError as e:
+                        self.Write_Log_Lines(f"[WARN] ack 파일 삭제 실패: {fname}: {e}")
 
     def Initialize_End_Flags(self):
         """Trial/DAO 종료 플래그 파일을 초기화한다. (세션 시작 시 1회)
@@ -2260,18 +2280,20 @@ class LLR_OPT:
         self.current_stage_idx = stage_idx
         self.temp_optimal_LLR_matrix = None
 
-        self.Set_Gen_Trial_LLR_Mode()
-
         # Stage 시작 시 target_group_indices 재설정 (optimal_LLR_matrix 기준)
         # - INITIAL_TARGET_GROUP_IDX부터 마지막 그룹까지
         # - Restart group 포함 (조건에 따라 skip)
+        # - 그룹 수가 줄어 목록이 비면 마지막 그룹 하나를 타겟으로 둔다
         if self.optimal_LLR_matrix is not None:
             base_matrix = self.optimal_LLR_matrix
-            new_target_indices = []
-            for idx in range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, len(base_matrix.groups)):
-                new_target_indices.append(idx)
+            new_target_indices = list(range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, len(base_matrix.groups)))
+            if not new_target_indices:
+                new_target_indices = [len(base_matrix.groups) - 1]
             self.target_group_indices = new_target_indices
             self.Write_Log_Lines(f"\t- Updated target_group_indices: {self.target_group_indices} (from optimal_LLR_matrix)")
+
+        # 모드와 타겟 그룹은 갱신된 target_group_indices 위에서 정한다
+        self.Set_Gen_Trial_LLR_Mode()
 
         # current_target_idx 계산 (이전 값 기준으로 +1, 모듈로 연산)
         if not hasattr(self, 'current_target_idx') or self.current_target_idx is None:
@@ -2538,8 +2560,10 @@ class LLR_OPT:
         # 2. FER이 모든 채널에서 같고, avg_iteration 업데이트가 활성화된 경우
         if DAO_CONFIG.ENABLE_AVG_ITER_UPDATE:
             if all(abs(a - b) < 1e-15 for a, b in zip(matrix_A.FERs, matrix_B.FERs)):
-                # avg iteration 비교 (낮을수록 좋음)
-                return self.Is_List_A_Strictly_Better(matrix_A.avg_iterations, matrix_B.avg_iterations)
+                # avg iteration 비교 (낮을수록 좋음). 미테스트 채널(-1.0)은 가장 나쁜 값으로 본다
+                avg_A = [float("inf") if avg < 0 else avg for avg in matrix_A.avg_iterations]
+                avg_B = [float("inf") if avg < 0 else avg for avg in matrix_B.avg_iterations]
+                return self.Is_List_A_Strictly_Better(avg_A, avg_B)
 
         # 3. FER이 더 나쁨 (또는 avg_iteration 업데이트 비활성화)
         return False
@@ -6468,7 +6492,7 @@ class LLR_OPT:
                 SPEED_TEST_REFC_CONFIG.fn,                      #9
                 SPEED_TEST_REFC_CONFIG.max_num_test,            #10
                 SPEED_TEST_REFC_CONFIG.mode_seed,           #11 
-                self.rank,          #12 (고정 시드)
+                SPEED_TEST_REFC_CONFIG.mode_init_seed,          #12 (고정 시드, 모든 rank 동일)
                 SPEED_TEST_REFC_CONFIG.CRC_Option_F_P,          #13
                 SPEED_TEST_REFC_CONFIG.mode_iter,               #14
                 SPEED_TEST_REFC_CONFIG.CRC_skip_mode,           #15
@@ -6491,7 +6515,7 @@ class LLR_OPT:
                 SPEED_TEST_REFC_CONFIG.fn,            #9
                 SPEED_TEST_REFC_CONFIG.max_num_test,  #10
                 SPEED_TEST_REFC_CONFIG.mode_seed,               #11
-                self.rank,          #12 (고정 시드)
+                SPEED_TEST_REFC_CONFIG.mode_init_seed,          #12 (고정 시드, 모든 rank 동일)
                 SPEED_TEST_REFC_CONFIG.mode_all_one_cw,   #13
                 SPEED_TEST_REFC_CONFIG.CRC_Option_F_P,    #14
                 SPEED_TEST_REFC_CONFIG.mode_iter,         #15
@@ -6689,7 +6713,7 @@ class LLR_OPT:
         """
         self._mpi_comm_with_timeout(
             self.comm.Barrier,
-            timeout_seconds=max(TIME_CONFIG.MPI_COMM_TIMEOUT_SECONDS, 3600),
+            timeout_seconds=TIME_CONFIG.MPI_TEST_BARRIER_TIMEOUT_SECONDS,
             comm_name=f"MPI_Barrier[{self.barrier_count}]"
         )
         self.barrier_count += 1  # 성공 후에만 증가
@@ -6994,6 +7018,28 @@ class LLR_OPT:
             error_msg = f"{comm_name} failed: {type(e).__name__}: {e}"
             self.MPI_Abort(error_msg)
 
+    def _safe_allgather(self, data, comm_name: str):
+        """모든 rank의 데이터를 모든 rank에 모은다. 타임아웃 감시를 거친다.
+
+        Args:
+            data: 각 rank가 전송할 데이터
+            comm_name: 통신 이름 (로그/디버깅용)
+
+        Returns:
+            모든 rank의 데이터 리스트 (rank 순서)
+        """
+        try:
+            return self._mpi_comm_with_timeout(
+                self.comm.allgather,
+                data,
+                timeout_seconds=TIME_CONFIG.MPI_TEST_BARRIER_TIMEOUT_SECONDS,
+                comm_name=comm_name
+            )
+        except Exception as e:
+            self.Write_MPI_Error_Snapshot(e, comm_name)
+            error_msg = f"{comm_name} failed: {type(e).__name__}: {e}"
+            self.MPI_Abort(error_msg)
+
     def MPI_Debug_Logging(self, tag: str = ""):
         """MPI debug용이며 barrier count를 출력한다.
 
@@ -7008,7 +7054,7 @@ class LLR_OPT:
         if not DEBUG_CONFIG.ENABLE_MPI_DEBUG_LOGGING:
             return
         
-        counts: list[int] = self.comm.allgather(self.barrier_count)
+        counts: list[int] = self._safe_allgather(self.barrier_count, "Allgather_barrier_count")
         if not self.is_root:
             return
 
@@ -7127,7 +7173,7 @@ class LLR_OPT:
         if not element_pool:
             return []
 
-        max_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH, len(element_pool))
+        max_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CSW, len(element_pool))
         if max_changes == 0:
             return []
         num_changes = random.randint(1, max_changes)
@@ -7162,15 +7208,15 @@ class LLR_OPT:
             # row_idx > 1: prev_row는 row_idx >= 1 (CSW >= 8, row_idx == 0은 CSW = -1이므로 제외)
             if row_idx > 1:
                 prev_row = matrix.groups[group_idx][row_idx - 1]
-                if new_CSW > prev_row.CSW:
-                    # prev 이하로 내림 (8의 배수 유지)
-                    new_CSW = (prev_row.CSW // STEP_CSW) * STEP_CSW
+                if new_CSW >= prev_row.CSW:
+                    # prev보다 한 단계 아래로 내린다 (엄격 감소 유지)
+                    new_CSW = prev_row.CSW - STEP_CSW
 
             if row_idx < len(matrix.groups[group_idx]) - 1:
                 next_row = matrix.groups[group_idx][row_idx + 1]
-                if new_CSW < next_row.CSW:
-                    # next 이상으로 올림 (8의 배수 유지)
-                    new_CSW = ((next_row.CSW + STEP_CSW - 1) // STEP_CSW) * STEP_CSW
+                if new_CSW <= next_row.CSW:
+                    # next보다 한 단계 위로 올린다 (엄격 감소 유지)
+                    new_CSW = next_row.CSW + STEP_CSW
 
             # 4. 최종 범위 재확인
             new_CSW = max(MIN_CSW, min(new_CSW, MAX_CSW))
@@ -8406,10 +8452,11 @@ class LLR_OPT:
                             num_non_restart += 1
                 is_hd_mode = (REFC_CONFIG.init_n == 1)
                 trials_per_round = sum(range(num_non_restart, 0, -1))
+                # Init_Reorder_Group_Mode의 total_trials와 같은 식: 초기 테스트 1 + 라운드 trial + 최종 검증 1
                 if is_hd_mode:
-                    self.max_modification_trial = trials_per_round + 1
+                    self.max_modification_trial = 1 + trials_per_round + 1
                 else:
-                    self.max_modification_trial = trials_per_round * 2 + 1
+                    self.max_modification_trial = 1 + trials_per_round * 2 + 1
             elif selected_mode == GenLLRMode.ADJUST_ITERATION:
                 # ADJUST_ITERATION: target_groups(restart 제외) 수
                 # 마지막 trial에서 temp_optimal → optimal 자동 전환 (is_update_at_last_trial)
@@ -8986,9 +9033,10 @@ class LLR_OPT:
 
             # while 루프 탈출 경로와 무관하게 모든 프로세스가 ack 작성
             self._Write_Run_ECC_End_Ack()
-            self._Report_Missing_Acks()
 
             self.Gather_Ref_C_Results(matrix=matrix, ch_idx=ch_idx, is_test_end=True)
+            # Gather 안의 배리어를 지난 뒤에 세어야 아직 ECC 중인 정상 rank를 미응답으로 적지 않는다
+            self._Report_Missing_Acks()
             self.Print_Test_Result(matrix=matrix, is_test_optimal=is_test_optimal, ch_idx=ch_idx, is_test_end=True)
 
             self.Process_CSW_Logs(matrix=matrix, ch_idx=ch_idx, is_test_initial=is_test_initial)
@@ -9046,7 +9094,7 @@ class LLR_OPT:
         elapsed_time = time.time() - start_time
 
         # 모든 프로세스의 소요 시간 수집 (allgather: 모든 rank가 결과 받음)
-        all_elapsed_times = self.comm.allgather(elapsed_time)
+        all_elapsed_times = self._safe_allgather(elapsed_time, "Allgather_core_elapsed_times")
         self.core_elapsed_times = all_elapsed_times
 
         if self.is_root:
@@ -9363,6 +9411,7 @@ class LLR_OPT:
         self.Write_Log_Lines("[Rebuild_Partial_Pool] Starting dynamic partial reconstruction")
 
         # ─── Step 1: Seed mode 설정 (전 rank 동기화) ───
+        prev_seed_mode = self.current_seed_mode
         if self.is_root:
             self.current_seed_mode = SeedMode.LOAD_UNCOR_SEED_SAVE_UNCOR_SEED
         self.current_seed_mode = self._safe_bcast(
@@ -9425,6 +9474,7 @@ class LLR_OPT:
 
         if total_partial_count == 0:
             self.Write_Log_Lines("[Rebuild_Partial_Pool] Partial count = 0. All uncors decoded successfully.")
+            self._Restore_State_After_Partial_Rebuild(prev_test_mode, prev_seed_mode)
             return False
 
         self.Write_Log_Lines(
@@ -9441,18 +9491,20 @@ class LLR_OPT:
         )
 
         # ─── Step 7: 상태 복원 ───
+        self._Restore_State_After_Partial_Rebuild(prev_test_mode, prev_seed_mode)
+
+        return True
+
+    def _Restore_State_After_Partial_Rebuild(self, prev_test_mode, prev_seed_mode) -> None:
+        """Rebuild_Partial_Pool이 바꾼 테스트 모드, 적재 상태, seed 모드를 진입 시점 값으로 되돌린다. (전 rank 동기화)"""
         self.current_test_mode = prev_test_mode
         self.current_loaded_test_mode = None  # 다음 Ensure_Uncors_Loaded에서 재로드 강제
-
-        # Seed mode 복원
         if self.is_root:
-            self.current_seed_mode = SeedMode.LOAD_UNCOR_SEED
+            self.current_seed_mode = prev_seed_mode
         self.current_seed_mode = self._safe_bcast(
             self.current_seed_mode if self.is_root else None,
             "Bcast_restore_seed_mode"
         )
-
-        return True
 
     def _Signal_Graceful_Stop_No_Partial(self):
         """Partial uncor가 0개일 때 graceful stop을 시그널한다.
@@ -9646,6 +9698,13 @@ class LLR_OPT:
 
     def Validate_Config(self):
         errors: list[str] = []
+
+        # 모드 시퀀스의 값이 GenLLRMode에 있는지 (없는 값은 stage 1의 GenLLRMode(값)에서 ValueError로 전체가 중단된다)
+        valid_mode_values = {int(mode) for mode in GenLLRMode}
+        for seq_name in ("Gen_LLR_Mode_SEQUENCE", "Gen_LLR_Mode_HBF_SEQUENCE"):
+            for mode_value in getattr(DAO_CONFIG, seq_name):
+                if int(mode_value) not in valid_mode_values:
+                    errors.append(f"{seq_name} contains {mode_value}, which is not a GenLLRMode value {sorted(valid_mode_values)}.")
 
         if INSERT_RANDOM_GROUP_CONFIG.INSERT_GROUP_NUM_ROWS <= 0:
             errors.append("InsertGroupConfig.NUM_ROWS must be greater than 0.")
@@ -10055,7 +10114,13 @@ class LLR_OPT:
             end_flag_interval = SINGLE_ROW_CONFIG.END_FLAG_CHECK_INTERVAL
             if end_flag_interval > 0 and candidate_idx % end_flag_interval == 0:
                 self.MPI_Barrier()
-                if self._gen_single_row_stop_idx is None and self.Read_DAO_End_Flag():
+                # root만 플래그 파일을 읽고 bcast로 전파한다 (rank마다 따로 읽으면 판정이 갈려 집단 통신이 어긋난다)
+                if self.is_root:
+                    is_dao_end = self._gen_single_row_stop_idx is None and self.Read_DAO_End_Flag()
+                else:
+                    is_dao_end = False
+                is_dao_end = self._safe_bcast(is_dao_end if self.is_root else None, "Bcast_single_row_dao_end")
+                if is_dao_end:
                     self._gen_single_row_stop_idx = candidate_idx + end_flag_interval
                     self._Write_Stop_Idx(self._gen_single_row_stop_idx)
                     self.Write_Log_Lines(
@@ -10102,9 +10167,9 @@ class LLR_OPT:
                     self.Check_Test_End(ch_idx=ch_idx)
 
                 self._Write_Run_ECC_End_Ack()
-                self._Report_Missing_Acks()
 
                 self.Gather_Ref_C_Results(matrix=candidate_matrix, ch_idx=ch_idx, is_test_end=True)
+                self._Report_Missing_Acks()
 
                 # 5. CSW 파싱 (채널별, 다음 채널 ECC가 CSW 파일을 덮어쓰기 전에 파싱)
                 if self.is_root:

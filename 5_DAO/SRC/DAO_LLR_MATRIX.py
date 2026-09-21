@@ -288,6 +288,9 @@ class LLR_MATRIX:
         if len(h.min_value) != h.num_parameter_each_set:
             output_msg = "min_value length mismatch"
             return False, output_msg
+        if h.num_group != len(self.groups):
+            output_msg = f"num_group mismatch with groups: header {h.num_group}, actual {len(self.groups)}"
+            return False, output_msg
 
         total_row_count = 0
         previous_group_end = None
@@ -299,6 +302,11 @@ class LLR_MATRIX:
             # 빈 그룹 검사
             if len(group) == 0:
                 output_msg = f"Group {g_idx} is empty"
+                return False, output_msg
+
+            # 헤더의 그룹별 행 수와 실제 행 수 대조
+            if len(group) != int(h.num_row_each_group[g_idx]):
+                output_msg = f"Group {g_idx} row count mismatch: header {int(h.num_row_each_group[g_idx])}, actual {len(group)}"
                 return False, output_msg
 
             # Iteration 끝과 다음 group의 iteration 시작 차이가 1인지 확인
@@ -329,6 +337,14 @@ class LLR_MATRIX:
                         f"Restart Group {g_idx} row must have iter_start == iter_end. "
                         f"Got start={group[0].iter_start}, end={group[0].iter_end}"
                     )
+                    return False, output_msg
+                # Restart row도 길이와 CSW 규격을 지켜야 파일이 바르게 쓰인다
+                expected_len = h.num_parameter_each_set * h.num_dv
+                if len(group[0].ch_th_values) != expected_len:
+                    output_msg = f"Restart Group {g_idx} row length mismatch. Expected {expected_len}, got {len(group[0].ch_th_values)}"
+                    return False, output_msg
+                if group[0].CSW != -1:
+                    output_msg = f"Restart Group {g_idx} row CSW must be -1, got {group[0].CSW}"
                     return False, output_msg
                 continue
 
@@ -595,7 +611,21 @@ class LLR_MATRIX:
 
             CSW_else = CSW_else_rows[0]
             remaining_rows = [row for row in group if row is not CSW_else]
+            # 범위 안의 STEP_CSW 배수로 맞춘 뒤 내림차순으로 세우고, 같아진 값은 한 단계씩 내려 서로 다르게 만든다
+            for row in remaining_rows:
+                corrected_CSW = int(round(row.CSW / STEP_CSW)) * STEP_CSW
+                corrected_CSW = max(MIN_CSW, min(corrected_CSW, MAX_CSW))
+                if corrected_CSW != row.CSW:
+                    correct_msg.append(f"\t- group {g_idx} CSW {row.CSW} -> {corrected_CSW} (Truncated)")
+                    row.CSW = corrected_CSW
             remaining_rows.sort(key=lambda r: r.CSW, reverse=True)
+            for prev_row, row in zip(remaining_rows, remaining_rows[1:]):
+                if row.CSW >= prev_row.CSW:
+                    lowered_CSW = prev_row.CSW - STEP_CSW
+                    if lowered_CSW < MIN_CSW:
+                        raise ValueError(f"[Correct_LLR_Matrix] Group {g_idx} has more CSW rows than the range [{MIN_CSW}, {MAX_CSW}] can keep distinct.")
+                    correct_msg.append(f"\t- group {g_idx} CSW {row.CSW} -> {lowered_CSW} (Deduplicated)")
+                    row.CSW = lowered_CSW
             group[:] = [CSW_else] + remaining_rows
 
         return correct_msg
@@ -638,8 +668,9 @@ class LLR_MATRIX:
 
             # 2. Ch/Th 정렬 (truncation 후 정렬해야 정렬 순서가 유지됨)
             segment[:self.ch_length] = np.sort(segment[:self.ch_length])[::-1]
-            if self.is_HBF_OPT:
-                segment[self.ch_length:] = 0
+            if self.is_HBF_OPT and dv_idx == 0:
+                # HBF 모드는 dv_idx 0의 TH만 상수로 고정한다 (Is_LLR_Valid의 HBF1 규칙과 같은 범위)
+                segment[self.ch_length:] = HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL
             else:
                 segment[self.ch_length:] = np.sort(segment[self.ch_length:])[::-1]
 

@@ -60,8 +60,11 @@ def should_exclude(name: str, exclude_patterns: list[str]) -> bool:
     return any(fnmatch(name, pattern) for pattern in exclude_patterns)
 
 
-def get_remote_files(sftp, remote_path: str, exclude_patterns: list[str]) -> dict:
-    """원격 디렉토리의 모든 파일 목록과 메타정보 수집"""
+def get_remote_files(sftp, remote_path: str, exclude_patterns: list[str], scan_errors: list[str] | None = None) -> dict:
+    """원격 디렉토리의 모든 파일 목록과 메타정보 수집.
+
+    읽지 못한 디렉토리는 scan_errors에 남긴다. 호출자는 이 목록이 비어 있을 때만 동기화를 완전한 것으로 본다.
+    """
     file_map = {}
 
     def _scan(current_remote: str, relative_base: str = ""):
@@ -70,9 +73,13 @@ def get_remote_files(sftp, remote_path: str, exclude_patterns: list[str]) -> dic
             entries = sftp.listdir_attr(current_remote)
         except PermissionError:
             logger.warning(f"권한 없음 (스킵): {current_remote}")
+            if scan_errors is not None:
+                scan_errors.append(f"scan permission denied: {current_remote}")
             return
         except Exception as e:
             logger.error(f"스캔 실패 (스킵): {current_remote} - {e}")
+            if scan_errors is not None:
+                scan_errors.append(f"scan failed: {current_remote}: {e}")
             return
 
         for entry in entries:
@@ -156,7 +163,7 @@ def sync_directory(config: dict) -> dict:
 
         # 원격 파일 스캔
         logger.info(f"원격 스캔 중: {config['remote_path']}")
-        remote_files = get_remote_files(sftp, config["remote_path"], config["exclude_patterns"])
+        remote_files = get_remote_files(sftp, config["remote_path"], config["exclude_patterns"], scan_errors=result["errors"])
         logger.info(f"원격 파일 {len(remote_files)}개 발견")
 
         # 타임스탬프 폴더 생성
@@ -214,8 +221,8 @@ def sync_directory(config: dict) -> dict:
 
         sftp.close()
 
-        # 동기화 성공 시 이전 server_sync_* 폴더 삭제
-        if not result["errors"]:
+        # 동기화가 오류 없이 끝났고 원격에서 파일을 하나라도 봤을 때만 이전 server_sync_* 폴더 삭제
+        if not result["errors"] and remote_files:
             logger.info("동기화 성공 - 이전 폴더 정리 중...")
             delete_old_sync_folders(base_path, sync_folder_name)
 

@@ -131,7 +131,7 @@ class DAO_CONFIG:
 
     # LLR 생성 모드 순서 설정
     Gen_LLR_Mode_SEQUENCE =[10, 11, 21, 30, 31, 40, 41, 42, 43, 50, 51, 70]
-    Gen_LLR_Mode_HBF_SEQUENCE = [7, 8, 1, 2, 12]
+    Gen_LLR_Mode_HBF_SEQUENCE = [40, 41, 10, 11, 60]  # GenLLRModeHBF 순서: INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP
     INITIAL_TARGET_GROUP_IDX: int = 1  # 이 인덱스부터 끝까지를 opt 타겟 그룹으로 설정. 예: 1이면 [1, 2, 3, ...], 0이면 [0, 1, 2, ...]
     ENABLE_AVG_ITER_UPDATE: bool = False  # FER 동일 시 avg_iteration 개선으로도 update 허용 여부
 
@@ -320,7 +320,8 @@ class TIME_CONFIG:
     MAX_STAGE_TIMEOUT_SECONDS = 1 * 60 * 60    # Stage별 최대 실행 시간 (초 단위, 기본값: 1시간). 100시간 이상이면 제한 없음과 동일
     MAX_ECC_MEMORY_RETRY = 10             # ECC 실행 메모리 에러(Errno 12) 최대 재시도 횟수
     MAX_ECC_MEMORY_RETRY_DELAY = 60       # 메모리 에러 재시도 시 최대 대기 시간 (초, 0~이 값 사이 랜덤)
-    MPI_COMM_TIMEOUT_SECONDS = 2*int(MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY)  # 메모리 재시도 최대 소요시간의 2배. 1시간 이상이면 타임아웃 없음과 동일
+    MPI_COMM_TIMEOUT_SECONDS = 2*int(MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY)  # 짧은 집단 통신(bcast, gather)의 대기 상한. 메모리 재시도 최대 소요시간의 2배
+    MPI_TEST_BARRIER_TIMEOUT_SECONDS = SIM_MAX_TIME_OUT + MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY + MPI_COMM_TIMEOUT_SECONDS  # ECC 실행을 사이에 둔 배리어와 allgather의 대기 상한. ECC 1회 허용 시간과 재시도 대기를 모두 덮는다
 
 # Debug / logging toggles
 class DEBUG_CONFIG:
