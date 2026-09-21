@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-03 01:27:08
+> Claude 마지막 확인: 2026-09-21 14:45:59
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -18,6 +18,11 @@
   - [ ] 표기 방식 확정 (분기 전용 줄 추가 여부)
   - [ ] 0_LDPC_original 반영 (외부에서 수행, 피드백 반영)
   - [ ] DAO 매트릭스 모델과 유효성 규칙 확장
+
+- [ ] DAO 파이썬 스크립트 가독성과 문제점 라이트 리뷰
+  - 상세: `_pm/tasks/20260921_DAO_readability_review/`
+  - [ ] Round 1 관점 도출, Round 2 분석 (기록: `_pm/tasks/20260921_DAO_readability_review/review/`)
+  - [ ] 리뷰 결과 중 개선 작업으로 옮길 항목 결정 (사용자)
 
 ## 새 작업 추가
 

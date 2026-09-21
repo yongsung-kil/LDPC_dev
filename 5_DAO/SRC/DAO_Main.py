@@ -2086,13 +2086,14 @@ class LLR_OPT:
             file_name = f"{redecode_header}uncor_{uncor_type}_H_{REFC_CONFIG.matrix_sel}_CH_{REFC_CONFIG.ch_type}_E{REFC_CONFIG.num_fixed_errs[ch_idx]}_SC_{REFC_CONFIG.fixed_SCRs[ch_idx]:.2f}_SE_{REFC_CONFIG.fixed_SERs[ch_idx]:.2f}_init_n_{REFC_CONFIG.init_n}_{process_idx}.{extension}"
         return file_name
 
-    def Gather_And_Archive_Uncors(self, ch_idx: int = 0, is_uncor_type_seed: bool = False, is_redecoded_uncor: bool = False, test_mode: TestMode = TestMode.FULL):
-        """각 프로세스의 uncor seed를 병합하고 최적 LLR 매트릭스와 함께 아카이빙한다.
+    def Gather_And_Archive_Uncors(self, matrix: LLR_MATRIX, ch_idx: int = 0, is_uncor_type_seed: bool = False, is_redecoded_uncor: bool = False, test_mode: TestMode = TestMode.FULL):
+        """각 프로세스의 uncor seed를 병합하고 그 uncor를 만든 LLR 매트릭스와 함께 아카이빙한다.
 
-        모든 프로세스의 uncor seed 파일을 하나로 병합하고, 해당 시점의 최적 LLR 매트릭스 파일도
-        함께 복사하여 재현 가능한 아카이브를 생성한다.
+        모든 프로세스의 uncor seed 파일을 하나로 병합하고, 병합 결과 폴더에 matrix 파일도
+        저장하여 재현 가능한 아카이브를 생성한다. 폴더 이름은 matrix의 파일 이름을 따른다.
 
         Args:
+            matrix (LLR_MATRIX): 이 uncor를 만든 테스트 대상 매트릭스.
             ch_idx (int): 채널 인덱스. 기본값 0.
             is_uncor_type_seed (bool): uncor 타입이 seed인지 여부. 기본값 False.
             is_redecoded_uncor (bool): 재디코딩된 uncor인지 여부. 기본값 False.
@@ -2104,7 +2105,7 @@ class LLR_OPT:
         if not self.is_root:
             return
         # Output 경로 결정 (Partial만 서브디렉토리, Full은 루트)
-        LLR_matrix_file_name = self.optimal_LLR_matrix.Get_LLR_Matrix_File_Name()
+        LLR_matrix_file_name = matrix.Get_LLR_Matrix_File_Name()
         dest_dir = Path(self.session_uncor_dir) / "Redecoded_uncors" / LLR_matrix_file_name
         if UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST and test_mode == TestMode.PARTIAL:
             dest_dir = dest_dir / "Partial"
@@ -2144,12 +2145,9 @@ class LLR_OPT:
         src_name = last_src_path.name if last_src_path else "(no source)"
         self.Write_Log_Lines(f"[Input Uncor Seeds Copied]: total_num_uncors[ch_idx]: {self.total_num_uncors[ch_idx]}\n\t{src_name} → {dest_path}.")
 
-        # optimal_LLR_matrix 텍스트 파일을 dest_dir에 복사
-        optimal_LLR_matrix_src_path = Path(self.optimal_output_dir) / LLR_matrix_file_name
-        if optimal_LLR_matrix_src_path.exists():
-            optimal_LLR_matrix_dest_path = dest_dir / LLR_matrix_file_name
-            shutil.copy2(optimal_LLR_matrix_src_path, optimal_LLR_matrix_dest_path)
-            self.Write_Log_Lines(f"[Optimal LLR Matrix Copied]: {optimal_LLR_matrix_src_path} → {optimal_LLR_matrix_dest_path}")
+        # uncor를 만든 matrix를 dest_dir에 함께 저장
+        self.Save_LLR_Matrix(matrix, target_dir=str(dest_dir))
+        self.Write_Log_Lines(f"[LLR Matrix Archived]: {dest_dir / LLR_matrix_file_name}")
 
         return dest_path
     
@@ -7312,7 +7310,7 @@ class LLR_OPT:
         lines = matrix.Build_LLR_Matrix_Output_Lines(compare_with=compare_with)
         self.Write_Log_Lines(lines)
 
-    def Process_Uncors(self, is_setup_stage: bool = False, is_uncor_type_seed: bool = True, is_redecoded_uncor: bool = False, should_distribute_uncors=False, test_mode: TestMode = TestMode.FULL):
+    def Process_Uncors(self, is_setup_stage: bool = False, is_uncor_type_seed: bool = True, is_redecoded_uncor: bool = False, should_distribute_uncors=False, test_mode: TestMode = TestMode.FULL, matrix: Optional[LLR_MATRIX] = None):
         """초기 uncor load 혹은 항상 save uncor일때만 동작.
         Uncor seed를 gather 후 분배한다.
 
@@ -7327,6 +7325,7 @@ class LLR_OPT:
                 - ENABLE_TWO_STAGE_TEST=False: 무시됨 (UNCOR_MATRIX_IDX 사용)
                 - ENABLE_TWO_STAGE_TEST=True, PARTIAL: Dynamic Partial (Partial/ 서브디렉토리)
                 - ENABLE_TWO_STAGE_TEST=True, FULL: UNCOR_MATRIX_IDX 사용 (루트)
+            matrix (Optional[LLR_MATRIX]): gather 단계에서 uncor를 만든 매트릭스. is_setup_stage=True면 사용하지 않는다.
 
         Returns:
             None
@@ -7337,7 +7336,7 @@ class LLR_OPT:
                 src_path = self.Copy_Uncors(ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed, test_mode=test_mode)
                 self.Write_Log_Lines(f"[Process_Uncors] Copy uncors ({self.Get_Test_Mode_String(test_mode)}) for initial test. ch_idx: {ch_idx}")
             else:
-                src_path = self.Gather_And_Archive_Uncors(ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed, is_redecoded_uncor=is_redecoded_uncor, test_mode=test_mode)
+                src_path = self.Gather_And_Archive_Uncors(matrix=matrix, ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed, is_redecoded_uncor=is_redecoded_uncor, test_mode=test_mode)
                 self.Write_Log_Lines(f"[Process_Uncors] Gather local uncors ({self.Get_Test_Mode_String(test_mode)}). ch_idx: {ch_idx}")                
             if should_distribute_uncors:
                 self.Distribute_Uncors_To_Local_Session(src_path, ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed)
@@ -7489,15 +7488,18 @@ class LLR_OPT:
         self.MPI_Barrier()
         self.Write_Log_Lines(f"[Setup_Uncor_Pool] Pool 생성 완료.")
 
-    def _Get_Tmp_Partial_Uncor_Dir(self) -> Path:
+    def _Get_Tmp_Partial_Uncor_Dir(self, matrix: LLR_MATRIX) -> Path:
         """Dynamic Partial uncor 임시 저장 디렉토리 경로를 반환한다.
 
-        경로: 5_Uncors/tmp_partial_uncors/{optimal_matrix_name}/
+        경로: 5_Uncors/tmp_partial_uncors/{matrix 파일 이름}/
+
+        Args:
+            matrix (LLR_MATRIX): 이 Partial uncor를 만든 테스트 대상 매트릭스.
 
         Returns:
             Path: tmp_partial_uncors 디렉토리 경로
         """
-        LLR_matrix_file_name = self.optimal_LLR_matrix.Get_LLR_Matrix_File_Name()
+        LLR_matrix_file_name = matrix.Get_LLR_Matrix_File_Name()
         return Path(self.session_uncor_dir) / TMP_PARTIAL_UNCORS_DIR_NAME / LLR_matrix_file_name
 
     def Load_Uncors_From_Pool(self, test_mode: TestMode):
@@ -7803,7 +7805,7 @@ class LLR_OPT:
             self.MPI_Barrier()
             self.total_num_uncors = self._safe_bcast(self.total_num_uncors if self.is_root else None, "Bcast_total_num_uncors")
         elif self.current_seed_mode == SeedMode.LOAD_UNCOR_SEED_SAVE_UNCOR_SEED:
-            self.Process_Uncors(is_setup_stage=False, is_uncor_type_seed=True, is_redecoded_uncor=True, should_distribute_uncors=False, test_mode=self.current_test_mode)
+            self.Process_Uncors(is_setup_stage=False, is_uncor_type_seed=True, is_redecoded_uncor=True, should_distribute_uncors=False, test_mode=self.current_test_mode, matrix=self.current_LLR_matrix)
 
         # SAVE_UNCOR 또는 REDECODE 모드일 때 Input으로 uncor 업데이트
         if DAO_CONFIG.RUN_DAO_MODE in [
@@ -8994,7 +8996,7 @@ class LLR_OPT:
             # SAVE_UNCOR 모드: 채널 테스트 직후 즉시 uncor 취합 (root-only 파일 I/O, MPI 통신 없음)
             if self.current_seed_mode == SeedMode.SAVE_UNCOR_SEED:
                 self.Gather_And_Archive_Uncors(
-                    ch_idx=ch_idx, is_uncor_type_seed=True,
+                    matrix=matrix, ch_idx=ch_idx, is_uncor_type_seed=True,
                     is_redecoded_uncor=False, test_mode=self.current_test_mode
                 )
 
@@ -9294,6 +9296,7 @@ class LLR_OPT:
         for ch_idx in range(REFC_CONFIG.NUM_TARGET_CHANNELS):
             # Gather redecoded uncors (root only: 파일 병합)
             src_path = self.Gather_And_Archive_Uncors(
+                matrix=self.current_LLR_matrix,
                 ch_idx=ch_idx,
                 is_uncor_type_seed=is_uncor_type_seed,
                 is_redecoded_uncor=True,
@@ -9302,7 +9305,7 @@ class LLR_OPT:
 
             # Partial pool용 tmp_partial_uncors에 저장
             if self.is_root and src_path and src_path.exists():
-                tmp_partial_dir = self._Get_Tmp_Partial_Uncor_Dir()
+                tmp_partial_dir = self._Get_Tmp_Partial_Uncor_Dir(matrix=self.current_LLR_matrix)
                 tmp_partial_dir.mkdir(parents=True, exist_ok=True)
                 dest_file_name = self.Get_Uncor_File_Name(ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed)
                 tmp_dest = tmp_partial_dir / dest_file_name
@@ -9379,6 +9382,7 @@ class LLR_OPT:
         is_uncor_type_seed = (UNCOR_CONFIG.LOAD_UNCOR_MODE != DAOLoadUncorMode.LOAD_VECTOR)
         for ch_idx in range(REFC_CONFIG.NUM_TARGET_CHANNELS):
             src_path = self.Gather_And_Archive_Uncors(
+                matrix=self.optimal_LLR_matrix,
                 ch_idx=ch_idx,
                 is_uncor_type_seed=is_uncor_type_seed,
                 is_redecoded_uncor=True,
@@ -9387,7 +9391,7 @@ class LLR_OPT:
 
             # tmp_partial_uncors에 저장 (Periodic Recheck 재분배 시 소스로 사용)
             if self.is_root and src_path and src_path.exists():
-                tmp_partial_dir = self._Get_Tmp_Partial_Uncor_Dir()
+                tmp_partial_dir = self._Get_Tmp_Partial_Uncor_Dir(matrix=self.optimal_LLR_matrix)
                 tmp_partial_dir.mkdir(parents=True, exist_ok=True)
                 dest_file_name = self.Get_Uncor_File_Name(ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed)
                 tmp_dest = tmp_partial_dir / dest_file_name
