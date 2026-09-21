@@ -53,42 +53,31 @@ mpiexec -n 4 python SRC/DAO_Main.py ^
 #### 1.2.1 일반 최적화 모드 (기본)
 ```python
 # DAO_Config.py
+DAO_CONFIG.RUN_DAO_MODE = RunDAOMode.RUN_OPTIMIZATION
 UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST = False
-DAO_CONFIG.EXIT_AFTER_INITIAL_MATRIX_MODE = ExitAfterInitialMatrixMode.DISABLED
 ```
 - 초기 매트릭스부터 시작하여 N개 스테이지 최적화 수행
 - 각 스테이지마다 GenLLRMode 순환
+- 명령행 인자로 SIM_IDX를 주면 `Set_Configs_Manually`의 프리셋이 적용된다 (예: `python DAO_Main.py 20`). 십의 자리는 디코더 모드(1 HD, 2 2SD, 3 3SD), 일의 자리는 실행 모드(0 최적화, 1 uncor 저장, 2 재디코딩)
 
-#### 1.2.2 Two-Stage 테스트 모드
+#### 1.2.2 Two-Stage 테스트 모드 (Dynamic Partial)
 ```python
 # DAO_Config.py
 UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST = True
-UNCOR_CONFIG.PARTIAL_UNCOR_MATRIX_IDX = 1  # Partial uncor 디렉토리 인덱스
-UNCOR_CONFIG.FULL_UNCOR_MATRIX_IDX = 2     # Full uncor 디렉토리 인덱스
+UNCOR_CONFIG.UNCOR_MATRIX_IDX = 202    # Full uncor 폴더 번호
 ```
-- Partial 테스트 (빠른 스크리닝) → Full 테스트 (정확한 평가) 순차 실행
-- 시간 절약을 위한 2단계 필터링
-
-**Uncor 디렉토리 구조:**
-```
-Input/Ref_C/{ECC_VER}/ECC/Uncors/HD/
-├── Partial/          # Partial 테스트용 (적은 uncor)
-├── Full/             # Full 테스트용 (많은 uncor)
-├── LLR_MATRIX_1/
-│   ├── Partial/
-│   └── Full/
-└── LLR_MATRIX_2/
-    ├── Partial/
-    └── Full/
-```
+- Input에는 Full uncor 한 벌만 둔다. Partial uncor는 초기 Full 테스트에서 실패한 uncor를 모아 세션 안에 자동으로 만든다
+- 시도마다 Partial 테스트(빠른 스크리닝)로 먼저 거르고, 개선된 것만 Full 테스트(정확한 평가)로 확인한다
+- 디렉토리 구조와 uncor 파일 준비 순서는 3.2절
 
 #### 1.2.3 초기 매트릭스만 테스트
 ```python
 # DAO_Config.py
-DAO_CONFIG.EXIT_AFTER_INITIAL_MATRIX_MODE = ExitAfterInitialMatrixMode.EXIT_AFTER_TEST_FER
+DAO_CONFIG.RUN_DAO_MODE = RunDAOMode.TEST_FER
 ```
 - 초기 매트릭스 로드 및 테스트만 수행
 - FER 측정 후 종료
+- `RunDAOMode.SAVE_UNCOR`는 같은 흐름에서 실패 uncor를 Input에 저장하고 종료한다 (부록 C)
 
 #### 1.2.4 코어 속도 테스트 모드
 ```python
@@ -338,7 +327,7 @@ class DAO_CONFIG:
     MAX_GEN_RETRY_PER_TRIAL = 5         # trial당 재시도 횟수
     INITIAL_TARGET_GROUP_IDX = 1        # 타겟 그룹 시작 인덱스
     Gen_LLR_Mode_SEQUENCE = [...]       # GenLLRMode 시퀀스
-    EXIT_AFTER_INITIAL_MATRIX_MODE = ExitAfterInitialMatrixMode.DISABLED
+    RUN_DAO_MODE = RunDAOMode.RUN_OPTIMIZATION
 ```
 
 **REFC_CONFIG:** ECC 실험 설정
@@ -354,10 +343,8 @@ class REFC_CONFIG:
 **UNCOR_CONFIG:** Uncor 관련 설정 (신규 분리)
 ```python
 class UNCOR_CONFIG:
-    ENABLE_TWO_STAGE_TEST = True
-    UNCOR_MATRIX_IDX = 10
-    PARTIAL_UNCOR_MATRIX_IDX = 1
-    FULL_UNCOR_MATRIX_IDX = 2
+    ENABLE_TWO_STAGE_TEST = False
+    UNCOR_MATRIX_IDX = -1
     ENABLE_LOAD_VECTOR = False
     IS_TLC = True
     LOAD_UNCOR_MODE = DAOLoadUncorMode.DEFAULT
@@ -667,96 +654,78 @@ class REGEN_ROW_CONFIG:
     FIXED_ROW_IDX: int | list[int] = -1  # -1: 전체 순회
 ```
 
-### 3.2 Two-Stage 테스트 시스템
+### 3.2 Two-Stage 테스트 시스템 (Dynamic Partial)
 
 #### 3.2.1 개요
 **목적:** 테스트 시간 절약
-- Partial: 적은 uncor로 빠른 스크리닝
-- Full: 많은 uncor로 정확한 평가
+- Partial: 초기 매트릭스가 정정하지 못한 uncor만 모은 작은 묶음으로 빠르게 스크리닝
+- Full: Input에 둔 uncor 전체로 정확하게 평가
+
+Partial 묶음은 Input에 두지 않는다. 초기 Full 테스트에서 실패한 uncor를 모아 세션 안에 만들고, optimal이 갱신될 때마다 다시 만든다. 코드에서는 이 방식을 Dynamic Partial이라 부른다.
 
 **동작 흐름:**
 ```
+초기 매트릭스 Full 테스트 (실패 uncor 저장)
+    ▼
+실패 uncor를 모아 Partial 풀 생성
+    ├─ 실패 uncor 0개 → 최적화 목표 달성으로 종료
+    ▼
 새 매트릭스 생성
     ▼
 Partial Test (빠름)
-    ├─ FER 나빠짐 → ❌ Full Test Skip
-    └─ FER 개선 → ✓ Full Test 진행
+    ├─ FER 개선 없음 → Full Test 생략
+    └─ FER 개선 → Full Test 진행
          ▼
     Full Test (정확)
-         ├─ FER 개선 → Optimal 갱신
-         └─ FER 나빠짐 → 유지
+         ├─ FER 개선 → Optimal 갱신, Partial 풀 재구성
+         └─ FER 개선 없음 → 유지
 ```
 
 #### 3.2.2 설정
 ```python
 # DAO_Config.py
-UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST = True
-
-# Uncor 디렉토리 인덱스
-UNCOR_CONFIG.UNCOR_MATRIX_IDX = -1 if UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST else 10
-UNCOR_CONFIG.PARTIAL_UNCOR_MATRIX_IDX = 1 if UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST else -1
-UNCOR_CONFIG.FULL_UNCOR_MATRIX_IDX = 2 if UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST else -1
+UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST = True   # Dynamic Partial 켜기
+UNCOR_CONFIG.UNCOR_MATRIX_IDX = 202         # Full uncor 폴더 번호 (-1이면 모드 폴더 바로 아래)
 ```
-
-**인덱스 의미:**
-- `-1`: 기본 디렉토리 (HD/ 또는 HD/Partial/ 등)
-- `>= 0`: 특정 LLR 매트릭스 디렉토리 (HD/LLR_MATRIX_{idx}/)
+Partial 전용 설정은 없다. 위 두 값과 함께 uncor 파일 이름을 정하는 `REFC_CONFIG`의 `init_n`, `ch_type`, `matrix_sel`, 채널 값(`RBERs`, `num_fixed_errs`, `fixed_SCRs`, `fixed_SERs`)이 Input의 파일과 맞아야 한다. 하나라도 어긋나면 `Copy_Uncors`가 "Missing input uncor file"로 멈춘다.
 
 #### 3.2.3 Uncor 디렉토리 구조
-```python
-# ENABLE_TWO_STAGE_TEST = True
-Input/Ref_C/{ECC_VER}/ECC/Uncors/HD/
-├── Partial/                    # PARTIAL_UNCOR_MATRIX_IDX = -1
-│   ├── ch_1_uncor_0.bin
-│   └── ch_1_uncor_1.bin        # 적은 수 (빠른 테스트)
-├── Full/                       # FULL_UNCOR_MATRIX_IDX = -1
-│   ├── ch_1_uncor_0.bin
-│   ├── ch_1_uncor_1.bin
-│   └── ...                     # 많은 수 (정확한 테스트)
-├── LLR_MATRIX_1/
-│   ├── Partial/                # PARTIAL_UNCOR_MATRIX_IDX = 1
-│   └── Full/                   # FULL_UNCOR_MATRIX_IDX = 1
-└── LLR_MATRIX_2/
-    ├── Partial/                # PARTIAL_UNCOR_MATRIX_IDX = 2
-    └── Full/                   # FULL_UNCOR_MATRIX_IDX = 2
+`Uncors/` 아래는 디코더 모드 폴더(`HD`, `2SD`, `3SD`)로 나뉘고, 그 아래에 LLR matrix 파일 이름과 같은 이름의 폴더를 둔다 (폴더 이름에 `.txt`까지 포함). Two-Stage 여부와 관계없이 구조는 같다. 아래는 2SD(init_n = 2), INITIAL_MATRIX_IDX = 200, UNCOR_MATRIX_IDX = 202 예시다.
 
-# ENABLE_TWO_STAGE_TEST = False
-Input/Ref_C/{ECC_VER}/ECC/Uncors/HD/
-├── ch_1_uncor_0.bin            # UNCOR_MATRIX_IDX = -1
-├── ch_1_uncor_1.bin
-├── ...
-└── LLR_MATRIX_10/              # UNCOR_MATRIX_IDX = 10
-    ├── ch_1_uncor_0.bin
-    └── ...
+```
+Input/Ref_C/Prime_ECC_3.0/
+├── EXE/
+│   └── Prime_ECC_3.0.exe                    # Linux는 확장자 없이 Prime_ECC_3.0
+├── H_Matrix/                                 # 폴더째 세션으로 복사
+├── Initial_LLR_matrix/
+│   └── 2SD/
+│       └── LLR_MATRIX_200.txt                # 초기 매트릭스
+└── Uncors/
+    └── 2SD/
+        ├── uncor_seed_..._init_n_2_0.txt     # UNCOR_MATRIX_IDX = -1 일 때 읽는 위치
+        └── LLR_MATRIX_202.txt/               # UNCOR_MATRIX_IDX = 202 일 때 읽는 위치 (폴더)
+            └── uncor_seed_..._init_n_2_0.txt # 채널마다 한 파일
 ```
 
-#### 3.2.4 Copy_Uncors 함수 ([DAO_Main.py](DAO/SRC/DAO_Main.py))
-**역할:** Input에서 Workspace로 uncor 파일 복사
+uncor 파일 이름은 `Get_Uncor_File_Name`이 `ch_type`에 따라 만든다 (matrix_sel = 1, init_n = 2 예시). 끝의 `_0`은 프로세스 번호이며 Input에서 읽을 때는 항상 0이다. `ENABLE_LOAD_VECTOR`가 True면 `uncor_seed` 대신 `uncor_vector`, 확장자는 `.dat`이다.
 
-```python
-def Copy_Uncors(
-    ch_idx: int,
-    uncor_matrix_idx: int,
-    test_mode: TestMode  # PARTIAL or FULL
-):
-    # Two-stage 모드 분기
-    if UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST:
-        # HD/Partial/ or HD/{llr_name}/Partial/
-        test_mode_subdir = TEST_MODE_DIR_NAME[test_mode]  # "Partial" or "Full"
-        if uncor_matrix_idx == -1:
-            src_dir = f"{base_uncor_dir}/{test_mode_subdir}"
-        else:
-            llr_name = f"LLR_MATRIX_{uncor_matrix_idx}"
-            src_dir = f"{base_uncor_dir}/{llr_name}/{test_mode_subdir}"
-    else:
-        # HD/ or HD/{llr_name}/
-        if uncor_matrix_idx == -1:
-            src_dir = base_uncor_dir
-        else:
-            llr_name = f"LLR_MATRIX_{uncor_matrix_idx}"
-            src_dir = f"{base_uncor_dir}/{llr_name}"
-```
+| ch_type | 파일 이름 |
+|---|---|
+| 1 (RBER) | `uncor_seed_H_1_CH_1_E1.35e-02_init_n_2_0.txt` |
+| 2 (고정 오류 수) | `uncor_seed_H_1_CH_2_E520_init_n_2_0.txt` |
+| 3 (고정 오류 수, SCR, SER) | `uncor_seed_H_1_CH_3_E520_SC_0.94_SE_0.23_init_n_2_0.txt` |
 
+**uncor 파일 준비 순서**
+- ㉮ `RUN_DAO_MODE = RunDAOMode.SAVE_UNCOR`로 초기 매트릭스를 한 번 돌린다 (프리셋 SIM_IDX 11, 21, 31)
+- ㉯ 결과는 `Uncors/{모드}/LLR_MATRIX_{INITIAL_MATRIX_IDX}.txt/Recoded_uncors_{YYYYMMDD_HHMMSS}/`에 저장된다 (부록 C)
+- ㉰ 그 안의 uncor 파일을 `Uncors/{모드}/LLR_MATRIX_{UNCOR_MATRIX_IDX}.txt/` 바로 아래로 옮긴다. 읽기는 타임스탬프 폴더가 아니라 매트릭스 이름 폴더 바로 아래에서 한다
+
+#### 3.2.4 Uncor 로드와 Partial 풀 생성 ([DAO_Main.py](DAO/SRC/DAO_Main.py))
+- ㉮ `Setup_Uncor_Pool`: 최적화 모드에서는 `LOAD_UNCOR_MODE`가 자동으로 `LOAD_SEED`가 된다. root가 `Copy_Uncors`로 Input의 Full uncor를 세션 `5_Uncors/Copied_uncors/`로 복사하고, 각 코어의 `Uncor_Pool/`에 나눠 둔다
+- ㉯ `Test_Initial_LLR`: Two-Stage가 켜져 있으면 초기 매트릭스를 Full uncor로 테스트하면서 실패한 uncor를 저장한다
+- ㉰ `_Build_Initial_Partial_Pool`: 실패 uncor를 모아 `5_Uncors/tmp_partial_uncors/{매트릭스 파일 이름}/`에 두고 각 코어의 Partial 풀로 나눈다. 실패 uncor가 0개이면 종료 플래그를 세우고 최적화를 시작하지 않는다
+- ㉱ `Rebuild_Partial_Pool`: optimal이 갱신되면 그 매트릭스의 실패 uncor로 Partial 풀을 다시 만든다
+- ㉲ `Ensure_Uncors_Loaded`: 시도마다 필요한 test_mode(PARTIAL 또는 FULL)의 uncor가 작업 폴더에 있는지 확인하고 풀에서 복사한다
 #### 3.2.5 FER 저장 분리
 **Partial과 Full 결과를 별도 필드에 저장:**
 ```python
@@ -777,25 +746,27 @@ class LLR_MATRIX:
 
 **업데이트 판단 로직:**
 ```python
-# Partial 테스트 (현재 매트릭스만)
+# Partial 테스트 (현재 매트릭스)
 Test_LLR(current_matrix, test_mode=TestMode.PARTIAL)
 # → current_matrix.FERs_partial 저장
 
-# Partial 결과 비교
-if current_matrix.FERs_partial >= optimal_matrix.FERs:
-    # Partial에서 이미 나빠짐 → Full 테스트 Skip
+# Partial 결과 비교 (optimal의 Partial FER과 채널별 비교)
+if not Is_List_A_Strictly_Better(current_matrix.FERs_partial, optimal_matrix.FERs_partial):
+    # Partial에서 개선이 없음 → Full 테스트 생략
     return False
 
-# Full 테스트 (현재 + optimal 모두)
+# Full 테스트 (현재 매트릭스)
 Test_LLR(current_matrix, test_mode=TestMode.FULL)
-Test_LLR(optimal_matrix, test_mode=TestMode.FULL)
-# → current_matrix.FERs, optimal_matrix.FERs 저장
+# → current_matrix.FERs 저장
 
 # Full 결과로 최종 판단
-if current_matrix.FERs < optimal_matrix.FERs:
+if Is_List_A_Strictly_Better(current_matrix.FERs, optimal_matrix.FERs):
     Update_Optimal_LLR()
+    Rebuild_Partial_Pool()
     return True
 ```
+
+`is_update_at_last_trial`이 켜져 있으면 비교 대상은 temp optimal이고, 모드의 마지막 trial은 Partial 결과와 관계없이 Full 테스트를 한다.
 
 ### 3.3 MPI 병렬 처리 구조
 
@@ -909,7 +880,7 @@ class DAO_CONFIG:
     INITIAL_MATRIX_IDX: int = 999
     """초기 LLR 매트릭스 인덱스
     - 파일명: LLR_MATRIX_{INITIAL_MATRIX_IDX}.txt
-    - 위치: Input/Ref_C/{ECC_VER}/Initial_LLR_matrix/{init_n}/
+    - 위치: Input/Ref_C/{ECC_NAME}/Initial_LLR_matrix/{HD,2SD,3SD}/
     """
 
     # ========== 타겟 그룹 설정 ==========
@@ -944,16 +915,22 @@ class DAO_CONFIG:
     """
 
     # HBF 최적화 시퀀스 (별도)
-    Gen_LLR_Mode_HBF_SEQUENCE: List[int] = [7, 8, 1, 2, 12]
+    Gen_LLR_Mode_HBF_SEQUENCE: List[int] = [40, 41, 10, 11, 60]
     """HBF 모드 전용 시퀀스"""
 
-    # ========== Exit 모드 설정 ==========
-    EXIT_AFTER_INITIAL_MATRIX_MODE: ExitAfterInitialMatrixMode = ExitAfterInitialMatrixMode.DISABLED
-    """초기 매트릭스 실행 후 종료 모드
-    - DISABLED: 정상 최적화 모드
-    - EXIT_AFTER_TEST_FER: 초기 FER 테스트 후 종료
-    - EXIT_AFTER_SAVE_UNCOR: Uncor 저장 후 종료
-    - EXIT_AFTER_LOAD_AND_SAVE_UNCOR: Uncor 로드 후 재저장하고 종료
+    # ========== 실행 모드 설정 ==========
+    RUN_DAO_MODE: RunDAOMode = RunDAOMode.RUN_OPTIMIZATION
+    """DAO 실행 모드
+    - RUN_OPTIMIZATION: 정상 최적화
+    - TEST_FER: 초기 매트릭스 FER 테스트 후 종료
+    - SAVE_UNCOR: 초기 매트릭스로 uncor 저장 후 종료
+    - REDECODE: uncor 로드 후 다시 저장하고 종료
+    - GEN_SINGLE_ROW: 단일 row 후보 생성, 테스트, ranking
+    """
+
+    INITIAL_MATRIX_IDX_LIST: Optional[list] = None
+    """복수 매트릭스 인덱스 (TEST_FER, SAVE_UNCOR, REDECODE 전용)
+    - None이면 INITIAL_MATRIX_IDX 하나만 처리
     """
 
     # ========== 기타 설정 ==========
@@ -1022,56 +999,45 @@ class REFC_CONFIG:
     """LDPC 디코더 최대 iteration 수"""
 ```
 
-#### 4.1.3 UNCOR_CONFIG (Uncor 관련 설정) - 신규 클래스
+#### 4.1.3 UNCOR_CONFIG (Uncor 관련 설정)
 
 ```python
 class UNCOR_CONFIG:
     # ========== Two-Stage 테스트 설정 ==========
-    ENABLE_TWO_STAGE_TEST: bool = True
-    """Two-Stage 테스트 활성화
-    - False: 기존 방식 (Full 테스트만 수행)
-    - True: Partial → Full 순차 테스트
+    ENABLE_TWO_STAGE_TEST: bool = False
+    """Two-Stage(Dynamic Partial) 테스트 활성화
+    - False: Full 테스트만 수행
+    - True: 초기 Full 테스트의 실패 uncor로 Partial 풀을 만들고, Partial에서 개선된 시도만 Full 테스트
     """
 
     # ========== Uncor 디렉토리 인덱스 ==========
-    UNCOR_MATRIX_IDX: int = 10 if not ENABLE_TWO_STAGE_TEST else -1
-    """Uncor 디렉토리 인덱스 (Two-Stage=False 전용)
-    - -1: HD/ 직접 사용
-    - >=0: HD/LLR_MATRIX_{idx}/ 사용
-    """
-
-    PARTIAL_UNCOR_MATRIX_IDX: int = 1 if ENABLE_TWO_STAGE_TEST else -1
-    """Partial uncor 디렉토리 인덱스 (Two-Stage=True 전용)
-    - -1: HD/Partial/
-    - >=0: HD/LLR_MATRIX_{idx}/Partial/
-    """
-
-    FULL_UNCOR_MATRIX_IDX: int = 2 if ENABLE_TWO_STAGE_TEST else -1
-    """Full uncor 디렉토리 인덱스 (Two-Stage=True 전용)
-    - -1: HD/Full/
-    - >=0: HD/LLR_MATRIX_{idx}/Full/
+    UNCOR_MATRIX_IDX: int = -1
+    """Input uncor 폴더 번호 (Two-Stage 여부와 무관하게 Full uncor 위치)
+    - -1: Uncors/{HD,2SD,3SD}/ 바로 아래
+    - >=0: Uncors/{HD,2SD,3SD}/LLR_MATRIX_{idx}.txt/ 아래
     """
 
     # ========== Load Vector 설정 ==========
     ENABLE_LOAD_VECTOR: bool = False
-    """Load uncor vector 활성화 여부"""
+    """seed(.txt) 대신 uncor vector(.dat)를 로드"""
 
     IS_TLC: bool = True
     """TLC 여부 (LEN_NO_PS 계산에 사용)"""
 
+    LEN_NO_PS: int = 0
+    """vector 한 개의 길이 (LOAD_VECTOR일 때 자동 계산)"""
+
     # ========== 종속성 있는 변수들 ==========
     NUM_LINES_PER_UNCOR: int = 1
-    """Uncor 파일당 라인 수 (자동 계산)"""
+    """Uncor 파일당 라인 수 (LOAD_VECTOR일 때 자동 계산)"""
 
     LOAD_UNCOR_MODE: DAOLoadUncorMode = DAOLoadUncorMode.DEFAULT
-    """초기 uncor 로드 모드
-    - DEFAULT: -1
-    - LOAD_NONE: 0
-    - LOAD_SEED: 1
-    - LOAD_VECTOR: 2
+    """초기 uncor 로드 모드. Update_Exit_After_Run_Configs가 RUN_DAO_MODE에 따라 정한다
+    - RUN_OPTIMIZATION: LOAD_SEED (ENABLE_LOAD_VECTOR가 True면 LOAD_VECTOR)
+    - TEST_FER, SAVE_UNCOR: LOAD_NONE
+    - REDECODE, GEN_SINGLE_ROW: LOAD_SEED
     """
 ```
-
 #### 4.1.4 SPEED_TEST_REFC_CONFIG (코어 속도 테스트 설정) - 신규 클래스
 
 ```python
@@ -1182,14 +1148,14 @@ class PATH_CONFIG:
 
     INPUT_DIR_PATH: str = ""
     """입력 파일 디렉토리
-    - LLR 매트릭스: Input/Ref_C/{ECC_VER}/Initial_LLR_matrix/
-    - Uncor: Input/Ref_C/{ECC_VER}/Uncors/
+    - LLR 매트릭스: Input/Ref_C/{ECC_NAME}/Initial_LLR_matrix/{HD,2SD,3SD}/
+    - Uncor: Input/Ref_C/{ECC_NAME}/Uncors/{HD,2SD,3SD}/
     """
 
     WORK_SPACE_DIR: str = ""
     """작업 공간 디렉토리
     - 임시 파일, uncor 복사본 등
-    - WorkSpace/{init_n}/
+    - Work_Space/{HD,2SD,3SD}/
     """
 
     # ========== 파일명 템플릿 ==========
@@ -1293,13 +1259,14 @@ class REGEN_ROW_CONFIG:
 
 ### 4.2 DAO_Constants.py 주요 상수
 
-#### 4.2.1 ExitAfterInitialMatrixMode Enum (신규)
+#### 4.2.1 RunDAOMode Enum
 ```python
-class ExitAfterInitialMatrixMode(IntEnum):
-    DISABLED = 0                        # 정상 최적화 모드
-    EXIT_AFTER_TEST_FER = 1             # 초기 FER 테스트 후 종료
-    EXIT_AFTER_SAVE_UNCOR = 2           # Uncor 저장 후 종료
-    EXIT_AFTER_LOAD_AND_SAVE_UNCOR = 3  # Uncor 로드 후 재저장하고 종료
+class RunDAOMode(IntEnum):
+    RUN_OPTIMIZATION = 0            # 정상 최적화 모드
+    TEST_FER = 1                    # 초기 매트릭스 FER 테스트 후 종료
+    SAVE_UNCOR = 2                  # 초기 매트릭스로 uncor 저장 후 종료
+    REDECODE = 3                    # uncor 로드 후 다시 저장하고 종료
+    GEN_SINGLE_ROW = 4              # 단일 row 후보 생성 + 테스트 + ranking
 ```
 
 #### 4.2.2 DAOLoadUncorMode Enum (단순화)
@@ -1341,8 +1308,7 @@ class DAO_CONFIG:
 
 class UNCOR_CONFIG:
     ENABLE_TWO_STAGE_TEST = True        # Two-Stage 활성화
-    PARTIAL_UNCOR_MATRIX_IDX = 1
-    FULL_UNCOR_MATRIX_IDX = 2
+    UNCOR_MATRIX_IDX = 102              # Full uncor 폴더 번호
 
 class REFC_CONFIG:
     fn = 50                             # 낮은 FE 목표
@@ -1374,7 +1340,7 @@ class REFC_CONFIG:
 ```python
 # DAO_Config.py
 class DAO_CONFIG:
-    EXIT_AFTER_INITIAL_MATRIX_MODE = ExitAfterInitialMatrixMode.EXIT_AFTER_TEST_FER
+    RUN_DAO_MODE = RunDAOMode.TEST_FER
 
 class DEBUG_CONFIG:
     ENABLE_DEBUG_MODE = True            # 디버그 모드
@@ -1393,7 +1359,7 @@ class REFC_CONFIG:
 
 | 에러 메시지 | 원인 | 해결 방법 |
 |------------|------|----------|
-| `There is no initial LLR matrix` | 초기 매트릭스 파일 없음 | `Input/Ref_C/{ECC_VER}/Initial_LLR_matrix/{init_n}/LLR_MATRIX_{idx}.txt` 확인 |
+| `There is no initial LLR matrix` | 초기 매트릭스 파일 없음 | `Input/Ref_C/{ECC_NAME}/Initial_LLR_matrix/{HD,2SD,3SD}/LLR_MATRIX_{idx}.txt` 확인 |
 | `TARGET_GROUP_IDX must define at least one index` | 타겟 그룹 인덱스 비어있음 | [DAO_Config.py:35](DAO/SRC/DAO_Config.py#L35)에서 `INITIAL_TARGET_GROUP_IDX` 설정 |
 | `Gen_LLR_Insert_Random_Group: Matrix must not be None` | 매트릭스 초기화 실패 | Run_Initial_Test 로그 확인 |
 | `MPI_Abort` 호출 | 치명적 에러 발생 | 로그 파일의 에러 메시지 확인 |
@@ -1410,32 +1376,28 @@ Output/{session}/Process_{rank}/
 └── 5_Uncors/               # Uncor 파일
 ```
 
-### C. Uncor 백업 시스템
+### C. Uncor를 Input에 저장하는 구조
 
-**Update_Uncors_To_Input 백업 구조** ([DAO_Main.py:4627](DAO/SRC/DAO_Main.py#L4627))
+**Update_Uncors_To_Input** ([DAO_Main.py](DAO/SRC/DAO_Main.py))
 
-EXIT_AFTER_SAVE_UNCOR 또는 EXIT_AFTER_LOAD_AND_SAVE_UNCOR 모드에서 uncor를 Input 디렉토리로 업데이트할 때, 기존 파일은 날짜+시간별 디렉토리에 백업됩니다.
+`RUN_DAO_MODE`가 SAVE_UNCOR 또는 REDECODE이면 테스트가 끝난 뒤 세션의 `5_Uncors/Redecoded_uncors/{매트릭스 파일 이름}/`에 모인 파일을 Input으로 복사한다. 기존 파일은 그대로 두고 실행마다 타임스탬프 폴더를 새로 만든다.
 
-**백업 디렉토리 구조:**
+**저장 구조:**
 ```
-Input/Ref_C/Prime_ECC_3.0/Uncors/HD/LLR_MATRIX_999/
-├── seed_ch0.txt              # 현재 파일
-├── uncor_log.txt             # 업데이트 이력 로그
-└── Backup/
-    ├── 20260206_143025/      # 첫 번째 백업 (날짜_시간)
-    │   └── seed_ch0.txt
-    └── 20260206_150312/      # 두 번째 백업
-        └── seed_ch0.txt
+Input/Ref_C/Prime_ECC_3.0/Uncors/2SD/LLR_MATRIX_200.txt/
+├── uncor_log.txt                          # 저장 이력 (위치, Line 수, 시각)
+├── Recoded_uncors_20260921_143025/        # 첫 번째 실행
+│   ├── uncor_seed_..._init_n_2_0.txt
+│   └── LLR_MATRIX_200.txt                 # 이 uncor를 만든 매트릭스
+└── Recoded_uncors_20260921_150312/        # 두 번째 실행
+    └── ...
 ```
 
-**백업 로직:**
-1. 날짜+시간 디렉토리 생성: `Backup/{YYYYMMDD_HHMMSS}/`
-2. 기존 파일을 백업 디렉토리로 이동 (원본 파일명 유지)
-3. uncor_log.txt에 백업 정보 기록:
-   - 백업 파일 경로
-   - Line 수
-   - 마지막 업데이트 시간
-
+**저장 로직:**
+- ㉮ `Recoded_uncors_{YYYYMMDD_HHMMSS}/` 폴더를 만든다
+- ㉯ `Redecoded_uncors/{매트릭스 파일 이름}/` 아래 파일을 그대로 복사한다 (`uncor_log.txt`는 제외)
+- ㉰ `uncor_log.txt`에 저장 위치, Line 수, 시각을 덧붙인다
+- ㉱ 최적화 입력으로 쓰려면 uncor 파일을 `LLR_MATRIX_{UNCOR_MATRIX_IDX}.txt/` 바로 아래로 옮긴다 (3.2.3절)
 ### D. 참고 파일
 
 - [CLAUDE.md](CLAUDE.md): 프로젝트 개요 및 Claude Code 가이드
@@ -1450,7 +1412,7 @@ Input/Ref_C/Prime_ECC_3.0/Uncors/HD/LLR_MATRIX_999/
 **버전:** 2.1
 **업데이트:** 최신 변경사항 반영
 - 타겟 그룹 설정 변경 (INITIAL_TARGET_GROUP_IDX)
-- Exit 모드 통합 (ExitAfterInitialMatrixMode Enum)
+- 실행 모드 통합 (RunDAOMode Enum)
 - UNCOR_CONFIG 클래스 신규 분리
 - SPEED_TEST_REFC_CONFIG 신규 추가 (코어 속도 테스트)
 - PRINT_LOG_CONFIG, TIME_CONFIG 신규 추가
@@ -1459,4 +1421,4 @@ Input/Ref_C/Prime_ECC_3.0/Uncors/HD/LLR_MATRIX_999/
 - 변수 이름 변경 (MAX_RUN_ECC_ERRORS, MAX_OPTIMIZATION_TRIALS 등)
 - **ECC_NAME_TEMPLATE 템플릿화** (DAO_Constants.py)
 - **경로 설정 개선** (PATH_CONFIG 동적 설정)
-- **Uncor 백업 시스템 개선** (날짜+시간별 디렉토리 구조)
+- **Uncor 저장 구조** (Recoded_uncors 타임스탬프 폴더)
