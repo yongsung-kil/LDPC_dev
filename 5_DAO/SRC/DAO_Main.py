@@ -1527,21 +1527,23 @@ class LLR_OPT:
                     self.Write_Log_Lines(f"⚠️ Failed to delete {target_path.name}: {e}")
         self.Write_Log_Lines(f"[Delete all local uncor seeds]")
 
-    def Delete_Own_Uncors(self, ch_idx: int = 0, is_uncor_type_seed: bool = True):
+    def Delete_Own_Uncors(self, ch_idx: int = 0, is_uncor_type_seed: bool = True, is_redecoded_uncor: bool = False):
         """현재 프로세스의 uncor 파일만 삭제한다 (병렬 실행용).
 
-        SAVE_UNCOR_SEED 모드에서 각 코어가 자신의 working copy만 삭제할 때 사용.
+        SAVE_UNCOR_SEED 모드에서는 자신의 working copy를, LOAD_UNCOR_SEED_SAVE_UNCOR_SEED 모드에서는
+        자신의 redecode 파일(is_redecoded_uncor=True)을 Ref-C 실행 전에 지울 때 사용한다.
         제외된 코어는 삭제를 시도하지 않는다.
         """
         if self.is_current_core_excluded:
             return
-        target_file_name = self.Get_Uncor_File_Name(process_idx=self.rank, ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed)
+        target_file_name = self.Get_Uncor_File_Name(process_idx=self.rank, ch_idx=ch_idx, is_uncor_type_seed=is_uncor_type_seed, is_redecoded_uncor=is_redecoded_uncor)
         target_path = Path(self.local_session_dir) / target_file_name
         if target_path.exists():
             try:
                 target_path.unlink()
-            except Exception as e:
-                self.Write_Log_Lines(f"⚠️ Failed to delete {target_path.name}: {e}")
+            except OSError as e:
+                # 남은 파일은 다음 Ref-C 실행분과 섞여 uncor 수를 틀리게 하므로 멈춘다 (root 전용 로그로는 worker의 실패가 보이지 않는다)
+                self.MPI_Abort(f"Delete_Own_Uncors: uncor 파일 삭제 실패, {target_path}: {e}")
 
     def Distribute_Uncors_To_Local_Session(self, src_path, ch_idx: int = 0, is_uncor_type_seed: bool = True):
         """uncor 시드를 프로세스별 세션으로 배포한다.
@@ -8546,6 +8548,9 @@ class LLR_OPT:
 
         if self.current_seed_mode == SeedMode.SAVE_UNCOR_SEED:
             self.Delete_Own_Uncors(ch_idx=ch_idx)
+        elif self.current_seed_mode == SeedMode.LOAD_UNCOR_SEED_SAVE_UNCOR_SEED:
+            # Ref-C는 실패 seed를 redecode 파일에 이어쓰기로 붙이므로, 이번 실행분만 남도록 이전 파일을 먼저 지운다
+            self.Delete_Own_Uncors(ch_idx=ch_idx, is_redecoded_uncor=True)
 
         self.is_test_end = False
         self.ecc_start_time = time.time()
@@ -9681,8 +9686,10 @@ class LLR_OPT:
         self.temp_optimal_LLR_matrix = self._safe_bcast(self.temp_optimal_LLR_matrix if self.is_root else None, "Bcast_temp_optimal_LLR_matrix")
         self.is_previous_trial_updated = self._safe_bcast(self.is_previous_trial_updated if self.is_root else None, "Bcast_is_previous_trial_updated")
 
-        # Dynamic Partial Reconstruction: optimal 갱신 시에만 실행
+        # Dynamic Partial Reconstruction: optimal 갱신 시에만 실행.
+        # 초기 매트릭스의 Partial 풀은 Test_Initial_LLR이 이미 만들었으므로 is_initial이면 건너뛴다
         if (UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST
+                and not is_initial
                 and self.update_mode in (UpdateMode.OPTIMAL_MATRIX_FROM_CURRENT,
                                           UpdateMode.OPTIMAL_MATRIX_FROM_TEMP_OPTIMAL)):
             has_partial = self.Rebuild_Partial_Pool()

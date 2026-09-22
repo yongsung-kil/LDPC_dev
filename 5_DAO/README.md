@@ -722,9 +722,9 @@ uncor 파일 이름은 `Get_Uncor_File_Name`이 `ch_type`에 따라 만든다 (m
 
 #### 3.2.4 Uncor 로드와 Partial 풀 생성 ([DAO_Main.py](DAO/SRC/DAO_Main.py))
 - ㉮ `Setup_Uncor_Pool`: 최적화 모드에서는 `LOAD_UNCOR_MODE`가 자동으로 `LOAD_SEED`가 된다. root가 `Copy_Uncors`로 Input의 Full uncor를 세션 `5_Uncors/Copied_uncors/`로 복사하고, 각 코어의 `Uncor_Pool/`에 나눠 둔다
-- ㉯ `Test_Initial_LLR`: Two-Stage가 켜져 있으면 초기 매트릭스를 Full uncor로 테스트하면서 실패한 uncor를 저장한다
+- ㉯ `Test_Initial_LLR`: Two-Stage가 켜져 있으면 초기 매트릭스를 Full uncor로 테스트하면서 실패한 uncor를 저장한다. 이 테스트와 Rebuild의 Full 테스트는 실행 전에 각 rank가 자기 redecode 파일을 지워 이번 실행분만 남긴다
 - ㉰ `_Build_Initial_Partial_Pool`: 실패 uncor를 모아 `5_Uncors/tmp_partial_uncors/{매트릭스 파일 이름}/`에 두고 각 코어의 Partial 풀로 나눈다. 실패 uncor가 0개이면 종료 플래그를 세우고 최적화를 시작하지 않는다
-- ㉱ `Rebuild_Partial_Pool`: optimal이 갱신되면 그 매트릭스의 실패 uncor로 Partial 풀을 다시 만든다
+- ㉱ `Rebuild_Partial_Pool`: 초기 테스트 뒤 optimal이 갱신될 때마다 그 매트릭스의 실패 uncor로 Partial 풀을 다시 만든다
 - ㉲ `Ensure_Uncors_Loaded`: 시도마다 필요한 test_mode(PARTIAL 또는 FULL)의 uncor가 작업 폴더에 있는지 확인하고 풀에서 복사한다
 #### 3.2.5 FER 저장 분리
 **Partial과 Full 결과를 별도 필드에 저장:**

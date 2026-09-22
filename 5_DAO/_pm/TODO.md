@@ -1,12 +1,21 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-21 22:12:09
+> Claude 마지막 확인: 2026-09-22 10:27:52
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
 ---
 
 ## 작업 목록
+
+- [ ] Dynamic Partial의 redecode uncor 누적 수정
+  - 상세: `_pm/tasks/20260922_dynamic_partial_redecode_accumulation/`
+  - [x] 원인 확인과 수정 2건(코드 변경 3곳) 적용 (2026-09-22 10:06, Set_Test_Environment에서 mode 12 실행 전 redecode 파일 삭제, 초기 update의 Rebuild_Partial_Pool 생략)
+  - [x] 라이트 리뷰 (2026-09-22 10:27, fable 에이전트, Round 1 관점 36개를 16개로 통합, Round 2 lv1 4개. 발견 CRITICAL 0, HIGH 0, MEDIUM 2, LOW 6. diff 결함 0건. 반영: 삭제 실패를 MPI_Abort로, 태스크 문서 3곳. 기존 결함 1건은 별도 작업 등록, LOW 3건은 기존 동작으로 기록만. 기록: `_pm/tasks/20260922_dynamic_partial_redecode_accumulation/review/`)
+  - [ ] 사용자 환경 MPI 재실행으로 Partial 수가 그 회차 실패 수와 같은지 확인 (검증 방법은 태스크 문서 7장)
+
+- [ ] graceful stop 뒤 빈 Partial 풀로 테스트가 돌아 MPI_Abort 되는 기존 결함 (Review 등급, 설계 후보 ㉮㉯ 중 사용자 결정 대기)
+  - 상세: `_pm/tasks/20260922_graceful_stop_empty_partial_test/`
 
 - [ ] SW 분기가 있는 LLR matrix 지원
   - 상세: `_pm/tasks/20260902_SW_branch_LLR_matrix/`
