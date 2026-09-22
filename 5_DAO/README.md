@@ -841,7 +841,7 @@ if self.is_root and now_optimal_LLR_update:
 
 ### 3.4 SW 분기 매트릭스에서 허용되는 모드
 
-입력 매트릭스의 row 꼬리 칸(`floor_flag`)이 -1이 아니면 그 그룹은 SW(Syndrome Weight, 신드롬 무게) 분기 그룹이다. 분기 index가 같은 연속 그룹은 한 묶음으로 변이한다. 자세한 규칙은 `DAO_spec.md` 3.7절에 있다.
+헤더 `type_each_group`이 10 이상인 그룹은 SW(Syndrome Weight, 신드롬 무게) 분기 그룹이다. 10은 분기 1개짜리 묶음(row 꼬리 0), 20과 21은 분기 2개(row 꼬리 0과 1)이고, 10 미만은 보통 그룹(row 꼬리 -1)이다. 한 구간 안에서 분기 index가 같은 그룹은 한 묶음으로 변이한다. 자세한 규칙은 `DAO_spec.md` 3.7절에 있다.
 
 - ㉮ 분기 그룹이 하나라도 있으면 `Gen_LLR_Mode_SEQUENCE`에 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 넣는다. 다른 모드가 있으면 `Set_Gen_Trial_LLR_Mode`가 오류 문구를 내고 멈춘다
 - ㉯ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다. 갱신할 분기마다 입력 매트릭스와 uncor seed를 따로 준비해 돌린다

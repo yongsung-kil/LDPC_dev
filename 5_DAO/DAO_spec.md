@@ -68,7 +68,7 @@ LLR_MATRIX
 | H4 | `len(max_value) == num_parameter_each_set` | "max_value length mismatch" |
 | H5 | `len(min_value) == num_parameter_each_set` | "min_value length mismatch" |
 | H6 | `num_group == len(groups)` | "num_group mismatch with groups" |
-| H8 | `type_each_group[g]`가 10 이상이면 일의 자리 == 그룹의 분기 index, 십의 자리 == 그 구간의 분기 수. 0과 1은 검사하지 않음 | "Group {idx} header type {t} says branch {b} but rows carry {c}" |
+| H8 | `type_each_group[g]`가 10 미만이면 row 꼬리 == -1. 10 이상이면 일의 자리 == 그룹의 분기 index, 십의 자리 == 그 구간의 분기 수 | "Group {idx} header type {t} is a plain group but rows carry SW branch index {c}", "Group {idx} header type {t} says branch {b} but rows carry {c}" |
 
 ### 3.2 그룹/행 구조 검증
 
@@ -129,16 +129,16 @@ SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 �
 **표기** (파일 형식은 바뀌지 않는다)
 
 - ㉮ 각 row의 마지막 칸 `floor_flag`가 분기 index다. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호
-- ㉯ 헤더 `type_each_group`은 디코더용이다. `{분기 수}{분기 index}` 두 자리(예: 20, 21) 또는 원래 값(0, 1). DAO는 읽은 값을 그대로 보존해 다시 쓰고, 10 이상일 때만 row 꼬리와 대조하며(H8) 구간 경계 판정에 쓴다
+- ㉯ 헤더 `type_each_group`은 두 가지 뜻을 갖는다. 10 미만(0, 1)은 보통 그룹이고 row 꼬리는 -1이어야 한다. 10 이상은 `{분기 수}{분기 index}` 표시다: 10은 분기 1개짜리 묶음(꼬리 0), 20과 21은 분기 2개(꼬리 0과 1). DAO는 읽은 값을 그대로 보존해 다시 쓰고, 헤더와 꼬리를 양방향으로 대조하며(H8), 헤더 표시 값이 바뀌는 자리를 구간 경계로 쓴다
 
 **용어**
 
-- ㉮ **묶음(bundle)**: 분기 index가 같은 연속 그룹. 분기 index가 -1이면 그룹 하나가 묶음 하나다. 묶음은 헤더와 무관하다 (헤더가 1이어도 꼬리 0이 이어지면 묶음이다)
-- ㉯ **구간(span)**: index 0으로 시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위. index 0이 그대로 이어지는데 헤더의 분기 표시(10 이상인 값의 일의 자리)가 바뀌는 자리도 구간 경계다 (예: 헤더 1인 그룹 뒤에 헤더 20인 그룹). 구간 안에서 index가 1 늘면 iteration은 구간 시작으로 되돌아간다. 모든 분기는 구간의 시작과 끝을 똑같이 덮는다(G10). 구간 끝은 분기 0이 덮는 끝이다
+- ㉮ **묶음(bundle)**: 한 구간 안에서 분기 index가 같은 그룹들. 분기 index가 -1이면 그룹 하나가 묶음 하나다. 헤더 10이 이어지는 그룹들이 가장 단순한 묶음이다
+- ㉯ **구간(span)**: index 0으로 시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위. index 0이 그대로 이어지는데 헤더 표시 값이 바뀌는 자리도 구간 경계다 (예: 헤더 10인 묶음 뒤에 헤더 20인 그룹). 구간 안에서 index가 1 늘면 iteration은 구간 시작으로 되돌아간다. 모든 분기는 구간의 시작과 끝을 똑같이 덮는다(G10). 구간 끝은 분기 0이 덮는 끝이다. 같은 표시의 묶음 두 개가 iteration이 이어진 채 붙어 있으면 경계를 알 수 없으므로, 그 실행에서 갱신하지 않는 쪽은 보통 그룹(헤더 1, 꼬리 -1)으로 둔다
 
 `Build_SW_Branch_Layout()`이 groups만 보고 그룹별 분기 index, 묶음, 구간을 계산한다. `Is_LLR_Valid()`가 이 계산으로 G2와 G10을 검사한다.
 
-**예** (`Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`)
+**예** (`Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`. 같은 폴더의 `LLR_MATRIX_2.txt`는 iteration 1~4가 헤더 10인 분기 1개짜리 묶음이다)
 
 | 그룹 | 헤더 | 꼬리 | iteration | 뜻 |
 |------|------|------|-----------|-----|

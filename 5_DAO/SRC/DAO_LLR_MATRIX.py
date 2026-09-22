@@ -99,11 +99,12 @@ class LLR_MATRIX:
     def Build_SW_Branch_Layout(self) -> Optional[str]:
         """groups에서 SW 분기 배치(그룹별 분기 index, 묶음, 구간)를 다시 계산한다.
 
-        분기 index는 각 row의 마지막 칸(floor_flag)이다. 구간은 분기 index 0으로 시작해 index가 0으로 되돌아가거나
-        -1이 나오기 전까지의 그룹들이 덮는 iteration 범위다. 분기 0이 그대로 이어지는 두 구간은 헤더 type_each_group의
-        분기 표시(10 이상이면 일의 자리가 분기 index)가 바뀌는 자리에서 갈린다. 구간 안에서 index가 1 늘면 iteration은
-        구간 시작으로 되돌아가고, 모든 분기는 구간의 시작과 끝을 똑같이 덮는다. 묶음은 한 구간 안에서 분기 index가
-        같은 그룹들이고, 분기가 없는 그룹은 그룹 하나가 묶음 하나다.
+        분기 index는 각 row의 마지막 칸(floor_flag)이다. 헤더 type_each_group이 10 이상이면 {분기 수}{분기 index}
+        표시이고(10은 분기 1개짜리 묶음, 20과 21은 분기 2개), 10 미만이면 보통 그룹이다. 구간은 분기 index 0으로
+        시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위다. 분기 0이 그대로
+        이어지는 두 구간은 헤더 표시 값이 바뀌는 자리(예: 10 뒤에 20)에서 갈린다. 구간 안에서 index가 1 늘면
+        iteration은 구간 시작으로 되돌아가고, 모든 분기는 구간의 시작과 끝을 똑같이 덮는다. 묶음은 한 구간 안에서
+        분기 index가 같은 그룹들이고, 분기가 없는 그룹은 그룹 하나가 묶음 하나다.
 
         Returns:
             Optional[str]: 배치가 규칙에 어긋나면 그 이유 (sw_layout_error에도 남는다). 문제 없으면 None
@@ -119,9 +120,10 @@ class LLR_MATRIX:
 
         header_types = list(self.header.type_each_group) if len(self.header.type_each_group) == num_groups else [0] * num_groups
 
-        def header_branch(g: int) -> Optional[int]:
+        def header_marker(g: int) -> Optional[int]:
+            """헤더의 분기 표시 값 전체 ({분기 수}{분기 index}). 10 미만이면 표시 없음"""
             type_value = int(header_types[g])
-            return type_value % 10 if type_value >= 10 else None
+            return type_value if type_value >= 10 else None
 
         def fail(message: str) -> str:
             self.sw_layout_error = message
@@ -168,8 +170,8 @@ class LLR_MATRIX:
                     starts_new_span = True
                 elif branch == 0 and current_branch > 0:
                     starts_new_span = True
-                elif branch == 0 and current_branch == 0 and header_branch(g_idx) != header_branch(prev_group_idx):
-                    # 분기 0이 이어지지만 헤더의 분기 표시가 바뀌면 새 구간이다 (묶음만 있는 구간 뒤에 분기 구간이 오는 경우)
+                elif branch == 0 and current_branch == 0 and header_marker(g_idx) != header_marker(prev_group_idx):
+                    # 분기 0이 이어지지만 헤더의 분기 표시 값이 바뀌면 새 구간이다 (예: 10인 묶음 뒤에 20인 분기 구간)
                     starts_new_span = True
                 else:
                     starts_new_span = False
@@ -583,12 +585,16 @@ class LLR_MATRIX:
         if layout_error is not None:
             return False, layout_error
 
-        # 헤더 type_each_group이 {분기 수}{분기 index} 두 자리이면 row 꼬리와 대조한다 (H8). 0과 1은 디코더용 원래 뜻이라 검사하지 않는다
+        # 헤더 type_each_group과 row 꼬리의 대조 (H8). 10 미만은 보통 그룹이라 꼬리가 -1이어야 하고,
+        # 10 이상은 {분기 수}{분기 index} 표시라 일의 자리가 꼬리와, 십의 자리가 구간의 분기 수와 같아야 한다
         for g_idx in range(len(self.groups)):
             type_value = int(h.type_each_group[g_idx])
-            if type_value < 10:
-                continue
             branch = self.group_branch_idx[g_idx]
+            if type_value < 10:
+                if branch != SW_BRANCH_NONE:
+                    output_msg = f"Group {g_idx} header type {type_value} is a plain group but rows carry SW branch index {branch}; use header 10 for a single-branch bundle"
+                    return False, output_msg
+                continue
             span = self.span_of_group[g_idx]
             if branch != type_value % 10:
                 output_msg = f"Group {g_idx} header type {type_value} says branch {type_value % 10} but rows carry {branch}"
