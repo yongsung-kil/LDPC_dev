@@ -2007,6 +2007,13 @@ class LLR_OPT:
             else:
                 self.MPI_Abort(f"Gen_Trial_LLR: Unhandled GenLLRMode={self.current_gen_trial_LLR_mode}")
 
+            # SW 분기 보호: 타겟 앞의 그룹(분기 구간)을 바꾼 trial은 버린다 (MUTATE 두 모드는 타겟 묶음만 만지므로 제외)
+            if new_LLR_matrix is not None and int(self.current_gen_trial_LLR_mode) not in {int(mode) for mode in SW_BRANCH_ALLOWED_MODES}:
+                protected_change = self._Protected_Groups_Changed(self.optimal_LLR_matrix, new_LLR_matrix)
+                if protected_change is not None:
+                    self.Write_Log_Lines(f"[SW branch] {self.current_gen_trial_LLR_mode_name} changed groups before the target: {protected_change}. Trial discarded")
+                    new_LLR_matrix = None
+
             # LLR Matrix 생성 실패
             if new_LLR_matrix is None:
                 self.generate_LLR_success = False
@@ -8329,12 +8336,14 @@ class LLR_OPT:
             self.now_enable_CSW_update_limit = False
             self.CSW_update_limit_value = MAX_CSW
     
-    def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_idx: int) -> Optional[str]:
+    def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_idx: int, target_group_indices: list[int]) -> Optional[str]:
         """SW 분기가 있는 매트릭스에서 이 모드와 타겟이 허용되는지 본다.
 
-        분기 그룹이 하나라도 있으면 SW_BRANCH_ALLOWED_MODES(MUTATE_MATRIX, MUTATE_CSW)만 허용한다. 다른 모드는
-        이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨린다. 타겟이 여러 분기로 갈라진 구간 안에
-        있으면 마지막 분기만 갱신한다. 분기 구조를 만들거나 없애는 일은 사용자가 입력 매트릭스로 한다.
+        ㉮ GEN_INITIAL_GROUP은 모든 그룹을 새 그룹 하나로 바꾸므로 분기 그룹이 있으면 허용하지 않는다
+        ㉯ 타겟 그룹(묶음 포함)에 분기 그룹이 들어 있으면 SW_BRANCH_ALLOWED_MODES(MUTATE_MATRIX, MUTATE_CSW)만 허용한다.
+           타겟이 전부 분기 구간 뒤의 보통 그룹이면 다른 모드도 허용하되, 타겟 앞의 그룹을 바꾼 trial은
+           Gen_Trial_LLR의 _Protected_Groups_Changed가 버린다
+        ㉰ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다
 
         Returns:
             Optional[str]: 막는 이유. 허용되면 None
@@ -8342,14 +8351,25 @@ class LLR_OPT:
         matrix.Build_SW_Branch_Layout()
         if not matrix.has_sw_branch:
             return None
+        mode_name = GenLLRMode(selected_mode).name
+        if int(selected_mode) == int(GenLLRMode.GEN_INITIAL_GROUP):
+            return f"mode {mode_name} replaces every group, so it is not allowed while the matrix has SW branch groups"
+
+        target_groups: list[int] = []
+        for idx in target_group_indices:
+            if 0 <= idx < len(matrix.groups):
+                target_groups.extend(matrix.bundle_of_group[idx])
+        branch_targets = sorted({g for g in target_groups if matrix.group_branch_idx[g] != SW_BRANCH_NONE})
+
         allowed_values = {int(mode) for mode in SW_BRANCH_ALLOWED_MODES}
-        if int(selected_mode) not in allowed_values:
+        if branch_targets and int(selected_mode) not in allowed_values:
             allowed_names = ", ".join(GenLLRMode(value).name for value in sorted(allowed_values))
             return (
-                f"matrix has SW branch groups, so mode {GenLLRMode(selected_mode).name} ({int(selected_mode)}) is not allowed. "
-                f"Allowed modes: {allowed_names}. Set Gen_LLR_Mode_SEQUENCE accordingly"
+                f"target groups {branch_targets} are SW branch groups, so mode {mode_name} ({int(selected_mode)}) is not allowed. "
+                f"Allowed modes there: {allowed_names}. Set INITIAL_TARGET_GROUP_IDX after the branch groups to use other modes"
             )
-        span = matrix.span_of_group[target_group_idx]
+
+        span = matrix.span_of_group[target_group_idx] if 0 <= target_group_idx < len(matrix.groups) else None
         if span is not None:
             last_branch = span[2] - 1
             branch = matrix.group_branch_idx[target_group_idx]
@@ -8358,6 +8378,37 @@ class LLR_OPT:
                     f"target g{target_group_idx} is SW branch {branch} of the span iteration {span[0]}~{span[1]} "
                     f"({span[2]} branches); DAO updates only the last branch ({last_branch})"
                 )
+        return None
+
+    def _Protected_Groups_Changed(self, base_matrix: LLR_MATRIX, new_matrix: LLR_MATRIX) -> Optional[str]:
+        """타겟 앞의 그룹(분기 구간을 담는 보호 구간)이 trial 생성으로 바뀌었는지 본다.
+
+        보호 구간은 target_group_indices의 최소 index 앞까지다. 그룹 수, row 수, iteration, CSW, 분기 index, 값 가운데
+        하나라도 다르면 바뀐 것이다.
+
+        Returns:
+            Optional[str]: 바뀐 내용. 그대로면 None
+        """
+        base_matrix.Build_SW_Branch_Layout()
+        if not base_matrix.has_sw_branch or not self.target_group_indices:
+            return None
+        num_protected = min(self.target_group_indices)
+        if num_protected <= 0:
+            return None
+        if len(new_matrix.groups) < num_protected:
+            return f"protected groups g0~g{num_protected - 1} were reduced to {len(new_matrix.groups)} groups"
+        for g in range(num_protected):
+            base_rows = base_matrix.groups[g]
+            new_rows = new_matrix.groups[g]
+            if len(base_rows) != len(new_rows):
+                return f"protected g{g} row count changed {len(base_rows)} -> {len(new_rows)}"
+            for r, (base_row, new_row) in enumerate(zip(base_rows, new_rows)):
+                base_tail = (int(base_row.iter_start), int(base_row.iter_end), int(base_row.CSW), int(base_row.floor_flag))
+                new_tail = (int(new_row.iter_start), int(new_row.iter_end), int(new_row.CSW), int(new_row.floor_flag))
+                if base_tail != new_tail:
+                    return f"protected g{g} row {r} (iteration, CSW, branch) changed {base_tail} -> {new_tail}"
+                if not np.array_equal(base_row.ch_th_values, new_row.ch_th_values):
+                    return f"protected g{g} row {r} values changed"
         return None
 
     def Set_Gen_Trial_LLR_Mode(self):
@@ -8399,7 +8450,7 @@ class LLR_OPT:
             # SW 분기: 타겟 묶음을 정하고, 분기 매트릭스에서 허용되지 않는 모드나 마지막이 아닌 분기를 막는다
             self.current_target_bundle = [self.current_target_group_idx]
             if self.optimal_LLR_matrix is not None:
-                sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.current_target_group_idx)
+                sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.current_target_group_idx, self.target_group_indices)
                 if sw_error is not None:
                     self.MPI_Abort(f"Set_Gen_Trial_LLR_Mode: {sw_error}")
                 self.current_target_bundle = list(self.optimal_LLR_matrix.bundle_of_group[self.current_target_group_idx])

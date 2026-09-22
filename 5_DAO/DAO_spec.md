@@ -151,7 +151,7 @@ SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 �
 **최적화 규칙**
 
 - ㉮ 타겟 목록(`target_group_indices`)은 묶음 단위다. 묶음은 첫 그룹 index 하나로 들어가고, `INITIAL_TARGET_GROUP_IDX`가 묶음 중간이면 그 묶음의 첫 그룹으로 당긴다
-- ㉯ 분기 그룹이 하나라도 있는 매트릭스에서는 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 다른 모드가 시퀀스에 있으면 `Set_Gen_Trial_LLR_Mode`가 오류로 멈춘다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다
+- ㉯ 타겟 그룹(묶음 포함)에 분기 그룹이 들어 있으면 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 다른 모드가 시퀀스에 있으면 `Set_Gen_Trial_LLR_Mode`가 오류로 멈춘다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다. `INITIAL_TARGET_GROUP_IDX`를 분기 구간 뒤로 두어 타겟이 보통 그룹뿐이면 다른 모드도 쓸 수 있다. 다만 GEN_INITIAL_GROUP은 모든 그룹을 바꾸므로 분기 그룹이 있으면 언제나 막는다. 허용된 모드가 타겟 앞의 그룹(분기 구간)을 조금이라도 바꾸면 `Gen_Trial_LLR`이 그 trial을 버리고 로그에 남긴다
 - ㉰ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다. 다른 분기가 타겟이면 오류로 멈춘다
 - ㉱ MUTATE_MATRIX는 묶음의 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CHTH`개까지 변이하고, `Correct_LLR_Matrix`가 row마다 정렬한다. MUTATE_CSW는 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CSW`개까지 변이하고 그룹 안에서 정렬한다
 - ㉲ HBF(Hybrid Bit Flipping)는 지금 HD 복호의 iteration 1~4를 뜻한다. HBF 최적화 모드(`IS_HBF_OPT`)와 SW 분기의 결합은 다루지 않는다

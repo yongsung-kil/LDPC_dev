@@ -83,7 +83,7 @@ DAO(Decoder Auto Optimizer)가 SW(Syndrome Weight, 신드롬 무게) 분기가 �
 - ㉮ `Initialize_Stage`의 `target_group_indices`는 묶음 대표(묶음의 첫 그룹 index)만 담는다. `INITIAL_TARGET_GROUP_IDX`가 묶음 중간을 가리키면 그 묶음의 첫 그룹으로 당긴다. 로그에 묶음 구성을 함께 적는다
 - ㉯ `Set_Gen_Trial_LLR_Mode`가 `current_target_group_idx`를 정한 뒤 `current_target_bundle`(그룹 index 목록)을 만들고 `Bcast_Trial_LLR_Mode`로 함께 뿌린다
 - ㉰ 모드 허용 검사 (root에서 판정 뒤 `MPI_Abort`, 문구에 그룹과 모드 이름을 적는다)
-  - ㉠ 매트릭스에 분기 그룹이 하나라도 있고 모드가 `SW_BRANCH_ALLOWED_MODES`(MUTATE_MATRIX, MUTATE_CSW) 밖이면 오류 (6절 결정 1). 판정은 `Check_SW_Branch_Mode_Allowed`가 하고 단일 프로세스로 검사할 수 있다
+  - ㉠ 타겟 그룹(묶음 포함)에 분기 그룹이 들어 있고 모드가 `SW_BRANCH_ALLOWED_MODES`(MUTATE_MATRIX, MUTATE_CSW) 밖이면 오류. GEN_INITIAL_GROUP은 분기 그룹이 있으면 언제나 오류. 판정은 `Check_SW_Branch_Mode_Allowed`가 하고 단일 프로세스로 검사할 수 있다. 타겟이 분기 구간 뒤의 보통 그룹뿐이면 다른 모드도 허용하되, `_Protected_Groups_Changed`가 타겟 앞 그룹의 변화를 잡아 그 trial을 버린다
   - ㉡ 타겟 묶음이 여러 분기로 갈라진 구간 안에 있는데 그 구간의 마지막 분기가 아니면 오류 ("DAO는 마지막 분기만 갱신")
 - ㉱ `Generate_Random_Mutation`: 타겟 묶음의 그룹마다 따로 요소 풀을 만들고 `min(NUM_ELEMENTS_TO_MUTATE_CHTH, 풀 크기)`개를 뽑아 합친다. 행 정렬은 지금처럼 `Correct_LLR_Matrix`가 행마다 한다
 - ㉲ `Mutate_CSW`: 타겟 묶음의 그룹마다 따로 `min(NUM_ELEMENTS_TO_MUTATE_CSW, 풀 크기)`개를 변이한다. 그룹 안 정렬과 중복 제거는 지금처럼 `Correct_LLR_Matrix`가 그룹마다 한다
@@ -117,7 +117,7 @@ DAO(Decoder Auto Optimizer)가 SW(Syndrome Weight, 신드롬 무게) 분기가 �
 
 ## 6. 결정 (2026-09-21)
 
-사용자가 정한 것: 1은 ㉮, 2는 ㉮, 3은 ㉮, 4는 ㉯(이름 `floor_flag` 유지), 5는 ㉮. 구현하며 드러난 추가 사항: 구간 경계에 헤더의 분기 표시 변화가 필요하다 (2.1 ㉯). 이어서 2026-09-22에 헤더 규약을 엄격하게 확정했다: 1은 보통 그룹(꼬리 -1), 10은 분기 1개짜리 묶음(꼬리 0), 20과 21은 분기 2개. 이에 맞춰 `LLR_MATRIX_2.txt`의 그룹 0, 1 헤더를 1에서 10으로 바꿨다. 아래는 결정 당시의 선택지다.
+사용자가 정한 것: 1은 ㉮, 2는 ㉮, 3은 ㉮, 4는 ㉯(이름 `floor_flag` 유지), 5는 ㉮. 구현하며 드러난 추가 사항: 구간 경계에 헤더의 분기 표시 변화가 필요하다 (2.1 ㉯). 이어서 2026-09-22에 헤더 규약을 엄격하게 확정했다: 1은 보통 그룹(꼬리 -1), 10은 분기 1개짜리 묶음(꼬리 0), 20과 21은 분기 2개. 이에 맞춰 `LLR_MATRIX_2.txt`의 그룹 0, 1 헤더를 1에서 10으로 바꿨다. 같은 날 결정 1을 좁혔다: 타겟 그룹에 분기 그룹이 들어 있을 때만 MUTATE 두 모드로 제한하고, 타겟이 분기 구간 뒤의 보통 그룹뿐이면 다른 모드도 허용한다 (GEN_INITIAL_GROUP은 언제나 금지). 대신 `_Protected_Groups_Changed`가 타겟 앞 그룹을 바꾼 trial을 버린다. 아래는 결정 당시의 선택지다.
 
 
 - 1. 구조 변경 모드를 막는 범위. ㉮ 매트릭스에 분기 그룹이 하나라도 있으면 MUTATE 두 모드 외 전부 오류 (추천. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨린다) ㉯ 타겟이 분기 그룹일 때만 오류 (요구 ㉱의 문자 그대로)
