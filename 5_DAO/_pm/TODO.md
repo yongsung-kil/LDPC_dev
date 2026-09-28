@@ -1,12 +1,19 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-22 10:27:52
+> Claude 마지막 확인: 2026-09-28 17:06:46
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
 ---
 
 ## 작업 목록
+
+- [ ] HBF 최적화 모드의 dv_idx 0 TH 고정을 HBF 구간(iteration 1~4)의 row로 한정
+  - 상세: `_pm/tasks/20260928_HBF_TH_iteration_range/`
+  - [x] 원인 확인과 수정 (2026-09-28 17:06, 판단을 `Is_Row_In_HBF_Iterations`에 모으고 유효성 검사, 보정, 변이, row와 DV 다시 만들기가 이 함수를 씀. max_iteration 상한 검사는 없앰. 검사 9건 통과, 수정 전 소스에서는 5건 실패)
+  - [x] DAO_spec.md 3.6절, 5.2절, 6.3절 반영 (2026-09-28 17:06)
+  - [ ] 사용자 결정: HBF 최적화 모드에서 iteration 5 이상의 그룹도 최적화 타겟에 넣을지
+  - [ ] 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 확인
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정
   - 상세: `_pm/tasks/20260922_dynamic_partial_redecode_accumulation/`

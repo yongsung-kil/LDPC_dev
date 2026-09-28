@@ -117,8 +117,12 @@ LLR_MATRIX
 
 | 규칙 | 조건 | 검증 내용 |
 |------|------|----------|
-| HBF1 | `is_HBF_OPT == True` | maxDv(dv_idx=0)의 TH 값은 모두 상수(`HBF_OPT_TH_CONSTANT_VAL`) |
-| HBF2 | `is_HBF_OPT == True` | max_iteration <= HBF_MAX_ITERATION |
+| HBF1 | `is_HBF_OPT == True`이고 row의 `iter_end <= HBF_MAX_ITERATION` | dv_idx 0의 TH 값은 모두 상수(`HBF_OPT_TH_CONSTANT_VAL`) |
+
+- ㉮ HBF 구간은 iteration 1부터 `HBF_MAX_ITERATION`(4)까지다. 이 구간에서 디코더는 가장 높은 DV를 1 bit 정밀도로 처리해 그 TH를 읽지 않는다
+- ㉯ dv_idx 0은 row의 첫 CH와 TH 묶음이다. row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서로 적는다
+- ㉰ row의 iteration 구간 전체가 HBF 구간 안에 있으면(`iter_end <= HBF_MAX_ITERATION`) HBF 구간의 row다. 판단은 `Is_Row_In_HBF_Iterations()`가 맡고, 유효성 검사, 보정, 변이, 난수 생성이 모두 이 함수를 쓴다
+- ㉱ iteration이 HBF 구간을 넘는 row는 dv_idx 0의 TH도 다른 DV와 같은 규칙(RW4, RW5)을 따른다. 매트릭스의 max_iteration은 `HBF_MAX_ITERATION`보다 클 수 있다
 
 ---
 
@@ -239,7 +243,7 @@ class GenLLRMode(IntEnum):
 
 **특수 로직**:
 - 이전 trial 성공 시 Fine/Coarse Tuning 모드 진입
-- HBF 모드: maxDv의 TH는 변경하지 않음
+- HBF 모드: HBF 구간의 row는 dv_idx 0의 TH를 변이 후보에서 뺌 (3.6절)
 
 ---
 
@@ -597,7 +601,7 @@ class GenLLRMode(IntEnum):
 
 1. **범위 Truncation**: max_value/min_value 범위로 제한
 2. **CH 정렬**: 내림차순 정렬 (truncation 후 수행)
-3. **TH 정렬**: 내림차순 정렬 (HBF 모드: 0으로 설정)
+3. **TH 정렬**: 내림차순 정렬 (HBF 모드: HBF 구간의 row는 dv_idx 0의 TH를 `HBF_OPT_TH_CONSTANT_VAL`로 고정, 3.6절)
 4. **CSW 정렬**: 내림차순 정렬 (row 1부터)
 
 **제외 조건**:

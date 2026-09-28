@@ -4051,8 +4051,8 @@ class LLR_OPT:
             ]
             new_ch_values.sort(reverse=True)
         
-            if input_matrix.is_HBF_OPT and dv_idx_to_change == 0:
-                # HBF OPT 모드에서 Max DV의 TH는 고정
+            if dv_idx_to_change == 0 and input_matrix.Is_Row_In_HBF_Iterations(row_to_change):
+                # HBF 구간의 row는 dv_idx 0의 TH를 고정
                 new_th_values = [HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL] * input_matrix.th_length
             else:
                 new_th_values = [
@@ -4188,8 +4188,8 @@ class LLR_OPT:
                 new_ch_values.sort(reverse=True)
 
                 # TH 값 생성
-                if input_matrix.is_HBF_OPT and dv_idx == 0:
-                    # HBF OPT 모드에서 Max DV의 TH는 고정
+                if dv_idx == 0 and input_matrix.Is_Row_In_HBF_Iterations(row_to_change):
+                    # HBF 구간의 row는 dv_idx 0의 TH를 고정
                     new_th_values = [HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL] * input_matrix.th_length
                 else:
                     new_th_values = [
@@ -7125,16 +7125,12 @@ class LLR_OPT:
             for row_idx, row in enumerate(group):
                 if row_idx < skip_max_row_idx:
                     continue
+                # HBF 구간의 row는 immutable 범위(dv_idx 0의 TH)를 변이 후보에서 뺀다
+                immutable_col_range = matrix.HBF_immutable_col_range if matrix.Is_Row_In_HBF_Iterations(row) else None
                 for col_idx in range(len(row.ch_th_values)):
+                    if immutable_col_range is not None and immutable_col_range[0] <= col_idx < immutable_col_range[1]:
+                        continue
                     element_pool.append((group_idx, row_idx, col_idx))
-
-            # HBF_OPT 모드: immutable 범위의 element 제외
-            if DAO_CONFIG.IS_HBF_OPT and matrix.HBF_immutable_col_range is not None:
-                immutable_start, immutable_end = matrix.HBF_immutable_col_range
-                element_pool = [
-                    (g, r, c) for g, r, c in element_pool
-                    if not (immutable_start <= c < immutable_end)
-                ]
 
             num_changes = min(MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH, len(element_pool))
             if num_changes > 0:

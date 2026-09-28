@@ -95,7 +95,16 @@ class LLR_MATRIX:
         if len(values) <= 1:
             return True
         return bool(np.all(values[:-1] >= values[1:]))
-    
+
+    def Is_Row_In_HBF_Iterations(self, row: LLR_Row) -> bool:
+        """HBF 최적화 모드에서 row의 iteration 구간 전체가 HBF 구간(1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
+
+        HBF 구간에서 디코더는 dv_idx 0(가장 높은 DV, row의 첫 CH와 TH 묶음)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
+        그래서 HBF 구간의 row는 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정하고 변이와 난수 생성 대상에서 뺀다.
+        iteration이 HBF 구간을 넘는 row는 dv_idx 0의 TH도 다른 DV처럼 다룬다.
+        """
+        return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION
+
     def Build_SW_Branch_Layout(self) -> Optional[str]:
         """groups에서 SW 분기 배치(그룹별 분기 index, 묶음, 구간)를 다시 계산한다.
 
@@ -513,15 +522,15 @@ class LLR_MATRIX:
                         output_msg = f"Group {g_idx} Row {r} DV {dv_idx} TH values ({th_part}) must be non-increasing."
                         return False, output_msg
 
-                    # HD HBF OPT 모드에서, maxDv의 Th는 HBF_OPT_CONSTANT이값이어야 함
-                    if self.is_HBF_OPT:
-                        if dv_idx == 0:
-                            if not np.all(th_part == HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL):
-                                output_msg = (
-                                    f"In HD_HBF_OPT mode, Group {g_idx} Row {r} DV {dv_idx} invalid TH values: "
-                                    f"expected all {HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL}, got {th_part.tolist()}"
-                                )
-                                return False, output_msg                            
+                    # HBF 구간의 row는 dv_idx 0의 TH가 HBF_OPT_TH_CONSTANT_VAL이어야 한다
+                    if dv_idx == 0 and self.Is_Row_In_HBF_Iterations(row):
+                        if not np.all(th_part == HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL):
+                            output_msg = (
+                                f"In HD_HBF_OPT mode, Group {g_idx} Row {r} DV {dv_idx} invalid TH values: "
+                                f"expected all {HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL} for iteration {row.iter_start}~{row.iter_end} "
+                                f"(HBF iterations are 1~{HBF_OPT_CONFIG.HBF_MAX_ITERATION}), got {th_part.tolist()}"
+                            )
+                            return False, output_msg
 
             CSW_values = [row.CSW for row in group]
             if CSW_values:
@@ -604,12 +613,6 @@ class LLR_MATRIX:
                 return False, output_msg
 
         self.max_iteration = max(group[-1].iter_end for group in self.groups)
-        if self.is_HBF_OPT:
-            if self.max_iteration > HBF_OPT_CONFIG.HBF_MAX_ITERATION:
-                output_msg = (
-                    f"In HD_HBF_OPT mode, input max iteration {self.max_iteration} is greater than HBF_MAX_ITERATION {HBF_OPT_CONFIG.HBF_MAX_ITERATION}"
-                )
-                return False, output_msg      
 
         return True, ""
 
@@ -704,7 +707,7 @@ class LLR_MATRIX:
         self.ch_length = 2 ** (self.init_n - 1)
         self.th_length = num_parameter_each_set - self.ch_length
 
-        # Highest Dv에대해서만 설정
+        # HBF 구간의 row에서 값이 고정되는 column 범위 (dv_idx 0의 TH)
         if self.is_HBF_OPT:
             self.HBF_immutable_col_range = (self.ch_length, num_parameter_each_set)
 
@@ -746,7 +749,9 @@ class LLR_MATRIX:
                 # Restart row는 정렬/truncation 제외
                 if row.is_group_restart:
                     continue
-                row.ch_th_values, tmp_msg = self.Correct_Ch_Th_In_Row(row.ch_th_values, g_idx, r_idx)
+                row.ch_th_values, tmp_msg = self.Correct_Ch_Th_In_Row(
+                    row.ch_th_values, g_idx, r_idx, is_row_in_HBF_iterations=self.Is_Row_In_HBF_Iterations(row)
+                )
                 correct_msg.extend(tmp_msg)
 
         # 모든 그룹에 대해 CSW 정렬 적용 (각 그룹의 첫 row인 CSW=-1 제외)
@@ -781,7 +786,7 @@ class LLR_MATRIX:
 
         return correct_msg
 
-    def Correct_Ch_Th_In_Row(self, values: np.ndarray, group_idx: int = -1, row_idx: int = -1) -> tuple[np.ndarray, list]:
+    def Correct_Ch_Th_In_Row(self, values: np.ndarray, group_idx: int = -1, row_idx: int = -1, is_row_in_HBF_iterations: bool = False) -> tuple[np.ndarray, list]:
         """
         DV별로 CH/TH 구간을 보정한 새 행을 반환한다.
 
@@ -789,7 +794,9 @@ class LLR_MATRIX:
         1. Max/Min Truncation: Header의 max/min value에 맞춰 값을 클램핑
         2. Ch/Th 정렬: 내림차순 정렬 (truncation 후 정렬해야 정렬 순서 유지)
 
-        HBF의 경우, max Dv의 Th 값을 0으로 수정한다.
+        is_row_in_HBF_iterations가 True면 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정한다
+        (판단 기준은 Is_Row_In_HBF_Iterations). iteration이 정해지기 전의 row는 False로 두고,
+        매트릭스에 들어간 뒤 Correct_LLR_Matrix가 row의 iteration을 보고 고정한다.
         """
         correct_msg = []
         expected_len = self.header.num_parameter_each_set * self.header.num_dv
@@ -819,8 +826,8 @@ class LLR_MATRIX:
 
             # 2. Ch/Th 정렬 (truncation 후 정렬해야 정렬 순서가 유지됨)
             segment[:self.ch_length] = np.sort(segment[:self.ch_length])[::-1]
-            if self.is_HBF_OPT and dv_idx == 0:
-                # HBF 모드는 dv_idx 0의 TH만 상수로 고정한다 (Is_LLR_Valid의 HBF1 규칙과 같은 범위)
+            if is_row_in_HBF_iterations and dv_idx == 0:
+                # HBF 구간의 row는 dv_idx 0의 TH만 상수로 고정한다 (Is_LLR_Valid의 HBF1 규칙과 같은 범위)
                 segment[self.ch_length:] = HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL
             else:
                 segment[self.ch_length:] = np.sort(segment[self.ch_length:])[::-1]
