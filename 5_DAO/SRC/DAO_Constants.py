@@ -207,3 +207,17 @@ SW_BRANCH_ALLOWED_MODES: set[int] = {
     GenLLRMode.MUTATE_MATRIX,
     GenLLRMode.MUTATE_CSW,
 }
+
+# FIXED_TARGET_GROUP_IDX_LIST로 타겟 그룹을 직접 지정했을 때 허용되는 모드. 목록의 index는 그룹 번호에 묶여 있으므로
+# 그룹 수, 그룹 순서, iteration 구간을 그대로 두고 타겟 그룹 안의 값과 row만 바꾸는 모드만 쓴다
+FIXED_TARGET_GROUP_ALLOWED_MODES: set[int] = {
+    GenLLRMode.MUTATE_MATRIX,
+    GenLLRMode.MUTATE_CSW,
+    GenLLRMode.SWAP_ROW,
+    GenLLRMode.COPY_ROWS,
+    GenLLRMode.COPY_GROUP,
+    GenLLRMode.INSERT_RANDOM_ROW,
+    GenLLRMode.INSERT_MUTATED_ROW,
+    GenLLRMode.REGEN_DV,
+    GenLLRMode.REGEN_ROW,
+}

@@ -133,6 +133,7 @@ class DAO_CONFIG:
     Gen_LLR_Mode_SEQUENCE =[10, 11, 21, 30, 31, 40, 41, 42, 43, 50, 51, 70]
     Gen_LLR_Mode_HBF_SEQUENCE = [40, 41, 10, 11, 60]  # GenLLRModeHBF 순서: INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP
     INITIAL_TARGET_GROUP_IDX: int = 1  # 이 인덱스부터 끝까지를 opt 타겟 그룹으로 설정. 예: 1이면 [1, 2, 3, ...], 0이면 [0, 1, 2, ...]
+    FIXED_TARGET_GROUP_IDX_LIST: Optional[list] = None  # opt 타겟 그룹을 직접 지정. 예: [0, 1]이면 그룹 0과 1만 변경. None이면 INITIAL_TARGET_GROUP_IDX부터 끝까지. 함께 쓸 수 있는 모드는 FIXED_TARGET_GROUP_ALLOWED_MODES
     ENABLE_AVG_ITER_UPDATE: bool = False  # FER 동일 시 avg_iteration 개선으로도 update 허용 여부
 
     @staticmethod

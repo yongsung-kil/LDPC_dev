@@ -2292,29 +2292,18 @@ class LLR_OPT:
         self.current_stage_idx = stage_idx
         self.temp_optimal_LLR_matrix = None
 
-        # Stage 시작 시 target_group_indices 재설정 (optimal_LLR_matrix 기준)
-        # - INITIAL_TARGET_GROUP_IDX부터 마지막 그룹까지
+        # Stage 시작 시 target_group_indices 재설정 (optimal_LLR_matrix 기준, 규칙은 Build_Target_Group_Indices)
         # - Restart group 포함 (조건에 따라 skip)
-        # - 그룹 수가 줄어 목록이 비면 마지막 그룹 하나를 타겟으로 둔다
         if self.optimal_LLR_matrix is not None:
             base_matrix = self.optimal_LLR_matrix
-            base_matrix.Build_SW_Branch_Layout()
-            candidate_indices = list(range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, len(base_matrix.groups)))
-            if not candidate_indices:
-                candidate_indices = [len(base_matrix.groups) - 1]
-            # 묶음(SW 분기 index가 같은 연속 그룹)은 첫 그룹 하나로 타겟 목록에 넣는다. 시작 index가 묶음 중간이면 그 묶음의 첫 그룹으로 당긴다
-            new_target_indices = []
-            for idx in candidate_indices:
-                bundle_head = base_matrix.bundle_of_group[idx][0]
-                if bundle_head not in new_target_indices:
-                    new_target_indices.append(bundle_head)
-            self.target_group_indices = new_target_indices
+            self.target_group_indices = self.Build_Target_Group_Indices(base_matrix)
             targets_str = ", ".join(
                 f"g{head}" if len(base_matrix.bundle_of_group[head]) == 1
                 else "{" + ", ".join(f"g{member}" for member in base_matrix.bundle_of_group[head]) + "}"
-                for head in new_target_indices
+                for head in self.target_group_indices
             )
-            self.Write_Log_Lines(f"\t- Updated target_group_indices: {self.target_group_indices} (from optimal_LLR_matrix; targets: {targets_str})")
+            target_source = "FIXED_TARGET_GROUP_IDX_LIST" if DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST is not None else "INITIAL_TARGET_GROUP_IDX"
+            self.Write_Log_Lines(f"\t- Updated target_group_indices: {self.target_group_indices} (from optimal_LLR_matrix and {target_source}; targets: {targets_str})")
 
         # 모드와 타겟 그룹은 갱신된 target_group_indices 위에서 정한다
         self.Set_Gen_Trial_LLR_Mode()
@@ -2371,11 +2360,7 @@ class LLR_OPT:
 
         self.initial_LLR_matrix = self._safe_bcast(self.initial_LLR_matrix if self.is_root else None, "Bcast_initial_LLR_matrix")
 
-        # Initialize target group indices: [INITIAL_TARGET_GROUP_IDX, ..., last_group_idx]
-        self.target_group_indices = list(range(
-            DAO_CONFIG.INITIAL_TARGET_GROUP_IDX,
-            len(self.initial_LLR_matrix.groups)
-        ))
+        self.target_group_indices = self.Build_Target_Group_Indices(self.initial_LLR_matrix)
 
         self.Update_Current_LLR(self.initial_LLR_matrix)
         self.Print_LLR_Matrix(self.current_LLR_matrix)
@@ -8332,6 +8317,86 @@ class LLR_OPT:
             self.now_enable_CSW_update_limit = False
             self.CSW_update_limit_value = MAX_CSW
     
+    @staticmethod
+    def _Is_Group_Index_Value(value) -> bool:
+        """그룹 index로 쓸 수 있는 정수 값인지 본다 (True와 False는 정수로 치지 않는다)."""
+        return isinstance(value, (int, np.integer)) and not isinstance(value, bool)
+
+    def Build_Target_Group_Indices(self, matrix: LLR_MATRIX) -> list[int]:
+        """설정에서 opt 타겟 그룹 목록을 만든다.
+
+        FIXED_TARGET_GROUP_IDX_LIST가 있으면 그 목록을 적힌 순서대로 쓰고, None이면 INITIAL_TARGET_GROUP_IDX부터
+        마지막 그룹까지를 쓴다 (그 범위가 비면 마지막 그룹 하나). 묶음(SW 분기 index가 같은 연속 그룹)은 첫 그룹
+        하나로 넣고, 묶음 중간을 가리킨 index는 그 묶음의 첫 그룹으로 당긴다.
+        FIXED_TARGET_GROUP_IDX_LIST에서는 매트릭스에 있는 그룹 번호만 고른다. 잘못 적은 값을 알리는 일은
+        Validate_Config의 Check_Fixed_Target_Group_Idx_List가 맡는다.
+        """
+        matrix.Build_SW_Branch_Layout()
+        num_groups = len(matrix.groups)
+        fixed_list = DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST
+        if fixed_list is not None:
+            listed_values = fixed_list if isinstance(fixed_list, (list, tuple)) else []
+            candidate_indices = [int(idx) for idx in listed_values if self._Is_Group_Index_Value(idx) and 0 <= idx < num_groups]
+        else:
+            candidate_indices = list(range(DAO_CONFIG.INITIAL_TARGET_GROUP_IDX, num_groups))
+            if not candidate_indices:
+                candidate_indices = [num_groups - 1]
+
+        target_group_indices: list[int] = []
+        for idx in candidate_indices:
+            bundle_head = matrix.bundle_of_group[idx][0]
+            if bundle_head not in target_group_indices:
+                target_group_indices.append(bundle_head)
+        return target_group_indices
+
+    def Check_Fixed_Target_Group_Idx_List(self, matrix: LLR_MATRIX) -> list[str]:
+        """FIXED_TARGET_GROUP_IDX_LIST의 값과, 함께 쓰는 모드 시퀀스를 검사한다.
+
+        목록의 index는 매트릭스의 그룹 번호에 묶여 있으므로, 그룹 수와 순서와 iteration 구간을 그대로 두는 모드
+        (FIXED_TARGET_GROUP_ALLOWED_MODES)만 함께 쓴다. 검사 대상은 지금 쓰는 시퀀스 하나다
+        (IS_HBF_OPT이면 Gen_LLR_Mode_HBF_SEQUENCE, 아니면 Gen_LLR_Mode_SEQUENCE).
+
+        Returns:
+            list[str]: 오류 문구 목록. FIXED_TARGET_GROUP_IDX_LIST가 None이거나 문제가 없으면 빈 목록
+        """
+        fixed_list = DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST
+        if fixed_list is None:
+            return []
+        if not isinstance(fixed_list, (list, tuple)):
+            return [f"FIXED_TARGET_GROUP_IDX_LIST must be a list of group indices such as [0, 1] (current: {fixed_list!r})."]
+        if len(fixed_list) == 0:
+            return ["FIXED_TARGET_GROUP_IDX_LIST must not be empty. Use None to target every group from INITIAL_TARGET_GROUP_IDX."]
+
+        errors: list[str] = []
+        num_groups = len(matrix.groups)
+        non_integers = [idx for idx in fixed_list if not self._Is_Group_Index_Value(idx)]
+        if non_integers:
+            errors.append(f"FIXED_TARGET_GROUP_IDX_LIST must contain integers only (found: {non_integers!r}).")
+            return errors
+        out_of_range = [int(idx) for idx in fixed_list if not (0 <= idx < num_groups)]
+        if out_of_range:
+            errors.append(f"FIXED_TARGET_GROUP_IDX_LIST contains {out_of_range}, out of range. Must be in [0, {num_groups - 1}] (the initial matrix has {num_groups} groups).")
+        duplicates = sorted({int(idx) for idx in fixed_list if list(fixed_list).count(idx) > 1})
+        if duplicates:
+            errors.append(f"FIXED_TARGET_GROUP_IDX_LIST contains {duplicates} more than once.")
+
+        sequence_name = "Gen_LLR_Mode_HBF_SEQUENCE" if DAO_CONFIG.IS_HBF_OPT else "Gen_LLR_Mode_SEQUENCE"
+        allowed_values = {int(mode) for mode in FIXED_TARGET_GROUP_ALLOWED_MODES}
+        valid_mode_values = {int(mode) for mode in GenLLRMode}
+        blocked_modes: list[int] = []
+        for mode_value in getattr(DAO_CONFIG, sequence_name):
+            mode_value = int(mode_value)
+            if mode_value in valid_mode_values and mode_value not in allowed_values and mode_value not in blocked_modes:
+                blocked_modes.append(mode_value)
+        if blocked_modes:
+            blocked_names = ", ".join(f"{GenLLRMode(value).name} ({value})" for value in blocked_modes)
+            allowed_names = ", ".join(f"{GenLLRMode(value).name} ({value})" for value in sorted(allowed_values))
+            errors.append(
+                f"{sequence_name} contains {blocked_names}, which change the number, order or iteration of groups, "
+                f"so they cannot run with FIXED_TARGET_GROUP_IDX_LIST. Allowed modes: {allowed_names}."
+            )
+        return errors
+
     def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_idx: int, target_group_indices: list[int]) -> Optional[str]:
         """SW 분기가 있는 매트릭스에서 이 모드와 타겟이 허용되는지 본다.
 
@@ -8362,7 +8427,8 @@ class LLR_OPT:
             allowed_names = ", ".join(GenLLRMode(value).name for value in sorted(allowed_values))
             return (
                 f"target groups {branch_targets} are SW branch groups, so mode {mode_name} ({int(selected_mode)}) is not allowed. "
-                f"Allowed modes there: {allowed_names}. Set INITIAL_TARGET_GROUP_IDX after the branch groups to use other modes"
+                f"Allowed modes there: {allowed_names}. Point the targets (INITIAL_TARGET_GROUP_IDX or FIXED_TARGET_GROUP_IDX_LIST) "
+                f"at the plain groups after the branch groups to use other modes"
             )
 
         span = matrix.span_of_group[target_group_idx] if 0 <= target_group_idx < len(matrix.groups) else None
@@ -9711,11 +9777,8 @@ class LLR_OPT:
                     if idx < num_groups
                 ]
                 if not self.target_group_indices:
-                    # 모두 제거된 경우 초기값으로 복원
-                    self.target_group_indices = list(range(
-                        DAO_CONFIG.INITIAL_TARGET_GROUP_IDX,
-                        len(self.optimal_LLR_matrix.groups)
-                    ))
+                    # 모두 제거된 경우 설정에서 다시 만든다
+                    self.target_group_indices = self.Build_Target_Group_Indices(self.optimal_LLR_matrix)
 
                 self.log_has_update = True
                 if self.update_mode in (UpdateMode.OPTIMAL_MATRIX_FROM_CURRENT, UpdateMode.OPTIMAL_MATRIX_FROM_TEMP_OPTIMAL):
@@ -9987,7 +10050,9 @@ class LLR_OPT:
                 errors.append(f"MAX_GEN_RETRY_PER_TRIAL must be > 0 (current: {DAO_CONFIG.MAX_GEN_RETRY_PER_TRIAL})")
             if self.initial_LLR_matrix is not None:
                 num_groups = len(self.initial_LLR_matrix.groups)
-                if DAO_CONFIG.INITIAL_TARGET_GROUP_IDX >= num_groups:
+                if DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST is not None:
+                    errors.extend(self.Check_Fixed_Target_Group_Idx_List(self.initial_LLR_matrix))
+                elif DAO_CONFIG.INITIAL_TARGET_GROUP_IDX >= num_groups:
                     errors.append(
                         f"INITIAL_TARGET_GROUP_IDX({DAO_CONFIG.INITIAL_TARGET_GROUP_IDX}) >= "
                         f"num_groups({num_groups}). target_group_indices will be empty.")

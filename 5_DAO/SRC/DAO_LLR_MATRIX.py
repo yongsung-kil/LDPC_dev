@@ -97,11 +97,12 @@ class LLR_MATRIX:
         return bool(np.all(values[:-1] >= values[1:]))
 
     def Is_Row_In_HBF_Iterations(self, row: LLR_Row) -> bool:
-        """HBF 최적화 모드에서 row의 iteration 구간 전체가 HBF 구간(1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
+        """HBF 최적화 모드에서 row가 HBF 구간(iteration 1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
 
         HBF 구간에서 디코더는 dv_idx 0(가장 높은 DV, row의 첫 CH와 TH 묶음)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
         그래서 HBF 구간의 row는 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정하고 변이와 난수 생성 대상에서 뺀다.
-        iteration이 HBF 구간을 넘는 row는 dv_idx 0의 TH도 다른 DV처럼 다룬다.
+        HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV처럼 다룬다.
+        row는 HBF 구간의 경계를 걸치지 않으므로(Is_LLR_Valid의 HBF2 규칙) 끝 iteration으로 판단한다.
         """
         return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION
 
@@ -494,6 +495,14 @@ class LLR_MATRIX:
                 # SW 분기 index: -1(분기 없음) 또는 0 이상 MAX_SW_BRANCH 이하 (RW2)
                 if row.floor_flag != SW_BRANCH_NONE and not (0 <= row.floor_flag <= MAX_SW_BRANCH):
                     output_msg = f"Group {g_idx} Row {r} invalid SW branch index (floor_flag) {row.floor_flag}"
+                    return False, output_msg
+
+                # HBF 최적화 모드의 row는 HBF 구간 안에서 끝나거나 HBF 구간 뒤에서 시작한다 (HBF2)
+                if self.is_HBF_OPT and row.iter_start <= HBF_OPT_CONFIG.HBF_MAX_ITERATION < row.iter_end:
+                    output_msg = (
+                        f"In HD_HBF_OPT mode, Group {g_idx} Row {r} iteration {row.iter_start}~{row.iter_end} crosses the HBF boundary: "
+                        f"a row must end within iteration 1~{HBF_OPT_CONFIG.HBF_MAX_ITERATION} or start after it"
+                    )
                     return False, output_msg
 
                 for dv_idx in range(h.num_dv):
