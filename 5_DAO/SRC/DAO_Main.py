@@ -8699,11 +8699,6 @@ class LLR_OPT:
             # Dynamic Partial: 외부에서 LOAD_UNCOR_SEED_SAVE_UNCOR_SEED로 설정된 경우 보존
             if self.current_seed_mode == SeedMode.LOAD_UNCOR_SEED_SAVE_UNCOR_SEED:
                 pass  # 기존 설정 유지, 분기 스킵
-            elif DAO_CONFIG.IS_HBF_OPT:
-                if HBF_OPT_CONFIG.HBF_OPT_USING_UNCOR:
-                    self.current_seed_mode = SeedMode.LOAD_UNCOR_SEED
-                else:
-                    self.current_seed_mode = SeedMode.DEFAULT
             else:
                 if is_test_initial:
                     if DAO_CONFIG.RUN_DAO_MODE == RunDAOMode.TEST_FER:

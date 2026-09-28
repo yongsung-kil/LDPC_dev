@@ -57,10 +57,27 @@ HBF 최적화 모드도 타겟 그룹은 보통 모드와 똑같이 고른다 (`
 
 허용 모드를 가른 기준은 코드에서 확인한 두 가지다. ㉮ 그룹을 넣거나 빼거나 순서를 바꾸는가 (`groups.insert`, `groups.pop`, `groups =`) ㉯ row의 `iter_start`나 `iter_end`를 바꾸는가. GEN_INITIAL_GROUP, REORDER_GROUP, INSERT_RANDOM_GROUP, INSERT_MUTATED_GROUP, SPLIT_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP이 여기에 걸린다. 이 모드들이 그룹 번호를 밀면 목록의 index가 다른 그룹을 가리키게 된다.
 
+### 3.2 HBF 최적화 모드의 seed 모드 (사용자 요청 2026-09-28)
+
+`Set_Seed_Mode`에는 HBF 최적화 모드 전용 갈래가 있었다. `HBF_OPT_CONFIG.HBF_OPT_USING_UNCOR`가 True면 언제나 LOAD_UNCOR_SEED, False면 언제나 DEFAULT를 골랐고, 실행 모드와 uncor 로드 모드는 보지 않았다. 이 갈래와 설정 값은 반입 커밋(2811bff, 2026-08-14)부터 있었고 `reference/`의 원형에도 같은 줄이 있다. `HBF_OPT_USING_UNCOR`를 읽는 자리는 이 갈래 하나였다.
+
+갈래를 없애 HBF 최적화 모드도 보통 모드와 같은 규칙을 따르게 하고, 읽는 자리가 없어진 `HBF_OPT_USING_UNCOR`도 없앴다.
+
+| 조건 (HBF 최적화 모드) | 갈래가 있을 때 (기본값 True) | 보통 모드와 같은 규칙 |
+|------|------|------|
+| 최적화, uncor seed 로드 | LOAD_UNCOR_SEED | LOAD_UNCOR_SEED (같음) |
+| 최적화, uncor vector 로드 (`ENABLE_LOAD_VECTOR`) | LOAD_UNCOR_SEED (풀에는 vector가 있어 어긋남) | LOAD_UNCOR_VECTOR |
+| TEST_FER | LOAD_UNCOR_SEED (풀이 없음) | DEFAULT |
+| SAVE_UNCOR | LOAD_UNCOR_SEED (uncor가 저장되지 않음) | SAVE_UNCOR_SEED |
+| REDECODE | LOAD_UNCOR_SEED (실패 seed가 저장되지 않음) | LOAD_UNCOR_SEED_SAVE_UNCOR_SEED |
+
+uncor 풀은 `LOAD_UNCOR_MODE`로 준비되므로(`Setup_Uncor_Pool`), seed 모드도 같은 값에서 정해져야 둘이 어긋나지 않는다. 없어지는 기능은 하나다: `HBF_OPT_USING_UNCOR = False`로 uncor 없이 난수 프레임으로 최적화하는 실행.
+
 ## 4. 수정 대상 파일
 
 - `SRC/DAO_LLR_MATRIX.py` (Is_Row_In_HBF_Iterations, Is_LLR_Valid, Read_Input_LLR_Matrix 주석, Correct_LLR_Matrix, Correct_Ch_Th_In_Row)
 - `SRC/DAO_Main.py` (Gen_LLR_Regen_DV, Gen_LLR_Regen_Row, Generate_Random_Mutation, Build_Target_Group_Indices, Check_Fixed_Target_Group_Idx_List, Initialize_Stage, Initialize_LLR_Matrix, Update_Optimal_LLR, Validate_Config, Check_SW_Branch_Mode_Allowed 오류 문구)
+- `SRC/DAO_Main.py` (Set_Seed_Mode), `SRC/DAO_Config.py` (HBF_OPT_CONFIG)
 - `SRC/DAO_Config.py` (FIXED_TARGET_GROUP_IDX_LIST), `SRC/DAO_Constants.py` (FIXED_TARGET_GROUP_ALLOWED_MODES)
 - `DAO_spec.md` (3.6절, 3.7절 최적화 규칙, 3.8절, 5.2절 특수 로직, 6.3절), `README.md` (타겟 그룹 설정, 3.4절, 4.1.1절)
 
@@ -83,6 +100,7 @@ HBF 최적화 모드도 타겟 그룹은 보통 모드와 똑같이 고른다 (`
   - 첫 수정 전 소스(커밋 dff3dba의 SRC): 처음 쓴 9건 가운데 5건 실패. 유효성 검사 실패 문구가 사용자 관측과 같음
   - 수정 후 소스: 11건 통과
 - 검사: `_test/20260928_fixed_target_group_idx_list/test_fixed_target_group_idx_list.py` 18건 (타겟 목록 만들기 6, stage마다 고르는 타겟 2, 설정 검사 10). 구현 전에는 18건 모두 오류, 구현 후 18건 통과
+- 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0 묶음을 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0]`(묶음 {0, 1})이 됨
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `target_group_indices`가 지정한 그룹만 도는지

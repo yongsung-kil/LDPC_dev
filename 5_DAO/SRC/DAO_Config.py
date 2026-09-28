@@ -373,7 +373,6 @@ class HBF_OPT_CONFIG:
             DAO_CONFIG.IS_HBF_OPT = False
     HBF_MAX_ITERATION = 4
     HBF_OPT_TH_CONSTANT_VAL = 0
-    HBF_OPT_USING_UNCOR = True
 
 class ADJUST_ITERATION_CONFIG:
     ITER_TRANSFER_RATIO: float = 0.1  # Iteration 전달 비율 (0.1 = donor group의 10%를 focus group에 전달)

@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-28 17:48:58
+> Claude 마지막 확인: 2026-09-28 20:48:57
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -14,7 +14,8 @@
   - [x] DAO_spec.md 3.6절, 5.2절, 6.3절 반영 (2026-09-28 17:06)
   - [x] HBF 구간의 경계를 걸치는 row를 유효성 검사로 막음 (2026-09-28 17:48, HBF2 규칙. 사용자 확인: 입력과 결과 모두 경계를 걸치지 않고 HBF 구간 안은 1, 2~3, 4처럼 나눌 수 있음. 검사 11건 통과)
   - [x] 타겟 그룹을 직접 지정하는 `FIXED_TARGET_GROUP_IDX_LIST` 추가 (2026-09-28 17:48, 사용자 요청. None이면 `INITIAL_TARGET_GROUP_IDX`를 따름. 타겟 목록은 `Build_Target_Group_Indices` 한 곳에서 만들고, 값과 함께 쓰는 모드는 `Validate_Config`가 시작할 때 검사. 검사 18건 통과. DAO_spec.md 3.8절과 README 반영)
-  - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `target_group_indices`가 지정한 그룹만 도는지)
+  - [x] HBF 최적화 모드의 seed 모드를 보통 모드와 같은 규칙으로 정함 (2026-09-28 20:48, 사용자 요청. `Set_Seed_Mode`의 HBF 전용 갈래와 `HBF_OPT_USING_UNCOR` 삭제. 검사 3건 통과)
+  - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `target_group_indices`가 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지)
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정
   - 상세: `_pm/tasks/20260922_dynamic_partial_redecode_accumulation/`
