@@ -204,17 +204,10 @@ MULTI_ROUND_INIT_FUNC: dict[int, str] = {
 SW_BRANCH_NONE = -1          # 분기 없음
 MAX_SW_BRANCH = 9            # 한 구간의 분기 index 상한 (파일 헤더가 한 자리씩 끊어 읽는다)
 
-# 타겟 그룹에 SW 분기 그룹이 들어 있을 때 허용되는 모드. 나머지 모드는 이웃 그룹의 iteration을 빌리거나
-# 재배치해 구간 정렬을 깨뜨리므로 Set_Gen_Trial_LLR_Mode가 오류로 멈춘다. 타겟이 분기 구간 뒤의 보통 그룹뿐이면
-# 다른 모드도 쓸 수 있고, 그때 타겟 앞 그룹을 바꾼 trial은 Gen_Trial_LLR이 버린다
-SW_BRANCH_ALLOWED_MODES: set[int] = {
-    GenLLRMode.MUTATE_MATRIX,
-    GenLLRMode.MUTATE_CSW,
-}
-
-# FIXED_TARGET_GROUP_IDX_LIST로 타겟 그룹을 직접 지정했을 때 허용되는 모드. 목록의 index는 그룹 번호에 묶여 있으므로
-# 그룹 수, 그룹 순서, iteration 구간을 그대로 두고 타겟 그룹 안의 값과 row만 바꾸는 모드만 쓴다
-FIXED_TARGET_GROUP_ALLOWED_MODES: set[int] = {
+# 그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기 표시)를 그대로 두고 타겟 그룹 안의 값과 row만 바꾸는 모드.
+# 그룹 안의 row 수는 바뀐다 (INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, COPY_GROUP, DELETE_ROW).
+# DELETE_ROW는 그룹 배치를 그대로 두는 실행(LLR_OPT.Is_Group_Layout_Kept)에서 row가 하나인 그룹을 건너뛴다
+GROUP_LAYOUT_KEEPING_MODES: set[int] = {
     GenLLRMode.MUTATE_MATRIX,
     GenLLRMode.MUTATE_CSW,
     GenLLRMode.SWAP_ROW,
@@ -224,4 +217,20 @@ FIXED_TARGET_GROUP_ALLOWED_MODES: set[int] = {
     GenLLRMode.INSERT_MUTATED_ROW,
     GenLLRMode.REGEN_DV,
     GenLLRMode.REGEN_ROW,
+    GenLLRMode.DELETE_ROW,
+}
+
+# 타겟 그룹에 SW 분기 그룹이 들어 있을 때 허용되는 모드. SW 분기 그룹은 HBF 최적화가 다루는 앞쪽 iteration에 놓이고,
+# 디코더 실행 파일은 그 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않는다. 나머지 모드는 Validate_Config와
+# Set_Gen_Trial_LLR_Mode가 오류로 멈춘다. 타겟이 분기 구간 뒤의 보통 그룹뿐이면 다른 모드도 쓸 수 있고,
+# 그때 타겟 앞 그룹을 바꾼 trial은 Gen_Trial_LLR이 버린다
+SW_BRANCH_ALLOWED_MODES: set[int] = GROUP_LAYOUT_KEEPING_MODES
+
+# FIXED_TARGET_GROUP_IDX_LIST로 타겟 그룹을 직접 지정했을 때 허용되는 모드. 목록의 index는 그룹 번호에 묶여 있다
+FIXED_TARGET_GROUP_ALLOWED_MODES: set[int] = GROUP_LAYOUT_KEEPING_MODES
+
+# 타겟 그룹 하나의 값만 바꾸는 모드. 타겟 앞 그룹의 보호 검사(LLR_OPT._Protected_Groups_Changed)를 거치지 않는다
+MODES_EXEMPT_FROM_PROTECTED_GROUP_CHECK: set[int] = {
+    GenLLRMode.MUTATE_MATRIX,
+    GenLLRMode.MUTATE_CSW,
 }

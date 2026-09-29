@@ -2009,7 +2009,7 @@ class LLR_OPT:
                 self.MPI_Abort(f"Gen_Trial_LLR: Unhandled GenLLRMode={self.current_gen_trial_LLR_mode}")
 
             # SW 분기 보호: 타겟 앞의 그룹(분기 구간)을 바꾼 trial은 버린다 (MUTATE 두 모드는 타겟 그룹만 만지므로 제외)
-            if new_LLR_matrix is not None and int(self.current_gen_trial_LLR_mode) not in {int(mode) for mode in SW_BRANCH_ALLOWED_MODES}:
+            if new_LLR_matrix is not None and int(self.current_gen_trial_LLR_mode) not in {int(mode) for mode in MODES_EXEMPT_FROM_PROTECTED_GROUP_CHECK}:
                 protected_change = self._Protected_Groups_Changed(self.optimal_LLR_matrix, new_LLR_matrix)
                 if protected_change is not None:
                     self.Write_Log_Lines(f"[SW branch] {self.current_gen_trial_LLR_mode_name} changed groups before the target: {protected_change}. Trial discarded")
@@ -5447,6 +5447,7 @@ class LLR_OPT:
 
         if total_rows <= 1:
             self.delete_row_state = DeleteRowState(is_active=False)
+            self.max_modification_trial = 0
             self.Write_Log_Lines(f"\t- DELETE_ROW: Only {total_rows} row(s), skipping")
             return
 
@@ -5454,6 +5455,7 @@ class LLR_OPT:
 
         if len(deletable) == 0:
             self.delete_row_state = DeleteRowState(is_active=False)
+            self.max_modification_trial = 0
             self.Write_Log_Lines(f"\t- DELETE_ROW: No deletable rows, skipping")
             return
 
@@ -5480,16 +5482,21 @@ class LLR_OPT:
 
         - target_group_indices 범위 내의 모든 row (restart group 포함)
         - 전체 matrix에 최소 1개 row는 남아야 함
+        - 그룹 배치를 그대로 두는 실행(Is_Group_Layout_Kept)에서는 row가 하나인 그룹을 건너뛴다.
+          하나 남은 row를 지우면 그룹이 없어지고 이웃 그룹의 iteration이 바뀐다
         """
         total_rows = sum(len(g) for g in matrix.groups)
         if total_rows <= 1:
             return []
 
+        is_group_layout_kept = self.Is_Group_Layout_Kept(matrix)
         result = []
         for g_idx in self.target_group_indices:
             if g_idx >= len(matrix.groups):
                 continue
             group = matrix.groups[g_idx]
+            if is_group_layout_kept and len(group) < 2:
+                continue
             for r_idx in range(len(group)):
                 result.append((g_idx, r_idx))
 
@@ -8355,7 +8362,7 @@ class LLR_OPT:
     def Check_Fixed_Target_Group_Idx_List(self, matrix: LLR_MATRIX) -> list[str]:
         """FIXED_TARGET_GROUP_IDX_LIST의 값과, 함께 쓰는 모드 시퀀스를 검사한다.
 
-        목록의 index는 매트릭스의 그룹 번호에 묶여 있으므로, 그룹 수와 순서와 iteration 구간을 그대로 두는 모드
+        목록의 index는 매트릭스의 그룹 번호에 묶여 있으므로, 그룹 배치(그룹 수, 순서, iteration 구간)를 그대로 두는 모드
         (FIXED_TARGET_GROUP_ALLOWED_MODES)만 함께 쓴다. 검사 대상은 지금 쓰는 시퀀스 하나다
         (IS_HBF_OPT이면 Gen_LLR_Mode_HBF_SEQUENCE, 아니면 Gen_LLR_Mode_SEQUENCE).
 
@@ -8429,7 +8436,9 @@ class LLR_OPT:
         """SW 분기가 있는 매트릭스에서 이 모드가 타겟 목록과 함께 허용되는지 본다.
 
         ㉮ GEN_INITIAL_GROUP은 모든 그룹을 새 그룹 하나로 바꾸므로 분기 그룹이 있으면 허용하지 않는다
-        ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 SW_BRANCH_ALLOWED_MODES(MUTATE_MATRIX, MUTATE_CSW)만 허용한다.
+        ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 SW_BRANCH_ALLOWED_MODES(그룹 배치를 그대로 두는 모드)만 허용한다.
+           디코더 실행 파일이 분기 그룹이 놓인 구간에서 그룹 수, iteration 구간, SW 분기가 바뀐 매트릭스를
+           받지 않기 때문이다. 그룹 안의 row 수는 바뀌어도 된다.
            타겟이 전부 분기 구간 뒤의 보통 그룹이면 다른 모드도 허용하되, 타겟 앞의 그룹을 바꾼 trial은
            Gen_Trial_LLR의 _Protected_Groups_Changed가 버린다
         어느 분기의 그룹을 바꿀지는 타겟 목록이 정한다. 분기 그룹은 분기 index와 상관없이 타겟이 된다.
@@ -8452,10 +8461,30 @@ class LLR_OPT:
             allowed_names = ", ".join(GenLLRMode(value).name for value in sorted(allowed_values))
             return (
                 f"target groups {branch_targets} are SW branch groups, so mode {mode_name} ({int(selected_mode)}) is not allowed. "
-                f"Allowed modes there: {allowed_names}. Point the targets (INITIAL_TARGET_GROUP_IDX or FIXED_TARGET_GROUP_IDX_LIST) "
+                f"Allowed modes there keep the number, order, iteration and SW branches of groups: {allowed_names}. "
+                f"Point the targets (INITIAL_TARGET_GROUP_IDX or FIXED_TARGET_GROUP_IDX_LIST) "
                 f"at the plain groups after the branch groups to use other modes"
             )
         return None
+
+    def Is_Group_Layout_Kept(self, matrix: LLR_MATRIX) -> bool:
+        """이 실행이 그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기 표시)를 그대로 두어야 하는지 본다.
+
+        ㉮ HBF 최적화 모드(IS_HBF_OPT): 디코더 실행 파일이 HBF 최적화가 다루는 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않는다
+        ㉯ FIXED_TARGET_GROUP_IDX_LIST로 타겟을 지정한 실행: 목록의 index가 그룹 번호에 묶여 있다
+        ㉰ 타겟에 SW 분기 그룹이 있는 실행: 분기 그룹은 ㉮의 구간에 놓인다
+        그룹 안의 row 수는 세 경우 모두 바뀌어도 된다.
+        """
+        if DAO_CONFIG.IS_HBF_OPT or DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST is not None:
+            return True
+        matrix.Build_SW_Branch_Layout()
+        if not matrix.has_sw_branch:
+            return False
+        return any(
+            matrix.group_branch_idx[group_idx] != SW_BRANCH_NONE
+            for group_idx in self.target_group_indices
+            if 0 <= group_idx < len(matrix.groups)
+        )
 
     def _Protected_Groups_Changed(self, base_matrix: LLR_MATRIX, new_matrix: LLR_MATRIX) -> Optional[str]:
         """타겟 앞의 그룹(분기 구간을 담는 보호 구간)이 trial 생성으로 바뀌었는지 본다.
@@ -8553,6 +8582,13 @@ class LLR_OPT:
                 group_idx = self.current_target_group_idx
                 if group_idx < len(self.optimal_LLR_matrix.groups) and len(self.optimal_LLR_matrix.groups[group_idx]) < 2:
                     self.Write_Log_Lines(f"\t- Target g{group_idx} has a single row (no CSW to mutate), skipping this stage")
+                    is_skip_this_stage = True
+
+            # 4. SWAP_ROW는 타겟 그룹의 row가 둘 이상이어야 맞바꿀 row 쌍이 있다
+            if not is_skip_this_stage and self.optimal_LLR_matrix is not None and selected_mode == GenLLRMode.SWAP_ROW:
+                group_idx = self.current_target_group_idx
+                if group_idx < len(self.optimal_LLR_matrix.groups) and len(self.optimal_LLR_matrix.groups[group_idx]) < 2:
+                    self.Write_Log_Lines(f"\t- Target g{group_idx} has a single row (no row pair to swap), skipping this stage")
                     is_skip_this_stage = True
 
             # Note: INSERT_MUTATED_ROW는 기존 그룹에 row만 추가하므로 iteration을 증가시키지 않음 (제약 불필요)
