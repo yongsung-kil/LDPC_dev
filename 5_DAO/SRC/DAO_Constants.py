@@ -41,6 +41,7 @@ class GenLLRMode(IntEnum):
     INSERT_RESTART_GROUP = 80
 
 class GenLLRModeHBF(IntEnum):
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스에 쓰는 모드. 값은 같은 이름의 GenLLRMode 값이다"""
     INSERT_RANDOM_GROUP = GenLLRMode.INSERT_RANDOM_GROUP
     INSERT_RANDOM_ROW = GenLLRMode.INSERT_RANDOM_ROW
     MUTATE_MATRIX = GenLLRMode.MUTATE_MATRIX
@@ -49,6 +50,9 @@ class GenLLRModeHBF(IntEnum):
     GEN_INITIAL_GROUP = GenLLRMode.GEN_INITIAL_GROUP
     COPY_GROUP = GenLLRMode.COPY_GROUP
     SWAP_ROW = GenLLRMode.SWAP_ROW
+    COPY_ROWS = GenLLRMode.COPY_ROWS
+    REGEN_DV = GenLLRMode.REGEN_DV
+    REGEN_ROW = GenLLRMode.REGEN_ROW
 
 class OperatingSystem(Enum):
     WINDOWS = "nt"

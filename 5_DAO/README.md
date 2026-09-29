@@ -961,8 +961,13 @@ class DAO_CONFIG:
         GenLLRModeHBF.SPLIT_GROUP,
         GenLLRModeHBF.COPY_GROUP,
         GenLLRModeHBF.SWAP_ROW,
+        GenLLRModeHBF.COPY_ROWS,
+        GenLLRModeHBF.REGEN_DV,
+        GenLLRModeHBF.REGEN_ROW,
     ]
     """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (GenLLRModeHBF의 모드를 모두 적은 목록. 돌릴 모드만 남긴다)
+    - GenLLRModeHBF에 없는 모드: REORDER_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW,
+      ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP
     - 위 Gen_LLR_Mode_SEQUENCE의 세 가지 제한이 똑같이 걸림
     - trial의 row는 iteration 구간 하나 안에 머물러야 함 (경계 기본값 4와 8). 걸치는 trial은 버려짐
       - GEN_INITIAL_GROUP: GEN_INITIAL_GROUP_CONFIG.ITERATION(기본 20)이 4 이하일 때만 통과
