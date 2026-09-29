@@ -276,6 +276,8 @@ Gen_LLR_Mode_HBF_SEQUENCE: target groups [0, 1] are SW branch groups, so mode IN
 
 5번의 까닭: DELETE_ROW는 row가 하나 남은 그룹을 만나면 그룹째 지우고 그 iteration을 앞뒤 그룹에 나눠 준다 (`_Build_Deleted_Row_Matrix`의 Case B). 그룹 수와 iteration이 함께 바뀌므로, 그룹 배치를 그대로 두는 실행에서는 그 그룹을 후보에서 뺀다. 후보는 round마다 다시 만들므로 row가 줄어 하나 남은 그룹도 다음 round에서 빠진다.
 
+그룹 배치를 바꿔도 되는 실행(보통 모드이고 타겟을 직접 지정하지 않았으며 타겟에 분기 그룹이 없는 실행)에서는 row 1개짜리 그룹도 후보로 남긴다 (사용자 결정 2026-09-29). DELETE_ROW는 후보마다 지운 매트릭스를 테스트해 기준보다 좋아진 것만 그 round의 최고로 남기고, 좋아진 후보가 없으면 아무것도 지우지 않고 끝나므로(`Update_Delete_Row_Round_Result`, `_Finalize_Delete_Row_Round`), 그룹이 없어지는 것은 테스트로 좋아졌을 때뿐이다.
+
 7번의 까닭: `LLR_MATRIX_2.txt`의 그룹 0과 3, `LLR_MATRIX_1.txt`의 그룹 0과 4는 row가 하나다. SWAP_ROW를 분기 그룹 타겟에 허용하면 이 그룹이 타겟인 stage에서 "SWAP_ROW requires target group with 2+ rows"로 실행이 멈춘다.
 
 분기 그룹에 모드마다 trial을 6개씩 만들어 본 결과 (모드 제한 검사를 거치지 않고 생성 함수를 직접 부름, `LLR_MATRIX_1.txt`의 그룹 0~5와 `LLR_MATRIX_2.txt`의 그룹 0~4):
@@ -363,7 +365,6 @@ SW 분기가 없는 4그룹 매트릭스의 타겟 그룹 1(iteration 2~4, row 2
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
 - ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 유효성 검사와 보정에도 `IS_HBF_OPT`와 상관없이 걸지. 사용자 결정(2026-09-29)은 값을 쓰는 모드까지이고 유효성 검사와 보정은 그대로다. 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
 - ㉰ 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽지 않는지, 읽되 0이라 같은 출력을 내는지 (라이트 리뷰 F7). 그리고 부호의 열 차수가 11, 4, 3, 2뿐인지 (F8). 규칙의 결론은 어느 쪽이든 같고 문서의 설명이 달라진다
-- ㉱ 그룹 배치를 바꿔도 되는 실행(3.11절의 4번이 거짓인 실행)에서 DELETE_ROW가 row 1개짜리 그룹을 그룹째 지우는 동작을 그대로 둘지
 
 ## 7. 검증
 

@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 21:16:30
+> Claude 마지막 확인: 2026-09-29 21:50:21
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -31,7 +31,7 @@
   - [x] HBF 기본 시퀀스에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺌 (2026-09-29 18:07, 사용자 결정. 기본 설정값에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 경계 검사로 모두 버려짐. `Gen_LLR_Mode_HBF_SEQUENCE`는 9개, `GenLLRModeHBF`의 멤버 11개는 그대로. 새 검사 7건 통과, 전체 199건 통과. 소스 커밋 e128e63. README 반영, 태스크 문서 3.10절)
   - [x] 분기 그룹 타겟에 그룹 배치를 그대로 두는 모드를 허용 (2026-09-29 20:41, 사용자 관측: 타겟 [0, 1]과 INSERT_RANDOM_ROW, COPY_ROWS, REGEN_DV, REGEN_ROW, DELETE_ROW로 시작 검사가 멈춤. 사용자 설명: 제한의 까닭은 SW 분기가 아니라 디코더 실행 파일이 HBF 최적화가 다루는 구간에서 그룹 수, iteration, SW 분기의 변화를 받지 않는 것이고 row 수의 변화는 받음. 허용 모드를 `GROUP_LAYOUT_KEEPING_MODES` 10개로 모으고 분기 그룹 타겟과 타겟 목록이 함께 씀. DELETE_ROW는 그룹 배치를 그대로 두는 실행에서 row 1개짜리 그룹을 건너뛰고, SWAP_ROW는 row 1개짜리 타겟 stage를 건너뜀. 새 검사 14건 통과, 전체 213건 통과. 소스 커밋 d645567. DAO_spec.md 3.6~3.8절, 5.4절, 5.16절, 6.2절과 README 반영, 태스크 문서 3.11절)
   - [x] HBF 최적화 모드의 모드 제한을 SW 분기와 떼어 놓고 기본 시퀀스를 허용 모드 10개로 맞춤 (2026-09-29 21:16, 사용자 결정 1-1과 2-1. `IS_HBF_OPT`가 켜져 있으면 SW 분기가 있든 없든 `GROUP_LAYOUT_KEEPING_MODES` 밖의 모드를 시작할 때와 stage마다 오류로 막음 (`Check_HBF_Optimization_Mode_Allowed`). `GenLLRModeHBF`를 그 10개와 같게 맞춤 (INSERT_MUTATED_ROW, DELETE_ROW 추가. GEN_INITIAL_GROUP, INSERT_RANDOM_GROUP, SPLIT_GROUP 제거). `Gen_LLR_Mode_HBF_SEQUENCE`는 10개 모두. 새 검사 11건 통과, 전체 224건 통과. 소스 커밋 a4263bc. DAO_spec.md 3.6절 HBF4, 3.7절, 3.8절 T6과 README 반영, 태스크 문서 3.12절)
-  - [ ] 사용자 결정: 그룹 배치를 바꿔도 되는 실행에서 DELETE_ROW가 row 1개짜리 그룹을 그룹째 지우는 동작을 그대로 둘지 (태스크 문서 6절 ㉱)
+  - [x] 그룹 배치를 바꿔도 되는 실행에서 DELETE_ROW가 row 1개짜리 그룹을 그룹째 지우는 동작은 그대로 둠 (2026-09-29 21:50, 사용자 결정. 지운 매트릭스를 테스트해 좋아진 것만 가져가므로 그룹이 없어지는 것은 개선됐을 때뿐. 태스크 문서 3.11절에 기록)
   - [ ] 사용자 확인: 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽는지와 부호의 열 차수 (리뷰 F7 F8, 태스크 문서 6절 ㉰)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지, `IS_HBF_OPT`와 2단계 테스트를 함께 켰을 때 `[Initial Partial]`과 `[Partial Test Start]` 줄이 나오는지)
 
