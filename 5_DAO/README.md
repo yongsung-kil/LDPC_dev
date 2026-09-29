@@ -127,7 +127,7 @@ FIXED_TARGET_GROUP_IDX_LIST = None  # 타겟 그룹을 직접 지정 (예: [0, 1
   - MUTATE_CSW와 SWAP_ROW는 타겟 그룹의 row가 1개이면 그 stage를 trial 없이 지나가고, DELETE_ROW는 row 1개짜리 그룹을 지우지 않는다
 
 #### GenLLRMode 시퀀스
-시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값에서 돌릴 모드만 남기고 순서를 정한다. 보통 모드의 기본값은 `GenLLRMode`의 모드 17개를 모두 적은 목록이고, HBF 최적화 모드의 기본값은 `GenLLRModeHBF`의 모드 11개에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 9개다.
+시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값에서 돌릴 모드만 남기고 순서를 정한다. 보통 모드의 기본값은 `GenLLRMode`의 모드 17개를 모두 적은 목록이고, HBF 최적화 모드의 기본값은 `GenLLRModeHBF`의 모드 10개를 모두 적은 목록이다. `GenLLRModeHBF`는 그룹 배치(그룹 수, 순서, iteration 구간, SW 분기 표시)를 그대로 두는 모드만 담고, HBF 최적화 모드는 SW 분기가 있든 없든 이 모드만 쓴다 (다른 모드를 적으면 시작할 때 오류).
 ```python
 # DAO_Config.py
 Gen_LLR_Mode_SEQUENCE = [            # 보통 모드: GenLLRMode의 이름
@@ -866,7 +866,7 @@ if self.is_root and now_optimal_LLR_update:
 - ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 그룹 배치를 그대로 두는 모드만 넣는다. 그룹 배치는 그룹 수, 그룹 순서, iteration 구간, SW 분기 표시다. 디코더 실행 파일이 분기 그룹이 놓인 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않기 때문이고, 그룹 안의 row 수는 바뀌어도 된다
   - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51), DELETE_ROW(70)
   - 막음: GEN_INITIAL_GROUP(0), REORDER_GROUP(22), INSERT_RANDOM_GROUP(40), INSERT_MUTATED_GROUP(42), SPLIT_GROUP(60), ADJUST_ITERATION(62), INSERT_RESTART_GROUP(80). 시퀀스에 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다
-  - 타겟을 분기 구간 뒤의 보통 그룹으로 두면 막은 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
+  - 타겟을 분기 구간 뒤의 보통 그룹으로 두면 막은 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다. HBF 최적화 모드(`IS_HBF_OPT`)는 타겟이 어디든, 분기가 있든 없든 허용 모드 10개만 쓴다 (4.1.1절)
   - DELETE_ROW는 HBF 최적화 모드, `FIXED_TARGET_GROUP_IDX_LIST`로 타겟을 지정한 실행, 타겟에 분기 그룹이 있는 실행에서 row 1개짜리 그룹을 지우지 않는다 (row가 2개 이상인 그룹의 row만 지움)
 - ㉯ 여러 분기로 갈라진 구간의 그룹은 분기 index와 상관없이 타겟이 된다. 어느 분기의 그룹을 바꿀지는 타겟 목록으로 정하고, 그 분기에 맞는 uncor seed는 사용자가 준비한다
 - ㉰ `INITIAL_TARGET_GROUP_IDX`와 `FIXED_TARGET_GROUP_IDX_LIST`의 값은 그룹 하나하나의 index다 (매트릭스 파일에 적힌 그룹 순서를 0부터 센다). 분기 그룹도 그룹마다 따로 타겟이 된다
@@ -960,26 +960,26 @@ class DAO_CONFIG:
     # HBF 최적화 시퀀스 (별도)
     Gen_LLR_Mode_HBF_SEQUENCE: List[GenLLRModeHBF] = [
         GenLLRModeHBF.INSERT_RANDOM_ROW,
+        GenLLRModeHBF.INSERT_MUTATED_ROW,
         GenLLRModeHBF.MUTATE_MATRIX,
         GenLLRModeHBF.MUTATE_CSW,
-        GenLLRModeHBF.SPLIT_GROUP,
         GenLLRModeHBF.COPY_GROUP,
         GenLLRModeHBF.SWAP_ROW,
         GenLLRModeHBF.COPY_ROWS,
         GenLLRModeHBF.REGEN_DV,
         GenLLRModeHBF.REGEN_ROW,
+        GenLLRModeHBF.DELETE_ROW,
     ]
-    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (돌릴 모드만 남긴다)
-    - GenLLRModeHBF의 모드 11개에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 9개
-    - GenLLRModeHBF에 없는 모드: REORDER_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW,
-      ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (GenLLRModeHBF의 모드 10개를 모두 적은 목록. 돌릴 모드만 남긴다)
+    - GenLLRModeHBF는 그룹 배치(그룹 수, 순서, iteration 구간, SW 분기 표시)를 그대로 두는 모드
+      (디코더 실행 파일이 HBF 최적화가 다루는 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않음.
+      그룹 안의 row 수는 바뀌어도 됨)
+    - GenLLRModeHBF에 없는 모드: GEN_INITIAL_GROUP, REORDER_GROUP, INSERT_RANDOM_GROUP, INSERT_MUTATED_GROUP,
+      SPLIT_GROUP, ADJUST_ITERATION, INSERT_RESTART_GROUP. 이 모드를 적으면 SW 분기가 있든 없든 시작할 때 오류
     - 위 Gen_LLR_Mode_SEQUENCE의 세 가지 제한이 똑같이 걸림
     - trial의 row는 iteration 구간 하나 안에 머물러야 함 (경계 기본값 4와 8). 걸치는 trial은 버려짐
-    - 뺀 두 모드는 새 그룹을 만들며, 기본 설정값에서는 그 그룹이 경계를 걸쳐 trial이 버려짐.
-      쓰려면 아래 조건을 맞추고 목록에 이름을 적음 (GEN_INITIAL_GROUP은 맨 앞에)
-      - GEN_INITIAL_GROUP: GEN_INITIAL_GROUP_CONFIG.ITERATION(기본 20)이 4 이하일 때만 통과
-      - INSERT_RANDOM_GROUP: 새 그룹과 뒤로 밀린 그룹이 경계를 걸치지 않을 때만 통과
-        (INSERT_GROUP_NUM_ITERATION 기본 20은 iteration 1~8의 그룹 뒤에서 모두 버려짐)
+    - DELETE_ROW는 row 1개짜리 그룹을 지우지 않고, MUTATE_CSW와 SWAP_ROW는 row 1개짜리 타겟의 stage를
+      trial 없이 지나감
     """
 
     # ========== 실행 모드 설정 ==========
@@ -1008,6 +1008,8 @@ class DAO_CONFIG:
       - row는 iteration 구간 하나 안에 머묾 (경계는 HBF_OPT_CONFIG.ITERATION_SPAN_ENDS,
         기본 4와 8이라 구간은 1~4, 5~8, 9 이후)
       - 입력 매트릭스가 어기면 시작할 때 "Initial LLR matrix validation failed."로 멈춤
+    - True일 때 시퀀스가 지킬 것: 그룹 배치를 그대로 두는 모드(GenLLRModeHBF의 모드 10개)만 담음.
+      SW 분기가 있든 없든 다른 모드가 있으면 시작할 때 오류
     - RUN_DAO_MODE가 GEN_SINGLE_ROW이면 False로 둠 (후보 row가 iteration 1~CANDIDATE_ITERATION
       하나라 경계를 걸침. True이면 시작할 때 오류)
     """
