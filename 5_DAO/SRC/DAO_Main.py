@@ -8548,11 +8548,18 @@ class LLR_OPT:
                         self.Write_Log_Lines(f"\t- Target g{group_idx} is restart group, skipping this stage")
                         is_skip_this_stage = True
 
+            # 3. MUTATE_CSW는 타겟 그룹의 row가 둘 이상이어야 바꿀 CSW가 있다 (첫 row의 CSW는 -1로 고정)
+            if not is_skip_this_stage and self.optimal_LLR_matrix is not None and selected_mode == GenLLRMode.MUTATE_CSW:
+                group_idx = self.current_target_group_idx
+                if group_idx < len(self.optimal_LLR_matrix.groups) and len(self.optimal_LLR_matrix.groups[group_idx]) < 2:
+                    self.Write_Log_Lines(f"\t- Target g{group_idx} has a single row (no CSW to mutate), skipping this stage")
+                    is_skip_this_stage = True
+
             # Note: INSERT_MUTATED_ROW는 기존 그룹에 row만 추가하므로 iteration을 증가시키지 않음 (제약 불필요)
             # INSERT_MUTATED_GROUP은 십시일반으로 iteration 확보 가능하므로 제약 불필요
 
             if is_skip_this_stage:
-                # restart group이 target이면 이 stage 전체를 skip
+                # skip 조건에 걸린 stage는 trial 없이 지나간다
                 self.max_modification_trial = 0
             elif selected_mode == GenLLRMode.COPY_ROWS:
                 if not self.optimal_LLR_matrix.groups:
@@ -9072,6 +9079,9 @@ class LLR_OPT:
         지정된 타겟 그룹을 후보 그룹의 모든 rows로 교체(Copy)합니다.
         타겟 그룹은 current_target_group_idx로 결정됩니다 (-1이면 마지막 그룹).
 
+        후보에서 가져오는 것은 row의 값(ch_th_values)과 CSW다. 타겟 그룹의 iteration과 SW 분기 표시
+        (row의 floor_flag, 헤더 type_each_group의 분기 표시)는 그대로 둔다. 분기는 입력 매트릭스가 정한다.
+
         Returns:
             bool: 성공하면 True, 실패하면 False
         """
@@ -9096,10 +9106,11 @@ class LLR_OPT:
         candidate_data = self.copy_group_candidates[candidate_idx]
         orig_group_idx = candidate_data['orig_group_idx']
 
-        # 타겟 그룹의 iteration 정보 저장 (유지해야 함)
+        # 타겟 그룹의 iteration과 SW 분기 index 저장 (유지해야 함)
         if target_group:
             target_iter_start = target_group[0].iter_start
             target_iter_end = target_group[0].iter_end
+            target_branch_idx = target_group[0].floor_flag
         else:
             self.Write_Log_Lines(f"\t- [Error] Target group {target_group_idx} is empty.")
             return False
@@ -9112,7 +9123,7 @@ class LLR_OPT:
             new_row = LLR_Row(
                 ch_th_values=np.array(row_data['ch_th_values'], copy=True),
                 CSW=row_data['CSW'],
-                floor_flag=row_data['floor_flag'],
+                floor_flag=target_branch_idx,  # 타겟 그룹의 분기 index 사용
                 iter_start=target_iter_start,  # 타겟 그룹의 iteration 사용
                 iter_end=target_iter_end,
                 is_group_restart=False
@@ -9121,9 +9132,13 @@ class LLR_OPT:
             matrix.Fill_Columns_Fixed_In_HBF_Iterations(new_row.ch_th_values, target_iter_end)
             target_group.append(new_row)
 
-        # Header 업데이트
+        # Header 업데이트. 보통 그룹끼리 복사하면 그룹 유형은 복사한 row를 따른다.
+        # 타겟이나 후보가 분기 그룹이면 헤더의 값이 분기 표시이므로 타겟의 값을 그대로 둔다
         matrix.header.num_row_each_group[target_group_idx] = len(target_group)
-        matrix.header.type_each_group[target_group_idx] = candidate_data['group_type']
+        is_target_plain = target_branch_idx == SW_BRANCH_NONE
+        is_candidate_plain = all(row_data['floor_flag'] == SW_BRANCH_NONE for row_data in candidate_data['rows'])
+        if is_target_plain and is_candidate_plain:
+            matrix.header.type_each_group[target_group_idx] = candidate_data['group_type']
 
         self.Write_Log_Lines(f"\t- Group Copy: Target Group {target_group_idx} <== Candidate Group {orig_group_idx}")
         self.Write_Log_Lines(f"\t    - Copied {len(target_group)} rows from Group {orig_group_idx} to Group {target_group_idx}")
@@ -10036,6 +10051,18 @@ class LLR_OPT:
                     "GEN_SINGLE_ROW 모드는 ENABLE_TWO_STAGE_TEST=True와 함께 사용할 수 없습니다. "
                     "UNCOR_CONFIG.ENABLE_TWO_STAGE_TEST를 False로 설정하세요."
                 )
+            if DAO_CONFIG.IS_HBF_OPT:
+                # 후보 row는 iteration 1~CANDIDATE_ITERATION 하나다. HBF 최적화 모드의 구간 경계를 걸치면 모든 후보가 버려진다
+                crossed_span_ends = [
+                    span_end for span_end in LLR_MATRIX.Get_Iteration_Span_Ends()
+                    if span_end < SINGLE_ROW_CONFIG.CANDIDATE_ITERATION
+                ]
+                if crossed_span_ends:
+                    errors.append(
+                        f"GEN_SINGLE_ROW 모드의 후보 row(iteration 1~{SINGLE_ROW_CONFIG.CANDIDATE_ITERATION})는 IS_HBF_OPT=True에서 "
+                        f"iteration 구간 경계 {crossed_span_ends}를 걸쳐 모든 후보가 버려집니다. "
+                        "DAO_CONFIG.IS_HBF_OPT를 False로 설정하세요."
+                    )
 
         if DAO_CONFIG.RUN_DAO_MODE == RunDAOMode.RUN_OPTIMIZATION:
             if DAO_CONFIG.MAX_OPTIMIZATION_TRIALS <= 0:
