@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 13:26:26
+> Claude 마지막 확인: 2026-09-29 13:38:06
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -16,6 +16,7 @@
   - [x] 타겟 그룹을 직접 지정하는 `FIXED_TARGET_GROUP_IDX_LIST` 추가 (2026-09-28 17:48, 사용자 요청. None이면 `INITIAL_TARGET_GROUP_IDX`를 따름. 타겟 목록은 `Build_Target_Group_Indices` 한 곳에서 만들고, 값과 함께 쓰는 모드는 `Validate_Config`가 시작할 때 검사. 검사 18건 통과. DAO_spec.md 3.8절과 README 반영)
   - [x] HBF 최적화 모드의 seed 모드를 보통 모드와 같은 규칙으로 정함 (2026-09-28 20:48, 사용자 요청. `Set_Seed_Mode`의 HBF 전용 갈래와 `HBF_OPT_USING_UNCOR` 삭제. 검사 3건 통과)
   - [x] 타겟 그룹을 그룹 하나씩 다루도록 되돌림 (2026-09-29 13:26, 사용자 요청. SW 분기 그룹을 한 단위로 함께 타겟하고 함께 변이하던 처리를 없앰. 타겟 목록의 값은 그룹 하나하나의 index이고 MUTATE_MATRIX와 MUTATE_CSW는 타겟 그룹 하나만 바꿈. 새 검사 8건, 고친 검사 20건과 42건 통과. DAO_spec.md 3.7절과 3.8절, README 3.4절 반영)
+  - [x] 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하던 규칙을 없앰 (2026-09-29 13:38, 사용자 관측: 타겟 g2에서 "DAO updates only the last branch"로 중단. 분기 그룹은 분기 index와 상관없이 타겟이 됨. 검사 22건, 8건, 41건 통과)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `target_group_indices`가 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지)
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정
@@ -60,7 +61,7 @@
   - [x] 변경 코드 라이트 리뷰 (2026-09-22 22:39 ~ 2026-09-22 23:14, 대상 6e035e6..15ab8e3의 SRC, 기록: `_pm/tasks/20260921_SW_branch_DAO_support/review/`)
     - Round 1 관점 16개, Round 2 lv1 4개 발견 28건 (CRITICAL 2, HIGH 2, MEDIUM 10, LOW 14). 종합 판정: 수정 필요
     - CRITICAL: 타겟 목록에서 마지막이 아닌 분기를 빼지 않아 파일 1이 기본 설정으로 첫 stage에서 중단(C1), SW 허용 검사가 stage 건너뛰기보다 먼저 돌아 GEN_INITIAL_GROUP이 stage 2 이상에서 중단(C2)
-  - [ ] 리뷰 발견 수정 (C1 C2 H1 H2 M1 M3 M4 M6 M9 M10은 작은 수정, M2 전면 재번호는 중간 규모)
+  - [ ] 리뷰 발견 수정 (C2 H1 H2 M1 M3 M4 M6 M9 M10은 작은 수정, M2 전면 재번호는 중간 규모. C1은 2026-09-29에 마지막 분기 규칙을 없애면서 함께 없어짐)
   - [x] 타겟 단위를 그룹 하나로 바꿈 (2026-09-29 13:26, 사용자 결정. 2026-09-21 결정 3번의 "묶음 단위 타겟"을 대신함. 기록은 `_pm/tasks/20260928_HBF_TH_iteration_range/` 3.3절)
   - [ ] 사용자 환경에서 MPI 실행 검증 (LLR_MATRIX_2.txt, 시퀀스 [10, 11], FIXED_TARGET_GROUP_IDX_LIST로 그룹 지정)
 

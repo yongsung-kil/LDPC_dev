@@ -8374,14 +8374,14 @@ class LLR_OPT:
             )
         return errors
 
-    def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_idx: int, target_group_indices: list[int]) -> Optional[str]:
-        """SW 분기가 있는 매트릭스에서 이 모드와 타겟이 허용되는지 본다.
+    def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_indices: list[int]) -> Optional[str]:
+        """SW 분기가 있는 매트릭스에서 이 모드가 타겟 목록과 함께 허용되는지 본다.
 
         ㉮ GEN_INITIAL_GROUP은 모든 그룹을 새 그룹 하나로 바꾸므로 분기 그룹이 있으면 허용하지 않는다
         ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 SW_BRANCH_ALLOWED_MODES(MUTATE_MATRIX, MUTATE_CSW)만 허용한다.
            타겟이 전부 분기 구간 뒤의 보통 그룹이면 다른 모드도 허용하되, 타겟 앞의 그룹을 바꾼 trial은
            Gen_Trial_LLR의 _Protected_Groups_Changed가 버린다
-        ㉰ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다
+        어느 분기의 그룹을 바꿀지는 타겟 목록이 정한다. 분기 그룹은 분기 index와 상관없이 타겟이 된다.
 
         Returns:
             Optional[str]: 막는 이유. 허용되면 None
@@ -8404,16 +8404,6 @@ class LLR_OPT:
                 f"Allowed modes there: {allowed_names}. Point the targets (INITIAL_TARGET_GROUP_IDX or FIXED_TARGET_GROUP_IDX_LIST) "
                 f"at the plain groups after the branch groups to use other modes"
             )
-
-        span = matrix.span_of_group[target_group_idx] if 0 <= target_group_idx < len(matrix.groups) else None
-        if span is not None:
-            last_branch = span[2] - 1
-            branch = matrix.group_branch_idx[target_group_idx]
-            if branch != last_branch:
-                return (
-                    f"target g{target_group_idx} is SW branch {branch} of the span iteration {span[0]}~{span[1]} "
-                    f"({span[2]} branches); DAO updates only the last branch ({last_branch})"
-                )
         return None
 
     def _Protected_Groups_Changed(self, base_matrix: LLR_MATRIX, new_matrix: LLR_MATRIX) -> Optional[str]:
@@ -8483,9 +8473,9 @@ class LLR_OPT:
                 self.Write_Log_Lines(f"\t- WARNING: current_target_group_idx ({self.current_target_group_idx}) exceeds group count ({len(self.optimal_LLR_matrix.groups)}), using last group")
                 self.current_target_group_idx = len(self.optimal_LLR_matrix.groups) - 1
 
-            # SW 분기: 분기 매트릭스에서 허용되지 않는 모드나 마지막이 아닌 분기를 막는다
+            # SW 분기: 타겟에 분기 그룹이 있을 때 허용되지 않는 모드를 막는다
             if self.optimal_LLR_matrix is not None:
-                sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.current_target_group_idx, self.target_group_indices)
+                sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.target_group_indices)
                 if sw_error is not None:
                     self.MPI_Abort(f"Set_Gen_Trial_LLR_Mode: {sw_error}")
 

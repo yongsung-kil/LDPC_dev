@@ -84,16 +84,18 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | 1 | `LLR_MATRIX.Build_SW_Branch_Layout` | 그룹별 분기 index와 구간만 계산 |
 | 2 | `LLR_OPT.Build_Target_Group_Indices` | 설정의 index를 그대로 타겟 목록에 담음 |
 | 3 | `LLR_OPT._Get_Target_Group_Idx` | 변이할 타겟 그룹 하나의 index. `Generate_Random_Mutation`과 `Mutate_CSW`가 씀 |
-| 4 | `LLR_OPT.Check_SW_Branch_Mode_Allowed` | 타겟 목록에 적힌 그룹만 보고 분기 그룹이 있는지 판단 |
+| 4 | `LLR_OPT.Check_SW_Branch_Mode_Allowed` | 타겟 목록에 적힌 그룹만 보고 분기 그룹이 있는지 판단. 분기 그룹은 분기 index와 상관없이 타겟이 됨 |
 | 5 | `LLR_OPT.Set_Gen_Trial_LLR_Mode`, `Bcast_Trial_LLR_Mode`, `Print_Mode_Target_Info`, `Initialize_Stage` | 타겟 그룹 하나만 정하고 알림 |
 
-그대로 둔 것: 분기 구간의 iteration 검사(G2, G10), 헤더와 꼬리의 대조(H8), 분기 그룹이 타겟일 때의 모드 제한(MUTATE_MATRIX, MUTATE_CSW), 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하는 규칙.
+그대로 둔 것: 분기 구간의 iteration 검사(G2, G10), 헤더와 꼬리의 대조(H8), 분기 그룹이 타겟일 때의 모드 제한(MUTATE_MATRIX, MUTATE_CSW).
+
+여러 분기로 갈라진 구간에서 마지막 분기만 갱신하던 규칙은 없앴다 (사용자 관측 2026-09-29: 타겟이 그룹 2가 되는 stage에서 "target g2 is SW branch 0 of the span iteration 5~8 (2 branches); DAO updates only the last branch (1)"로 중단). 바꿀 그룹을 타겟 목록으로 직접 고르므로 어느 분기를 바꿀지도 목록이 정한다. 이 규칙이 타겟 목록에서 마지막이 아닌 분기를 빼지 않아 기본 설정으로 중단되던 문제(2026-09-22 라이트 리뷰의 C1)도 함께 없어진다.
 
 | `LLR_MATRIX_2.txt`에 준 목록 | 타겟 목록 | stage마다 바뀌는 그룹 |
 |------|------|------|
 | `[0, 1]` | `[0, 1]` | 그룹 0, 다음 바퀴에 그룹 1 |
 | `[1, 4]` | `[1, 4]` | 그룹 1, 다음 바퀴에 그룹 4 |
-| `[0, 2]` | `[0, 2]` | 그룹 0, 다음 바퀴에 그룹 2에서 중단 (구간 5~8의 분기 0이라 마지막 분기가 아님) |
+| `[2, 3]` | `[2, 3]` | 그룹 2(구간 5~8의 분기 0), 다음 바퀴에 그룹 3(분기 1) |
 
 ## 4. 수정 대상 파일
 
@@ -122,9 +124,9 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 - 검사: `_test/20260928_hbf_th_iteration_range/test_hbf_th_iteration_range.py` 11건 (유효성 4, 보정 1, 변이 2, row 다시 만들기 2, DV 다시 만들기 2)
   - 첫 수정 전 소스(커밋 dff3dba의 SRC): 처음 쓴 9건 가운데 5건 실패. 유효성 검사 실패 문구가 사용자 관측과 같음
   - 수정 후 소스: 11건 통과
-- 검사: `_test/20260928_fixed_target_group_idx_list/test_fixed_target_group_idx_list.py` 20건 (타겟 목록 만들기 7, stage마다 고르는 타겟 3, 설정 검사 10). 구현 전에는 모두 오류였고, 3.3절을 반영하기 전에는 분기 그룹을 하나씩 다루는 4건이 실패. 지금 20건 통과
-- 검사: `_test/20260929_target_group_one_by_one/test_target_group_one_by_one.py` 8건 (MUTATE_MATRIX 3, MUTATE_CSW 2, 모드 허용 검사 3). 3.3절을 반영하기 전에는 4건 실패, 지금 8건 통과
-- 검사: `check_sw_branch.py`를 3.3절에 맞게 고침 (42건 통과)
+- 검사: `_test/20260928_fixed_target_group_idx_list/test_fixed_target_group_idx_list.py` 20건 (타겟 목록 만들기 7, stage마다 고르는 타겟 3, 설정 검사 10). 구현 전에는 모두 오류였고, 3.3절을 반영하기 전에는 분기 그룹을 하나씩 다루는 4건이 실패. 지금 22건 통과 (분기 0과 분기 1을 차례로 도는 2건 포함. 마지막 분기 규칙을 없애기 전에는 이 2건이 사용자 관측과 같은 문구로 중단)
+- 검사: `_test/20260929_target_group_one_by_one/test_target_group_one_by_one.py` 8건 (MUTATE_MATRIX 4, MUTATE_CSW 2, 모드 허용 검사 2). 3.3절을 반영하기 전에는 4건 실패, 지금 8건 통과
+- 검사: `check_sw_branch.py`를 3.3절에 맞게 고침 (41건 통과)
 - 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`

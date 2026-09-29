@@ -128,15 +128,14 @@ t = m2.Deep_Copy(); muts = f.Generate_Random_Mutation(t)
 check("㉳ 분기 없는 그룹은 그룹 하나만 변이", {g for g, *_ in muts} == {10}, str({g for g, *_ in muts}))
 
 # ㉴ ㉵ 모드 허용 검사
-check("㉴ 파일 1 타겟 g3(분기 0)은 마지막 분기가 아니라 오류", "only the last branch" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_MATRIX, 3, [3, 4, 6, 7, 8, 9, 10, 11]) or ""))
-check("㉴ 파일 1 타겟 g4(분기 1)는 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_CSW, 4, [4, 6, 7, 8, 9, 10, 11]) is None)
-check("㉴ 파일 2 타겟 g0(분기 하나짜리 구간)은 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, 0, [0, 1, 3, 4]) is None)
-check("㉴ 파일 2 타겟 g1(분기 하나짜리 구간의 둘째 그룹)도 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, 1, [0, 1, 3, 4]) is None)
-check("㉵ 타겟에 분기 그룹이 있으면 REORDER_GROUP은 오류", "not allowed" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, 4, [4, 6, 7, 8, 9, 10, 11]) or ""))
-check("㉵ 타겟이 분기 구간 뒤(g6~)뿐이면 REORDER_GROUP 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, 6, list(range(6, 12))) is None)
-check("㉵ 타겟이 분기 구간 뒤여도 DELETE_ROW 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.DELETE_ROW, 6, list(range(6, 12))) is None)
-check("㉵ GEN_INITIAL_GROUP은 분기 그룹이 있으면 언제나 오류", "replaces every group" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.GEN_INITIAL_GROUP, 6, list(range(6, 12))) or ""))
-check("㉵ 옛 형식에 REORDER_GROUP은 허용", f.Check_SW_Branch_Mode_Allowed(old, GenLLRMode.REORDER_GROUP, 1, [1, 2]) is None)
+check("㉴ 파일 1 타겟에 분기 0(g0, g1, g3)과 분기 1(g2, g4, g5)이 모두 있어도 MUTATE_MATRIX 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_MATRIX, list(range(0, 12))) is None)
+check("㉴ 파일 1 타겟 g4(분기 1)에 MUTATE_CSW 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_CSW, [4, 6, 7, 8, 9, 10, 11]) is None)
+check("㉴ 파일 2 타겟 g0, g1(분기 하나짜리 구간)과 g2(분기 0), g3, g4(분기 1) 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, [0, 1, 2, 3, 4]) is None)
+check("㉵ 타겟에 분기 그룹이 있으면 REORDER_GROUP은 오류", "not allowed" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, [4, 6, 7, 8, 9, 10, 11]) or ""))
+check("㉵ 타겟이 분기 구간 뒤(g6~)뿐이면 REORDER_GROUP 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, list(range(6, 12))) is None)
+check("㉵ 타겟이 분기 구간 뒤여도 DELETE_ROW 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.DELETE_ROW, list(range(6, 12))) is None)
+check("㉵ GEN_INITIAL_GROUP은 분기 그룹이 있으면 언제나 오류", "replaces every group" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.GEN_INITIAL_GROUP, list(range(6, 12))) or ""))
+check("㉵ 옛 형식에 REORDER_GROUP은 허용", f.Check_SW_Branch_Mode_Allowed(old, GenLLRMode.REORDER_GROUP, [1, 2]) is None)
 # 보호 구간 안전망
 class FakeGuard:
     target_group_indices = list(range(6, 12))

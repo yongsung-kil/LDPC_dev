@@ -849,7 +849,7 @@ if self.is_root and now_optimal_LLR_update:
 헤더 `type_each_group`이 10 이상인 그룹은 SW(Syndrome Weight, 신드롬 무게) 분기 그룹이다. 10은 분기 1개(row 꼬리 0), 20과 21은 분기 2개(row 꼬리 0과 1)이고, 10 미만은 보통 그룹(row 꼬리 -1)이다. 타겟은 분기 그룹도 그룹 하나씩 고르고, 변이는 타겟 그룹 하나에만 들어간다. 자세한 규칙은 `DAO_spec.md` 3.7절에 있다.
 
 - ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 `Gen_LLR_Mode_SEQUENCE`에 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 넣는다. 다른 모드가 있으면 `Set_Gen_Trial_LLR_Mode`가 오류 문구를 내고 멈춘다. 타겟을 분기 구간 뒤의 보통 그룹으로 두면 다른 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
-- ㉯ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다. 갱신할 분기마다 입력 매트릭스와 uncor seed를 따로 준비해 돌린다
+- ㉯ 여러 분기로 갈라진 구간의 그룹은 분기 index와 상관없이 타겟이 된다. 어느 분기의 그룹을 바꿀지는 타겟 목록으로 정하고, 그 분기에 맞는 uncor seed는 사용자가 준비한다
 - ㉰ `INITIAL_TARGET_GROUP_IDX`와 `FIXED_TARGET_GROUP_IDX_LIST`의 값은 그룹 하나하나의 index다 (매트릭스 파일에 적힌 그룹 순서를 0부터 센다). 분기 그룹도 그룹마다 따로 타겟이 된다
 - ㉱ DAO는 분기를 만들거나 없애지 않는다. 헤더 `type_each_group`은 읽은 값을 그대로 보존한다
 
