@@ -364,7 +364,6 @@ SW 분기가 없는 4그룹 매트릭스의 타겟 그룹 1(iteration 2~4, row 2
 
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
 - ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 유효성 검사와 보정에도 `IS_HBF_OPT`와 상관없이 걸지. 사용자 결정(2026-09-29)은 값을 쓰는 모드까지이고 유효성 검사와 보정은 그대로다. 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
-- ㉰ 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽지 않는지, 읽되 0이라 같은 출력을 내는지 (라이트 리뷰 F7). 그리고 부호의 열 차수가 11, 4, 3, 2뿐인지 (F8). 규칙의 결론은 어느 쪽이든 같고 문서의 설명이 달라진다
 
 ## 7. 검증
 
@@ -395,4 +394,5 @@ SW 분기가 없는 4그룹 매트릭스의 타겟 그룹 1(iteration 2~4, row 2
   - 값 규칙, seed 모드, 타겟 목록, MPI로 옮기는 값에서는 결함을 찾지 못함
   - 3.4절의 수정은 리뷰 뒤에 들어갔다. 1~5번(커밋 f843c7a)으로 F15 가운데 `_generate_mutation_for_group`과 F9 가운데 INSERT_RANDOM_ROW, INSERT_RANDOM_GROUP의 로그가 풀렸고, 6~11번으로 F15의 나머지(`_generate_mutation_for_row`)와 REGEN_DV가 dv_idx 0 자리의 값을 다른 DV로 옮기던 발견이 풀렸다
   - 3.6절의 수정으로 F1, F2, F6이 풀렸고, 3.8절로 F4와 F5가, 3.9절로 F3이 풀렸다 (커밋 dde34bd). HIGH와 MEDIUM 발견 6건이 모두 풀렸다
+  - F7과 F8은 사용자 확인(2026-09-29)으로 닫혔다. F7: 실행 파일의 디코더는 iteration 1~4에서 dv_idx 0의 TH를 읽지 않는다 (문서의 설명 그대로. 저장소의 원본 소스 `__AUTO_LLR_OPT__` 갈래는 TH를 읽되 0이면 같은 출력을 내는데, 실행 파일은 그 판이 아니다). F8: 평가 대상 파라미터에서 열 차수와 dv_idx 0 칸의 대응이 맞아 정상 동작한다
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지 (같은 자리의 "Current target index" 줄은 별도 카운터라 실제 타겟과 다른 그룹을 적는다, 라이트 리뷰 F17)
