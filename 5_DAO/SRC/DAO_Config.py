@@ -130,9 +130,10 @@ class DAO_CONFIG:
     RUN_DAO_MODE: RunDAOMode = RunDAOMode.RUN_OPTIMIZATION
 
     # LLR 생성 모드 순서 설정. stage마다 목록의 다음 모드를 돌고, 끝까지 가면 처음으로 돌아간다
-    # 두 목록은 쓸 수 있는 모드를 모두 적은 것이다. 돌릴 모드만 남기고 순서를 정한다
+    # 두 목록에서 돌릴 모드만 남기고 순서를 정한다
     # - 타겟에 SW 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만 남긴다 (Validate_Config가 시작할 때 검사)
     # - FIXED_TARGET_GROUP_IDX_LIST를 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
+    # 보통 모드의 시퀀스. GenLLRMode의 모드를 모두 적은 목록이다
     Gen_LLR_Mode_SEQUENCE = [
         GenLLRMode.GEN_INITIAL_GROUP,      # stage 1에서만 돈다 (맨 앞에 둔다)
         GenLLRMode.MUTATE_MATRIX,
@@ -152,10 +153,9 @@ class DAO_CONFIG:
         GenLLRMode.DELETE_ROW,
         GenLLRMode.INSERT_RESTART_GROUP,
     ]
-    # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스
+    # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스. GenLLRModeHBF에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 목록이다
+    # 두 모드가 만드는 그룹은 기본 설정값(iteration 20칸)에서 iteration 구간 경계(4, 8)를 걸쳐 trial이 버려진다
     Gen_LLR_Mode_HBF_SEQUENCE = [
-        GenLLRModeHBF.GEN_INITIAL_GROUP,   # stage 1에서만 돈다 (맨 앞에 둔다)
-        GenLLRModeHBF.INSERT_RANDOM_GROUP,
         GenLLRModeHBF.INSERT_RANDOM_ROW,
         GenLLRModeHBF.MUTATE_MATRIX,
         GenLLRModeHBF.MUTATE_CSW,
