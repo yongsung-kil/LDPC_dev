@@ -123,23 +123,25 @@ FIXED_TARGET_GROUP_IDX_LIST = None  # 타겟 그룹을 직접 지정 (예: [0, 1
 - **`FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰는 모드**: 목록의 index가 그룹 번호에 묶여 있으므로 그룹 수, 순서, iteration 구간을 그대로 두는 모드만 쓴다
   - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51)
   - 지금 쓰는 시퀀스에 다른 모드가 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다
-  - 목록에 SW 분기 그룹(헤더 10 이상)이 있으면 이 가운데 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 쓴다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스를 `[10, 11]`로 둔다
+  - 목록에 SW 분기 그룹(헤더 10 이상)이 있으면 이 가운데 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 쓴다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스에 MUTATE_MATRIX와 MUTATE_CSW만 남긴다
 
 #### GenLLRMode 시퀀스
+시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값은 쓸 수 있는 모드를 모두 적은 목록이므로, 돌릴 모드만 남기고 순서를 정한다.
 ```python
 # DAO_Config.py
-Gen_LLR_Mode_SEQUENCE = [
-    10,  # MUTATE_MATRIX
-    11,  # MUTATE_CSW
-    21,  # SWAP_ROW
-    30,  # COPY_ROWS
-    31,  # COPY_GROUP
-    40,  # INSERT_RANDOM_GROUP
-    41,  # INSERT_RANDOM_ROW
-    50,  # REGEN_DV
-    51,  # REGEN_ROW
+Gen_LLR_Mode_SEQUENCE = [            # 보통 모드: GenLLRMode의 이름
+    GenLLRMode.MUTATE_MATRIX,
+    GenLLRMode.MUTATE_CSW,
+    GenLLRMode.COPY_ROWS,
+]
+Gen_LLR_Mode_HBF_SEQUENCE = [        # HBF 최적화 모드(IS_HBF_OPT): GenLLRModeHBF의 이름
+    GenLLRModeHBF.MUTATE_MATRIX,
+    GenLLRModeHBF.MUTATE_CSW,
 ]
 ```
+- stage마다 목록의 다음 모드를 돌고, 끝까지 가면 처음으로 돌아간다
+- GEN_INITIAL_GROUP은 stage 1에서만 돌므로 쓰려면 맨 앞에 둔다
+- 로그는 모드를 값(숫자)으로 적는다 (예: `[current_gen_trial_LLR_mode]: MUTATE_CSW (11)  (2/3) [10, '11', 30]`)
 
 #### 채널 설정
 ```python
@@ -923,31 +925,49 @@ class DAO_CONFIG:
     """
 
     # ========== GenLLRMode 시퀀스 ==========
-    Gen_LLR_Mode_SEQUENCE: List[int] = [
-        10,  # MUTATE_MATRIX: 행렬 값 변이
-        11,  # MUTATE_CSW: CSW 값 변이
-        21,  # SWAP_ROW: 행 교환
-        30,  # COPY_ROWS: 행 복사
-        31,  # COPY_GROUP: 그룹 복사
-        40,  # INSERT_RANDOM_GROUP: 그룹 삽입
-        41,  # INSERT_RANDOM_ROW: 행 삽입
-        50,  # REGEN_DV: DV 재생성
-        51,  # REGEN_ROW: 행 재생성
+    Gen_LLR_Mode_SEQUENCE: List[GenLLRMode] = [
+        GenLLRMode.GEN_INITIAL_GROUP,     # 모든 그룹을 새 그룹 하나로 교체 (stage 1에서만 돎)
+        GenLLRMode.MUTATE_MATRIX,         # CH, TH 값 변이
+        GenLLRMode.MUTATE_CSW,            # CSW 값 변이
+        GenLLRMode.SWAP_ROW,              # 그룹 안 두 row의 값 맞바꾸기
+        GenLLRMode.REORDER_GROUP,         # 그룹 순서 재배열
+        GenLLRMode.COPY_ROWS,             # 다른 row의 값 복사
+        GenLLRMode.COPY_GROUP,            # 다른 그룹의 row 복사
+        GenLLRMode.INSERT_RANDOM_GROUP,   # 난수 그룹 삽입
+        GenLLRMode.INSERT_RANDOM_ROW,     # 난수 row 삽입
+        GenLLRMode.INSERT_MUTATED_GROUP,  # 기존 그룹을 변이해 삽입
+        GenLLRMode.INSERT_MUTATED_ROW,    # 기존 row를 변이해 삽입
+        GenLLRMode.REGEN_DV,              # DV 하나의 값 재생성
+        GenLLRMode.REGEN_ROW,             # row 하나의 값 재생성
+        GenLLRMode.SPLIT_GROUP,           # 그룹의 iteration을 둘로 분할
+        GenLLRMode.ADJUST_ITERATION,      # 그룹 사이 iteration 재분배
+        GenLLRMode.DELETE_ROW,            # row 삭제
+        GenLLRMode.INSERT_RESTART_GROUP,  # restart 그룹 삽입
     ]
-    """최적화 모드 실행 순서
-    - Stage 1: mode=10 (MUTATE_MATRIX)
-    - Stage 2: mode=11 (MUTATE_CSW)
-    - ...
-    - Stage 10: mode=10 (반복)
+    """최적화 모드 실행 순서 (쓸 수 있는 모드를 모두 적은 목록. 돌릴 모드만 남긴다)
+    - Stage 1은 목록의 첫 모드, Stage 2는 둘째 모드, 끝까지 가면 처음으로 돌아감
+    - 타겟에 SW 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만 남김 (다른 모드가 있으면 시작할 때 오류)
+    - 매트릭스에 SW 분기 그룹이 있으면 GEN_INITIAL_GROUP을 뺌 (시작할 때 오류)
+    - FIXED_TARGET_GROUP_IDX_LIST와 함께 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남김
     """
 
     # HBF 최적화 시퀀스 (별도)
-    Gen_LLR_Mode_HBF_SEQUENCE: List[int] = [40, 41, 10, 11, 60]
-    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스
-    - 타겟에 SW 분기 그룹이 있으면 [10, 11]만 사용 (다른 모드가 있으면 시작할 때 오류)
-    - FIXED_TARGET_GROUP_IDX_LIST와 함께 쓰면 40(INSERT_RANDOM_GROUP)과 60(SPLIT_GROUP)은 사용 불가
-    - 40은 iteration 5~8 그룹 뒤에 붙일 때만 통과 (iteration 1~4 그룹 뒤에 붙인 새 그룹은
-      8과 9 사이 경계를 걸쳐 버려짐)
+    Gen_LLR_Mode_HBF_SEQUENCE: List[GenLLRModeHBF] = [
+        GenLLRModeHBF.GEN_INITIAL_GROUP,
+        GenLLRModeHBF.INSERT_RANDOM_GROUP,
+        GenLLRModeHBF.INSERT_RANDOM_ROW,
+        GenLLRModeHBF.MUTATE_MATRIX,
+        GenLLRModeHBF.MUTATE_CSW,
+        GenLLRModeHBF.SPLIT_GROUP,
+        GenLLRModeHBF.COPY_GROUP,
+        GenLLRModeHBF.SWAP_ROW,
+    ]
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (GenLLRModeHBF의 모드를 모두 적은 목록. 돌릴 모드만 남긴다)
+    - 위 Gen_LLR_Mode_SEQUENCE의 세 가지 제한이 똑같이 걸림
+    - trial의 row는 iteration 구간 하나 안에 머물러야 함 (경계 기본값 4와 8). 걸치는 trial은 버려짐
+      - GEN_INITIAL_GROUP: GEN_INITIAL_GROUP_CONFIG.ITERATION(기본 20)이 4 이하일 때만 통과
+      - INSERT_RANDOM_GROUP: 새 그룹과 뒤로 밀린 그룹이 경계를 걸치지 않을 때만 통과
+        (INSERT_GROUP_NUM_ITERATION 기본 20은 iteration 1~8의 그룹 뒤에서 모두 버려짐)
     """
 
     # ========== 실행 모드 설정 ==========
@@ -1339,9 +1359,9 @@ class DAO_CONFIG:
     INITIAL_TARGET_GROUP_IDX = 1        # 단일 그룹만
 
     Gen_LLR_Mode_SEQUENCE = [
-        10,  # MUTATE_MATRIX
-        11,  # MUTATE_CSW
-        30,  # COPY_ROWS
+        GenLLRMode.MUTATE_MATRIX,
+        GenLLRMode.MUTATE_CSW,
+        GenLLRMode.COPY_ROWS,
     ]  # 핵심 모드만
 
 class UNCOR_CONFIG:
@@ -1362,8 +1382,11 @@ class DAO_CONFIG:
     INITIAL_TARGET_GROUP_IDX = 0        # 모든 그룹
 
     Gen_LLR_Mode_SEQUENCE = [
-        10, 11, 21, 30, 31, 40, 41, 50, 51
-    ]  # 모든 모드
+        GenLLRMode.MUTATE_MATRIX, GenLLRMode.MUTATE_CSW, GenLLRMode.SWAP_ROW,
+        GenLLRMode.COPY_ROWS, GenLLRMode.COPY_GROUP,
+        GenLLRMode.INSERT_RANDOM_GROUP, GenLLRMode.INSERT_RANDOM_ROW,
+        GenLLRMode.REGEN_DV, GenLLRMode.REGEN_ROW,
+    ]  # 값, row, 그룹을 바꾸는 모드를 차례로
 
 class UNCOR_CONFIG:
     ENABLE_TWO_STAGE_TEST = False       # Full 테스트만

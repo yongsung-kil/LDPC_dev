@@ -7218,15 +7218,15 @@ class LLR_OPT:
         return modifications
 
     def Get_Mode_Sequence_Str(self) -> str:
-        """현재 모드 시퀀스를 문자열로 반환한다. 현재 모드는 따옴표로 강조."""
+        """현재 모드 시퀀스를 문자열로 반환한다. 모드는 값(숫자)으로 적고, 현재 모드는 따옴표로 강조."""
         sequence = DAO_CONFIG.Gen_LLR_Mode_HBF_SEQUENCE if DAO_CONFIG.IS_HBF_OPT else DAO_CONFIG.Gen_LLR_Mode_SEQUENCE
         current_idx = self.current_gen_trial_LLR_mode_index
         parts = []
         for i, mode in enumerate(sequence):
             if i == current_idx:
-                parts.append(f"'{mode}'")
+                parts.append(f"'{int(mode)}'")
             else:
-                parts.append(str(mode))
+                parts.append(str(int(mode)))
         return f"({current_idx + 1}/{len(sequence)}) [" + ", ".join(parts) + "]"
 
     def Get_Target_Group_Indices_Str(self) -> str:
@@ -8500,11 +8500,12 @@ class LLR_OPT:
                 self.MPI_Abort(error_msg)
 
             mode_index = (self.current_stage_idx - 1) % len(all_modes)
-            selected_mode = all_modes[mode_index]
+            # 시퀀스의 원소(GenLLRMode나 GenLLRModeHBF의 멤버, 또는 그 값)를 GenLLRMode의 멤버로 읽는다
+            selected_mode = GenLLRMode(all_modes[mode_index])
 
             self.current_gen_trial_LLR_mode_index = mode_index
             self.current_gen_trial_LLR_mode = selected_mode
-            self.current_gen_trial_LLR_mode_name = GenLLRMode(selected_mode).name
+            self.current_gen_trial_LLR_mode_name = selected_mode.name
 
             # Gen_LLR_Mode_SEQUENCE 한 바퀴당 target_group_idx 하나씩 순환
             # (max_modification_trial 계산 전에 먼저 설정)

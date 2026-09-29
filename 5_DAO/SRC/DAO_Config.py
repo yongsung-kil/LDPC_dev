@@ -32,7 +32,7 @@ def Set_Configs_Manually():
     if SIM_IDX == 10:
         DAO_CONFIG.INITIAL_MATRIX_IDX = 100
         DAO_CONFIG.RUN_DAO_MODE = RunDAOMode.RUN_OPTIMIZATION
-        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [22, 10, 11, 22]
+        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [GenLLRMode.REORDER_GROUP, GenLLRMode.MUTATE_MATRIX, GenLLRMode.MUTATE_CSW, GenLLRMode.REORDER_GROUP]
         REFC_CONFIG.init_n = 1
         REFC_CONFIG.ch_type = 2
         REFC_CONFIG.num_fixed_errs = [370, 410]
@@ -58,7 +58,7 @@ def Set_Configs_Manually():
     elif SIM_IDX == 20:
         DAO_CONFIG.INITIAL_MATRIX_IDX = 200
         DAO_CONFIG.RUN_DAO_MODE = RunDAOMode.RUN_OPTIMIZATION
-        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [22, 10, 11, 22]
+        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [GenLLRMode.REORDER_GROUP, GenLLRMode.MUTATE_MATRIX, GenLLRMode.MUTATE_CSW, GenLLRMode.REORDER_GROUP]
         REFC_CONFIG.init_n = 2
         REFC_CONFIG.ch_type = 3
         REFC_CONFIG.num_fixed_errs = [520, 530]
@@ -90,7 +90,7 @@ def Set_Configs_Manually():
     elif SIM_IDX == 30:
         DAO_CONFIG.INITIAL_MATRIX_IDX = 300
         DAO_CONFIG.RUN_DAO_MODE = RunDAOMode.RUN_OPTIMIZATION
-        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [22, 10, 11, 22]
+        DAO_CONFIG.Gen_LLR_Mode_SEQUENCE = [GenLLRMode.REORDER_GROUP, GenLLRMode.MUTATE_MATRIX, GenLLRMode.MUTATE_CSW, GenLLRMode.REORDER_GROUP]
         REFC_CONFIG.init_n = 3
         REFC_CONFIG.ch_type = 1
         REFC_CONFIG.RBERs = [0.017, 0.018]
@@ -129,9 +129,40 @@ class DAO_CONFIG:
     # DAO 실행 모드 설정
     RUN_DAO_MODE: RunDAOMode = RunDAOMode.RUN_OPTIMIZATION
 
-    # LLR 생성 모드 순서 설정
-    Gen_LLR_Mode_SEQUENCE =[10, 11, 21, 30, 31, 40, 41, 42, 43, 50, 51, 70]
-    Gen_LLR_Mode_HBF_SEQUENCE = [40, 41, 10, 11, 60]  # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스: INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP. 타겟에 SW 분기 그룹이 있으면 [10, 11]만 쓴다 (Validate_Config가 시작할 때 검사)
+    # LLR 생성 모드 순서 설정. stage마다 목록의 다음 모드를 돌고, 끝까지 가면 처음으로 돌아간다
+    # 두 목록은 쓸 수 있는 모드를 모두 적은 것이다. 돌릴 모드만 남기고 순서를 정한다
+    # - 타겟에 SW 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만 남긴다 (Validate_Config가 시작할 때 검사)
+    # - FIXED_TARGET_GROUP_IDX_LIST를 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
+    Gen_LLR_Mode_SEQUENCE = [
+        GenLLRMode.GEN_INITIAL_GROUP,      # stage 1에서만 돈다 (맨 앞에 둔다)
+        GenLLRMode.MUTATE_MATRIX,
+        GenLLRMode.MUTATE_CSW,
+        GenLLRMode.SWAP_ROW,
+        GenLLRMode.REORDER_GROUP,
+        GenLLRMode.COPY_ROWS,
+        GenLLRMode.COPY_GROUP,
+        GenLLRMode.INSERT_RANDOM_GROUP,
+        GenLLRMode.INSERT_RANDOM_ROW,
+        GenLLRMode.INSERT_MUTATED_GROUP,
+        GenLLRMode.INSERT_MUTATED_ROW,
+        GenLLRMode.REGEN_DV,
+        GenLLRMode.REGEN_ROW,
+        GenLLRMode.SPLIT_GROUP,
+        GenLLRMode.ADJUST_ITERATION,
+        GenLLRMode.DELETE_ROW,
+        GenLLRMode.INSERT_RESTART_GROUP,
+    ]
+    # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스
+    Gen_LLR_Mode_HBF_SEQUENCE = [
+        GenLLRModeHBF.GEN_INITIAL_GROUP,   # stage 1에서만 돈다 (맨 앞에 둔다)
+        GenLLRModeHBF.INSERT_RANDOM_GROUP,
+        GenLLRModeHBF.INSERT_RANDOM_ROW,
+        GenLLRModeHBF.MUTATE_MATRIX,
+        GenLLRModeHBF.MUTATE_CSW,
+        GenLLRModeHBF.SPLIT_GROUP,
+        GenLLRModeHBF.COPY_GROUP,
+        GenLLRModeHBF.SWAP_ROW,
+    ]
     INITIAL_TARGET_GROUP_IDX: int = 1  # 이 인덱스부터 끝까지를 opt 타겟 그룹으로 설정. 예: 1이면 [1, 2, 3, ...], 0이면 [0, 1, 2, ...]
     FIXED_TARGET_GROUP_IDX_LIST: Optional[list] = None  # opt 타겟 그룹을 직접 지정. 예: [0, 1]이면 그룹 0과 1만 변경. None이면 INITIAL_TARGET_GROUP_IDX부터 끝까지. 함께 쓸 수 있는 모드는 FIXED_TARGET_GROUP_ALLOWED_MODES
     ENABLE_AVG_ITER_UPDATE: bool = False  # FER 동일 시 avg_iteration 개선으로도 update 허용 여부

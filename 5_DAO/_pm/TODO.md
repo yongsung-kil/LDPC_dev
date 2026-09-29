@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 14:27:51
+> Claude 마지막 확인: 2026-09-29 14:36:07
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -24,8 +24,10 @@
     - Round 1 관점 38개를 18개로 통합, Round 2 lv1 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정: 수정 필요. HIGH 3건과 MEDIUM 2건은 기준 커밋의 복사본으로 재현해 확인
     - HIGH: 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤(F1), 경계 검사가 iteration 4와 5 사이만 봄(F2), COPY_GROUP이 후보의 분기 표시를 타겟에 복사함(F3)
   - [x] 리뷰 발견 F1 F2 F6 수정 (2026-09-29 14:27, 사용자 결정. F2: row가 걸칠 수 없는 경계를 `ITERATION_SPAN_ENDS`로 두고 기본 4와 8, HBF2가 이 경계를 모두 검사. F1: `Validate_Config`가 시작할 때 시퀀스의 모든 모드에 SW 분기 제한을 검사. F6: DAO_spec.md 3.6~3.8절과 README에 HBF 최적화 모드의 사용 조건 반영. 새 검사 9건과 9건 통과, 전체 165건 통과)
+  - [x] 모드 시퀀스를 이름으로 적고 쓸 수 있는 모드를 모두 담음 (2026-09-29 14:36, 사용자 요청. `Gen_LLR_Mode_SEQUENCE`는 `GenLLRMode` 17개, `Gen_LLR_Mode_HBF_SEQUENCE`는 `GenLLRModeHBF` 8개, 프리셋 세 곳은 값 그대로 이름으로. GEN_INITIAL_GROUP은 stage 1에서만 돌아 맨 앞에 둠. `Set_Gen_Trial_LLR_Mode`가 원소를 `GenLLRMode`의 멤버로 읽고 로그는 숫자로 찍음. 검사 10건 통과. README 반영)
   - [ ] 리뷰 발견 F3 F4 (사용자에게 설명을 다시 드림, 결정 대기), F5 (이번에 넘어감)
-  - [ ] 사용자 결정: HBF 기본 시퀀스 `[40, 41, 10, 11, 60]`의 40번 모드를 그대로 둘지 (타겟이 iteration 1~4 그룹이면 40번 모드의 trial이 경계 검사로 모두 버려짐)
+  - [ ] 사용자 결정: HBF 기본 시퀀스의 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 그대로 둘지 (기본 설정값에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 경계 검사로 모두 버려짐. 태스크 문서 6절 ㉲)
+  - [ ] 사용자 결정: `GenLLRModeHBF`에 없는 모드(COPY_ROWS, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW 등)를 HBF 최적화 모드의 목록에 넣을지 (태스크 문서 6절 ㉳)
   - [ ] 사용자 확인: 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽는지와 부호의 열 차수 (리뷰 F7 F8, 태스크 문서 6절 ㉱)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지, `IS_HBF_OPT`와 2단계 테스트를 함께 켰을 때 `[Initial Partial]`과 `[Partial Test Start]` 줄이 나오는지)
 
