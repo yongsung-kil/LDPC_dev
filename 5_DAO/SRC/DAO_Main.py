@@ -3032,8 +3032,9 @@ class LLR_OPT:
         # 4. 소스 그룹 복사 후 mutation 적용
         new_group_rows: list[LLR_Row] = []
         for row_idx, source_row in enumerate(source_group):
-            # row 값 복사
+            # row 값 복사 (새 그룹이 HD 복호의 HBF 구간에 들어가면 dv_idx 0의 TH는 상수)
             new_ch_th_values = source_row.ch_th_values.copy()
+            input_matrix.Fill_Columns_Fixed_In_HBF_Iterations(new_ch_th_values, new_iter_end)
 
             # CSW 유지 (첫 번째 row는 -1, 나머지는 원본 CSW)
             if row_idx == 0:
@@ -3207,12 +3208,15 @@ class LLR_OPT:
 
         self.Write_Log_Lines(f"\t- Target group: {target_group_idx}, insert at row: {row_idx}, source: g{source_group_idx}/r{source_row_idx}")
 
-        # 새 row 생성 (소스 row 복사)
+        # 새 row 생성 (소스 row 복사. 타겟 그룹이 HD 복호의 HBF 구간이면 dv_idx 0의 TH는 상수)
+        target_iter_end = target_group[0].iter_end
         new_ch_th_values = source_row.ch_th_values.copy()
+        input_matrix.Fill_Columns_Fixed_In_HBF_Iterations(new_ch_th_values, target_iter_end)
 
         # Mutation 적용
         mutations = self._generate_mutation_for_row(
             new_ch_th_values,
+            fixed_columns=input_matrix.Get_Columns_Fixed_In_HBF_Iterations(target_iter_end),
             num_elements=INSERT_MUTATED_ROW_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH,
             mutation_range=INSERT_MUTATED_ROW_CONFIG.MUTATION_RANGE,
             allow_zero=INSERT_MUTATED_ROW_CONFIG.ALLOW_ZERO_MUTATION
@@ -3560,6 +3564,7 @@ class LLR_OPT:
     def _generate_mutation_for_row(
         self,
         ch_th_values: np.ndarray,
+        fixed_columns: list[int],
         num_elements: int,
         mutation_range: int,
         allow_zero: bool = True
@@ -3568,6 +3573,7 @@ class LLR_OPT:
 
         Args:
             ch_th_values: mutation 대상 값 배열
+            fixed_columns: 변이 후보에서 빼는 column (LLR_MATRIX.Get_Columns_Fixed_In_HBF_Iterations의 결과)
             num_elements: 변이할 최대 요소 수
             mutation_range: 변이 범위 (-range ~ +range)
             allow_zero: True면 mutation 개수 0 허용 (빈 리스트 반환 가능)
@@ -3578,7 +3584,7 @@ class LLR_OPT:
         if mutation_range == 0:
             return []
 
-        col_indices = list(range(len(ch_th_values)))
+        col_indices = [col_idx for col_idx in range(len(ch_th_values)) if col_idx not in fixed_columns]
         if not col_indices:
             return []
 
@@ -4030,35 +4036,38 @@ class LLR_OPT:
         start_col_idx = dv_idx_to_change * num_params
         end_col_idx = start_col_idx + num_params
         
-        # 새로운 CH/TH 쌍 값 생성
+        # 새로운 CH/TH 쌍 값 생성 (다른 DV 자리에 다시 쓸 수 있도록 TH까지 난수로 만들어 둔다)
         if self.is_replace_DV_in_Ch_Th_reuse_mode:
-            new_dv_segment = self.previous_dv_segment
+            generated_dv_segment = self.previous_dv_segment
         else:
             new_ch_values = [
-                random.randint(h.min_value[i], h.max_value[i]) 
+                random.randint(h.min_value[i], h.max_value[i])
                 for i in range(input_matrix.ch_length)
             ]
             new_ch_values.sort(reverse=True)
-        
-            if dv_idx_to_change == 0 and input_matrix.Is_Row_In_HBF_Iterations(row_to_change):
-                # HBF 구간의 row는 dv_idx 0의 TH를 고정
-                new_th_values = [HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL] * input_matrix.th_length
-            else:
-                new_th_values = [
-                    random.randint(h.min_value[input_matrix.ch_length + i], h.max_value[input_matrix.ch_length + i])
-                    for i in range(input_matrix.th_length)
-                ]
+
+            new_th_values = [
+                random.randint(h.min_value[input_matrix.ch_length + i], h.max_value[input_matrix.ch_length + i])
+                for i in range(input_matrix.th_length)
+            ]
             new_th_values.sort(reverse=True)
 
-            new_dv_segment = np.array(new_ch_values + new_th_values, dtype=np.int32)
-            self.previous_dv_segment = new_dv_segment
-        
+            generated_dv_segment = np.array(new_ch_values + new_th_values, dtype=np.int32)
+            self.previous_dv_segment = generated_dv_segment
+
+        # 쓰는 자리가 HD 복호의 HBF 구간 row의 dv_idx 0이면 TH는 상수
+        fixed_columns = input_matrix.Get_Columns_Fixed_In_HBF_Iterations(row_to_change.iter_end)
+        new_dv_segment = np.array(generated_dv_segment, dtype=np.int32, copy=True)
+        for i, col_idx in enumerate(range(start_col_idx, end_col_idx)):
+            if col_idx in fixed_columns:
+                new_dv_segment[i] = HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL
+
         # 기존 값 저장 및 새 값으로 교체
         old_dv_segment = []
         for i, col_idx in enumerate(range(start_col_idx, end_col_idx)):
             old_value = int(row_to_change.ch_th_values[col_idx])
             new_value = new_dv_segment[i]
-            
+
             # 값 변경 (매트릭스 수정)
             row_to_change.ch_th_values[col_idx] = new_value
 
@@ -4165,9 +4174,9 @@ class LLR_OPT:
 
         # 새로운 row 전체 생성 (모든 DV)
         if self.is_gen_row_reuse_mode and self.previous_gen_row is not None:
-            new_row_values = self.previous_gen_row
+            generated_row_values = self.previous_gen_row
         else:
-            new_row_values = []
+            generated_row_values = []
             for dv_idx in range(num_dv):
                 # 각 DV에 대해 CH 값 생성
                 new_ch_values = [
@@ -4177,20 +4186,20 @@ class LLR_OPT:
                 new_ch_values.sort(reverse=True)
 
                 # TH 값 생성
-                if dv_idx == 0 and input_matrix.Is_Row_In_HBF_Iterations(row_to_change):
-                    # HBF 구간의 row는 dv_idx 0의 TH를 고정
-                    new_th_values = [HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL] * input_matrix.th_length
-                else:
-                    new_th_values = [
-                        random.randint(int(h.min_value[input_matrix.ch_length + i]), int(h.max_value[input_matrix.ch_length + i]))
-                        for i in range(input_matrix.th_length)
-                    ]
+                new_th_values = [
+                    random.randint(int(h.min_value[input_matrix.ch_length + i]), int(h.max_value[input_matrix.ch_length + i]))
+                    for i in range(input_matrix.th_length)
+                ]
                 new_th_values.sort(reverse=True)
 
-                new_row_values.extend(new_ch_values + new_th_values)
+                generated_row_values.extend(new_ch_values + new_th_values)
 
-            new_row_values = np.array(new_row_values, dtype=np.int32)
-            self.previous_gen_row = new_row_values
+            generated_row_values = np.array(generated_row_values, dtype=np.int32)
+            self.previous_gen_row = generated_row_values
+
+        # 쓰는 row가 HD 복호의 HBF 구간에 있으면 dv_idx 0의 TH는 상수
+        new_row_values = generated_row_values.copy()
+        input_matrix.Fill_Columns_Fixed_In_HBF_Iterations(new_row_values, row_to_change.iter_end)
 
         # 기존 값 저장 및 새 값으로 교체
         old_row_values = np.array(row_to_change.ch_th_values, dtype=np.int32)
@@ -6412,10 +6421,14 @@ class LLR_OPT:
         old_row_i_ch_th = np.array(row_i.ch_th_values, copy=True)
         old_row_j_ch_th = np.array(row_j.ch_th_values, copy=True)
 
-        # 4. ch_th_values만 swap
-        temp_values = np.array(row_i.ch_th_values, copy=True)
-        row_i.ch_th_values = np.array(row_j.ch_th_values, copy=True)
-        row_j.ch_th_values = temp_values
+        # 4. ch_th_values만 swap (HD 복호의 HBF 구간 row는 dv_idx 0의 TH를 빼고 바꾼다)
+        new_row_i_ch_th = np.array(row_j.ch_th_values, copy=True)
+        new_row_j_ch_th = np.array(row_i.ch_th_values, copy=True)
+        for col_idx in input_matrix.Get_Columns_Fixed_In_HBF_Iterations(row_i.iter_end):
+            new_row_i_ch_th[col_idx] = row_i.ch_th_values[col_idx]
+            new_row_j_ch_th[col_idx] = row_j.ch_th_values[col_idx]
+        row_i.ch_th_values = new_row_i_ch_th
+        row_j.ch_th_values = new_row_j_ch_th
 
         # 5. 로그 출력
         log_lines = [
@@ -9012,8 +9025,9 @@ class LLR_OPT:
         # 교체 전 값 (처음 10개만)
         old_values = target_row.ch_th_values[:10].tolist() if len(target_row.ch_th_values) >= 10 else target_row.ch_th_values.tolist()
 
-        # 교체 수행
+        # 교체 수행 (타겟 row가 HD 복호의 HBF 구간에 있으면 dv_idx 0의 TH는 상수)
         target_row.ch_th_values = np.array(candidate_data['ch_th_values'], copy=True)
+        matrix.Fill_Columns_Fixed_In_HBF_Iterations(target_row.ch_th_values, target_row.iter_end)
 
         # 교체 후 값 (처음 10개만)
         new_values = target_row.ch_th_values[:10].tolist() if len(target_row.ch_th_values) >= 10 else target_row.ch_th_values.tolist()
@@ -9077,6 +9091,8 @@ class LLR_OPT:
                 iter_end=target_iter_end,
                 is_group_restart=False
             )
+            # 타겟 그룹이 HD 복호의 HBF 구간에 있으면 dv_idx 0의 TH는 상수
+            matrix.Fill_Columns_Fixed_In_HBF_Iterations(new_row.ch_th_values, target_iter_end)
             target_group.append(new_row)
 
         # Header 업데이트

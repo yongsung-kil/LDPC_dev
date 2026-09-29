@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 14:03:42
+> Claude 마지막 확인: 2026-09-29 14:12:45
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -18,7 +18,7 @@
   - [x] 타겟 그룹을 그룹 하나씩 다루도록 되돌림 (2026-09-29 13:26, 사용자 요청. SW 분기 그룹을 한 단위로 함께 타겟하고 함께 변이하던 처리를 없앰. 타겟 목록의 값은 그룹 하나하나의 index이고 MUTATE_MATRIX와 MUTATE_CSW는 타겟 그룹 하나만 바꿈. 새 검사 8건, 고친 검사 20건과 42건 통과. DAO_spec.md 3.7절과 3.8절, README 3.4절 반영)
   - [x] 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하던 규칙을 없앰 (2026-09-29 13:38, 사용자 관측: 타겟 g2에서 "DAO updates only the last branch"로 중단. 분기 그룹은 분기 index와 상관없이 타겟이 됨. 검사 22건, 8건, 41건 통과)
   - [x] HD 복호의 HBF 구간 row에서 변이와 난수 생성이 dv_idx 0의 TH를 건드리지 않게 함 (2026-09-29 14:01, 사용자 관측: MUTATE_MATRIX가 dv_idx 0의 TH를 바꾸려 함. 원인은 제외 규칙이 `IS_HBF_OPT`에 묶여 있던 것. `Get_Columns_Fixed_In_HBF_Iterations`를 넣어 HBF 시퀀스의 모드 10, 40, 41, 60이 `IS_HBF_OPT`와 상관없이 따름. 검사 14건 통과. DAO_spec.md 3.6절 HBF3 반영)
-  - [ ] 사용자 결정: HBF3을 나머지 모드(INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP, SWAP_ROW)와 유효성 검사, 보정에도 `IS_HBF_OPT`와 상관없이 걸지
+  - [x] HBF3을 값을 쓰는 나머지 모드에도 걸음 (2026-09-29 14:12, 사용자 결정: 나머지 모드까지, 유효성 검사와 보정은 그대로. INSERT_MUTATED_ROW, INSERT_MUTATED_GROUP의 복사 값, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP은 dv_idx 0의 TH를 상수로 채우고 SWAP_ROW는 빼고 맞바꿈. `Fill_Columns_Fixed_In_HBF_Iterations` 추가. 검사 33건 통과. DAO_spec.md 3.6절 반영)
   - [x] HBF 관련 부분 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, Opus 에이전트, 대상 dff3dba..2e34036의 HBF 관련 코드와 문서, 기록: `_pm/tasks/20260928_HBF_TH_iteration_range/review/`)
     - Round 1 관점 38개를 18개로 통합, Round 2 lv1 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정: 수정 필요. HIGH 3건과 MEDIUM 2건은 기준 커밋의 복사본으로 재현해 확인
     - HIGH: 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤(F1), 경계 검사가 iteration 4와 5 사이만 봄(F2), COPY_GROUP이 후보의 분기 표시를 타겟에 복사함(F3)

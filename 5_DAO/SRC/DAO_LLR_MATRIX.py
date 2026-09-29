@@ -100,19 +100,28 @@ class LLR_MATRIX:
 
         HD 복호의 iteration 1 ~ HBF_MAX_ITERATION은 HBF(Hybrid Bit Flipping) 구간이다. 이 구간에서 디코더는
         dv_idx 0(가장 높은 DV, row의 맨 앞 CH와 TH)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
-        변이는 이 column을 후보에서 빼고, 난수로 만드는 row는 이 column을 HBF_OPT_TH_CONSTANT_VAL로 채운다.
+        trial을 만드는 모드는 이 column을 이렇게 다룬다. 변이는 후보에서 빼고, row끼리 값을 맞바꾸는 모드는
+        빼고 바꾸며, 새 값을 쓰는 모드는 HBF_OPT_TH_CONSTANT_VAL로 채운다 (Fill_Columns_Fixed_In_HBF_Iterations).
         HBF 최적화 모드(is_HBF_OPT)가 꺼져 있어도 같다. HBF 구간 뒤의 row와 HD가 아닌 복호는 빈 목록이다.
         """
         if self.init_n != 1 or iter_end > HBF_OPT_CONFIG.HBF_MAX_ITERATION:
             return []
         return list(range(self.ch_length, self.header.num_parameter_each_set))
 
+    def Fill_Columns_Fixed_In_HBF_Iterations(self, ch_th_values: np.ndarray, iter_end: int) -> None:
+        """끝 iteration이 iter_end인 row에 넣을 값에서, 값이 고정되는 column을 HBF_OPT_TH_CONSTANT_VAL로 채운다.
+
+        받은 배열 ch_th_values의 값을 바로 고친다. 고정되는 column은 Get_Columns_Fixed_In_HBF_Iterations가 정한다.
+        """
+        for col_idx in self.Get_Columns_Fixed_In_HBF_Iterations(iter_end):
+            ch_th_values[col_idx] = HBF_OPT_CONFIG.HBF_OPT_TH_CONSTANT_VAL
+
     def Is_Row_In_HBF_Iterations(self, row: LLR_Row) -> bool:
         """HBF 최적화 모드에서 row가 HBF 구간(iteration 1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
 
         HBF 최적화 모드는 HBF 구간 row의 dv_idx 0 TH가 HBF_OPT_TH_CONSTANT_VAL인지 검사하고(Is_LLR_Valid의 HBF1),
-        보정과 REGEN_DV, REGEN_ROW가 그 값으로 채운다. 변이와 난수 생성은 모드와 상관없이
-        Get_Columns_Fixed_In_HBF_Iterations를 따른다.
+        보정(Correct_LLR_Matrix)이 매트릭스의 모든 HBF 구간 row를 그 값으로 채운다.
+        trial을 만드는 모드는 HBF 최적화 모드와 상관없이 Get_Columns_Fixed_In_HBF_Iterations를 따른다.
         row는 HBF 구간의 경계를 걸치지 않으므로(Is_LLR_Valid의 HBF2 규칙) 끝 iteration으로 판단한다.
         """
         return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION

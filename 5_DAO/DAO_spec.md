@@ -119,12 +119,21 @@ LLR_MATRIX
 |------|------|----------|
 | HBF1 | `is_HBF_OPT == True`이고 row의 `iter_end <= HBF_MAX_ITERATION` | dv_idx 0의 TH 값은 모두 상수(`HBF_OPT_TH_CONSTANT_VAL`) |
 | HBF2 | `is_HBF_OPT == True` | row는 HBF 구간 안에서 끝나거나 HBF 구간 뒤에서 시작 (`iter_start <= HBF_MAX_ITERATION < iter_end`이면 오류) |
-| HBF3 | HD 복호(`init_n == 1`)이고 row의 `iter_end <= HBF_MAX_ITERATION` (`is_HBF_OPT`와 무관) | 변이는 dv_idx 0의 TH를 후보에서 빼고, 난수로 만드는 row는 dv_idx 0의 TH를 상수(`HBF_OPT_TH_CONSTANT_VAL`)로 채움 |
+| HBF3 | HD 복호(`init_n == 1`)이고 row의 `iter_end <= HBF_MAX_ITERATION` (`is_HBF_OPT`와 무관) | trial을 만드는 모드가 dv_idx 0의 TH를 아래 표대로 다룸 |
 
 - ㉮ HBF 구간은 HD 복호의 iteration 1부터 `HBF_MAX_ITERATION`(4)까지다. 이 구간에서 디코더는 가장 높은 DV를 1 bit 정밀도로 처리해 그 TH를 읽지 않는다
 - ㉯ dv_idx 0은 row의 맨 앞 CH와 TH다. row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서로 적는다
-- ㉰ HBF1과 보정, REGEN_DV, REGEN_ROW는 `Is_Row_In_HBF_Iterations()`로 판단한다 (HBF 최적화 모드이고 `iter_end <= HBF_MAX_ITERATION`)
-- ㉳ HBF3은 `Get_Columns_Fixed_In_HBF_Iterations()`로 판단한다. 따르는 모드는 MUTATE_MATRIX(미세 조정과 거친 조정 포함), INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, SPLIT_GROUP, INSERT_MUTATED_GROUP이다. 끝 iteration을 모른 채 만드는 row(GEN_INITIAL_GROUP, GEN_SINGLE_ROW)는 모든 column을 난수로 채운다
+- ㉰ HBF1과 보정(`Correct_LLR_Matrix`)은 `Is_Row_In_HBF_Iterations()`로 판단한다 (HBF 최적화 모드이고 `iter_end <= HBF_MAX_ITERATION`). 보정은 매트릭스의 모든 HBF 구간 row를 상수로 채운다
+- ㉳ HBF3은 `Get_Columns_Fixed_In_HBF_Iterations()`로 판단하고, 상수로 채우는 일은 `Fill_Columns_Fixed_In_HBF_Iterations()`가 맡는다. 모드가 쓴 row에만 걸린다
+
+| HBF3에서 dv_idx 0의 TH를 다루는 방식 | 모드 |
+|------|------|
+| 변이 후보에서 뺌 (값이 그대로 남음) | MUTATE_MATRIX(미세 조정과 거친 조정 포함), SPLIT_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW |
+| 빼고 맞바꿈 (각 row가 자기 값을 그대로 가짐) | SWAP_ROW |
+| 상수(`HBF_OPT_TH_CONSTANT_VAL`)로 채움 | INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_GROUP과 INSERT_MUTATED_ROW가 복사해 온 값, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP |
+
+- ㉴ REGEN_DV는 만든 값을 다른 DV 자리에 다시 쓸 수 있도록 TH까지 난수로 만들어 두고, 쓰는 자리가 HBF 구간 row의 dv_idx 0일 때만 TH를 상수로 바꿔 쓴다
+- ㉵ 끝 iteration을 모른 채 만드는 row(GEN_INITIAL_GROUP, GEN_SINGLE_ROW)는 모든 column을 난수로 채운다. 그룹의 iteration을 옮기는 모드(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 값을 쓰지 않으므로 HBF3이 걸리지 않는다
 - ㉱ HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV와 같은 규칙(RW4, RW5)을 따른다. 매트릭스의 max_iteration은 `HBF_MAX_ITERATION`보다 클 수 있다
 - ㉲ HBF 구간 안은 여러 그룹으로 나눌 수 있다 (예: iteration 1, 2~3, 4). HBF2는 입력 매트릭스와 trial 매트릭스에 똑같이 걸리므로, 경계를 걸치는 row를 만든 trial은 유효하지 않은 매트릭스로 버려진다
 
