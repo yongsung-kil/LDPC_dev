@@ -131,7 +131,7 @@ class DAO_CONFIG:
 
     # LLR 생성 모드 순서 설정. stage마다 목록의 다음 모드를 돌고, 끝까지 가면 처음으로 돌아간다
     # 두 목록에서 돌릴 모드만 남기고 순서를 정한다
-    # - 타겟에 SW 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만 남긴다 (Validate_Config가 시작할 때 검사)
+    # - 타겟에 SW 분기 그룹이 있으면 SW_BRANCH_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
     # - FIXED_TARGET_GROUP_IDX_LIST를 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
     # 보통 모드의 시퀀스. GenLLRMode의 모드를 모두 적은 목록이다
     Gen_LLR_Mode_SEQUENCE = [

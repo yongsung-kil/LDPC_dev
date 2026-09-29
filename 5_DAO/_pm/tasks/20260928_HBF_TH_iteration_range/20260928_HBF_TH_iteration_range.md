@@ -52,10 +52,10 @@ HBF 최적화 모드도 타겟 그룹은 보통 모드와 똑같이 고른다 (`
 |---|------|------|
 | 1 | `DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST` | 기본값 None (`INITIAL_TARGET_GROUP_IDX`를 따름). 목록이면 적은 그룹만, 적은 순서대로 타겟 |
 | 2 | `LLR_OPT.Build_Target_Group_Indices` (새 함수) | 설정과 매트릭스에서 타겟 목록을 만드는 한 곳. `Initialize_LLR_Matrix`, `Initialize_Stage`, `Update_Optimal_LLR`이 쓴다. 목록의 값은 그룹 하나하나의 index다 (3.3절) |
-| 3 | `FIXED_TARGET_GROUP_ALLOWED_MODES` (`DAO_Constants.py`) | 목록과 함께 쓰는 모드. 그룹 수, 순서, iteration 구간을 그대로 두는 9개 (MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW) |
+| 3 | `FIXED_TARGET_GROUP_ALLOWED_MODES` (`DAO_Constants.py`) | 목록과 함께 쓰는 모드. 그룹 수, 순서, iteration 구간을 그대로 두는 10개 (MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, DELETE_ROW). DELETE_ROW는 3.11절에서 더했다 |
 | 4 | `LLR_OPT.Check_Fixed_Target_Group_Idx_List` (새 함수) | 목록의 꼴, 범위, 중복과 지금 쓰는 모드 시퀀스를 검사. `Validate_Config`가 시작할 때 부른다 |
 
-허용 모드를 가른 기준은 코드에서 확인한 두 가지다. ㉮ 그룹을 넣거나 빼거나 순서를 바꾸는가 (`groups.insert`, `groups.pop`, `groups =`) ㉯ row의 `iter_start`나 `iter_end`를 바꾸는가. GEN_INITIAL_GROUP, REORDER_GROUP, INSERT_RANDOM_GROUP, INSERT_MUTATED_GROUP, SPLIT_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP이 여기에 걸린다. 이 모드들이 그룹 번호를 밀면 목록의 index가 다른 그룹을 가리키게 된다.
+허용 모드를 가른 기준은 코드에서 확인한 두 가지다. ㉮ 그룹을 넣거나 빼거나 순서를 바꾸는가 (`groups.insert`, `groups.pop`, `groups =`) ㉯ row의 `iter_start`나 `iter_end`를 바꾸는가. GEN_INITIAL_GROUP, REORDER_GROUP, INSERT_RANDOM_GROUP, INSERT_MUTATED_GROUP, SPLIT_GROUP, ADJUST_ITERATION, INSERT_RESTART_GROUP이 여기에 걸린다. 이 모드들이 그룹 번호를 밀면 목록의 index가 다른 그룹을 가리키게 된다. DELETE_ROW는 row가 하나 남은 그룹을 지울 때만 ㉮와 ㉯에 걸리므로, 목록을 쓰는 실행에서 그 그룹을 건너뛰게 하고 허용했다 (3.11절).
 
 ### 3.2 HBF 최적화 모드의 seed 모드 (사용자 요청 2026-09-28)
 
@@ -87,7 +87,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | 4 | `LLR_OPT.Check_SW_Branch_Mode_Allowed` | 타겟 목록에 적힌 그룹만 보고 분기 그룹이 있는지 판단. 분기 그룹은 분기 index와 상관없이 타겟이 됨 |
 | 5 | `LLR_OPT.Set_Gen_Trial_LLR_Mode`, `Bcast_Trial_LLR_Mode`, `Print_Mode_Target_Info`, `Initialize_Stage` | 타겟 그룹 하나만 정하고 알림 |
 
-그대로 둔 것: 분기 구간의 iteration 검사(G2, G10), 헤더와 꼬리의 대조(H8), 분기 그룹이 타겟일 때의 모드 제한(MUTATE_MATRIX, MUTATE_CSW).
+그대로 둔 것: 분기 구간의 iteration 검사(G2, G10), 헤더와 꼬리의 대조(H8), 분기 그룹이 타겟일 때의 모드 제한(허용 모드는 3.11절).
 
 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하던 규칙은 없앴다 (사용자 관측 2026-09-29: 타겟이 그룹 2가 되는 stage에서 "target g2 is SW branch 0 of the span iteration 5~8 (2 branches); DAO updates only the last branch (1)"로 중단). 바꿀 그룹을 타겟 목록으로 직접 고르므로 어느 분기를 바꿀지도 목록이 정한다. 이 규칙이 타겟 목록에서 마지막이 아닌 분기를 빼지 않아 기본 설정으로 중단되던 문제(2026-09-22 라이트 리뷰의 C1)도 함께 없어진다.
 
@@ -246,9 +246,51 @@ COPY_GROUP은 타겟 그룹의 row를 후보 그룹의 row로 통째로 바꾸�
 | 시퀀스 한 바퀴 | 9 stage (전에는 11). 타겟은 한 바퀴마다 다음 그룹으로 넘어가므로 9 stage마다 바뀜 |
 | 유효한 trial이 없는 stage가 이어질 때의 종료 | 18 stage (시퀀스 길이의 두 배. 전에는 22) |
 | `LLR_MATRIX_2.txt`, 타겟이 분기 구간 뒤의 보통 그룹(그룹 5 이후) | 시작 검사 통과 (전에는 GEN_INITIAL_GROUP 때문에 멈춤) |
-| `LLR_MATRIX_2.txt`, 타겟에 분기 그룹이 있음 | 시작 검사에서 멈춤. 알리는 모드는 MUTATE_MATRIX와 MUTATE_CSW를 뺀 7개 |
+| `LLR_MATRIX_2.txt`, 타겟에 분기 그룹이 있음 | 시작 검사에서 멈춤. 알리는 모드는 SPLIT_GROUP 하나 (허용 모드는 3.11절) |
+
+### 3.11 분기 그룹 타겟에 그룹 배치를 그대로 두는 모드를 허용 (사용자 관측과 설명 2026-09-29)
+
+사용자 관측: `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`과 HBF 시퀀스(INSERT_RANDOM_ROW, COPY_ROWS, REGEN_DV, REGEN_ROW, DELETE_ROW 포함)로 돌리면 시작 검사가 아래 두 가지로 멈춘다.
+
+```
+Gen_LLR_Mode_HBF_SEQUENCE contains DELETE_ROW (70), which change the number, order or iteration of groups, so they cannot run with FIXED_TARGET_GROUP_IDX_LIST.
+Gen_LLR_Mode_HBF_SEQUENCE: target groups [0, 1] are SW branch groups, so mode INSERT_RANDOM_ROW (41) is not allowed.
+```
+
+사용자 설명: 모드 제한의 까닭은 SW 분기가 아니다. 디코더 실행 파일이 HBF 최적화가 다루는 구간에서 ㉮ 그룹 수가 바뀌는 것 ㉯ iteration이 바뀌는 것 ㉰ SW 분기가 더해지는 것을 받지 않는 것이 까닭이다. 그룹 안의 row 수가 바뀌는 것은 받는다. SW 분기 지원(2026-09-21)은 이 제한을 분기 그룹이 있을 때의 규칙으로 넣었다.
+
+사용자 결정: REGEN_DV, REGEN_ROW, COPY_ROWS, DELETE_ROW, INSERT_RANDOM_ROW를 이 구간에서 쓴다. DELETE_ROW는 row 1개짜리 그룹을 건너뛴다 (MUTATE_CSW와 같은 방식).
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `GROUP_LAYOUT_KEEPING_MODES` (`DAO_Constants.py`, 새 상수) | 그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기 표시)를 그대로 두는 모드 10개: MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, DELETE_ROW |
+| 2 | `SW_BRANCH_ALLOWED_MODES`, `FIXED_TARGET_GROUP_ALLOWED_MODES` | 둘 다 1번의 모드 (전에는 앞의 것이 2개, 뒤의 것이 DELETE_ROW를 뺀 9개) |
+| 3 | `MODES_EXEMPT_FROM_PROTECTED_GROUP_CHECK` (새 상수) | 타겟 앞 그룹의 보호 검사를 거치지 않는 모드. MUTATE_MATRIX와 MUTATE_CSW (전과 같은 두 모드) |
+| 4 | `LLR_OPT.Is_Group_Layout_Kept` (새 함수) | 그룹 배치를 그대로 두는 실행인지 판단. HBF 최적화 모드, `FIXED_TARGET_GROUP_IDX_LIST`로 타겟을 지정한 실행, 타겟에 분기 그룹이 있는 실행 |
+| 5 | `LLR_OPT._Build_Delete_Row_Candidates` | 4번이 참이면 row가 하나인 그룹을 후보에서 뺌 |
+| 6 | `LLR_OPT.Init_Delete_Row_Mode` | 후보가 없으면 그 stage의 trial 수를 0으로 둠 |
+| 7 | `LLR_OPT.Set_Gen_Trial_LLR_Mode` | 모드가 SWAP_ROW이고 타겟 그룹의 row가 2개 미만이면 그 stage의 trial 수를 0으로 둠 (전에는 오류로 멈춤) |
+| 8 | `LLR_OPT.Check_SW_Branch_Mode_Allowed` | 오류 문구에 허용 모드가 지키는 것(그룹 수, 순서, iteration, SW 분기)을 적음 |
+
+2번에 SWAP_ROW, COPY_GROUP, INSERT_MUTATED_ROW를 함께 넣은 까닭: 사용자가 든 다섯 모드와 같은 기준(그룹 배치를 그대로 둠)을 지난다. COPY_GROUP은 3.9절로 분기 표시를 그대로 둔다.
+
+5번의 까닭: DELETE_ROW는 row가 하나 남은 그룹을 만나면 그룹째 지우고 그 iteration을 앞뒤 그룹에 나눠 준다 (`_Build_Deleted_Row_Matrix`의 Case B). 그룹 수와 iteration이 함께 바뀌므로, 그룹 배치를 그대로 두는 실행에서는 그 그룹을 후보에서 뺀다. 후보는 round마다 다시 만들므로 row가 줄어 하나 남은 그룹도 다음 round에서 빠진다.
+
+7번의 까닭: `LLR_MATRIX_2.txt`의 그룹 0과 3, `LLR_MATRIX_1.txt`의 그룹 0과 4는 row가 하나다. SWAP_ROW를 분기 그룹 타겟에 허용하면 이 그룹이 타겟인 stage에서 "SWAP_ROW requires target group with 2+ rows"로 실행이 멈춘다.
+
+분기 그룹에 모드마다 trial을 6개씩 만들어 본 결과 (모드 제한 검사를 거치지 않고 생성 함수를 직접 부름, `LLR_MATRIX_1.txt`의 그룹 0~5와 `LLR_MATRIX_2.txt`의 그룹 0~4):
+
+| 모드 | 결과 |
+|------|------|
+| INSERT_RANDOM_ROW, INSERT_MUTATED_ROW | 만들어진 trial은 모두 유효하고 그룹 배치가 그대로 (CSW를 넣을 자리가 없어 trial이 나오지 않은 경우가 그룹마다 0~2회) |
+| COPY_ROWS, COPY_GROUP, REGEN_DV, REGEN_ROW | 6개 모두 유효하고 그룹 배치가 그대로 |
+| SWAP_ROW | row가 2개 이상인 그룹에서 6개 모두 유효하고 그룹 배치가 그대로 |
+| DELETE_ROW | `LLR_MATRIX_2.txt`의 타겟 0과 1에서 후보 7개(그룹 1의 row)가 모두 유효하고 그룹 배치가 그대로 |
+| SPLIT_GROUP | 그룹 수가 바뀜 (막는 모드) |
 
 ## 4. 수정 대상 파일
+
+- `SRC/DAO_Constants.py` (3.11절의 1~3번), `SRC/DAO_Main.py` (3.11절의 4~8번과 Gen_Trial_LLR의 보호 검사 조건), `SRC/DAO_Config.py` (시퀀스 주석), `DAO_spec.md` (3.6절 ㉵, 3.7절 ㉯㉲㉳, 3.8절 ㉯와 T5, 5.4절, 5.16절, 6.2절), `README.md` (타겟 그룹 설정, 3.1.3절, 3.4절 ㉮, 4.1.1절)
 
 - `SRC/DAO_Config.py` (Gen_LLR_Mode_HBF_SEQUENCE와 시퀀스 주석), `README.md` (GenLLRMode 시퀀스, 4.1.1절의 HBF 시퀀스)
 - `SRC/DAO_Main.py` (Copy_Group), `DAO_spec.md` (5.7절)
@@ -280,12 +322,17 @@ COPY_GROUP은 타겟 그룹의 row를 후보 그룹의 row로 통째로 바꾸�
 - ㉸ MUTATE_CSW의 stage 건너뛰기는 타겟 그룹의 row가 하나일 때만 걸린다. row가 둘 이상인 타겟의 stage는 trial 수와 흐름이 같다
 - ㉹ GEN_SINGLE_ROW의 시작 검사는 `IS_HBF_OPT`가 켜져 있을 때만 걸린다. `IS_HBF_OPT`를 끈 GEN_SINGLE_ROW 실행은 같은 설정으로 시작 검사를 지난다
 - ㉺ 3.10절로 달라지는 실행은 HBF 최적화 모드에서 기본 목록을 그대로 둔 실행 하나다. 보통 모드의 실행과, `Gen_LLR_Mode_HBF_SEQUENCE`를 직접 적은 실행은 같다
+- ㉶ 3.11절의 모드 허용은 전에 시작 검사에서 멈추던 설정(분기 그룹 타겟과 row 단위 모드, 타겟 목록과 DELETE_ROW)을 돌게 한다. 전에 돌던 설정은 같은 모드가 같은 검사를 지난다. 타겟 앞 그룹의 보호 검사를 거치는 모드와 거치지 않는 모드도 전과 같다
+- ㉻ 보통 모드이고 타겟을 직접 지정하지 않았으며 타겟에 분기 그룹이 없는 실행은 DELETE_ROW의 후보가 전과 같다 (row 1개짜리 그룹도 후보이고 그룹째 지움). 이 실행에서 3.11절로 달라지는 것은 둘이다: DELETE_ROW의 후보가 없는 stage가 trial 없이 지나가고(전에는 trial 1개가 생성에 5회 실패), SWAP_ROW의 row 1개짜리 타겟 stage가 trial 없이 지나간다(전에는 오류로 멈춤)
 
 ## 6. 미결정 사항
 
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
 - ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 유효성 검사와 보정에도 `IS_HBF_OPT`와 상관없이 걸지. 사용자 결정(2026-09-29)은 값을 쓰는 모드까지이고 유효성 검사와 보정은 그대로다. 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
 - ㉰ 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽지 않는지, 읽되 0이라 같은 출력을 내는지 (라이트 리뷰 F7). 그리고 부호의 열 차수가 11, 4, 3, 2뿐인지 (F8). 규칙의 결론은 어느 쪽이든 같고 문서의 설명이 달라진다
+- ㉱ 모드 제한의 기준을 SW 분기 그룹에서 HBF 최적화가 다루는 구간으로 옮길지 (3.11절의 사용자 설명). 지금은 타겟에 SW 분기 그룹이 있을 때만 제한이 걸린다. SW 분기가 없는 매트릭스는 HBF 최적화 모드에서도 SPLIT_GROUP처럼 그룹 수를 바꾸는 모드가 iteration 1~8의 타겟에 돈다. 정할 것은 제한이 걸리는 구간의 범위(iteration 1~4인지 1~8인지)와 DAO가 그 실행을 알아보는 기준(`IS_HBF_OPT`인지)이다
+- ㉲ HBF 기본 시퀀스의 SPLIT_GROUP을 뺄지, DELETE_ROW와 INSERT_MUTATED_ROW를 `GenLLRModeHBF`와 HBF 기본 시퀀스에 넣을지. SPLIT_GROUP은 그룹 수를 바꾸므로 분기 그룹 타겟에서 시작 검사에 걸린다
+- ㉳ 그룹 배치를 바꿔도 되는 실행(3.11절의 4번이 거짓인 실행)에서 DELETE_ROW가 row 1개짜리 그룹을 그룹째 지우는 동작을 그대로 둘지
 
 ## 7. 검증
 
@@ -299,12 +346,14 @@ COPY_GROUP은 타겟 그룹의 row를 후보 그룹의 row로 통째로 바꾸�
 - 검사: `_test/20260929_hd_hbf_dv0_th_untouched/test_hd_hbf_dv0_th_untouched.py` 33건 (`IS_HBF_OPT`를 끈 HD 복호. 고정 column 5, MUTATE_MATRIX 3, 그룹 변이와 SPLIT_GROUP 3, INSERT_MUTATED_GROUP 2, INSERT_MUTATED_ROW 3, INSERT_RANDOM_ROW 2, INSERT_RANDOM_GROUP 2, 끝 iteration을 모르는 row 1, REGEN_ROW 2, REGEN_DV 4, COPY_ROWS 2, COPY_GROUP 2, SWAP_ROW 2). 3.4절의 1~5번을 반영하기 전에는 처음 쓴 14건 가운데 10건 실패, 6~11번을 반영하기 전에는 더한 19건 가운데 11건 실패, 지금 33건 통과
 - 검사: `_test/20260929_hbf_two_stage_allowed/test_hbf_two_stage_allowed.py` 6건 (시작 검사 5, trial 테스트가 도는 순서 1). 3.5절을 반영하기 전에는 시작 검사 2건이 "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다"로 실패, 지금 6건 통과. trial 테스트 순서 1건은 반영 전에도 통과했다 (그 흐름이 `IS_HBF_OPT`를 읽지 않음을 보이는 검사)
 - 검사: `_test/20260929_hbf_iteration_span_ends/test_hbf_iteration_span_ends.py` 9건 (구간 안의 row 1, 경계를 걸친 row 3, HBF 최적화 모드를 끈 경우 1, 경계 설정 1, 입력 매트릭스 1, INSERT_RANDOM_GROUP 2). 3.6절을 반영하기 전에는 9건 모두 오류(설정 없음), 지금 9건 통과
-- 검사: `_test/20260929_mode_sequence_start_check/test_mode_sequence_start_check.py` 9건 (시퀀스 검사 7, `Validate_Config` 2). 3.6절을 반영하기 전에는 8건이 실패하거나 오류, 지금 9건 통과
+- 검사: `_test/20260929_mode_sequence_start_check/test_mode_sequence_start_check.py` 9건 (시퀀스 검사 7, `Validate_Config` 2). 3.6절을 반영하기 전에는 8건이 실패하거나 오류. 분기 그룹 타겟에서 막히는 모드의 예를 3.11절에 맞게 INSERT_RANDOM_ROW에서 SPLIT_GROUP으로 바꿨다 (6건). 지금 9건 통과
 - 검사: `_test/20260929_mode_sequence_by_name/test_mode_sequence_by_name.py` 12건 (기본 시퀀스 5, 프리셋 1, 시퀀스를 읽는 자리 5, HBF 최적화 모드에서 만든 trial 1). 3.7절의 1~5번을 반영하기 전에는 처음 쓴 10건 가운데 6건이 실패하거나 오류였고, 그때도 통과한 4건은 HBF 모드의 값이 같은 이름의 보통 모드와 같은지, 로그 글, 시작 검사, pickle 왕복이다. 6번과 함께 더한 2건 가운데 목록 구성 검사는 6번을 반영하기 전에 실패했고 trial 검사는 그때도 통과했다. 기본 시퀀스 검사 2건(HBF 목록의 구성, stage 1에서만 도는 모드의 자리)은 3.10절에 맞게 고쳤다. 지금 12건 통과
 - 검사: `_test/20260929_hbf_default_sequence/test_hbf_default_sequence.py` 7건 (HBF 기본 목록의 구성 3, stage가 도는 순서 1, 시작 검사 1, 뺀 모드를 다시 적은 시퀀스 1, 보통 목록 1). 3.10절을 반영하기 전에는 4건 실패, 지금 7건 통과
 - 검사: `_test/20260929_skip_and_stop_checks/test_skip_and_stop_checks.py` 8건 (MUTATE_CSW stage 건너뛰기 4, GEN_SINGLE_ROW 시작 검사 4). 3.8절을 반영하기 전에는 3건 실패, 지금 8건 통과
 - 검사: `_test/20260929_copy_group_keeps_branch_marks/test_copy_group_keeps_branch_marks.py` 7건 (입력 매트릭스의 표시 1, 분기 그룹을 복사한 보통 타겟 1, 값과 CSW 1, 다른 그룹 1, 복사 뒤의 모드 허용 1, 보통 그룹을 복사한 분기 타겟 1, 보통 그룹끼리의 그룹 유형 1). 3.9절을 반영하기 전에는 3건 실패 (분기 그룹을 복사한 보통 타겟, 복사 뒤의 모드 허용, 보통 그룹을 복사한 분기 타겟), 지금 7건 통과
-- 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
+- 검사: `_test/20260929_row_modes_on_branch_groups/test_row_modes_on_branch_groups.py` 14건 (모드 허용 7, DELETE_ROW 5, SWAP_ROW 2). 3.11절을 반영하기 전에는 11건이 실패하거나 오류였고, 그때도 통과한 3건은 막는 모드 6개, GEN_INITIAL_GROUP, 그룹 배치를 바꿔도 되는 실행의 DELETE_ROW 후보다. 지금 14건 통과
+- 사용자 관측의 재현: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`, `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`, HBF 시퀀스 INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, COPY_ROWS, REGEN_DV, REGEN_ROW, DELETE_ROW. 3.11절을 반영하기 전(커밋 723b8e8)에는 시작 검사가 사용자 관측과 같은 문구로 멈췄고, 지금은 통과
+- 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과. 검사는 모두 213건
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, 기준 커밋 2e34036, 기록: `review/`): Round 1 관점 38개를 18개로 통합, Round 2 lv1 에이전트 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정은 수정 필요
   - HIGH: F1 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤, F2 경계 검사가 4와 5 사이만 봄, F3 COPY_GROUP이 후보의 분기 표시를 타겟에 복사함

@@ -133,7 +133,7 @@ LLR_MATRIX
 | 상수(`HBF_OPT_TH_CONSTANT_VAL`)로 채움 | INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_GROUP과 INSERT_MUTATED_ROW가 복사해 온 값, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP |
 
 - ㉴ REGEN_DV는 만든 값을 다른 DV 자리에 다시 쓸 수 있도록 TH까지 난수로 만들어 두고, 쓰는 자리가 HBF 구간 row의 dv_idx 0일 때만 TH를 상수로 바꿔 쓴다
-- ㉵ 끝 iteration을 모른 채 만드는 row(GEN_INITIAL_GROUP, GEN_SINGLE_ROW)는 모든 column을 난수로 채운다. 그룹의 iteration을 옮기는 모드(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 값을 쓰지 않으므로 HBF3이 걸리지 않는다
+- ㉵ 끝 iteration을 모른 채 만드는 row(GEN_INITIAL_GROUP, GEN_SINGLE_ROW)는 모든 column을 난수로 채운다. 값을 쓰지 않는 모드(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 HBF3이 걸리지 않는다
 - ㉱ HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV와 같은 규칙(RW4, RW5)을 따른다. 매트릭스의 max_iteration은 `HBF_MAX_ITERATION`보다 클 수 있다
 - ㉲ HBF2의 경계 e는 iteration e와 e + 1 사이다. `ITERATION_SPAN_ENDS`의 기본값은 4와 8이라 구간은 1~4, 5~8, 9 이후다. `HBF_MAX_ITERATION`은 `ITERATION_SPAN_ENDS`에 없어도 언제나 경계다. 판단은 `Get_Iteration_Span_End_Crossed_By_Row()`가 맡는다
 - ㉶ 구간 안은 여러 그룹으로 나눌 수 있다 (예: 구간 1~4를 iteration 1, 2~3, 4로). HBF2는 입력 매트릭스와 trial 매트릭스에 똑같이 걸리므로, 경계를 걸치는 row를 만든 trial은 유효하지 않은 매트릭스로 버려진다. 예: INSERT_RANDOM_GROUP이 iteration 2~4 그룹 뒤에 붙이는 새 그룹은 5부터 `INSERT_GROUP_NUM_ITERATION`(20)칸이라 8과 9 사이를 걸쳐 버려지고, iteration 5~8 그룹 뒤에 붙이는 새 그룹(9~28)은 통과한다
@@ -169,10 +169,15 @@ SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 �
 **최적화 규칙**
 
 - ㉮ 타겟 목록(`target_group_indices`)의 값은 그룹 하나하나의 index다. 분기 그룹도 그룹마다 따로 타겟이 된다 (3.8절). 예의 그룹 4와 5는 같은 분기지만 타겟 4는 그룹 4만, 타겟 5는 그룹 5만 바꾼다
-- ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 다른 모드가 있으면 `Validate_Config`가 시작할 때 `Check_Mode_Sequence_With_SW_Branch()`로 찾아 오류로 멈춘다. `Set_Gen_Trial_LLR_Mode`도 stage마다 그 stage의 모드를 같은 규칙으로 검사한다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다. 타겟을 분기 구간 뒤의 보통 그룹으로만 두면 다른 모드도 쓸 수 있다. 다만 GEN_INITIAL_GROUP은 모든 그룹을 바꾸므로 분기 그룹이 있으면 언제나 막는다. 허용된 모드가 타겟 앞의 그룹(분기 구간)을 조금이라도 바꾸면 `Gen_Trial_LLR`이 그 trial을 버리고 로그에 남긴다
+- ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 그룹 배치를 그대로 두는 모드만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 그룹 배치는 그룹 수, 그룹 순서, iteration 구간, SW 분기 표시다. 디코더 실행 파일이 분기 그룹이 놓인 구간(HBF 최적화가 다루는 앞쪽 iteration)에서 그룹 배치가 바뀐 매트릭스를 받지 않기 때문이다. 그룹 안의 row 수는 바뀌어도 된다
+  - 허용: MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, DELETE_ROW (`GROUP_LAYOUT_KEEPING_MODES`)
+  - 막음: GEN_INITIAL_GROUP, REORDER_GROUP, INSERT_RANDOM_GROUP, INSERT_MUTATED_GROUP, SPLIT_GROUP, ADJUST_ITERATION, INSERT_RESTART_GROUP
+  - 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 막는 모드가 있으면 `Validate_Config`가 시작할 때 `Check_Mode_Sequence_With_SW_Branch()`로 찾아 오류로 멈춘다. `Set_Gen_Trial_LLR_Mode`도 stage마다 그 stage의 모드를 같은 규칙으로 검사한다
+  - 타겟을 분기 구간 뒤의 보통 그룹으로만 두면 다른 모드도 쓸 수 있다. 다만 GEN_INITIAL_GROUP은 모든 그룹을 바꾸므로 분기 그룹이 있으면 언제나 막는다. 모드가 타겟 앞의 그룹(분기 구간)을 조금이라도 바꾸면 `Gen_Trial_LLR`이 그 trial을 버리고 로그에 남긴다 (타겟 그룹 하나의 값만 바꾸는 MUTATE_MATRIX와 MUTATE_CSW는 이 검사를 거치지 않는다)
+- ㉳ 그룹 배치를 그대로 두는 실행은 세 가지다: HBF 최적화 모드(`IS_HBF_OPT`), `FIXED_TARGET_GROUP_IDX_LIST`로 타겟을 지정한 실행, 타겟에 분기 그룹이 있는 실행. `Is_Group_Layout_Kept()`가 판단하고, DELETE_ROW가 이 판단으로 row 1개짜리 그룹을 건너뛴다 (5.16절)
 - ㉰ 여러 분기로 갈라진 구간의 그룹은 분기 index와 상관없이 타겟이 된다. 어느 분기의 그룹을 바꿀지는 타겟 목록으로 정한다 (예의 구간 5~8에서 분기 0만 바꾸려면 `FIXED_TARGET_GROUP_IDX_LIST = [3]`, 분기 1만 바꾸려면 `[4, 5]`)
 - ㉱ MUTATE_MATRIX는 타겟 그룹에서 `NUM_ELEMENTS_TO_MUTATE_CHTH`개까지 변이하고, `Correct_LLR_Matrix`가 row마다 정렬한다. MUTATE_CSW는 타겟 그룹에서 `NUM_ELEMENTS_TO_MUTATE_CSW`개까지 변이하고 그룹 안에서 정렬한다
-- ㉲ HBF(Hybrid Bit Flipping)는 지금 HD 복호의 iteration 1~4를 뜻한다. HBF 최적화 모드(`IS_HBF_OPT`)도 분기 매트릭스에 이 절의 규칙을 그대로 쓴다. 분기 그룹이 HBF 구간 안에 있으면 3.6절의 규칙이 그 row에도 걸리고, 타겟에 분기 그룹이 있으면 `Gen_LLR_Mode_HBF_SEQUENCE`에 MUTATE_MATRIX와 MUTATE_CSW만 넣는다
+- ㉲ HBF(Hybrid Bit Flipping)는 지금 HD 복호의 iteration 1~4를 뜻한다. HBF 최적화 모드(`IS_HBF_OPT`)도 분기 매트릭스에 이 절의 규칙을 그대로 쓴다. 분기 그룹이 HBF 구간 안에 있으면 3.6절의 규칙이 그 row에도 걸리고, 타겟에 분기 그룹이 있으면 `Gen_LLR_Mode_HBF_SEQUENCE`에 ㉯의 허용 모드만 넣는다
 
 ---
 
@@ -186,7 +191,7 @@ SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 �
 | `FIXED_TARGET_GROUP_IDX_LIST`가 목록 (예: `[0, 1]`) | 목록에 적은 그룹만, 적은 순서대로 |
 
 - ㉮ 타겟은 모드 시퀀스 한 바퀴마다 목록의 다음 그룹으로 넘어간다. HBF 최적화 모드도 같은 규칙을 따른다 (시퀀스만 `Gen_LLR_Mode_HBF_SEQUENCE`를 쓴다)
-- ㉯ `FIXED_TARGET_GROUP_IDX_LIST`의 index는 매트릭스의 그룹 번호에 묶여 있다. 그래서 그룹 수, 순서, iteration 구간을 그대로 두는 모드(`FIXED_TARGET_GROUP_ALLOWED_MODES`)만 함께 쓴다: MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW. 목록에 SW 분기 그룹이 있으면 이 가운데 MUTATE_MATRIX와 MUTATE_CSW만 쓴다 (3.7절 ㉯, T5)
+- ㉯ `FIXED_TARGET_GROUP_IDX_LIST`의 index는 매트릭스의 그룹 번호에 묶여 있다. 그래서 그룹 배치를 그대로 두는 모드(`FIXED_TARGET_GROUP_ALLOWED_MODES`)만 함께 쓴다: MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, DELETE_ROW. 목록에 SW 분기 그룹이 있을 때 허용되는 모드도 이 10개다 (3.7절 ㉯, T5)
 - ㉰ `Validate_Config`가 시작할 때 `Check_Fixed_Target_Group_Idx_List()`(T1~T4)와 `Check_Mode_Sequence_With_SW_Branch()`(T5)로 검사한다. T5는 목록을 주지 않은 실행에도 걸린다
 
 | 규칙 | 검증 내용 |
@@ -195,7 +200,7 @@ SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 �
 | T2 | 목록의 값은 정수이고 0 이상 초기 매트릭스의 그룹 수 미만 |
 | T3 | 목록에 같은 값이 한 번씩만 나옴 |
 | T4 | 지금 쓰는 모드 시퀀스의 모드가 모두 `FIXED_TARGET_GROUP_ALLOWED_MODES` 안에 있음 |
-| T5 | 지금 쓰는 모드 시퀀스의 모드가 모두 SW 분기 제한을 지남 (타겟에 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만, 분기 그룹이 있는 매트릭스에서 GEN_INITIAL_GROUP은 언제나 오류) |
+| T5 | 지금 쓰는 모드 시퀀스의 모드가 모두 SW 분기 제한을 지남 (타겟에 분기 그룹이 있으면 `SW_BRANCH_ALLOWED_MODES`의 모드만, 분기 그룹이 있는 매트릭스에서 GEN_INITIAL_GROUP은 언제나 오류) |
 
 ---
 
@@ -316,9 +321,9 @@ class GenLLRMode(IntEnum):
 
 **제외 조건**:
 - Restart 그룹 제외
-- 그룹 내 row가 2개 미만이면 제외
+- 타겟 그룹의 row가 하나뿐이면 맞바꿀 row 쌍이 없으므로 그 stage를 건너뜀 (`Set_Gen_Trial_LLR_Mode`가 trial 수를 0으로 둠)
 
-**Trial 수**: 각 그룹별 C(m, 2)의 합 (m = 그룹 내 row 수)
+**Trial 수**: 타겟 그룹의 C(m, 2) (m = 그룹 내 row 수)
 
 ---
 
@@ -560,10 +565,12 @@ class GenLLRMode(IntEnum):
 **삭제 후보 조건**:
 - target_group_indices 범위 내의 모든 row (restart group 포함)
 - 전체 matrix에 최소 1개 row는 남아야 함
+- 그룹 배치를 그대로 두는 실행(3.7절 ㉳)에서는 row가 하나인 그룹을 후보에서 뺌
+- 후보가 없으면 그 stage를 건너뜀 (`Init_Delete_Row_Mode`가 trial 수를 0으로 둠)
 
 **삭제 케이스**:
-- **Case A** (그룹 내 row 2개 이상): row만 제거, 첫 row 삭제 시 새 첫 row의 CSW를 -1로 설정 (C1 규칙)
-- **Case B** (그룹 내 row 1개): group 전체 삭제, iteration 재분배
+- **Case A** (그룹 내 row 2개 이상): row만 제거, 첫 row 삭제 시 새 첫 row의 CSW를 -1로 설정 (C1 규칙). 그룹 배치는 그대로
+- **Case B** (그룹 내 row 1개): group 전체 삭제, iteration 재분배. 그룹 배치를 바꿔도 되는 실행에서만 일어남
 
 **상태 변수** (DeleteRowState):
 - `is_active`: 모드 활성화 여부
@@ -640,7 +647,7 @@ class GenLLRMode(IntEnum):
 | INSERT_RANDOM_GROUP | CSW 후보 < num_rows - 1 | None |
 | INSERT_MUTATED_GROUP | Non-restart 그룹 없음 / max_iteration >= MAX_DECODING_ITERATION | None / Skip |
 | INSERT_MUTATED_ROW | CSW 삽입 불가능 / max_iteration >= MAX_DECODING_ITERATION | None / Skip |
-| SWAP_ROW | 유효한 row pair 없음 | None |
+| SWAP_ROW | 타겟 그룹의 row가 1개 | Skip |
 | REORDER_GROUP | 재배열 대상 그룹 없음 | None |
 | DELETE_ROW | 삭제 가능한 row 없음 / 전체 row 1개 이하 | Skip |
 | INSERT_RESTART_GROUP | 유효한 삽입 위치 없음 / 그룹 수 2개 미만 | Skip |

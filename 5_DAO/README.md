@@ -120,10 +120,11 @@ FIXED_TARGET_GROUP_IDX_LIST = None  # 타겟 그룹을 직접 지정 (예: [0, 1
 - **INSERT_RANDOM_GROUP 실행 시 자동 업데이트**
   - 삽입 위치 이후 인덱스 +1 보정
   - 새 그룹 인덱스 맨 뒤에 추가
-- **`FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰는 모드**: 목록의 index가 그룹 번호에 묶여 있으므로 그룹 수, 순서, iteration 구간을 그대로 두는 모드만 쓴다
-  - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51)
+- **`FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰는 모드**: 목록의 index가 그룹 번호에 묶여 있으므로 그룹 배치(그룹 수, 순서, iteration 구간, SW 분기 표시)를 그대로 두는 모드만 쓴다. 그룹 안의 row 수는 바뀌어도 된다
+  - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51), DELETE_ROW(70)
   - 지금 쓰는 시퀀스에 다른 모드가 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다
-  - 목록에 SW 분기 그룹(헤더 10 이상)이 있으면 이 가운데 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 쓴다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스에 MUTATE_MATRIX와 MUTATE_CSW만 남긴다
+  - 목록에 SW 분기 그룹(헤더 10 이상)이 있을 때 허용되는 모드도 위 10개다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스에 위 10개 가운데 돌릴 모드만 남긴다
+  - MUTATE_CSW와 SWAP_ROW는 타겟 그룹의 row가 1개이면 그 stage를 trial 없이 지나가고, DELETE_ROW는 row 1개짜리 그룹을 지우지 않는다
 
 #### GenLLRMode 시퀀스
 시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값에서 돌릴 모드만 남기고 순서를 정한다. 보통 모드의 기본값은 `GenLLRMode`의 모드 17개를 모두 적은 목록이고, HBF 최적화 모드의 기본값은 `GenLLRModeHBF`의 모드 11개에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 9개다.
@@ -495,14 +496,14 @@ class MUTATE_CONFIG:
 **위치:** [DAO_Main.py](DAO/SRC/DAO_Main.py)
 
 **동작:**
-- 같은 그룹 내 두 행의 위치 교환
-- Iteration 순서 변경으로 성능 개선 시도
+- 타겟 그룹 안 두 row의 값(CH, TH)을 맞바꿈
+- CSW와 iteration은 그대로
+- 타겟 그룹의 row가 1개이면 그 stage를 trial 없이 지나감
 
 **알고리즘:**
-1. 타겟 그룹에서 2개 행 선택
-2. 위치 교환
-3. iter_start/iter_end 재계산
-4. 유효성 검증
+1. 타겟 그룹에서 row 2개를 고름 (trial마다 다음 쌍, 모두 C(m, 2)쌍)
+2. 두 row의 값을 맞바꿈
+3. 유효성 검증
 
 #### 3.1.4 COPY_ROWS (30)
 **위치:** [DAO_Main.py](DAO/SRC/DAO_Main.py)
@@ -862,7 +863,11 @@ if self.is_root and now_optimal_LLR_update:
 
 헤더 `type_each_group`이 10 이상인 그룹은 SW(Syndrome Weight, 신드롬 무게) 분기 그룹이다. 10은 분기 1개(row 꼬리 0), 20과 21은 분기 2개(row 꼬리 0과 1)이고, 10 미만은 보통 그룹(row 꼬리 -1)이다. 타겟은 분기 그룹도 그룹 하나씩 고르고, 변이는 타겟 그룹 하나에만 들어간다. 자세한 규칙은 `DAO_spec.md` 3.7절에 있다.
 
-- ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 넣는다. 다른 모드가 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다. 타겟을 분기 구간 뒤의 보통 그룹으로 두면 다른 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
+- ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 그룹 배치를 그대로 두는 모드만 넣는다. 그룹 배치는 그룹 수, 그룹 순서, iteration 구간, SW 분기 표시다. 디코더 실행 파일이 분기 그룹이 놓인 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않기 때문이고, 그룹 안의 row 수는 바뀌어도 된다
+  - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51), DELETE_ROW(70)
+  - 막음: GEN_INITIAL_GROUP(0), REORDER_GROUP(22), INSERT_RANDOM_GROUP(40), INSERT_MUTATED_GROUP(42), SPLIT_GROUP(60), ADJUST_ITERATION(62), INSERT_RESTART_GROUP(80). 시퀀스에 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다
+  - 타겟을 분기 구간 뒤의 보통 그룹으로 두면 막은 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
+  - DELETE_ROW는 HBF 최적화 모드, `FIXED_TARGET_GROUP_IDX_LIST`로 타겟을 지정한 실행, 타겟에 분기 그룹이 있는 실행에서 row 1개짜리 그룹을 지우지 않는다 (row가 2개 이상인 그룹의 row만 지움)
 - ㉯ 여러 분기로 갈라진 구간의 그룹은 분기 index와 상관없이 타겟이 된다. 어느 분기의 그룹을 바꿀지는 타겟 목록으로 정하고, 그 분기에 맞는 uncor seed는 사용자가 준비한다
 - ㉰ `INITIAL_TARGET_GROUP_IDX`와 `FIXED_TARGET_GROUP_IDX_LIST`의 값은 그룹 하나하나의 index다 (매트릭스 파일에 적힌 그룹 순서를 0부터 센다). 분기 그룹도 그룹마다 따로 타겟이 된다
 - ㉱ DAO는 분기를 만들거나 없애지 않는다. 헤더 `type_each_group`은 읽은 값을 그대로 보존한다
@@ -920,8 +925,8 @@ class DAO_CONFIG:
     - None → INITIAL_TARGET_GROUP_IDX부터 마지막 그룹까지
     - 값은 그룹 하나하나의 index (SW 분기 그룹도 그룹마다 따로 지정)
     - 함께 쓰는 모드: FIXED_TARGET_GROUP_ALLOWED_MODES
-      (그룹 수, 순서, iteration 구간을 그대로 두는 모드)
-    - 목록에 SW 분기 그룹이 있으면 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 사용
+      (그룹 수, 순서, iteration 구간, SW 분기 표시를 그대로 두는 모드 10개. 3.4절)
+    - 목록에 SW 분기 그룹이 있을 때 허용되는 모드도 같은 10개
     - 값과 모드는 Validate_Config가 시작할 때 검사
     """
 
@@ -947,7 +952,7 @@ class DAO_CONFIG:
     ]
     """최적화 모드 실행 순서 (쓸 수 있는 모드를 모두 적은 목록. 돌릴 모드만 남긴다)
     - Stage 1은 목록의 첫 모드, Stage 2는 둘째 모드, 끝까지 가면 처음으로 돌아감
-    - 타겟에 SW 분기 그룹이 있으면 MUTATE_MATRIX와 MUTATE_CSW만 남김 (다른 모드가 있으면 시작할 때 오류)
+    - 타겟에 SW 분기 그룹이 있으면 그룹 배치를 그대로 두는 모드만 남김 (3.4절. 다른 모드가 있으면 시작할 때 오류)
     - 매트릭스에 SW 분기 그룹이 있으면 GEN_INITIAL_GROUP을 뺌 (시작할 때 오류)
     - FIXED_TARGET_GROUP_IDX_LIST와 함께 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남김
     """
