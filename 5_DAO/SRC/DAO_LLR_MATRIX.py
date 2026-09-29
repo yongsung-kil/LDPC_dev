@@ -28,7 +28,7 @@ class LLR_Row:
     CSW: int
     iter_start: int
     iter_end: int
-    floor_flag: int           # SW 분기 index. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호. 같은 값이 이어지는 그룹들은 한 묶음으로 변이한다
+    floor_flag: int           # SW 분기 index. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호
     is_group_restart: bool = False
 
 class LLR_MATRIX:
@@ -58,7 +58,6 @@ class LLR_MATRIX:
 
         # SW 분기 배치 (Build_SW_Branch_Layout이 groups에서 계산한다. 헤더는 보지 않는다)
         self.group_branch_idx: list[int] = []                      # 그룹별 분기 index (첫 row의 floor_flag)
-        self.bundle_of_group: list[list[int]] = []                 # 그룹별 묶음 (같은 분기 index가 이어지는 그룹 index 목록)
         self.span_of_group: list[Optional[tuple[int, int, int]]] = []  # 그룹별 (구간 시작, 구간 끝, 분기 수). 분기 없으면 None
         self.has_sw_branch: bool = False
         self.sw_layout_error: Optional[str] = None
@@ -99,7 +98,7 @@ class LLR_MATRIX:
     def Is_Row_In_HBF_Iterations(self, row: LLR_Row) -> bool:
         """HBF 최적화 모드에서 row가 HBF 구간(iteration 1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
 
-        HBF 구간에서 디코더는 dv_idx 0(가장 높은 DV, row의 첫 CH와 TH 묶음)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
+        HBF 구간에서 디코더는 dv_idx 0(가장 높은 DV, row의 맨 앞 CH와 TH)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
         그래서 HBF 구간의 row는 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정하고 변이와 난수 생성 대상에서 뺀다.
         HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV처럼 다룬다.
         row는 HBF 구간의 경계를 걸치지 않으므로(Is_LLR_Valid의 HBF2 규칙) 끝 iteration으로 판단한다.
@@ -107,14 +106,13 @@ class LLR_MATRIX:
         return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION
 
     def Build_SW_Branch_Layout(self) -> Optional[str]:
-        """groups에서 SW 분기 배치(그룹별 분기 index, 묶음, 구간)를 다시 계산한다.
+        """groups에서 SW 분기 배치(그룹별 분기 index, 구간)를 다시 계산한다.
 
         분기 index는 각 row의 마지막 칸(floor_flag)이다. 헤더 type_each_group이 10 이상이면 {분기 수}{분기 index}
-        표시이고(10은 분기 1개짜리 묶음, 20과 21은 분기 2개), 10 미만이면 보통 그룹이다. 구간은 분기 index 0으로
+        표시이고(10은 분기 1개, 20과 21은 분기 2개), 10 미만이면 보통 그룹이다. 구간은 분기 index 0으로
         시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위다. 분기 0이 그대로
         이어지는 두 구간은 헤더 표시 값이 바뀌는 자리(예: 10 뒤에 20)에서 갈린다. 구간 안에서 index가 1 늘면
-        iteration은 구간 시작으로 되돌아가고, 모든 분기는 구간의 시작과 끝을 똑같이 덮는다. 묶음은 한 구간 안에서
-        분기 index가 같은 그룹들이고, 분기가 없는 그룹은 그룹 하나가 묶음 하나다.
+        iteration은 구간 시작으로 되돌아가고, 모든 분기는 구간의 시작과 끝을 똑같이 덮는다.
 
         Returns:
             Optional[str]: 배치가 규칙에 어긋나면 그 이유 (sw_layout_error에도 남는다). 문제 없으면 None
@@ -122,7 +120,6 @@ class LLR_MATRIX:
         num_groups = len(self.groups)
         self.group_branch_idx = [int(group[0].floor_flag) if group else SW_BRANCH_NONE for group in self.groups]
         self.has_sw_branch = any(idx != SW_BRANCH_NONE for idx in self.group_branch_idx)
-        self.bundle_of_group = [[g] for g in range(num_groups)]
         self.span_of_group = [None] * num_groups
         self.sw_layout_error = None
         if self.groups and all(self.groups):
@@ -143,7 +140,6 @@ class LLR_MATRIX:
         span_start = None
         span_end = None
         current_branch = None          # None이면 구간 밖
-        current_bundle: list[int] = []
         prev_end = None
         prev_group_idx = None
 
@@ -174,14 +170,13 @@ class LLR_MATRIX:
                     current_branch = None
                 else:
                     expected_start = start if prev_end is None else prev_end + 1
-                current_bundle = [g_idx]
             else:
                 if current_branch is None:
                     starts_new_span = True
                 elif branch == 0 and current_branch > 0:
                     starts_new_span = True
                 elif branch == 0 and current_branch == 0 and header_marker(g_idx) != header_marker(prev_group_idx):
-                    # 분기 0이 이어지지만 헤더의 분기 표시 값이 바뀌면 새 구간이다 (예: 10인 묶음 뒤에 20인 분기 구간)
+                    # 분기 0이 이어지지만 헤더의 분기 표시 값이 바뀌면 새 구간이다 (예: 10인 구간 뒤에 20인 구간)
                     starts_new_span = True
                 else:
                     starts_new_span = False
@@ -200,7 +195,6 @@ class LLR_MATRIX:
                     span_end = None
                     current_branch = 0
                     span_members = []
-                    current_bundle = []
                 elif branch == current_branch:
                     expected_start = prev_end + 1
                 elif branch == current_branch + 1:
@@ -212,18 +206,15 @@ class LLR_MATRIX:
                         return fail(f"SW branch {current_branch} ends at iteration {prev_end} but its span ends at {span_end}")
                     expected_start = span_start
                     current_branch = branch
-                    current_bundle = []
                 else:
                     return fail(
                         f"Group {g_idx} branch {branch} follows branch {current_branch}; "
                         f"the branch index must stay, increase by 1, or return to 0"
                     )
                 span_members.append(g_idx)
-                current_bundle.append(g_idx)
 
             if start != expected_start:
                 return fail(f"Group {g_idx} iter_start must be {expected_start} (SW branch {branch}), got {start}")
-            self.bundle_of_group[g_idx] = current_bundle
             prev_end = end
             prev_group_idx = g_idx
 
@@ -452,7 +443,7 @@ class LLR_MATRIX:
                 output_msg = f"Group {g_idx} row count mismatch: header {int(h.num_row_each_group[g_idx])}, actual {len(group)}"
                 return False, output_msg
 
-            # 그룹 안 모든 row의 분기 index(floor_flag)가 같아야 한 묶음으로 다룰 수 있다 (G9)
+            # 그룹 안 모든 row의 분기 index(floor_flag)가 같아야 그룹의 분기가 정해진다 (G9)
             branch_values = {int(row.floor_flag) for row in group}
             if len(branch_values) != 1:
                 output_msg = f"Group {g_idx} rows carry different SW branch index (floor_flag): {sorted(branch_values)}"
@@ -610,7 +601,7 @@ class LLR_MATRIX:
             branch = self.group_branch_idx[g_idx]
             if type_value < 10:
                 if branch != SW_BRANCH_NONE:
-                    output_msg = f"Group {g_idx} header type {type_value} is a plain group but rows carry SW branch index {branch}; use header 10 for a single-branch bundle"
+                    output_msg = f"Group {g_idx} header type {type_value} is a plain group but rows carry SW branch index {branch}; use header 10 for a span with one branch"
                     return False, output_msg
                 continue
             span = self.span_of_group[g_idx]

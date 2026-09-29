@@ -26,7 +26,7 @@ In HD_HBF_OPT mode, Group 2 Row 0 DV 0 invalid TH values: expected all 0, got [1
 
 디코더 쪽 근거: [decoder.cpp:4058](../../../../0_LDPC_original/src/decoder.cpp)은 BF가 켜져 있고 `iter <= ITER_MAX_HBF`(4)이며 DV가 가장 높은 등급일 때 1 bit 정밀도로 처리해 TH를 읽지 않는다. iteration 5부터는 TH를 읽는다.
 
-dv_idx 0의 위치: row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서이고, 코드는 row를 `num_parameter_each_set` 칸씩 잘라 첫 묶음을 dv_idx 0으로 읽는다. 이 부분은 수정 없이 맞게 동작한다.
+dv_idx 0의 위치: row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서이고, 코드는 row를 `num_parameter_each_set` 칸씩 잘라 맨 앞 칸들을 dv_idx 0으로 읽는다. 이 부분은 수정 없이 맞게 동작한다.
 
 ## 3. 설계
 
@@ -51,7 +51,7 @@ HBF 최적화 모드도 타겟 그룹은 보통 모드와 똑같이 고른다 (`
 | # | 위치 | 내용 |
 |---|------|------|
 | 1 | `DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST` | 기본값 None (`INITIAL_TARGET_GROUP_IDX`를 따름). 목록이면 적은 그룹만, 적은 순서대로 타겟 |
-| 2 | `LLR_OPT.Build_Target_Group_Indices` (새 함수) | 설정과 매트릭스에서 타겟 목록을 만드는 한 곳. `Initialize_LLR_Matrix`, `Initialize_Stage`, `Update_Optimal_LLR`이 쓴다. 묶음 중간의 index는 묶음의 첫 그룹으로 당긴다 |
+| 2 | `LLR_OPT.Build_Target_Group_Indices` (새 함수) | 설정과 매트릭스에서 타겟 목록을 만드는 한 곳. `Initialize_LLR_Matrix`, `Initialize_Stage`, `Update_Optimal_LLR`이 쓴다. 목록의 값은 그룹 하나하나의 index다 (3.3절) |
 | 3 | `FIXED_TARGET_GROUP_ALLOWED_MODES` (`DAO_Constants.py`) | 목록과 함께 쓰는 모드. 그룹 수, 순서, iteration 구간을 그대로 두는 9개 (MUTATE_MATRIX, MUTATE_CSW, SWAP_ROW, COPY_ROWS, COPY_GROUP, INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW) |
 | 4 | `LLR_OPT.Check_Fixed_Target_Group_Idx_List` (새 함수) | 목록의 꼴, 범위, 중복과 지금 쓰는 모드 시퀀스를 검사. `Validate_Config`가 시작할 때 부른다 |
 
@@ -73,8 +73,31 @@ HBF 최적화 모드도 타겟 그룹은 보통 모드와 똑같이 고른다 (`
 
 uncor 풀은 `LOAD_UNCOR_MODE`로 준비되므로(`Setup_Uncor_Pool`), seed 모드도 같은 값에서 정해져야 둘이 어긋나지 않는다. 없어지는 기능은 하나다: `HBF_OPT_USING_UNCOR = False`로 uncor 없이 난수 프레임으로 최적화하는 실행.
 
+### 3.3 타겟과 변이의 단위를 그룹 하나로 (사용자 요청 2026-09-29)
+
+SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그룹들을 한 단위로 다뤘다. 타겟 목록에는 그 첫 그룹만 들어갔고, MUTATE_MATRIX와 MUTATE_CSW는 그 그룹들을 함께 바꿨다. 그래서 `LLR_MATRIX_2.txt`에 `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`을 주면 타겟 목록이 `[0]`이 되고 그룹 0(iteration 1)과 그룹 1(iteration 2~4)이 매번 함께 바뀌었다.
+
+사용자 결정: 타겟 목록의 값은 그룹 하나하나의 index이고, 변이는 타겟 그룹 하나에만 들어간다 (SW 분기 지원 이전과 같은 방식).
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `LLR_MATRIX.Build_SW_Branch_Layout` | 그룹별 분기 index와 구간만 계산 |
+| 2 | `LLR_OPT.Build_Target_Group_Indices` | 설정의 index를 그대로 타겟 목록에 담음 |
+| 3 | `LLR_OPT._Get_Target_Group_Idx` | 변이할 타겟 그룹 하나의 index. `Generate_Random_Mutation`과 `Mutate_CSW`가 씀 |
+| 4 | `LLR_OPT.Check_SW_Branch_Mode_Allowed` | 타겟 목록에 적힌 그룹만 보고 분기 그룹이 있는지 판단 |
+| 5 | `LLR_OPT.Set_Gen_Trial_LLR_Mode`, `Bcast_Trial_LLR_Mode`, `Print_Mode_Target_Info`, `Initialize_Stage` | 타겟 그룹 하나만 정하고 알림 |
+
+그대로 둔 것: 분기 구간의 iteration 검사(G2, G10), 헤더와 꼬리의 대조(H8), 분기 그룹이 타겟일 때의 모드 제한(MUTATE_MATRIX, MUTATE_CSW), 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하는 규칙.
+
+| `LLR_MATRIX_2.txt`에 준 목록 | 타겟 목록 | stage마다 바뀌는 그룹 |
+|------|------|------|
+| `[0, 1]` | `[0, 1]` | 그룹 0, 다음 바퀴에 그룹 1 |
+| `[1, 4]` | `[1, 4]` | 그룹 1, 다음 바퀴에 그룹 4 |
+| `[0, 2]` | `[0, 2]` | 그룹 0, 다음 바퀴에 그룹 2에서 중단 (구간 5~8의 분기 0이라 마지막 분기가 아님) |
+
 ## 4. 수정 대상 파일
 
+- `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.3절의 표), `_pm/tasks/20260921_SW_branch_DAO_support/review/checks/check_sw_branch.py`
 - `SRC/DAO_LLR_MATRIX.py` (Is_Row_In_HBF_Iterations, Is_LLR_Valid, Read_Input_LLR_Matrix 주석, Correct_LLR_Matrix, Correct_Ch_Th_In_Row)
 - `SRC/DAO_Main.py` (Gen_LLR_Regen_DV, Gen_LLR_Regen_Row, Generate_Random_Mutation, Build_Target_Group_Indices, Check_Fixed_Target_Group_Idx_List, Initialize_Stage, Initialize_LLR_Matrix, Update_Optimal_LLR, Validate_Config, Check_SW_Branch_Mode_Allowed 오류 문구)
 - `SRC/DAO_Main.py` (Set_Seed_Mode), `SRC/DAO_Config.py` (HBF_OPT_CONFIG)
@@ -87,7 +110,7 @@ uncor 풀은 `LOAD_UNCOR_MODE`로 준비되므로(`Setup_Uncor_Pool`), seed 모�
 - ㉯ max_iteration이 4 이하인 HBF 매트릭스는 모든 row가 HBF 구간에 있으므로 동작이 같다
 - ㉰ restart row는 유효성 검사와 보정 모두 HBF 규칙보다 앞에서 건너뛴다
 - ㉱ `Correct_Ch_Th_In_Row`의 새 인자는 기본값이 False이고, row 없이 부르는 자리는 `_generate_random_row` 하나다. 그 결과는 `Gen_Trial_LLR`과 `Build_Single_Row_Matrix`에서 `Correct_LLR_Matrix`를 거친다
-- ㉲ `FIXED_TARGET_GROUP_IDX_LIST`가 None인 실행은 타겟 목록이 stage마다 같은 규칙으로 만들어진다. 시작 직후의 목록(`Initialize_LLR_Matrix`)과 목록이 비었을 때의 복원(`Update_Optimal_LLR`)도 묶음의 첫 그룹으로 당기는 규칙을 함께 따른다 (SW 분기가 없는 매트릭스는 값이 같다)
+- ㉲ `FIXED_TARGET_GROUP_IDX_LIST`가 None인 실행은 타겟 목록이 `INITIAL_TARGET_GROUP_IDX`부터 마지막 그룹까지다. 시작 직후(`Initialize_LLR_Matrix`), stage 시작(`Initialize_Stage`), 목록이 비었을 때의 복원(`Update_Optimal_LLR`)이 같은 함수로 만든다
 - ㉳ `Build_Target_Group_Indices`는 잘못 적은 값(정수가 아닌 값, 범위 밖)을 건너뛰고, 알리는 일은 뒤이어 도는 `Validate_Config`가 맡는다. `Setup`이 `Initialize_LLR_Matrix` 다음에 `Validate_Config`를 부르기 때문이다
 
 ## 6. 미결정 사항
@@ -99,8 +122,10 @@ uncor 풀은 `LOAD_UNCOR_MODE`로 준비되므로(`Setup_Uncor_Pool`), seed 모�
 - 검사: `_test/20260928_hbf_th_iteration_range/test_hbf_th_iteration_range.py` 11건 (유효성 4, 보정 1, 변이 2, row 다시 만들기 2, DV 다시 만들기 2)
   - 첫 수정 전 소스(커밋 dff3dba의 SRC): 처음 쓴 9건 가운데 5건 실패. 유효성 검사 실패 문구가 사용자 관측과 같음
   - 수정 후 소스: 11건 통과
-- 검사: `_test/20260928_fixed_target_group_idx_list/test_fixed_target_group_idx_list.py` 18건 (타겟 목록 만들기 6, stage마다 고르는 타겟 2, 설정 검사 10). 구현 전에는 18건 모두 오류, 구현 후 18건 통과
+- 검사: `_test/20260928_fixed_target_group_idx_list/test_fixed_target_group_idx_list.py` 20건 (타겟 목록 만들기 7, stage마다 고르는 타겟 3, 설정 검사 10). 구현 전에는 모두 오류였고, 3.3절을 반영하기 전에는 분기 그룹을 하나씩 다루는 4건이 실패. 지금 20건 통과
+- 검사: `_test/20260929_target_group_one_by_one/test_target_group_one_by_one.py` 8건 (MUTATE_MATRIX 3, MUTATE_CSW 2, 모드 허용 검사 3). 3.3절을 반영하기 전에는 4건 실패, 지금 8건 통과
+- 검사: `check_sw_branch.py`를 3.3절에 맞게 고침 (42건 통과)
 - 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
-- 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0 묶음을 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0]`(묶음 {0, 1})이 됨
+- 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `target_group_indices`가 지정한 그룹만 도는지

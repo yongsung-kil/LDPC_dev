@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-28 20:48:57
+> Claude 마지막 확인: 2026-09-29 13:26:26
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -15,6 +15,7 @@
   - [x] HBF 구간의 경계를 걸치는 row를 유효성 검사로 막음 (2026-09-28 17:48, HBF2 규칙. 사용자 확인: 입력과 결과 모두 경계를 걸치지 않고 HBF 구간 안은 1, 2~3, 4처럼 나눌 수 있음. 검사 11건 통과)
   - [x] 타겟 그룹을 직접 지정하는 `FIXED_TARGET_GROUP_IDX_LIST` 추가 (2026-09-28 17:48, 사용자 요청. None이면 `INITIAL_TARGET_GROUP_IDX`를 따름. 타겟 목록은 `Build_Target_Group_Indices` 한 곳에서 만들고, 값과 함께 쓰는 모드는 `Validate_Config`가 시작할 때 검사. 검사 18건 통과. DAO_spec.md 3.8절과 README 반영)
   - [x] HBF 최적화 모드의 seed 모드를 보통 모드와 같은 규칙으로 정함 (2026-09-28 20:48, 사용자 요청. `Set_Seed_Mode`의 HBF 전용 갈래와 `HBF_OPT_USING_UNCOR` 삭제. 검사 3건 통과)
+  - [x] 타겟 그룹을 그룹 하나씩 다루도록 되돌림 (2026-09-29 13:26, 사용자 요청. SW 분기 그룹을 한 단위로 함께 타겟하고 함께 변이하던 처리를 없앰. 타겟 목록의 값은 그룹 하나하나의 index이고 MUTATE_MATRIX와 MUTATE_CSW는 타겟 그룹 하나만 바꿈. 새 검사 8건, 고친 검사 20건과 42건 통과. DAO_spec.md 3.7절과 3.8절, README 3.4절 반영)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `target_group_indices`가 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지)
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정
@@ -48,7 +49,7 @@
   - [ ] 사용자 결정 (HBF 경로 존폐는 C1 수정으로 살리는 쪽 선택, 남은 것: 매트릭스 모델 정리 4건의 선행 여부, Prime_ECC_3.0 규격, 후속 작업 갈래)
   - [ ] 결정에 따라 수리 태스크와 가독성 태스크 등록
 
-- [ ] SW 분기 LLR matrix의 DAO 지원 (현재 수준: 읽기, 묶음 변이, 모드 제한)
+- [ ] SW 분기 LLR matrix의 DAO 지원 (현재 수준: 읽기, 그룹 단위 변이, 모드 제한)
   - 상세: `_pm/tasks/20260921_SW_branch_DAO_support/` (Decision 등급, 미결정 5건)
   - [x] 요구 정리와 설계 문서 작성 (2026-09-21 18:39)
   - [x] 사용자 결정 5건 (2026-09-21 20:38: 구조 변경 모드 전부 금지, 헤더 10 이상만 대조, 묶음 단위 타겟, 이름 floor_flag 유지, 이 세션 구현)
@@ -60,7 +61,8 @@
     - Round 1 관점 16개, Round 2 lv1 4개 발견 28건 (CRITICAL 2, HIGH 2, MEDIUM 10, LOW 14). 종합 판정: 수정 필요
     - CRITICAL: 타겟 목록에서 마지막이 아닌 분기를 빼지 않아 파일 1이 기본 설정으로 첫 stage에서 중단(C1), SW 허용 검사가 stage 건너뛰기보다 먼저 돌아 GEN_INITIAL_GROUP이 stage 2 이상에서 중단(C2)
   - [ ] 리뷰 발견 수정 (C1 C2 H1 H2 M1 M3 M4 M6 M9 M10은 작은 수정, M2 전면 재번호는 중간 규모)
-  - [ ] 사용자 환경에서 MPI 실행 검증 (LLR_MATRIX_2.txt, 시퀀스 [10, 11], INITIAL_TARGET_GROUP_IDX로 묶음 지정)
+  - [x] 타겟 단위를 그룹 하나로 바꿈 (2026-09-29 13:26, 사용자 결정. 2026-09-21 결정 3번의 "묶음 단위 타겟"을 대신함. 기록은 `_pm/tasks/20260928_HBF_TH_iteration_range/` 3.3절)
+  - [ ] 사용자 환경에서 MPI 실행 검증 (LLR_MATRIX_2.txt, 시퀀스 [10, 11], FIXED_TARGET_GROUP_IDX_LIST로 그룹 지정)
 
 ## 새 작업 추가
 

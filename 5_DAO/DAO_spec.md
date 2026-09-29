@@ -121,52 +121,51 @@ LLR_MATRIX
 | HBF2 | `is_HBF_OPT == True` | row는 HBF 구간 안에서 끝나거나 HBF 구간 뒤에서 시작 (`iter_start <= HBF_MAX_ITERATION < iter_end`이면 오류) |
 
 - ㉮ HBF 구간은 iteration 1부터 `HBF_MAX_ITERATION`(4)까지다. 이 구간에서 디코더는 가장 높은 DV를 1 bit 정밀도로 처리해 그 TH를 읽지 않는다
-- ㉯ dv_idx 0은 row의 첫 CH와 TH 묶음이다. row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서로 적는다
+- ㉯ dv_idx 0은 row의 맨 앞 CH와 TH다. row는 `CH(dv 0) TH(dv 0) CH(dv 1) TH(dv 1) ...` 순서로 적는다
 - ㉰ HBF 구간의 row인지는 `Is_Row_In_HBF_Iterations()`가 끝 iteration으로 판단하고(`iter_end <= HBF_MAX_ITERATION`), 유효성 검사, 보정, 변이, 난수 생성이 모두 이 함수를 쓴다
 - ㉱ HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV와 같은 규칙(RW4, RW5)을 따른다. 매트릭스의 max_iteration은 `HBF_MAX_ITERATION`보다 클 수 있다
 - ㉲ HBF 구간 안은 여러 그룹으로 나눌 수 있다 (예: iteration 1, 2~3, 4). HBF2는 입력 매트릭스와 trial 매트릭스에 똑같이 걸리므로, 경계를 걸치는 row를 만든 trial은 유효하지 않은 매트릭스로 버려진다
 
 ---
 
-### 3.7 SW 분기와 묶음
+### 3.7 SW 분기
 
-SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 분기로 갈라 디코더가 프레임마다 하나를 고르게 하는 구조다. DAO는 분기를 만들거나 없애거나 옮기지 않고, 사용자가 입력 매트릭스로 정한 분기를 읽어 묶음 단위로 변이한다.
+SW(Syndrome Weight, 신드롬 무게) 분기는 한 iteration 구간을 여러 분기로 갈라 디코더가 프레임마다 하나를 고르게 하는 구조다. DAO는 분기를 만들거나 없애거나 옮기지 않고, 사용자가 입력 매트릭스로 정한 분기를 그대로 보존한다. 타겟은 분기 그룹도 그룹 하나씩 고르고, 변이는 타겟 그룹 하나에만 들어간다.
 
 **표기** (파일 형식은 바뀌지 않는다)
 
 - ㉮ 각 row의 마지막 칸 `floor_flag`가 분기 index다. -1은 분기 없음, 0 이상은 그 구간 안의 분기 번호
-- ㉯ 헤더 `type_each_group`은 두 가지 뜻을 갖는다. 10 미만(0, 1)은 보통 그룹이고 row 꼬리는 -1이어야 한다. 10 이상은 `{분기 수}{분기 index}` 표시다: 10은 분기 1개짜리 묶음(꼬리 0), 20과 21은 분기 2개(꼬리 0과 1). DAO는 읽은 값을 그대로 보존해 다시 쓰고, 헤더와 꼬리를 양방향으로 대조하며(H8), 헤더 표시 값이 바뀌는 자리를 구간 경계로 쓴다
+- ㉯ 헤더 `type_each_group`은 두 가지 뜻을 갖는다. 10 미만(0, 1)은 보통 그룹이고 row 꼬리는 -1이어야 한다. 10 이상은 `{분기 수}{분기 index}` 표시다: 10은 분기 1개(꼬리 0), 20과 21은 분기 2개(꼬리 0과 1). DAO는 읽은 값을 그대로 보존해 다시 쓰고, 헤더와 꼬리를 양방향으로 대조하며(H8), 헤더 표시 값이 바뀌는 자리를 구간 경계로 쓴다
 
 **용어**
 
-- ㉮ **묶음(bundle)**: 한 구간 안에서 분기 index가 같은 그룹들. 분기 index가 -1이면 그룹 하나가 묶음 하나다. 헤더 10이 이어지는 그룹들이 가장 단순한 묶음이다
-- ㉯ **구간(span)**: index 0으로 시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위. index 0이 그대로 이어지는데 헤더 표시 값이 바뀌는 자리도 구간 경계다 (예: 헤더 10인 묶음 뒤에 헤더 20인 그룹). 구간 안에서 index가 1 늘면 iteration은 구간 시작으로 되돌아간다. 모든 분기는 구간의 시작과 끝을 똑같이 덮는다(G10). 구간 끝은 분기 0이 덮는 끝이다. 같은 표시의 묶음 두 개가 iteration이 이어진 채 붙어 있으면 경계를 알 수 없으므로, 그 실행에서 갱신하지 않는 쪽은 보통 그룹(헤더 1, 꼬리 -1)으로 둔다
+- ㉮ **구간(span)**: index 0으로 시작해 index가 0으로 되돌아가거나 -1이 나오기 전까지의 그룹들이 덮는 iteration 범위. index 0이 그대로 이어지는데 헤더 표시 값이 바뀌는 자리도 구간 경계다 (예: 헤더 10인 그룹 뒤에 헤더 20인 그룹). 구간 안에서 index가 1 늘면 iteration은 구간 시작으로 되돌아간다. 모든 분기는 구간의 시작과 끝을 똑같이 덮는다(G10). 구간 끝은 분기 0이 덮는 끝이다. 같은 표시의 구간 두 개가 iteration이 이어진 채 붙어 있으면 한 구간으로 읽는다
 
-`Build_SW_Branch_Layout()`이 groups만 보고 그룹별 분기 index, 묶음, 구간을 계산한다. `Is_LLR_Valid()`가 이 계산으로 G2와 G10을 검사한다.
+`Build_SW_Branch_Layout()`이 groups만 보고 그룹별 분기 index와 구간을 계산한다. `Is_LLR_Valid()`가 이 계산으로 G2와 G10을 검사한다.
 
-**예** (`Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`. 같은 폴더의 `LLR_MATRIX_2.txt`는 iteration 1~4가 헤더 10인 분기 1개짜리 묶음이다)
+**예** (`Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`. 같은 폴더의 `LLR_MATRIX_2.txt`는 iteration 1~4가 헤더 10인 분기 1개짜리 구간이다)
 
 | 그룹 | 헤더 | 꼬리 | iteration | 뜻 |
 |------|------|------|-----------|-----|
-| 0, 1 | 20, 20 | 0, 0 | 1~1, 2~4 | 구간 1~4의 분기 0 (두 그룹이 한 묶음) |
+| 0, 1 | 20, 20 | 0, 0 | 1~1, 2~4 | 구간 1~4의 분기 0 |
 | 2 | 21 | 1 | 1~4 | 구간 1~4의 분기 1 |
 | 3 | 20 | 0 | 5~8 | 구간 5~8의 분기 0 |
-| 4, 5 | 21, 21 | 1, 1 | 5~5, 6~8 | 구간 5~8의 분기 1 (한 묶음) |
+| 4, 5 | 21, 21 | 1, 1 | 5~5, 6~8 | 구간 5~8의 분기 1 |
 | 6~11 | 1 | -1 | 9~124 | 분기 없음 |
 
 **최적화 규칙**
 
-- ㉮ 타겟 목록(`target_group_indices`)은 묶음 단위다. 묶음은 첫 그룹 index 하나로 들어가고, `INITIAL_TARGET_GROUP_IDX`나 `FIXED_TARGET_GROUP_IDX_LIST`의 index가 묶음 중간이면 그 묶음의 첫 그룹으로 당긴다 (3.8절)
-- ㉯ 타겟 그룹(묶음 포함)에 분기 그룹이 들어 있으면 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 다른 모드가 시퀀스에 있으면 `Set_Gen_Trial_LLR_Mode`가 오류로 멈춘다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다. 타겟을 분기 구간 뒤의 보통 그룹으로만 두면 다른 모드도 쓸 수 있다. 다만 GEN_INITIAL_GROUP은 모든 그룹을 바꾸므로 분기 그룹이 있으면 언제나 막는다. 허용된 모드가 타겟 앞의 그룹(분기 구간)을 조금이라도 바꾸면 `Gen_Trial_LLR`이 그 trial을 버리고 로그에 남긴다
+- ㉮ 타겟 목록(`target_group_indices`)의 값은 그룹 하나하나의 index다. 분기 그룹도 그룹마다 따로 타겟이 된다 (3.8절). 예의 그룹 4와 5는 같은 분기지만 타겟 4는 그룹 4만, 타겟 5는 그룹 5만 바꾼다
+- ㉯ 타겟 그룹에 분기 그룹이 들어 있으면 MUTATE_MATRIX와 MUTATE_CSW만 허용한다(`SW_BRANCH_ALLOWED_MODES`). 다른 모드가 시퀀스에 있으면 `Set_Gen_Trial_LLR_Mode`가 오류로 멈춘다. 구조 변경 모드는 이웃 그룹의 iteration을 빌리거나 재배치해 구간 정렬을 깨뜨리기 때문이다. 타겟을 분기 구간 뒤의 보통 그룹으로만 두면 다른 모드도 쓸 수 있다. 다만 GEN_INITIAL_GROUP은 모든 그룹을 바꾸므로 분기 그룹이 있으면 언제나 막는다. 허용된 모드가 타겟 앞의 그룹(분기 구간)을 조금이라도 바꾸면 `Gen_Trial_LLR`이 그 trial을 버리고 로그에 남긴다
 - ㉰ 타겟이 여러 분기로 갈라진 구간 안에 있으면 마지막 분기만 갱신한다. 다른 분기가 타겟이면 오류로 멈춘다
-- ㉱ MUTATE_MATRIX는 묶음의 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CHTH`개까지 변이하고, `Correct_LLR_Matrix`가 row마다 정렬한다. MUTATE_CSW는 그룹마다 따로 `NUM_ELEMENTS_TO_MUTATE_CSW`개까지 변이하고 그룹 안에서 정렬한다
+- ㉱ MUTATE_MATRIX는 타겟 그룹에서 `NUM_ELEMENTS_TO_MUTATE_CHTH`개까지 변이하고, `Correct_LLR_Matrix`가 row마다 정렬한다. MUTATE_CSW는 타겟 그룹에서 `NUM_ELEMENTS_TO_MUTATE_CSW`개까지 변이하고 그룹 안에서 정렬한다
 - ㉲ HBF(Hybrid Bit Flipping)는 지금 HD 복호의 iteration 1~4를 뜻한다. HBF 최적화 모드(`IS_HBF_OPT`)와 SW 분기의 결합은 다루지 않는다
 
 ---
 
 ### 3.8 타겟 그룹 목록
 
-`Build_Target_Group_Indices()`가 설정과 매트릭스에서 타겟 목록(`target_group_indices`)을 만든다. 시작할 때 초기 매트릭스로 한 번, stage마다 optimal 매트릭스로 한 번 만든다.
+`Build_Target_Group_Indices()`가 설정과 매트릭스에서 타겟 목록(`target_group_indices`)을 만든다. 시작할 때 초기 매트릭스로 한 번, stage마다 optimal 매트릭스로 한 번 만든다. 목록의 값은 그룹 하나하나의 index이고, 매트릭스 파일에 적힌 그룹 순서를 0부터 센다.
 
 | 설정 | 타겟 목록 |
 |------|----------|

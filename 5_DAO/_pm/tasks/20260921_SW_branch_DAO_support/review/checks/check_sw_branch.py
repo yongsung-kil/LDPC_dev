@@ -34,7 +34,7 @@ old = LLR_MATRIX(init_n=1, matrix_idx=0, is_HBF_OPT=False, input_dir=OLD_DIR)
 ok, msg = old.Is_LLR_Valid()
 check("㉮ 옛 형식 매트릭스 유효", ok, msg)
 check("㉮ 옛 형식 왕복 일치", tokens_of_matrix(old) == tokens_of_file(os.path.join(OLD_DIR, "LLR_MATRIX_0.txt")))
-check("㉮ 옛 형식은 분기 없음, 묶음은 그룹 하나씩", (not old.has_sw_branch) and all(b == [g] for g, b in enumerate(old.bundle_of_group)))
+check("㉮ 옛 형식은 분기 없음", (not old.has_sw_branch) and all(span is None for span in old.span_of_group))
 
 # ㉯ 새 형식 두 파일
 m1 = LLR_MATRIX(init_n=1, matrix_idx=1, is_HBF_OPT=False, input_dir=NEW_DIR)
@@ -46,11 +46,9 @@ check("㉯ LLR_MATRIX_1 왕복 일치 (헤더 20/21/1과 꼬리 보존)", tokens
 check("㉯ LLR_MATRIX_2 왕복 일치", tokens_of_matrix(m2) == tokens_of_file(os.path.join(NEW_DIR, "LLR_MATRIX_2.txt")))
 check("㉯ max_iteration 124", m1.max_iteration == 124 and m2.max_iteration == 124, f"{m1.max_iteration} {m2.max_iteration}")
 
-# ㉰ 묶음
-b1 = [m1.bundle_of_group[g] for g in range(len(m1.groups))]
-check("㉰ 파일 1 묶음", b1[0] == [0, 1] and b1[1] == [0, 1] and b1[2] == [2] and b1[3] == [3] and b1[4] == [4, 5] and b1[5] == [4, 5] and all(b1[g] == [g] for g in range(6, 12)), str(b1))
-b2 = [m2.bundle_of_group[g] for g in range(len(m2.groups))]
-check("㉰ 파일 2 묶음", b2[0] == [0, 1] and b2[2] == [2] and b2[3] == [3, 4] and all(b2[g] == [g] for g in range(5, 11)), str(b2))
+# ㉰ 그룹별 분기 index
+check("㉰ 파일 1 분기 index", m1.group_branch_idx == [0, 0, 1, 0, 1, 1] + [-1] * 6, str(m1.group_branch_idx))
+check("㉰ 파일 2 분기 index", m2.group_branch_idx == [0, 0, 0, 1, 1] + [-1] * 6, str(m2.group_branch_idx))
 
 # ㉱ 구간
 s1 = m1.span_of_group
@@ -91,15 +89,17 @@ def plain_header_with_branch_tail(t):
 invalid("헤더 1(보통 그룹)인데 꼬리 0", plain_header_with_branch_tail, "is a plain group but rows carry SW branch index 0")
 # 헤더 10 규약: 파일 2와 같은 구조를 헤더 1 1 로 쓰면 무효, 10 10 이면 유효
 t = m2.Deep_Copy(); t.header.type_each_group = np.array([1, 1, 20, 21, 21, 1, 1, 1, 1, 1, 1])
-check("㉲ 거부: 묶음을 헤더 1로 쓰면 무효 (10을 써야 함)", not t.Is_LLR_Valid()[0])
+check("㉲ 거부: 분기 1개짜리 구간을 헤더 1로 쓰면 무효 (10을 써야 함)", not t.Is_LLR_Valid()[0])
 check("㉯ 파일 2 헤더가 10 10 20 21 21", list(m2.header.type_each_group[:5]) == [10, 10, 20, 21, 21], str(list(m2.header.type_each_group[:5])))
 
-# ㉳ 묶음 변이
+# ㉳ 분기 그룹의 변이 (타겟 그룹 하나만 바꾼다)
 class Fake:
     now_enable_CSW_update_limit = False
     current_target_group_idx = 0
     Get_Mutate_Matrix_Skip_Row_Idx = M.LLR_OPT.Get_Mutate_Matrix_Skip_Row_Idx
-    _Get_Target_Bundle_Groups = M.LLR_OPT._Get_Target_Bundle_Groups
+    _Get_Target_Group_Idx = M.LLR_OPT._Get_Target_Group_Idx
+    _Is_Group_Index_Value = staticmethod(M.LLR_OPT._Is_Group_Index_Value)
+    Build_Target_Group_Indices = M.LLR_OPT.Build_Target_Group_Indices
     Generate_Random_Mutation = M.LLR_OPT.Generate_Random_Mutation
     Mutate_CSW = M.LLR_OPT.Mutate_CSW
     Check_SW_Branch_Mode_Allowed = M.LLR_OPT.Check_SW_Branch_Mode_Allowed
@@ -111,12 +111,15 @@ f = Fake(); f.current_target_group_idx = 0
 t = m2.Deep_Copy()
 muts = f.Generate_Random_Mutation(t)
 groups_touched = {g for g, r, c, o, n in muts}
-per_group = {g: sum(1 for x in muts if x[0] == g) for g in groups_touched}
-check("㉳ MUTATE_MATRIX가 묶음 {0,1} 두 그룹 모두 변이", groups_touched == {0, 1}, str(groups_touched))
-check("㉳ 그룹마다 NUM_ELEMENTS_TO_MUTATE_CHTH개", all(v == C.MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH for v in per_group.values()), str(per_group))
+check("㉳ MUTATE_MATRIX가 타겟 그룹 0만 변이 (같은 분기의 그룹 1은 그대로)", groups_touched == {0}, str(groups_touched))
+check("㉳ 타겟 그룹에서 NUM_ELEMENTS_TO_MUTATE_CHTH개", len(muts) == C.MUTATE_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH, str(len(muts)))
 t = m2.Deep_Copy()
 mods = f.Mutate_CSW(t)
-check("㉳ MUTATE_CSW는 묶음 안 row가 있는 그룹 1만 (그룹 0은 row 하나)", {g for g, r, o, n in mods} == {1}, str(mods))
+check("㉳ MUTATE_CSW는 타겟 그룹 0에 바꿀 row가 없어 변이 없음 (그룹 0은 row 하나)", mods == [], str(mods))
+f.current_target_group_idx = 1
+t = m2.Deep_Copy()
+mods = f.Mutate_CSW(t)
+check("㉳ MUTATE_CSW가 타겟 그룹 1만 변이", {g for g, r, o, n in mods} == {1}, str(mods))
 ok, msg = t.Is_LLR_Valid()
 t.Correct_LLR_Matrix(); ok2, msg2 = t.Is_LLR_Valid()
 check("㉳ CSW 변이 뒤 보정하면 유효", ok2, msg2)
@@ -127,7 +130,8 @@ check("㉳ 분기 없는 그룹은 그룹 하나만 변이", {g for g, *_ in mut
 # ㉴ ㉵ 모드 허용 검사
 check("㉴ 파일 1 타겟 g3(분기 0)은 마지막 분기가 아니라 오류", "only the last branch" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_MATRIX, 3, [3, 4, 6, 7, 8, 9, 10, 11]) or ""))
 check("㉴ 파일 1 타겟 g4(분기 1)는 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.MUTATE_CSW, 4, [4, 6, 7, 8, 9, 10, 11]) is None)
-check("㉴ 파일 2 타겟 g0(분기 하나짜리 구간)은 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, 0, [0, 2, 3, 5, 6, 7, 8, 9, 10]) is None)
+check("㉴ 파일 2 타겟 g0(분기 하나짜리 구간)은 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, 0, [0, 1, 3, 4]) is None)
+check("㉴ 파일 2 타겟 g1(분기 하나짜리 구간의 둘째 그룹)도 허용", f.Check_SW_Branch_Mode_Allowed(m2, GenLLRMode.MUTATE_MATRIX, 1, [0, 1, 3, 4]) is None)
 check("㉵ 타겟에 분기 그룹이 있으면 REORDER_GROUP은 오류", "not allowed" in (f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, 4, [4, 6, 7, 8, 9, 10, 11]) or ""))
 check("㉵ 타겟이 분기 구간 뒤(g6~)뿐이면 REORDER_GROUP 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.REORDER_GROUP, 6, list(range(6, 12))) is None)
 check("㉵ 타겟이 분기 구간 뒤여도 DELETE_ROW 허용", f.Check_SW_Branch_Mode_Allowed(m1, GenLLRMode.DELETE_ROW, 6, list(range(6, 12))) is None)
@@ -147,16 +151,11 @@ check("보호 구간: 분기 그룹의 값이 바뀌면 검출", "values changed
 touched = m1.Deep_Copy(); touched.groups[7][0].iter_end += 0; touched.groups[8][1].ch_th_values[0] += 1
 check("보호 구간: 타겟 그룹(g8)이 바뀐 것은 검출 대상 아님", fg._Protected_Groups_Changed(m1, touched) is None)
 
-# 타겟 목록: Initialize_Stage와 같은 계산
-heads = []
-for idx in range(0, len(m2.groups)):
-    h = m2.bundle_of_group[idx][0]
-    if h not in heads: heads.append(h)
-check("타겟 목록이 묶음 대표만 담음 (파일 2, 시작 0)", heads == [0, 2, 3] + list(range(5, 11)), str(heads))
-heads = []
-for idx in range(1, len(m2.groups)):
-    h = m2.bundle_of_group[idx][0]
-    if h not in heads: heads.append(h)
-check("시작 index가 묶음 중간이면 첫 그룹으로 당김 (파일 2, 시작 1)", heads[0] == 0, str(heads))
+# 타겟 목록: Initialize_Stage가 쓰는 Build_Target_Group_Indices (값은 그룹 하나하나의 index)
+C.DAO_CONFIG.FIXED_TARGET_GROUP_IDX_LIST = None
+C.DAO_CONFIG.INITIAL_TARGET_GROUP_IDX = 0
+check("타겟 목록이 모든 그룹을 하나씩 담음 (파일 2, 시작 0)", f.Build_Target_Group_Indices(m2) == list(range(0, 11)), str(f.Build_Target_Group_Indices(m2)))
+C.DAO_CONFIG.INITIAL_TARGET_GROUP_IDX = 1
+check("시작 index가 분기 구간의 둘째 그룹이어도 그 그룹부터 (파일 2, 시작 1)", f.Build_Target_Group_Indices(m2) == list(range(1, 11)), str(f.Build_Target_Group_Indices(m2)))
 
 print("\nFAILED:", fails if fails else "none")
