@@ -8432,6 +8432,50 @@ class LLR_OPT:
                 errors.append(f"{sequence_name}: {sw_error}")
         return errors
 
+    def Check_HBF_Optimization_Mode_Allowed(self, selected_mode: int) -> Optional[str]:
+        """HBF 최적화 모드(IS_HBF_OPT)에서 이 모드가 허용되는지 본다.
+
+        디코더 실행 파일은 HBF 최적화가 다루는 구간에서 그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기)가 바뀐
+        매트릭스를 받지 않는다. 그래서 그룹 배치를 그대로 두는 모드(GROUP_LAYOUT_KEEPING_MODES, GenLLRModeHBF의 모드)만
+        허용한다. 그룹 안의 row 수는 바뀌어도 된다. SW 분기의 유무와 타겟 목록은 보지 않는다.
+
+        Returns:
+            Optional[str]: 막는 이유. 허용되거나 HBF 최적화 모드가 아니면 None
+        """
+        if not DAO_CONFIG.IS_HBF_OPT:
+            return None
+        allowed_values = {int(mode) for mode in GROUP_LAYOUT_KEEPING_MODES}
+        if int(selected_mode) in allowed_values:
+            return None
+        mode_name = GenLLRMode(selected_mode).name
+        allowed_names = ", ".join(GenLLRMode(value).name for value in sorted(allowed_values))
+        return (
+            f"mode {mode_name} ({int(selected_mode)}) changes the number, order or iteration of groups, "
+            f"which the decoder does not accept in the iterations HBF optimization covers (IS_HBF_OPT=True). "
+            f"Allowed modes: {allowed_names}"
+        )
+
+    def Check_Mode_Sequence_In_HBF_Optimization(self) -> list[str]:
+        """HBF 최적화 모드의 시퀀스(Gen_LLR_Mode_HBF_SEQUENCE)의 모드마다 Check_HBF_Optimization_Mode_Allowed를 시작할 때 검사한다.
+
+        Returns:
+            list[str]: 오류 문구 목록 (막히는 모드마다 하나). IS_HBF_OPT가 꺼져 있거나 문제가 없으면 빈 목록
+        """
+        if not DAO_CONFIG.IS_HBF_OPT:
+            return []
+        valid_mode_values = {int(mode) for mode in GenLLRMode}
+        errors: list[str] = []
+        checked_modes: set[int] = set()
+        for mode_value in DAO_CONFIG.Gen_LLR_Mode_HBF_SEQUENCE:
+            mode_value = int(mode_value)
+            if mode_value not in valid_mode_values or mode_value in checked_modes:
+                continue
+            checked_modes.add(mode_value)
+            hbf_error = self.Check_HBF_Optimization_Mode_Allowed(mode_value)
+            if hbf_error is not None:
+                errors.append(f"Gen_LLR_Mode_HBF_SEQUENCE: {hbf_error}")
+        return errors
+
     def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_indices: list[int]) -> Optional[str]:
         """SW 분기가 있는 매트릭스에서 이 모드가 타겟 목록과 함께 허용되는지 본다.
 
@@ -8559,6 +8603,11 @@ class LLR_OPT:
                 sw_error = self.Check_SW_Branch_Mode_Allowed(self.optimal_LLR_matrix, selected_mode, self.target_group_indices)
                 if sw_error is not None:
                     self.MPI_Abort(f"Set_Gen_Trial_LLR_Mode: {sw_error}")
+
+            # HBF 최적화 모드: 그룹 배치를 바꾸는 모드를 막는다
+            hbf_error = self.Check_HBF_Optimization_Mode_Allowed(selected_mode)
+            if hbf_error is not None:
+                self.MPI_Abort(f"Set_Gen_Trial_LLR_Mode: {hbf_error}")
 
             # Stage skip 조건 체크
             is_skip_this_stage = False
@@ -10128,6 +10177,7 @@ class LLR_OPT:
                         f"INITIAL_TARGET_GROUP_IDX({DAO_CONFIG.INITIAL_TARGET_GROUP_IDX}) >= "
                         f"num_groups({num_groups}). target_group_indices will be empty.")
                 errors.extend(self.Check_Mode_Sequence_With_SW_Branch(self.initial_LLR_matrix))
+            errors.extend(self.Check_Mode_Sequence_In_HBF_Optimization())
 
         if SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS < 0:
             errors.append(f"SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS must be >= 0 (current: {SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS})")

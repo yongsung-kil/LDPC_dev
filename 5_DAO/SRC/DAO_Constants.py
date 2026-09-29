@@ -41,18 +41,21 @@ class GenLLRMode(IntEnum):
     INSERT_RESTART_GROUP = 80
 
 class GenLLRModeHBF(IntEnum):
-    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스에 쓰는 모드. 값은 같은 이름의 GenLLRMode 값이다"""
-    INSERT_RANDOM_GROUP = GenLLRMode.INSERT_RANDOM_GROUP
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스에 쓰는 모드. 값은 같은 이름의 GenLLRMode 값이다.
+
+    그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기 표시)를 그대로 두는 모드(GROUP_LAYOUT_KEEPING_MODES)와 같다.
+    디코더 실행 파일이 HBF 최적화가 다루는 구간에서 그룹 배치가 바뀐 매트릭스를 받지 않기 때문이다
+    """
     INSERT_RANDOM_ROW = GenLLRMode.INSERT_RANDOM_ROW
+    INSERT_MUTATED_ROW = GenLLRMode.INSERT_MUTATED_ROW
     MUTATE_MATRIX = GenLLRMode.MUTATE_MATRIX
     MUTATE_CSW = GenLLRMode.MUTATE_CSW
-    SPLIT_GROUP = GenLLRMode.SPLIT_GROUP
-    GEN_INITIAL_GROUP = GenLLRMode.GEN_INITIAL_GROUP
     COPY_GROUP = GenLLRMode.COPY_GROUP
     SWAP_ROW = GenLLRMode.SWAP_ROW
     COPY_ROWS = GenLLRMode.COPY_ROWS
     REGEN_DV = GenLLRMode.REGEN_DV
     REGEN_ROW = GenLLRMode.REGEN_ROW
+    DELETE_ROW = GenLLRMode.DELETE_ROW
 
 class OperatingSystem(Enum):
     WINDOWS = "nt"
@@ -206,6 +209,8 @@ MAX_SW_BRANCH = 9            # 한 구간의 분기 index 상한 (파일 헤더�
 
 # 그룹 배치(그룹 수, 그룹 순서, iteration 구간, SW 분기 표시)를 그대로 두고 타겟 그룹 안의 값과 row만 바꾸는 모드.
 # 그룹 안의 row 수는 바뀐다 (INSERT_RANDOM_ROW, INSERT_MUTATED_ROW, COPY_GROUP, DELETE_ROW).
+# GenLLRModeHBF의 모드와 같다. HBF 최적화 모드(IS_HBF_OPT)는 SW 분기가 있든 없든 이 모드만 쓴다
+# (LLR_OPT.Check_HBF_Optimization_Mode_Allowed가 시작할 때와 stage마다 검사).
 # DELETE_ROW는 그룹 배치를 그대로 두는 실행(LLR_OPT.Is_Group_Layout_Kept)에서 row가 하나인 그룹을 건너뛴다
 GROUP_LAYOUT_KEEPING_MODES: set[int] = {
     GenLLRMode.MUTATE_MATRIX,

@@ -133,6 +133,8 @@ class DAO_CONFIG:
     # 두 목록에서 돌릴 모드만 남기고 순서를 정한다
     # - 타겟에 SW 분기 그룹이 있으면 SW_BRANCH_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
     # - FIXED_TARGET_GROUP_IDX_LIST를 쓰면 FIXED_TARGET_GROUP_ALLOWED_MODES의 모드만 남긴다 (Validate_Config가 시작할 때 검사)
+    # - IS_HBF_OPT가 켜져 있으면 GenLLRModeHBF의 모드만 쓴다. 그룹 배치(그룹 수, 순서, iteration 구간, SW 분기)를
+    #   바꾸는 모드를 적으면 Validate_Config가 시작할 때 오류로 멈춘다
     # 보통 모드의 시퀀스. GenLLRMode의 모드를 모두 적은 목록이다
     Gen_LLR_Mode_SEQUENCE = [
         GenLLRMode.GEN_INITIAL_GROUP,      # stage 1에서만 돈다 (맨 앞에 둔다)
@@ -153,18 +155,18 @@ class DAO_CONFIG:
         GenLLRMode.DELETE_ROW,
         GenLLRMode.INSERT_RESTART_GROUP,
     ]
-    # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스. GenLLRModeHBF에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 목록이다
-    # 두 모드가 만드는 그룹은 기본 설정값(iteration 20칸)에서 iteration 구간 경계(4, 8)를 걸쳐 trial이 버려진다
+    # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스. GenLLRModeHBF의 모드 10개를 모두 적은 목록이다
     Gen_LLR_Mode_HBF_SEQUENCE = [
         GenLLRModeHBF.INSERT_RANDOM_ROW,
+        GenLLRModeHBF.INSERT_MUTATED_ROW,
         GenLLRModeHBF.MUTATE_MATRIX,
         GenLLRModeHBF.MUTATE_CSW,
-        GenLLRModeHBF.SPLIT_GROUP,
         GenLLRModeHBF.COPY_GROUP,
         GenLLRModeHBF.SWAP_ROW,
         GenLLRModeHBF.COPY_ROWS,
         GenLLRModeHBF.REGEN_DV,
         GenLLRModeHBF.REGEN_ROW,
+        GenLLRModeHBF.DELETE_ROW,
     ]
     INITIAL_TARGET_GROUP_IDX: int = 1  # 이 인덱스부터 끝까지를 opt 타겟 그룹으로 설정. 예: 1이면 [1, 2, 3, ...], 0이면 [0, 1, 2, ...]
     FIXED_TARGET_GROUP_IDX_LIST: Optional[list] = None  # opt 타겟 그룹을 직접 지정. 예: [0, 1]이면 그룹 0과 1만 변경. None이면 INITIAL_TARGET_GROUP_IDX부터 끝까지. 함께 쓸 수 있는 모드는 FIXED_TARGET_GROUP_ALLOWED_MODES
