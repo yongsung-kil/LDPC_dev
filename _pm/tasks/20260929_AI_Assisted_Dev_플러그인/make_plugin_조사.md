@@ -1,7 +1,7 @@
 # Claude 플러그인 기획 조사 (make_plugin.md 검토)
 
 > 작성: 2026-09-29 21:06:59
-> 대상: [make_plugin.md](make_plugin.md)의 초안. 빠진 것, 더할 것, 고칠 것을 이 저장소, 형제 저장소(논문 아카이브), Claude Code 공식 문서로 확인해 정리한다.
+> 대상: [make_plugin.md](../../../make_plugin.md)의 초안. 빠진 것, 더할 것, 고칠 것을 이 저장소, 형제 저장소(논문 아카이브), Claude Code 공식 문서로 확인해 정리한다.
 > 결정이 필요한 것 7건은 [판정요청_플러그인_260929.md](%ED%8C%90%EC%A0%95%EC%9A%94%EC%B2%AD_%ED%94%8C%EB%9F%AC%EA%B7%B8%EC%9D%B8_260929.md)에 따로 두었다.
 
 ---

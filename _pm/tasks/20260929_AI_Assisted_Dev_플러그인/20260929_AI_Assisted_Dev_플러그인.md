@@ -1,0 +1,172 @@
+# Claude 플러그인 AI_Assisted_Dev 제작
+
+> 작성: 2026-09-29 21:49:39
+> 상태: 설계 검토 대기 (사용자 검토 뒤 실행 계획으로 넘어감)
+> 변경 등급: Decision (새 저장소 신설)
+> 초안: [make_plugin.md](../../../make_plugin.md), 조사: [make_plugin_조사.md](make_plugin_%EC%A1%B0%EC%82%AC.md), 결정: [판정요청_플러그인_260929.md](%ED%8C%90%EC%A0%95%EC%9A%94%EC%B2%AD_%ED%94%8C%EB%9F%AC%EA%B7%B8%EC%9D%B8_260929.md)
+
+---
+
+## 목적
+
+Claude Code 플러그인(Claude Code에 설치하는 기능 묶음) 하나를 만든다. 기존 소스코드와 문서가 있는 프로젝트를 가진 엔지니어가 설치하면 Claude가 그 코드를 이해하고 문서화, 논문과 특허 조사, 아이디어 적용 실험, 최적화, 프로젝트 관리를 돕는다. 이 저장소와 논문 아카이브에서 굳힌 작업 방식을 남이 쓸 수 있는 꼴로 뽑아낸다.
+
+## 배경
+
+- ㉮ 지금까지의 작업 방식은 홈 폴더의 절차 문서(plan, review, debug, explore, test, wiki, decision), 프로젝트 CLAUDE.md의 규칙, `_pm/` 규약, 3_LDPC_ideas의 실험 절차, 논문 아카이브의 선별과 분석 절차에 흩어져 있다
+- ㉯ 이것들은 이 저장소 전용으로 쓰여 있어 다른 프로젝트에 그대로 옮길 수 없다
+- ㉰ 플러그인으로 묶으면 설치 한 번으로 같은 방식이 다른 프로젝트에서도 돈다
+
+## 확정 사항 (판정요청 답)
+
+| 항목 | 결정 |
+|---|---|
+| 범위 | 어떤 프로젝트에도 맞는 뼈대 + 프로젝트 프로파일. 프로파일은 LDPC가 아닌 문제, C++가 아닌 언어, Verilog나 RTL 같은 하드웨어 설계 환경도 담는다 |
+| 저장소 | LDPC_dev의 형제 폴더에 새 git 저장소 (작업 이름 `AI_Assisted_Dev`). 플러그인 내용물에 회사와 LDPC 언급을 두지 않는다 |
+| 시험 대상 | LDPC 코드를 새 폴더의 시험장에 가져가 절차서를 돌려 보며 고친다. 시험 대상은 정상 빌드되는 코드 한 벌 (파편화된 코드나 빌드 불가 상황은 다루지 않는다) |
+| 기능 범위 | 초안의 여섯 기능 전부. 기능마다 스킬로 나뉘어 있어 쓰는 사람이 골라 쓴다 |
+| 링크 규약 | 일반 md 링크 + 머리말 태그. 역링크는 스크립트가 계산한다 |
+| 논문 검색 | 사내 PC에서 브라우저를 조종해 검색한다 (IEEE 라이선스 적용). 형제 저장소 git 이력의 수집기 셋과 PDF 내려받기 도구를 일반화한다 |
+| 절차 스킬 | 계획, 리뷰, 디버그, 테스트 설계는 플러그인 자체 스킬로 넣는다 |
+| 순서 | 통합 저장소 작업과 병행한다. 플러그인은 지금 시작한다 |
+
+---
+
+## 설계
+
+### 1. 새 저장소의 폴더 구성
+
+```
+AI_Assisted_Dev/                     LDPC_dev의 형제 폴더 (git 저장소)
+├── plugin/                          플러그인 본체 (배포 단위, 이 폴더만 남에게 준다)
+│   ├── .claude-plugin/plugin.json   이름, 버전, 설명
+│   ├── skills/{이름}/SKILL.md       스킬 (3절 표)
+│   ├── agents/{이름}.md             에이전트 (4절)
+│   ├── hooks/hooks.json             자동 실행 설정 (5절)
+│   ├── scripts/                     파이썬 스크립트 (렌더러, 역링크, 검색, 알림)
+│   ├── templates/                   사용자 프로젝트에 복사되는 양식 (CLAUDE.md, _pm/, 프로파일, 기준서, 실험 폴더, ADR)
+│   └── evals/                       스킬별 동작 검사 사례 (8절)
+├── testbed/                         시험장 (git 무시). LDPC 코드 사본을 두고 플러그인을 돌려 본다
+├── _pm/                             이 저장소의 작업 관리 (플러그인의 pm 스킬로 운영한다)
+├── README.md                        설치법, 스킬 목록, 겹치는 스킬 끄는 법
+└── CLAUDE.md                        이 저장소에서 작업할 때의 규칙
+```
+
+- ㉮ `plugin/` 밖의 것은 배포되지 않는다. 회사와 LDPC 언급 검사는 `plugin/` 전체에 건다
+- ㉯ 시험장에 LDPC 코드를 두는 것은 플러그인을 실제 코드에 돌려 보기 위함이며, 시험장은 git이 추적하지 않는다
+
+### 2. 프로젝트 프로파일 (스킬이 읽는 유일한 도메인 지식)
+
+onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 코드 대신 이 문서를 읽는다. 논문 심층 분석 프롬프트가 코드 프로파일 한 파일만 읽던 방식을 프로젝트 전체로 넓힌 것이다.
+
+| 파일 (`docs/profile/`) | 담는 것 |
+|---|---|
+| `overview.md` | 문제 정의, 입력과 출력, 성능 지표, 실행 환경 (언어, 빌드 방법, 시뮬레이터. 하드웨어 설계면 합성 도구와 목표 공정) |
+| `structure.md` | 모듈 지도와 의존 관계. 파일, 모듈, 신호 흐름처럼 언어에 기대지 않는 낱말로 적는다 |
+| `replacement_points.md` | 교체 지점 표. 새 기법을 끼워 넣을 수 있는 자리와 그 단위 (C++ 함수, Python 메서드, Verilog 모듈 등). 없으면 "만들어야 함"으로 표시 |
+| `techniques.md` | 이미 가진 기법 목록 (논문 선별 때 "이미 있음" 판정에 쓴다) |
+| `constraints.md` | 변경 금지 대상, 기밀 규칙, 용어 풀이 |
+
+- ㉮ 프로파일 항목의 이름과 뜻은 언어와 무관하게 고정한다. onboard가 언어별 탐색 방법(C++, Python, Verilog, VHDL)을 골라 채운다
+- ㉯ 프로파일이 없으면 스킬은 "onboard를 먼저 실행하라"고 답하고 멈춘다
+
+### 3. 스킬 표
+
+| 스킬 | 하는 일 | 옮겨 오는 자산 | 진행 상태를 남기는 곳 |
+|---|---|---|---|
+| onboard | 프로젝트를 읽어 프로파일, CLAUDE.md, `_pm/`, `docs/` 뼈대를 만든다 | explore.md의 병렬 탐색 방식, `_pm/` 양식 | `docs/profile/` |
+| explore | 범위를 지정해 병렬 탐색하고 이해 문서를 만든다 | explore.md | `docs/explore/` |
+| wiki | AI용 위키를 만들고 갱신한다 (대화, 커밋, 완료 작업에서 결정과 시도를 뽑음) | wiki.md | `_wiki/`, `_tracker.md` |
+| doc-check | 문서 규칙 검사 (줄표, 가운뎃점, 번호 나열, 깨진 링크, 금지 표현) | 문서 수정 후 검사 루틴 | 없음 |
+| paper-search | 주제로 arXiv, IEEE, 특허를 검색해 목록 db를 만든다 | 수집기 셋 (git 이력), ieee_downloader | `papers.db` |
+| paper-screen | 초록만 보고 통과와 제외를 병렬 판정한다 | review.py, select_workflow.js, 기준서 양식 | `papers.db` |
+| paper-analyze | 통과 논문의 전문을 에이전트가 1편씩 읽고 고정 선택지 표로 분석한다 | analysis_prompt.md, categories.md | 논문별 분석 md |
+| idea-apply | 아이디어를 접수하고 실험 폴더를 만들고 실험로그와 현황표를 갱신한다 | 새논문적용규칙, `_template/`, 실험로그 | 아이디어 현황표 |
+| speed-opt | 코드 효율화 항목을 하나씩 진행한다 (항목별 문서, 검토, 외부 검증 기록) | 1_LDPC_revised의 체크리스트 방식 | `docs/speed_opt/` |
+| param-opt | 사용자 시뮬레이터에 맞는 파라미터 최적화기 뼈대를 만든다 | DAO의 구조 (참조 구현) | 만들어진 최적화기 폴더 |
+| pm | 작업 등록, 진행 메모, 완료 처리, 판정요청 작성 | `_pm/` 규약, decision.md | `_pm/` |
+| dashboard | `_pm/`, 현황표, 실험로그, 문서 링크를 json으로 뽑아 정적 html 대시보드를 만든다 | render.py, 통합 저장소 태스크의 사이트 설계 | `dashboard/` |
+| plan, review, debug, test | 계획 수립, 리뷰(라운드 진행), 디버그, 테스트 설계 | plan.md, review.md, debug.md, test.md | 각 절차의 산출 문서 |
+
+- ㉮ 스킬 하나는 절차서다. 읽을 것이 많거나 병렬이 필요한 단계는 에이전트를 부른다
+- ㉯ 한 번에 끝나지 않는 스킬은 위 표의 "진행 상태를 남기는 곳"에 상태를 적어 다음 세션이 이어서 한다
+
+### 4. 에이전트
+
+| 에이전트 | 역할 | 도구 제한 |
+|---|---|---|
+| explorer | 탐색 작업자. 관점 하나를 맡아 코드를 읽고 보고한다 | 읽기와 검색만 |
+| paper-reader | 논문 1편 분석 작업자. 프로파일과 논문 텍스트만 읽고 고정 선택지 표를 채운다 | 읽기만 |
+| reviewer | 리뷰 작업자. 라운드마다 관점 하나를 맡는다 | 읽기와 검색만 |
+
+### 5. 자동 실행 설정 (`hooks/hooks.json`)
+
+- ㉮ 세션 시작: `_pm/TODO.md`가 있으면 읽고 "Claude 마지막 확인" 시각을 적는다
+- ㉯ 작업이 끝날 때: 알림 스크립트가 설정되어 있으면 보낸다 (설정이 없으면 건너뛴다. 통로와 토큰은 사용자 홈 설정에 둔다)
+- ㉰ md 파일을 고친 뒤: doc-check 스크립트로 줄표와 가운뎃점을 검사해 경고만 낸다
+
+### 6. 대시보드 자료 양식 (스크립트가 읽는 md 규칙)
+
+| 자료 | 파일 | 읽는 규칙 |
+|---|---|---|
+| 작업 | `_pm/TODO.md` | `- [ ]`, `- [x]` 항목과 하위 `상세:` 링크 |
+| 완료 | `_pm/DONE.md` | `### YYYY-MM-DD` 절 |
+| 결정 대기 | `_pm/tasks/*/판정요청*.md` | `## 물음 N.` 과 `%` 줄 (빈 `%` 줄이 미답) |
+| 아이디어 | 현황표 md | `\| # \| 제목 \| 출처 \| 상태 \| 디렉토리 \|` 표 |
+| 실험 | 실험로그 md | `## ` 절 단위 |
+| 문서 지도 | 모든 md | 머리말 `tags:`, 본문 md 링크 (역링크 계산) |
+
+- ㉮ `scripts/collect_status.py`가 위 규칙으로 `dashboard/status.json`을 만들고, `scripts/render_dashboard.py`가 `dashboard/index.html`을 만든다
+- ㉯ html은 정적이고 상대 링크만 쓴다 (어느 호스트에 올려도 동작). 작성 규격은 HTML 작성 가이드를 따른다
+- ㉰ 렌더 뒤 깨진 링크와 금지 표현을 검사한다 (통합 저장소 태스크의 설계와 같음)
+
+### 7. 논문과 특허 검색 (브라우저 조종)
+
+- ㉮ 사내 PC에서 실제 Chrome을 조종한다. Claude Code의 Chrome 확장(Claude in Chrome)이 있으면 스킬이 그 도구로 직접 검색 페이지를 읽고, 없으면 selenium 스크립트를 돌린다 (ieee_downloader 방식)
+- ㉯ 출처별 방법
+  - ㉠ arXiv: 공개 API (git 이력의 arxiv_collector.py를 일반화)
+  - ㉡ IEEE Xplore: 검색 결과 페이지에서 제목, 초록, 연도, 문서 번호를 읽는다. 라이선스가 있으므로 PDF까지 받는다
+  - ㉢ 특허: Google Patents 검색 페이지를 같은 방식으로 읽는다
+- ㉰ 결과는 `papers.db` (형제 저장소 db.py의 표 구조를 일반화). 같은 질의를 다시 돌리면 이어받는다
+- ㉱ 검색어와 기준서는 프로파일의 문제 정의에서 뽑는다
+
+### 8. 시험 절차 (시험장)
+
+- 1. LDPC 코드 한 벌(2_LDPC_base 사본과 1_LDPC_revised의 C++ 사본)을 `testbed/`에 둔다 (git 무시)
+- 2. `claude --plugin-dir ./plugin` 으로 시험장에서 onboard부터 스킬을 순서대로 돌려 보고 절차서를 고친다
+- 3. 스킬마다 `evals/` 사례를 하나 이상 두고 `claude plugin validate`와 `claude plugin eval`로 검사한다
+- 4. 커밋마다 `plugin/` 전체에 회사와 LDPC 언급 검사를 돌려 0건을 확인한다
+
+### 9. 만드는 순서 (의존 관계 순)
+
+- 1. 저장소 뼈대, plugin.json, pm 스킬, doc-check 스킬 (자기 관리부터 플러그인으로 한다)
+- 2. onboard, explore, wiki 스킬 (프로파일이 나와야 나머지가 돈다)
+- 3. dashboard (자료 양식과 스크립트)
+- 4. idea-apply, speed-opt, param-opt 스킬
+- 5. paper-search, paper-screen, paper-analyze 스킬
+- 6. plan, review, debug, test 스킬 이관
+- 7. evals 정비와 배포 (marketplace.json)
+
+---
+
+## 수정 대상
+
+- ㉮ LDPC_dev의 형제 폴더 `AI_Assisted_Dev/` 전체 (신규 git 저장소)
+- ㉯ LDPC_dev: 루트 `_pm/TODO.md`(항목 등록), 이 태스크 폴더
+- ㉰ 형제 저장소 LDPC_Paper_Analysis: 읽기만 한다 (git 이력에서 수집기 셋을 꺼내 일반화)
+- ㉱ 홈 폴더 절차 문서: 수정하지 않고 복사해 일반화한다
+
+## 안전성 체크리스트
+
+- [ ] `plugin/`에 회사, LDPC, 입력 파일 언급 0건 (커밋마다 검사)
+- [ ] `testbed/`와 CLAUDE.local.md가 .gitignore에 들어간 뒤 첫 커밋
+- [ ] 홈 폴더의 개인 설정(알림 토큰, 로컬 경로)은 플러그인에 넣지 않는다
+- [ ] 원본 절차서(홈 prompts, 형제 저장소)는 수정하지 않는다
+- [ ] `claude plugin validate` 통과 뒤 커밋
+
+## 미결정 사항
+
+- ㉮ 폴더와 플러그인 이름: 작업 이름은 `AI_Assisted_Dev`(폴더), `ai-assisted-dev`(plugin.json의 이름). 다른 이름을 원하면 첫 커밋 전에 바꾼다
+- ㉯ 새 저장소의 원격: 개인 GitHub 비공개로 시작하고 회사 GitHub 반영은 뒤에 정한다
+- ㉰ 프로파일 폴더 이름: `docs/profile/` (사용자 프로젝트 안)
+- ㉱ 사내 PC에서 Claude in Chrome을 쓸 수 있는지 (안 되면 selenium 스크립트만 쓴다)
