@@ -131,7 +131,7 @@ class DAO_CONFIG:
 
     # LLR 생성 모드 순서 설정
     Gen_LLR_Mode_SEQUENCE =[10, 11, 21, 30, 31, 40, 41, 42, 43, 50, 51, 70]
-    Gen_LLR_Mode_HBF_SEQUENCE = [40, 41, 10, 11, 60]  # GenLLRModeHBF 순서: INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP
+    Gen_LLR_Mode_HBF_SEQUENCE = [40, 41, 10, 11, 60]  # HBF 최적화 모드(IS_HBF_OPT)의 시퀀스: INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP. 타겟에 SW 분기 그룹이 있으면 [10, 11]만 쓴다 (Validate_Config가 시작할 때 검사)
     INITIAL_TARGET_GROUP_IDX: int = 1  # 이 인덱스부터 끝까지를 opt 타겟 그룹으로 설정. 예: 1이면 [1, 2, 3, ...], 0이면 [0, 1, 2, ...]
     FIXED_TARGET_GROUP_IDX_LIST: Optional[list] = None  # opt 타겟 그룹을 직접 지정. 예: [0, 1]이면 그룹 0과 1만 변경. None이면 INITIAL_TARGET_GROUP_IDX부터 끝까지. 함께 쓸 수 있는 모드는 FIXED_TARGET_GROUP_ALLOWED_MODES
     ENABLE_AVG_ITER_UPDATE: bool = False  # FER 동일 시 avg_iteration 개선으로도 update 허용 여부
@@ -373,6 +373,7 @@ class HBF_OPT_CONFIG:
             DAO_CONFIG.IS_HBF_OPT = False
     HBF_MAX_ITERATION = 4
     HBF_OPT_TH_CONSTANT_VAL = 0
+    ITERATION_SPAN_ENDS = [4, 8]  # HBF 최적화 모드에서 row가 걸칠 수 없는 경계. 값 e는 iteration e와 e + 1 사이를 뜻한다 (4와 8이면 구간은 1~4, 5~8, 9 이후). HBF_MAX_ITERATION은 여기 없어도 언제나 경계다
 
 class ADJUST_ITERATION_CONFIG:
     ITER_TRANSFER_RATIO: float = 0.1  # Iteration 전달 비율 (0.1 = donor group의 10%를 focus group에 전달)

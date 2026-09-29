@@ -126,6 +126,26 @@ class LLR_MATRIX:
         """
         return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION
 
+    @staticmethod
+    def Get_Iteration_Span_Ends() -> list[int]:
+        """row가 걸칠 수 없는 iteration 경계의 목록 (오름차순). 값 e는 iteration e와 e + 1 사이를 뜻한다.
+
+        HBF 구간의 끝(HBF_MAX_ITERATION)과 ITERATION_SPAN_ENDS의 값이 경계다. 4와 8이면 구간은 1~4, 5~8, 9 이후다.
+        """
+        return sorted({int(HBF_OPT_CONFIG.HBF_MAX_ITERATION), *(int(span_end) for span_end in HBF_OPT_CONFIG.ITERATION_SPAN_ENDS)})
+
+    def Get_Iteration_Span_End_Crossed_By_Row(self, row: LLR_Row) -> Optional[int]:
+        """HBF 최적화 모드에서 row의 iteration 구간이 걸치는 첫 경계를 알려준다. 걸치지 않으면 None.
+
+        row는 구간 하나 안에 머문다. 구간 안은 여러 그룹으로 나눌 수 있다 (예: 구간 1~4를 1, 2~3, 4로).
+        """
+        if not self.is_HBF_OPT:
+            return None
+        for span_end in self.Get_Iteration_Span_Ends():
+            if row.iter_start <= span_end < row.iter_end:
+                return span_end
+        return None
+
     def Build_SW_Branch_Layout(self) -> Optional[str]:
         """groups에서 SW 분기 배치(그룹별 분기 index, 구간)를 다시 계산한다.
 
@@ -509,11 +529,13 @@ class LLR_MATRIX:
                     output_msg = f"Group {g_idx} Row {r} invalid SW branch index (floor_flag) {row.floor_flag}"
                     return False, output_msg
 
-                # HBF 최적화 모드의 row는 HBF 구간 안에서 끝나거나 HBF 구간 뒤에서 시작한다 (HBF2)
-                if self.is_HBF_OPT and row.iter_start <= HBF_OPT_CONFIG.HBF_MAX_ITERATION < row.iter_end:
+                # HBF 최적화 모드의 row는 iteration 구간 하나 안에 머문다 (HBF2)
+                crossed_span_end = self.Get_Iteration_Span_End_Crossed_By_Row(row)
+                if crossed_span_end is not None:
                     output_msg = (
-                        f"In HD_HBF_OPT mode, Group {g_idx} Row {r} iteration {row.iter_start}~{row.iter_end} crosses the HBF boundary: "
-                        f"a row must end within iteration 1~{HBF_OPT_CONFIG.HBF_MAX_ITERATION} or start after it"
+                        f"In HD_HBF_OPT mode, Group {g_idx} Row {r} iteration {row.iter_start}~{row.iter_end} crosses the boundary "
+                        f"between iteration {crossed_span_end} and {crossed_span_end + 1}: a row must stay within one span "
+                        f"(spans end at iteration {self.Get_Iteration_Span_Ends()})"
                     )
                     return False, output_msg
 

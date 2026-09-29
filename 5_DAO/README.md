@@ -123,6 +123,7 @@ FIXED_TARGET_GROUP_IDX_LIST = None  # 타겟 그룹을 직접 지정 (예: [0, 1
 - **`FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰는 모드**: 목록의 index가 그룹 번호에 묶여 있으므로 그룹 수, 순서, iteration 구간을 그대로 두는 모드만 쓴다
   - 허용: MUTATE_MATRIX(10), MUTATE_CSW(11), SWAP_ROW(21), COPY_ROWS(30), COPY_GROUP(31), INSERT_RANDOM_ROW(41), INSERT_MUTATED_ROW(43), REGEN_DV(50), REGEN_ROW(51)
   - 지금 쓰는 시퀀스에 다른 모드가 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다
+  - 목록에 SW 분기 그룹(헤더 10 이상)이 있으면 이 가운데 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 쓴다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스를 `[10, 11]`로 둔다
 
 #### GenLLRMode 시퀀스
 ```python
@@ -858,7 +859,7 @@ if self.is_root and now_optimal_LLR_update:
 
 헤더 `type_each_group`이 10 이상인 그룹은 SW(Syndrome Weight, 신드롬 무게) 분기 그룹이다. 10은 분기 1개(row 꼬리 0), 20과 21은 분기 2개(row 꼬리 0과 1)이고, 10 미만은 보통 그룹(row 꼬리 -1)이다. 타겟은 분기 그룹도 그룹 하나씩 고르고, 변이는 타겟 그룹 하나에만 들어간다. 자세한 규칙은 `DAO_spec.md` 3.7절에 있다.
 
-- ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 `Gen_LLR_Mode_SEQUENCE`에 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 넣는다. 다른 모드가 있으면 `Set_Gen_Trial_LLR_Mode`가 오류 문구를 내고 멈춘다. 타겟을 분기 구간 뒤의 보통 그룹으로 두면 다른 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
+- ㉮ 타겟 그룹(`INITIAL_TARGET_GROUP_IDX`부터 끝까지, 또는 `FIXED_TARGET_GROUP_IDX_LIST`로 지정한 그룹)에 분기 그룹이 들어 있으면 지금 쓰는 시퀀스(`Gen_LLR_Mode_SEQUENCE`, HBF 최적화 모드는 `Gen_LLR_Mode_HBF_SEQUENCE`)에 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 넣는다. 다른 모드가 있으면 `Validate_Config`가 시작할 때 오류 문구를 내고 멈춘다. 타겟을 분기 구간 뒤의 보통 그룹으로 두면 다른 모드도 쓸 수 있고(GEN_INITIAL_GROUP 제외), 그때 타겟 앞의 그룹을 바꾼 trial은 버려지고 로그에 `[SW branch]`로 남는다
 - ㉯ 여러 분기로 갈라진 구간의 그룹은 분기 index와 상관없이 타겟이 된다. 어느 분기의 그룹을 바꿀지는 타겟 목록으로 정하고, 그 분기에 맞는 uncor seed는 사용자가 준비한다
 - ㉰ `INITIAL_TARGET_GROUP_IDX`와 `FIXED_TARGET_GROUP_IDX_LIST`의 값은 그룹 하나하나의 index다 (매트릭스 파일에 적힌 그룹 순서를 0부터 센다). 분기 그룹도 그룹마다 따로 타겟이 된다
 - ㉱ DAO는 분기를 만들거나 없애지 않는다. 헤더 `type_each_group`은 읽은 값을 그대로 보존한다
@@ -917,6 +918,7 @@ class DAO_CONFIG:
     - 값은 그룹 하나하나의 index (SW 분기 그룹도 그룹마다 따로 지정)
     - 함께 쓰는 모드: FIXED_TARGET_GROUP_ALLOWED_MODES
       (그룹 수, 순서, iteration 구간을 그대로 두는 모드)
+    - 목록에 SW 분기 그룹이 있으면 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 사용
     - 값과 모드는 Validate_Config가 시작할 때 검사
     """
 
@@ -941,7 +943,12 @@ class DAO_CONFIG:
 
     # HBF 최적화 시퀀스 (별도)
     Gen_LLR_Mode_HBF_SEQUENCE: List[int] = [40, 41, 10, 11, 60]
-    """HBF 모드 전용 시퀀스"""
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스
+    - 타겟에 SW 분기 그룹이 있으면 [10, 11]만 사용 (다른 모드가 있으면 시작할 때 오류)
+    - FIXED_TARGET_GROUP_IDX_LIST와 함께 쓰면 40(INSERT_RANDOM_GROUP)과 60(SPLIT_GROUP)은 사용 불가
+    - 40은 iteration 5~8 그룹 뒤에 붙일 때만 통과 (iteration 1~4 그룹 뒤에 붙인 새 그룹은
+      8과 9 사이 경계를 걸쳐 버려짐)
+    """
 
     # ========== 실행 모드 설정 ==========
     RUN_DAO_MODE: RunDAOMode = RunDAOMode.RUN_OPTIMIZATION
@@ -961,9 +968,14 @@ class DAO_CONFIG:
     # ========== 기타 설정 ==========
     IS_HBF_OPT: bool = False
     """HBF (Hybrid Bit Flipping) 최적화 모드
-    - True: HBF 전용 GenLLRMode 시퀀스 사용
-    - False: 일반 시퀀스 사용
+    - True: Gen_LLR_Mode_HBF_SEQUENCE 사용 (HD 복호, init_n 1에서만 켜짐)
+    - False: Gen_LLR_Mode_SEQUENCE 사용
     - uncor 사용과 테스트 방식(seed 모드, Two-Stage 테스트)은 두 값에서 같음
+    - True일 때 매트릭스가 지킬 것 (DAO_spec.md 3.6절, 입력과 trial 모두)
+      - iteration 1~HBF_MAX_ITERATION(4)의 row는 dv_idx 0의 TH가 HBF_OPT_TH_CONSTANT_VAL(0)
+      - row는 iteration 구간 하나 안에 머묾 (경계는 HBF_OPT_CONFIG.ITERATION_SPAN_ENDS,
+        기본 4와 8이라 구간은 1~4, 5~8, 9 이후)
+      - 입력 매트릭스가 어기면 시작할 때 "Initial LLR matrix validation failed."로 멈춤
     """
 
     MAX_RUN_ECC_ERRORS: int = 5

@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 14:20:11
+> Claude 마지막 확인: 2026-09-29 14:27:51
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -23,8 +23,9 @@
   - [x] HBF 관련 부분 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, Opus 에이전트, 대상 dff3dba..2e34036의 HBF 관련 코드와 문서, 기록: `_pm/tasks/20260928_HBF_TH_iteration_range/review/`)
     - Round 1 관점 38개를 18개로 통합, Round 2 lv1 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정: 수정 필요. HIGH 3건과 MEDIUM 2건은 기준 커밋의 복사본으로 재현해 확인
     - HIGH: 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤(F1), 경계 검사가 iteration 4와 5 사이만 봄(F2), COPY_GROUP이 후보의 분기 표시를 타겟에 복사함(F3)
-  - [ ] 리뷰 발견 수정 (F1 F3 F4 F5 F6은 고칠 방향이 정해짐. 사용자 지시 대기)
-  - [ ] 사용자 결정: iteration 8과 9 사이 경계도 검사할지 (리뷰 F2, 태스크 문서 6절 ㉰)
+  - [x] 리뷰 발견 F1 F2 F6 수정 (2026-09-29 14:27, 사용자 결정. F2: row가 걸칠 수 없는 경계를 `ITERATION_SPAN_ENDS`로 두고 기본 4와 8, HBF2가 이 경계를 모두 검사. F1: `Validate_Config`가 시작할 때 시퀀스의 모든 모드에 SW 분기 제한을 검사. F6: DAO_spec.md 3.6~3.8절과 README에 HBF 최적화 모드의 사용 조건 반영. 새 검사 9건과 9건 통과, 전체 165건 통과)
+  - [ ] 리뷰 발견 F3 F4 (사용자에게 설명을 다시 드림, 결정 대기), F5 (이번에 넘어감)
+  - [ ] 사용자 결정: HBF 기본 시퀀스 `[40, 41, 10, 11, 60]`의 40번 모드를 그대로 둘지 (타겟이 iteration 1~4 그룹이면 40번 모드의 trial이 경계 검사로 모두 버려짐)
   - [ ] 사용자 확인: 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽는지와 부호의 열 차수 (리뷰 F7 F8, 태스크 문서 6절 ㉱)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지, `IS_HBF_OPT`와 2단계 테스트를 함께 켰을 때 `[Initial Partial]`과 `[Partial Test Start]` 줄이 나오는지)
 

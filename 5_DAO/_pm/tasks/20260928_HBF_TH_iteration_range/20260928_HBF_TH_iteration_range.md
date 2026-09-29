@@ -146,7 +146,26 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 `IS_HBF_OPT`가 바꾸는 것은 세 가지가 남는다. ㉮ 모드 시퀀스(`Gen_LLR_Mode_HBF_SEQUENCE`) ㉯ 유효성 검사 HBF1과 HBF2 ㉰ 보정이 HBF 구간 row의 dv_idx 0 TH를 상수로 덮어쓰는 것.
 
+### 3.6 iteration 구간 경계와 시작 검사 (라이트 리뷰 F1, F2, F6, 사용자 결정 2026-09-29)
+
+사용자 결정: ㉮ iteration 8과 9 사이 경계도 검사한다 ㉯ 모드 시퀀스의 SW 분기 제한을 시작할 때 검사한다 ㉰ 문서에 HBF 최적화 모드의 사용 조건을 적는다. 라이트 리뷰의 F3, F4는 설명을 다시 드린 뒤 정하고, F5는 이번에 넘어간다.
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `HBF_OPT_CONFIG.ITERATION_SPAN_ENDS` | row가 걸칠 수 없는 경계의 목록. 기본값 4와 8 (구간 1~4, 5~8, 9 이후). 값 e는 iteration e와 e + 1 사이를 뜻한다 |
+| 2 | `LLR_MATRIX.Get_Iteration_Span_Ends` (새 함수) | `HBF_MAX_ITERATION`과 `ITERATION_SPAN_ENDS`를 합친 경계 목록. `HBF_MAX_ITERATION`은 설정에 없어도 언제나 경계다 |
+| 3 | `LLR_MATRIX.Get_Iteration_Span_End_Crossed_By_Row` (새 함수) | HBF 최적화 모드에서 row가 걸치는 첫 경계. 걸치지 않으면 None |
+| 4 | `LLR_MATRIX.Is_LLR_Valid`의 HBF2 | 3번으로 판단. 오류 문구에 걸친 경계와 경계 목록을 적음 |
+| 5 | `LLR_OPT.Check_Mode_Sequence_With_SW_Branch` (새 함수) | 지금 쓰는 시퀀스의 모드마다 `Check_SW_Branch_Mode_Allowed`를 돌려 막히는 모드를 모음 |
+| 6 | `LLR_OPT.Validate_Config` | 최적화 실행이고 초기 매트릭스가 있으면 5번을 부름. 목록을 준 실행과 주지 않은 실행 모두 |
+
+경계 검사는 HBF 최적화 모드에서만 건다 (HBF1, HBF2와 같은 조건). 달라지는 동작은 하나다: SW 분기가 없는 매트릭스에서 INSERT_RANDOM_GROUP이 iteration 2~4 그룹 뒤에 붙이는 새 그룹(5~24)이 8과 9 사이를 걸쳐 버려진다. iteration 5~8 그룹 뒤에 붙이는 새 그룹(9~28)은 통과한다.
+
+시작 검사는 stage 검사(`Set_Gen_Trial_LLR_Mode`)와 같은 함수로 같은 타겟 목록을 본다. 타겟 목록과 분기 배치가 시작할 때 정해지므로 두 검사의 결과가 같고, 달라지는 것은 알리는 때다. stage 검사는 그대로 둔다.
+
 ## 4. 수정 대상 파일
+
+- `SRC/DAO_Config.py` (ITERATION_SPAN_ENDS, Gen_LLR_Mode_HBF_SEQUENCE 주석), `SRC/DAO_LLR_MATRIX.py` (3.6절의 2~4번), `SRC/DAO_Main.py` (3.6절의 5, 6번), `DAO_spec.md` (3.6절 HBF2와 ㉲㉶, 3.7절 ㉯㉲, 3.8절 ㉯㉰와 T5), `README.md` (타겟 그룹 설정, 3.4절 ㉮, 4.1.1절)
 
 - `SRC/DAO_Main.py` (Validate_Config의 2단계 테스트 조합 검사), `README.md` (3.2.2절, 4.1.1절 IS_HBF_OPT 설명)
 - `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.4절의 표), `DAO_spec.md` (3.6절 HBF3, 5.2절)
@@ -172,7 +191,8 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
 - ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 유효성 검사와 보정에도 `IS_HBF_OPT`와 상관없이 걸지. 사용자 결정(2026-09-29)은 값을 쓰는 모드까지이고 유효성 검사와 보정은 그대로다. 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
-- ㉰ iteration 8과 9 사이 경계도 검사할지 (라이트 리뷰 F2). 지금 HBF2는 4와 5 사이만 본다. SW 분기가 없는 매트릭스에서는 INSERT_RANDOM_GROUP이 붙인 iteration 5~24 그룹이 유효로 통과한다. 선택지는 경계를 설정값으로 두고(기본 4와 8) 걸치는 row를 막는 것과 지금대로 두는 것이다
+- ㉰ 라이트 리뷰의 F3(COPY_GROUP이 후보의 분기 표시를 타겟에 복사함), F4(row 하나짜리 타겟의 MUTATE_CSW가 바뀌지 않은 매트릭스를 되풀이 측정함), F5(GEN_SINGLE_ROW와 HBF 최적화 모드의 조합)를 고칠지. F3과 F4는 사용자에게 설명을 다시 드린 상태이고 F5는 넘어가기로 했다
+- ㉲ HBF 기본 시퀀스 `[40, 41, 10, 11, 60]`의 40번 모드를 그대로 둘지. 3.6절의 경계 검사로, 타겟이 iteration 1~4 그룹이면 40번 모드의 trial이 모두 버려진다
 - ㉱ 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽지 않는지, 읽되 0이라 같은 출력을 내는지 (라이트 리뷰 F7). 그리고 부호의 열 차수가 11, 4, 3, 2뿐인지 (F8). 규칙의 결론은 어느 쪽이든 같고 문서의 설명이 달라진다
 
 ## 7. 검증
@@ -186,6 +206,8 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 - 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
 - 검사: `_test/20260929_hd_hbf_dv0_th_untouched/test_hd_hbf_dv0_th_untouched.py` 33건 (`IS_HBF_OPT`를 끈 HD 복호. 고정 column 5, MUTATE_MATRIX 3, 그룹 변이와 SPLIT_GROUP 3, INSERT_MUTATED_GROUP 2, INSERT_MUTATED_ROW 3, INSERT_RANDOM_ROW 2, INSERT_RANDOM_GROUP 2, 끝 iteration을 모르는 row 1, REGEN_ROW 2, REGEN_DV 4, COPY_ROWS 2, COPY_GROUP 2, SWAP_ROW 2). 3.4절의 1~5번을 반영하기 전에는 처음 쓴 14건 가운데 10건 실패, 6~11번을 반영하기 전에는 더한 19건 가운데 11건 실패, 지금 33건 통과
 - 검사: `_test/20260929_hbf_two_stage_allowed/test_hbf_two_stage_allowed.py` 6건 (시작 검사 5, trial 테스트가 도는 순서 1). 3.5절을 반영하기 전에는 시작 검사 2건이 "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다"로 실패, 지금 6건 통과. trial 테스트 순서 1건은 반영 전에도 통과했다 (그 흐름이 `IS_HBF_OPT`를 읽지 않음을 보이는 검사)
+- 검사: `_test/20260929_hbf_iteration_span_ends/test_hbf_iteration_span_ends.py` 9건 (구간 안의 row 1, 경계를 걸친 row 3, HBF 최적화 모드를 끈 경우 1, 경계 설정 1, 입력 매트릭스 1, INSERT_RANDOM_GROUP 2). 3.6절을 반영하기 전에는 9건 모두 오류(설정 없음), 지금 9건 통과
+- 검사: `_test/20260929_mode_sequence_start_check/test_mode_sequence_start_check.py` 9건 (시퀀스 검사 7, `Validate_Config` 2). 3.6절을 반영하기 전에는 8건이 실패하거나 오류, 지금 9건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, 기준 커밋 2e34036, 기록: `review/`): Round 1 관점 38개를 18개로 통합, Round 2 lv1 에이전트 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정은 수정 필요
@@ -193,4 +215,5 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
   - MEDIUM: F4 row 하나짜리 타겟의 MUTATE_CSW가 바뀌지 않은 매트릭스를 되풀이 측정함, F5 GEN_SINGLE_ROW와 HBF 최적화 모드의 조합을 시작할 때 막지 않음, F6 문서에 HBF 최적화 모드의 사용 조건이 빠짐
   - 값 규칙, seed 모드, 타겟 목록, MPI로 옮기는 값에서는 결함을 찾지 못함
   - 3.4절의 수정은 리뷰 뒤에 들어갔다. 1~5번(커밋 f843c7a)으로 F15 가운데 `_generate_mutation_for_group`과 F9 가운데 INSERT_RANDOM_ROW, INSERT_RANDOM_GROUP의 로그가 풀렸고, 6~11번으로 F15의 나머지(`_generate_mutation_for_row`)와 REGEN_DV가 dv_idx 0 자리의 값을 다른 DV로 옮기던 발견이 풀렸다
+  - 3.6절의 수정으로 F1, F2, F6이 풀렸다. F3, F4, F5는 남아 있다 (6절 ㉰)
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지 (같은 자리의 "Current target index" 줄은 별도 카운터라 실제 타겟과 다른 그룹을 적는다, 라이트 리뷰 F17)

@@ -8400,6 +8400,31 @@ class LLR_OPT:
             )
         return errors
 
+    def Check_Mode_Sequence_With_SW_Branch(self, matrix: LLR_MATRIX) -> list[str]:
+        """지금 쓰는 모드 시퀀스의 모드마다 SW 분기 제한(Check_SW_Branch_Mode_Allowed)을 시작할 때 검사한다.
+
+        타겟 목록과 분기 배치는 시작할 때 정해지므로, 시퀀스 뒤쪽의 모드가 막히는 설정을 첫 stage 전에 알린다.
+        검사 대상은 지금 쓰는 시퀀스 하나다 (IS_HBF_OPT이면 Gen_LLR_Mode_HBF_SEQUENCE, 아니면 Gen_LLR_Mode_SEQUENCE).
+
+        Returns:
+            list[str]: 오류 문구 목록 (막히는 모드마다 하나). 문제가 없으면 빈 목록
+        """
+        sequence_name = "Gen_LLR_Mode_HBF_SEQUENCE" if DAO_CONFIG.IS_HBF_OPT else "Gen_LLR_Mode_SEQUENCE"
+        valid_mode_values = {int(mode) for mode in GenLLRMode}
+        target_group_indices = self.Build_Target_Group_Indices(matrix)
+
+        errors: list[str] = []
+        checked_modes: set[int] = set()
+        for mode_value in getattr(DAO_CONFIG, sequence_name):
+            mode_value = int(mode_value)
+            if mode_value not in valid_mode_values or mode_value in checked_modes:
+                continue
+            checked_modes.add(mode_value)
+            sw_error = self.Check_SW_Branch_Mode_Allowed(matrix, mode_value, target_group_indices)
+            if sw_error is not None:
+                errors.append(f"{sequence_name}: {sw_error}")
+        return errors
+
     def Check_SW_Branch_Mode_Allowed(self, matrix: LLR_MATRIX, selected_mode: int, target_group_indices: list[int]) -> Optional[str]:
         """SW 분기가 있는 매트릭스에서 이 모드가 타겟 목록과 함께 허용되는지 본다.
 
@@ -10038,6 +10063,7 @@ class LLR_OPT:
                     errors.append(
                         f"INITIAL_TARGET_GROUP_IDX({DAO_CONFIG.INITIAL_TARGET_GROUP_IDX}) >= "
                         f"num_groups({num_groups}). target_group_indices will be empty.")
+                errors.extend(self.Check_Mode_Sequence_With_SW_Branch(self.initial_LLR_matrix))
 
         if SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS < 0:
             errors.append(f"SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS must be >= 0 (current: {SPEED_TEST_REFC_CONFIG.RECHECK_INTERVAL_SECONDS})")
