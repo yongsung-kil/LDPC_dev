@@ -694,6 +694,16 @@ UNCOR_CONFIG.UNCOR_MATRIX_IDX = 202         # Full uncor 폴더 번호 (-1이면
 ```
 Partial 전용 설정은 없다. 위 두 값과 함께 uncor 파일 이름을 정하는 `REFC_CONFIG`의 `init_n`, `ch_type`, `matrix_sel`, 채널 값(`RBERs`, `num_fixed_errs`, `fixed_SCRs`, `fixed_SERs`)이 Input의 파일과 맞아야 한다. 하나라도 어긋나면 `Copy_Uncors`가 "Missing input uncor file"로 멈춘다.
 
+함께 쓸 수 있는 조합은 `Validate_Config`가 시작할 때 검사한다.
+
+| 설정 | Two-Stage 테스트 |
+|------|------|
+| `RUN_DAO_MODE`가 RUN_OPTIMIZATION | 사용 |
+| `RUN_DAO_MODE`가 REDECODE 또는 GEN_SINGLE_ROW | 시작할 때 오류 |
+| uncor 로드 모드가 LOAD_SEED | 사용 |
+| uncor 로드 모드가 LOAD_NONE 또는 LOAD_VECTOR (`ENABLE_LOAD_VECTOR`) | 시작할 때 오류 |
+| `IS_HBF_OPT` (HBF 최적화 모드) | 켜든 끄든 사용 |
+
 #### 3.2.3 Uncor 디렉토리 구조
 `Uncors/` 아래는 디코더 모드 폴더(`HD`, `2SD`, `3SD`)로 나뉘고, 그 아래에 LLR matrix 파일 이름과 같은 이름의 폴더를 둔다 (폴더 이름에 `.txt`까지 포함). Two-Stage 여부와 관계없이 구조는 같다. 아래는 2SD(init_n = 2), INITIAL_MATRIX_IDX = 200, UNCOR_MATRIX_IDX = 202 예시다.
 
@@ -953,6 +963,7 @@ class DAO_CONFIG:
     """HBF (Hybrid Bit Flipping) 최적화 모드
     - True: HBF 전용 GenLLRMode 시퀀스 사용
     - False: 일반 시퀀스 사용
+    - uncor 사용과 테스트 방식(seed 모드, Two-Stage 테스트)은 두 값에서 같음
     """
 
     MAX_RUN_ECC_ERRORS: int = 5

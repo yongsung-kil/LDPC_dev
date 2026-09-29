@@ -9997,10 +9997,6 @@ class LLR_OPT:
                     "Two-Stage 모드는 현재 LOAD_UNCOR_MODE=LOAD_VECTOR를 지원하지 않습니다. "
                     "LOAD_SEED를 사용하세요."
                 )
-            if DAO_CONFIG.IS_HBF_OPT:
-                errors.append(
-                    "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다."
-                )
 
         # GEN_SINGLE_ROW 모드는 LOAD_VECTOR와 함께 사용할 수 없음
         if DAO_CONFIG.RUN_DAO_MODE == RunDAOMode.GEN_SINGLE_ROW:

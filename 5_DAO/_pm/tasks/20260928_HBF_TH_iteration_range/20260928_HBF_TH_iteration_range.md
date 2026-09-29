@@ -128,8 +128,27 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 그대로 둔 것: 유효성 검사(HBF1, HBF2)와 보정(`Correct_LLR_Matrix`)은 `IS_HBF_OPT`가 켜져 있을 때만 규칙을 건다. 그룹의 iteration을 옮기는 모드(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 값을 쓰지 않아 이 규칙이 걸리지 않는다. 이 모드가 iteration 5 이상의 그룹을 HBF 구간으로 옮기면 `IS_HBF_OPT`가 꺼진 실행에서는 그 그룹의 dv_idx 0 TH가 그대로 남는다.
 
+### 3.5 HBF 최적화 모드에서 2단계 테스트 사용 (사용자 요청 2026-09-29)
+
+사용자 결정: HBF 최적화 모드는 uncor 사용과 테스트 방식에서 보통 모드와 똑같이 동작한다.
+
+`Validate_Config`는 2단계 테스트(`ENABLE_TWO_STAGE_TEST`: trial을 Partial uncor로 먼저 돌리고 개선된 trial만 Full uncor로 다시 돌리는 방식)와 `IS_HBF_OPT`를 함께 켜면 "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다."로 멈췄다. 이 검사는 반입 커밋(2811bff)부터 있었고, 2단계 테스트 개발 기록(`reference/_dev_log/20260406_two_stage_test/two_stage_test.md`)에는 까닭이 "HBF 최적화와 비호환" 한 줄뿐이다.
+
+코드에서 찾은 충돌은 3.2절의 HBF 전용 seed 갈래 하나다. `HBF_OPT_USING_UNCOR`가 False면 seed 모드가 DEFAULT(난수 프레임)가 되어 Partial 테스트가 Partial 풀을 읽지 않는다. 보통 모드는 uncor 로드 모드가 LOAD_NONE일 때 2단계 테스트를 막는 검사로 이 경우를 거르는데, HBF 전용 갈래는 uncor 로드 모드를 보지 않아 그 검사에 걸리지 않았다. 갈래가 없어진 지금은 HBF 최적화 모드도 그 검사로 걸러진다.
+
+| 확인한 것 | 결과 |
+|------|------|
+| 2단계 테스트 흐름의 함수(`Test_Initial_LLR`, `_Build_Initial_Partial_Pool`, `Rebuild_Partial_Pool`, `_Restore_State_After_Partial_Rebuild`, `Test_Trial_LLR`, `Check_Partial_Improvement`, `Determine_Update_Decision`)가 `IS_HBF_OPT`를 읽는지 | 읽는 자리 없음 |
+| seed 모드 (초기 Full 테스트, trial의 Partial과 Full 테스트, Partial 풀 다시 만들기) | `IS_HBF_OPT`를 켠 채와 끈 채가 같음 |
+| trial 테스트가 도는 순서 (Partial 개선 시 Partial 다음 Full, 아니면 Partial만) | `IS_HBF_OPT`를 켠 채와 끈 채가 같음 |
+
+수정은 `Validate_Config`에서 그 검사를 없앤 것 하나다. 2단계 테스트의 나머지 제한(REDECODE, GEN_SINGLE_ROW, LOAD_NONE, LOAD_VECTOR)은 그대로이고 `IS_HBF_OPT`와 상관없이 걸린다.
+
+`IS_HBF_OPT`가 바꾸는 것은 세 가지가 남는다. ㉮ 모드 시퀀스(`Gen_LLR_Mode_HBF_SEQUENCE`) ㉯ 유효성 검사 HBF1과 HBF2 ㉰ 보정이 HBF 구간 row의 dv_idx 0 TH를 상수로 덮어쓰는 것.
+
 ## 4. 수정 대상 파일
 
+- `SRC/DAO_Main.py` (Validate_Config의 2단계 테스트 조합 검사), `README.md` (3.2.2절, 4.1.1절 IS_HBF_OPT 설명)
 - `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.4절의 표), `DAO_spec.md` (3.6절 HBF3, 5.2절)
 - `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.3절의 표), `_pm/tasks/20260921_SW_branch_DAO_support/review/checks/check_sw_branch.py`
 - `SRC/DAO_LLR_MATRIX.py` (Is_Row_In_HBF_Iterations, Is_LLR_Valid, Read_Input_LLR_Matrix 주석, Correct_LLR_Matrix, Correct_Ch_Th_In_Row)
@@ -142,6 +161,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 - ㉮ `IS_HBF_OPT`이 False인 실행은 `Is_Row_In_HBF_Iterations`가 항상 False라 유효성 검사와 보정의 동작이 같다. HD 복호에서 달라지는 것은 3.4절의 모드가 자기가 쓴 HBF 구간 row의 dv_idx 0 TH를 그대로 두거나 상수로 채우는 것 하나다. 2SD와 3SD는 `Get_Columns_Fixed_In_HBF_Iterations`가 빈 목록이라 동작이 같다
 - ㉴ `IS_HBF_OPT`이 True인 실행에서 3.4절로 달라지는 것은 REGEN_DV가 다른 DV 자리에 다시 쓰는 값의 TH 하나다 (상수 0 0 0 대신 난수). 나머지 모드는 보정이 뒤에서 같은 값으로 채우므로 trial 매트릭스가 같다
+- ㉵ 2단계 테스트를 끈 실행과 `IS_HBF_OPT`를 끈 실행은 3.5절로 달라지는 것이 없다. 두 설정을 함께 켠 실행만 시작 검사를 지나 보통 모드와 같은 흐름으로 돈다. 이 조합의 MPI 실행은 아직 해 보지 않았다
 - ㉯ max_iteration이 4 이하인 HBF 매트릭스는 모든 row가 HBF 구간에 있으므로 동작이 같다
 - ㉰ restart row는 유효성 검사와 보정 모두 HBF 규칙보다 앞에서 건너뛴다
 - ㉱ `Correct_Ch_Th_In_Row`의 `is_row_in_HBF_iterations` 인자는 기본값이 False이고, row 없이 부르는 자리는 `_generate_random_row` 하나다. 끝 iteration을 받으면 3.4절의 규칙으로 값을 정하고, 받지 않으면(GEN_INITIAL_GROUP, GEN_SINGLE_ROW) False다. 그 결과는 `Gen_Trial_LLR`과 `Build_Single_Row_Matrix`에서 `Correct_LLR_Matrix`를 거친다
@@ -165,6 +185,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 - 검사: `check_sw_branch.py`를 3.3절에 맞게 고침 (41건 통과)
 - 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
 - 검사: `_test/20260929_hd_hbf_dv0_th_untouched/test_hd_hbf_dv0_th_untouched.py` 33건 (`IS_HBF_OPT`를 끈 HD 복호. 고정 column 5, MUTATE_MATRIX 3, 그룹 변이와 SPLIT_GROUP 3, INSERT_MUTATED_GROUP 2, INSERT_MUTATED_ROW 3, INSERT_RANDOM_ROW 2, INSERT_RANDOM_GROUP 2, 끝 iteration을 모르는 row 1, REGEN_ROW 2, REGEN_DV 4, COPY_ROWS 2, COPY_GROUP 2, SWAP_ROW 2). 3.4절의 1~5번을 반영하기 전에는 처음 쓴 14건 가운데 10건 실패, 6~11번을 반영하기 전에는 더한 19건 가운데 11건 실패, 지금 33건 통과
+- 검사: `_test/20260929_hbf_two_stage_allowed/test_hbf_two_stage_allowed.py` 6건 (시작 검사 5, trial 테스트가 도는 순서 1). 3.5절을 반영하기 전에는 시작 검사 2건이 "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다"로 실패, 지금 6건 통과. trial 테스트 순서 1건은 반영 전에도 통과했다 (그 흐름이 `IS_HBF_OPT`를 읽지 않음을 보이는 검사)
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, 기준 커밋 2e34036, 기록: `review/`): Round 1 관점 38개를 18개로 통합, Round 2 lv1 에이전트 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정은 수정 필요
