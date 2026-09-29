@@ -126,7 +126,7 @@ FIXED_TARGET_GROUP_IDX_LIST = None  # 타겟 그룹을 직접 지정 (예: [0, 1
   - 목록에 SW 분기 그룹(헤더 10 이상)이 있으면 이 가운데 MUTATE_MATRIX(10)와 MUTATE_CSW(11)만 쓴다 (3.4절). 예: `LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`의 iteration 1~8 그룹을 바꾸려면 시퀀스에 MUTATE_MATRIX와 MUTATE_CSW만 남긴다
 
 #### GenLLRMode 시퀀스
-시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값은 쓸 수 있는 모드를 모두 적은 목록이므로, 돌릴 모드만 남기고 순서를 정한다.
+시퀀스는 모드를 이름으로 적는다. `DAO_Config.py`의 기본값에서 돌릴 모드만 남기고 순서를 정한다. 보통 모드의 기본값은 `GenLLRMode`의 모드 17개를 모두 적은 목록이고, HBF 최적화 모드의 기본값은 `GenLLRModeHBF`의 모드 11개에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 9개다.
 ```python
 # DAO_Config.py
 Gen_LLR_Mode_SEQUENCE = [            # 보통 모드: GenLLRMode의 이름
@@ -954,8 +954,6 @@ class DAO_CONFIG:
 
     # HBF 최적화 시퀀스 (별도)
     Gen_LLR_Mode_HBF_SEQUENCE: List[GenLLRModeHBF] = [
-        GenLLRModeHBF.GEN_INITIAL_GROUP,
-        GenLLRModeHBF.INSERT_RANDOM_GROUP,
         GenLLRModeHBF.INSERT_RANDOM_ROW,
         GenLLRModeHBF.MUTATE_MATRIX,
         GenLLRModeHBF.MUTATE_CSW,
@@ -966,11 +964,14 @@ class DAO_CONFIG:
         GenLLRModeHBF.REGEN_DV,
         GenLLRModeHBF.REGEN_ROW,
     ]
-    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (GenLLRModeHBF의 모드를 모두 적은 목록. 돌릴 모드만 남긴다)
+    """HBF 최적화 모드(IS_HBF_OPT)의 시퀀스 (돌릴 모드만 남긴다)
+    - GenLLRModeHBF의 모드 11개에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺀 9개
     - GenLLRModeHBF에 없는 모드: REORDER_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW,
       ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP
     - 위 Gen_LLR_Mode_SEQUENCE의 세 가지 제한이 똑같이 걸림
     - trial의 row는 iteration 구간 하나 안에 머물러야 함 (경계 기본값 4와 8). 걸치는 trial은 버려짐
+    - 뺀 두 모드는 새 그룹을 만들며, 기본 설정값에서는 그 그룹이 경계를 걸쳐 trial이 버려짐.
+      쓰려면 아래 조건을 맞추고 목록에 이름을 적음 (GEN_INITIAL_GROUP은 맨 앞에)
       - GEN_INITIAL_GROUP: GEN_INITIAL_GROUP_CONFIG.ITERATION(기본 20)이 4 이하일 때만 통과
       - INSERT_RANDOM_GROUP: 새 그룹과 뒤로 밀린 그룹이 경계를 걸치지 않을 때만 통과
         (INSERT_GROUP_NUM_ITERATION 기본 20은 iteration 1~8의 그룹 뒤에서 모두 버려짐)

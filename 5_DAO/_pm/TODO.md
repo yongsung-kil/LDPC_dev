@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 15:03:37
+> Claude 마지막 확인: 2026-09-29 18:07:09
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -28,8 +28,8 @@
   - [x] HBF 최적화 모드의 목록에 COPY_ROWS, REGEN_DV, REGEN_ROW를 더함 (2026-09-29 14:42, 사용자 결정: 이 셋은 넣고 REORDER_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP은 넣지 않음. `GenLLRModeHBF`에 멤버 3개, `Gen_LLR_Mode_HBF_SEQUENCE`에 3줄 추가. 검사 12건 통과. README 4.1.1절 반영)
   - [x] 태스크 문서 3.7절에 위 결정 반영 (2026-09-29 15:03, 3.7절 표와 마지막 문단, 4절, 7절. 결정이 난 6절의 항목은 뺌)
   - [x] 리뷰 발견 F3 F4 F5 수정 (2026-09-29 15:03, 사용자 결정. F3: COPY_GROUP은 후보의 값과 CSW만 가져오고 타겟 그룹의 iteration과 SW 분기 표시는 그대로 둠. F4: 타겟 그룹의 row가 하나이면 MUTATE_CSW stage를 건너뜀. F5: GEN_SINGLE_ROW의 후보 row가 HBF 최적화 모드의 구간 경계를 걸치면 시작할 때 오류로 멈춤. 새 검사 7건과 8건 통과, 전체 192건 통과. 소스 커밋 dde34bd. DAO_spec.md 3.6절, 5.3절, 5.7절, 6.2절과 README 4.1.1절 반영)
-  - [ ] 사용자 결정: HBF 기본 시퀀스의 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 그대로 둘지 (기본 설정값에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 경계 검사로 모두 버려짐. 태스크 문서 6절 ㉰)
-  - [ ] 사용자 확인: 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽는지와 부호의 열 차수 (리뷰 F7 F8, 태스크 문서 6절 ㉱)
+  - [x] HBF 기본 시퀀스에서 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 뺌 (2026-09-29 18:07, 사용자 결정. 기본 설정값에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 경계 검사로 모두 버려짐. `Gen_LLR_Mode_HBF_SEQUENCE`는 9개, `GenLLRModeHBF`의 멤버 11개는 그대로. 새 검사 7건 통과, 전체 199건 통과. 소스 커밋 e128e63. README 반영, 태스크 문서 3.10절)
+  - [ ] 사용자 확인: 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽는지와 부호의 열 차수 (리뷰 F7 F8, 태스크 문서 6절 ㉰)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지, `IS_HBF_OPT`와 2단계 테스트를 함께 켰을 때 `[Initial Partial]`과 `[Partial Test Start]` 줄이 나오는지)
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정
