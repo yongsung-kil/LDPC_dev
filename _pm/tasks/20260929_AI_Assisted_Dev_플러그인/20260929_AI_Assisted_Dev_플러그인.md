@@ -1,7 +1,7 @@
 # Claude 플러그인 AI_Assisted_Dev 제작
 
 > 작성: 2026-09-29 21:49:39
-> 상태: 설계 검토 대기 (사용자 검토 뒤 실행 계획으로 넘어감)
+> 상태: 설계 승인 (2026-09-30). 실행 계획: [실행계획.md](%EC%8B%A4%ED%96%89%EA%B3%84%ED%9A%8D.md)
 > 변경 등급: Decision (새 저장소 신설)
 > 초안: [make_plugin.md](../../../make_plugin.md), 조사: [make_plugin_조사.md](make_plugin_%EC%A1%B0%EC%82%AC.md), 결정: [판정요청_플러그인_260929.md](%ED%8C%90%EC%A0%95%EC%9A%94%EC%B2%AD_%ED%94%8C%EB%9F%AC%EA%B7%B8%EC%9D%B8_260929.md)
 
@@ -76,13 +76,14 @@ onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 �
 |---|---|---|---|
 | onboard | 프로젝트를 읽어 프로파일, CLAUDE.md, `_pm/`, `docs/` 뼈대를 만든다 | explore.md의 병렬 탐색 방식, `_pm/` 양식 | `docs/profile/` |
 | explore | 범위를 지정해 병렬 탐색하고 이해 문서를 만든다 | explore.md | `docs/explore/` |
-| wiki | AI용 위키를 만들고 갱신한다 (대화, 커밋, 완료 작업에서 결정과 시도를 뽑음) | wiki.md | `_wiki/`, `_tracker.md` |
+| wiki | AI용 위키를 만들고 갱신한다. 대화, 커밋, 완료 작업에서 결정(decisions), 시도(trials), 자산(assets)을 뽑고, 기술 문서(tech: 알고리즘 설명, 모듈 동작, 사용법)를 축적한다. explore와 onboard의 산출물이 기술 문서의 원재료다 | wiki.md (tech 갈래와 그 양식은 신규) | `_wiki/`, `_tracker.md` |
 | doc-check | 문서 규칙 검사 (줄표, 가운뎃점, 번호 나열, 깨진 링크, 금지 표현) | 문서 수정 후 검사 루틴 | 없음 |
 | paper-search | 주제로 arXiv, IEEE, 특허를 검색해 목록 db를 만든다 | 수집기 셋 (git 이력), ieee_downloader | `papers.db` |
 | paper-screen | 초록만 보고 통과와 제외를 병렬 판정한다 | review.py, select_workflow.js, 기준서 양식 | `papers.db` |
 | paper-analyze | 통과 논문의 전문을 에이전트가 1편씩 읽고 고정 선택지 표로 분석한다 | analysis_prompt.md, categories.md | 논문별 분석 md |
 | idea-apply | 아이디어를 접수하고 실험 폴더를 만들고 실험로그와 현황표를 갱신한다 | 새논문적용규칙, `_template/`, 실험로그 | 아이디어 현황표 |
 | speed-opt | 코드 효율화 항목을 하나씩 진행한다 (항목별 문서, 검토, 외부 검증 기록) | 1_LDPC_revised의 체크리스트 방식 | `docs/speed_opt/` |
+| robustness-check | 안정성 검사. 잘못된 입력과 경계 조건에서 코드가 무너지지 않는지 항목별로 점검하고 고친다 (배열 범위 밖 접근, 정수 넘침, 초기화 안 된 값, 0으로 나눔, 고정소수점 포화, 재현성. RTL이면 리셋 값, 비트 폭 불일치, 클록 영역 넘김). 진행 방식은 speed-opt와 같다 (점검표, 한 번에 한 항목, 항목별 문서, 외부 검증 기록) | 1_LDPC_revised의 범위 검사 수정(6-1, 6-2)과 체크리스트 방식 | `docs/robustness/` |
 | param-opt | 사용자 시뮬레이터에 맞는 파라미터 최적화기 뼈대를 만든다 | DAO의 구조 (참조 구현) | 만들어진 최적화기 폴더 |
 | pm | 작업 등록, 진행 메모, 완료 처리, 판정요청 작성 | `_pm/` 규약, decision.md | `_pm/` |
 | dashboard | `_pm/`, 현황표, 실험로그, 문서 링크를 json으로 뽑아 정적 html 대시보드를 만든다 | render.py, 통합 저장소 태스크의 사이트 설계 | `dashboard/` |
@@ -142,10 +143,18 @@ onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 �
 - 1. 저장소 뼈대, plugin.json, pm 스킬, doc-check 스킬 (자기 관리부터 플러그인으로 한다)
 - 2. onboard, explore, wiki 스킬 (프로파일이 나와야 나머지가 돈다)
 - 3. dashboard (자료 양식과 스크립트)
-- 4. idea-apply, speed-opt, param-opt 스킬
+- 4. idea-apply, speed-opt, robustness-check, param-opt 스킬
 - 5. paper-search, paper-screen, paper-analyze 스킬
 - 6. plan, review, debug, test 스킬 이관
 - 7. evals 정비와 배포 (marketplace.json)
+- 8. 소개 페이지 (10절)
+
+### 10. 소개 페이지
+
+- ㉮ 플러그인이 완성되면 소개 페이지 `docs/intro.html`을 새 저장소에 둔다. 무엇을 하는 플러그인인지, 스킬 목록과 흐름, 설치법, 프로파일 개념을 한 화면에 보인다
+- ㉯ 줄글 대신 요소로 구성한다: 스킬 카드, 흐름 그림(onboard에서 대시보드까지), 접었다 펴는 스킬 상세, 설치 명령 상자, 프로파일 예시 표, 자주 묻는 것
+- ㉰ 문장은 사람이 쓴 듯 담백하게 쓴다. 꾸미는 말과 감탄을 쓰지 않고, 기능은 하는 일로 말한다
+- ㉱ 작성 규격은 HTML 작성 가이드를 따르고 상대 링크만 쓴다. 이 페이지는 html이 정본이다 (md에서 뽑지 않는다)
 
 ---
 
