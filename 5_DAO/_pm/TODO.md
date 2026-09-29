@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 13:38:06
+> Claude 마지막 확인: 2026-09-29 14:01:16
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -17,6 +17,9 @@
   - [x] HBF 최적화 모드의 seed 모드를 보통 모드와 같은 규칙으로 정함 (2026-09-28 20:48, 사용자 요청. `Set_Seed_Mode`의 HBF 전용 갈래와 `HBF_OPT_USING_UNCOR` 삭제. 검사 3건 통과)
   - [x] 타겟 그룹을 그룹 하나씩 다루도록 되돌림 (2026-09-29 13:26, 사용자 요청. SW 분기 그룹을 한 단위로 함께 타겟하고 함께 변이하던 처리를 없앰. 타겟 목록의 값은 그룹 하나하나의 index이고 MUTATE_MATRIX와 MUTATE_CSW는 타겟 그룹 하나만 바꿈. 새 검사 8건, 고친 검사 20건과 42건 통과. DAO_spec.md 3.7절과 3.8절, README 3.4절 반영)
   - [x] 여러 분기로 갈라진 구간에서 마지막 분기만 갱신하던 규칙을 없앰 (2026-09-29 13:38, 사용자 관측: 타겟 g2에서 "DAO updates only the last branch"로 중단. 분기 그룹은 분기 index와 상관없이 타겟이 됨. 검사 22건, 8건, 41건 통과)
+  - [x] HD 복호의 HBF 구간 row에서 변이와 난수 생성이 dv_idx 0의 TH를 건드리지 않게 함 (2026-09-29 14:01, 사용자 관측: MUTATE_MATRIX가 dv_idx 0의 TH를 바꾸려 함. 원인은 제외 규칙이 `IS_HBF_OPT`에 묶여 있던 것. `Get_Columns_Fixed_In_HBF_Iterations`를 넣어 HBF 시퀀스의 모드 10, 40, 41, 60이 `IS_HBF_OPT`와 상관없이 따름. 검사 14건 통과. DAO_spec.md 3.6절 HBF3 반영)
+  - [ ] 사용자 결정: HBF3을 나머지 모드(INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP, SWAP_ROW)와 유효성 검사, 보정에도 `IS_HBF_OPT`와 상관없이 걸지
+  - [ ] HBF 관련 부분 라이트 리뷰 (2026-09-29 13:39 시작, 대상 dff3dba..2e34036의 HBF 관련 코드와 문서, 기록: `_pm/tasks/20260928_HBF_TH_iteration_range/review/`)
   - [ ] 사용자 환경 MPI 실행 확인 (초기 매트릭스 검증 통과, 로그의 `target_group_indices`가 지정한 그룹만 도는지, `[current_seed_mode]`가 LOAD_UNCOR_SEED인지)
 
 - [ ] Dynamic Partial의 redecode uncor 누적 수정

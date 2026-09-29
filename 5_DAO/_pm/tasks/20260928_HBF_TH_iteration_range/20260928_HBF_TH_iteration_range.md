@@ -97,8 +97,32 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | `[1, 4]` | `[1, 4]` | 그룹 1, 다음 바퀴에 그룹 4 |
 | `[2, 3]` | `[2, 3]` | 그룹 2(구간 5~8의 분기 0), 다음 바퀴에 그룹 3(분기 1) |
 
+### 3.4 HD 복호의 HBF 구간에서 변이와 난수 생성이 dv_idx 0의 TH를 건드리지 않게 (사용자 요청 2026-09-29)
+
+사용자 관측: MUTATE_MATRIX가 iteration 1~4 그룹의 dv_idx 0 TH를 바꾸려 한다. HD 복호의 iteration 1~4는 언제나 HBF 구간이고 dv_idx 0의 TH는 0이어야 한다.
+
+원인은 dv_idx 0의 TH를 빼는 규칙이 HBF 최적화 모드(`IS_HBF_OPT`)에 묶여 있던 것이다. `IS_HBF_OPT`의 기본값은 False이고 켜는 코드가 없어, 설정에서 직접 켜지 않은 HD 실행은 규칙 없이 돈다. 확인은 `LLR_MATRIX_2.txt`의 그룹 0(iteration 1)과 그룹 1(iteration 2~4)에서 경우마다 2000회 돌려 셌다.
+
+| 경로 | `IS_HBF_OPT` True | `IS_HBF_OPT` False |
+|------|------|------|
+| MUTATE_MATRIX (조정 단계 포함)가 dv_idx 0의 TH를 고른 횟수 | 0 | 622~787 |
+| 그룹 변이 공용 함수(`_generate_mutation_for_group`)가 고른 횟수 | 767 (뒤에 보정이 0으로 되돌림) | 737 |
+
+사용자 지시에 따라 범위는 HBF 시퀀스(`Gen_LLR_Mode_HBF_SEQUENCE`)의 모드로 한정했다.
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `LLR_MATRIX.Get_Columns_Fixed_In_HBF_Iterations` (새 함수) | HD 복호(`init_n == 1`)이고 끝 iteration이 `HBF_MAX_ITERATION` 이하면 dv_idx 0의 TH column 목록, 아니면 빈 목록. `IS_HBF_OPT`를 보지 않음 |
+| 2 | `LLR_OPT.Generate_Random_Mutation` (MUTATE_MATRIX) | 위 목록의 column을 변이 후보에서 뺌 |
+| 3 | `LLR_OPT._generate_mutation_for_group` (SPLIT_GROUP, INSERT_MUTATED_GROUP) | 인자로 매트릭스를 받아 같은 column을 변이 후보에서 뺌 |
+| 4 | `LLR_OPT._generate_random_row` (INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW) | 끝 iteration을 받아 같은 column을 `HBF_OPT_TH_CONSTANT_VAL`로 채움 |
+| 5 | `LLR_MATRIX.HBF_immutable_col_range` | 읽는 자리가 1번 함수로 옮겨 가 속성을 없앰 |
+
+그대로 둔 것: 유효성 검사(HBF1, HBF2), 보정(`Correct_LLR_Matrix`), REGEN_DV, REGEN_ROW는 `IS_HBF_OPT`가 켜져 있을 때만 규칙을 건다. INSERT_MUTATED_ROW의 변이(`_generate_mutation_for_row`), COPY_ROWS, COPY_GROUP, SWAP_ROW는 HBF 구간 row의 dv_idx 0 TH를 바꿀 수 있다.
+
 ## 4. 수정 대상 파일
 
+- `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.4절의 표), `DAO_spec.md` (3.6절 HBF3, 5.2절)
 - `SRC/DAO_LLR_MATRIX.py`, `SRC/DAO_Main.py` (3.3절의 표), `_pm/tasks/20260921_SW_branch_DAO_support/review/checks/check_sw_branch.py`
 - `SRC/DAO_LLR_MATRIX.py` (Is_Row_In_HBF_Iterations, Is_LLR_Valid, Read_Input_LLR_Matrix 주석, Correct_LLR_Matrix, Correct_Ch_Th_In_Row)
 - `SRC/DAO_Main.py` (Gen_LLR_Regen_DV, Gen_LLR_Regen_Row, Generate_Random_Mutation, Build_Target_Group_Indices, Check_Fixed_Target_Group_Idx_List, Initialize_Stage, Initialize_LLR_Matrix, Update_Optimal_LLR, Validate_Config, Check_SW_Branch_Mode_Allowed 오류 문구)
@@ -108,16 +132,17 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 ## 5. 안전성 체크리스트
 
-- ㉮ `IS_HBF_OPT`이 False인 실행은 `Is_Row_In_HBF_Iterations`가 항상 False라 동작이 같다
+- ㉮ `IS_HBF_OPT`이 False인 실행은 `Is_Row_In_HBF_Iterations`가 항상 False라 유효성 검사, 보정, REGEN_DV, REGEN_ROW의 동작이 같다. HD 복호에서 달라지는 것은 3.4절의 모드가 HBF 구간 row의 dv_idx 0 TH를 그대로 두는 것 하나다. 2SD와 3SD는 `Get_Columns_Fixed_In_HBF_Iterations`가 빈 목록이라 동작이 같다
 - ㉯ max_iteration이 4 이하인 HBF 매트릭스는 모든 row가 HBF 구간에 있으므로 동작이 같다
 - ㉰ restart row는 유효성 검사와 보정 모두 HBF 규칙보다 앞에서 건너뛴다
-- ㉱ `Correct_Ch_Th_In_Row`의 새 인자는 기본값이 False이고, row 없이 부르는 자리는 `_generate_random_row` 하나다. 그 결과는 `Gen_Trial_LLR`과 `Build_Single_Row_Matrix`에서 `Correct_LLR_Matrix`를 거친다
+- ㉱ `Correct_Ch_Th_In_Row`의 `is_row_in_HBF_iterations` 인자는 기본값이 False이고, row 없이 부르는 자리는 `_generate_random_row` 하나다. 끝 iteration을 받으면 3.4절의 규칙으로 값을 정하고, 받지 않으면(GEN_INITIAL_GROUP, GEN_SINGLE_ROW) False다. 그 결과는 `Gen_Trial_LLR`과 `Build_Single_Row_Matrix`에서 `Correct_LLR_Matrix`를 거친다
 - ㉲ `FIXED_TARGET_GROUP_IDX_LIST`가 None인 실행은 타겟 목록이 `INITIAL_TARGET_GROUP_IDX`부터 마지막 그룹까지다. 시작 직후(`Initialize_LLR_Matrix`), stage 시작(`Initialize_Stage`), 목록이 비었을 때의 복원(`Update_Optimal_LLR`)이 같은 함수로 만든다
 - ㉳ `Build_Target_Group_Indices`는 잘못 적은 값(정수가 아닌 값, 범위 밖)을 건너뛰고, 알리는 일은 뒤이어 도는 `Validate_Config`가 맡는다. `Setup`이 `Initialize_LLR_Matrix` 다음에 `Validate_Config`를 부르기 때문이다
 
 ## 6. 미결정 사항
 
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
+- ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 `IS_HBF_OPT`와 상관없이 어디까지 걸지. 지금은 3.4절의 모드만 따른다. 남은 자리는 ㉠ 나머지 모드(INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, COPY_ROWS, COPY_GROUP, SWAP_ROW) ㉡ 유효성 검사와 보정이다. ㉡을 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
 
 ## 7. 검증
 
@@ -128,6 +153,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 - 검사: `_test/20260929_target_group_one_by_one/test_target_group_one_by_one.py` 8건 (MUTATE_MATRIX 4, MUTATE_CSW 2, 모드 허용 검사 2). 3.3절을 반영하기 전에는 4건 실패, 지금 8건 통과
 - 검사: `check_sw_branch.py`를 3.3절에 맞게 고침 (41건 통과)
 - 검사: `_test/20260928_hbf_seed_mode/test_hbf_seed_mode.py` 3건 (조건 9가지를 HBF 최적화 모드를 끈 채와 켠 채로 비교). 갈래를 없애기 전에는 HBF 쪽 조건 6가지가 보통 모드와 달랐고, 없앤 뒤 3건 통과
+- 검사: `_test/20260929_hd_hbf_dv0_th_untouched/test_hd_hbf_dv0_th_untouched.py` 14건 (`IS_HBF_OPT`를 끈 HD 복호. 고정 column 3, MUTATE_MATRIX 3, 그룹 변이와 SPLIT_GROUP 3, INSERT_RANDOM_ROW 2, INSERT_RANDOM_GROUP 2, 끝 iteration을 모르는 row 1). 3.4절을 반영하기 전에는 10건 실패, 지금 14건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `target_group_indices`가 지정한 그룹만 도는지

@@ -95,12 +95,24 @@ class LLR_MATRIX:
             return True
         return bool(np.all(values[:-1] >= values[1:]))
 
+    def Get_Columns_Fixed_In_HBF_Iterations(self, iter_end: int) -> list[int]:
+        """HD 복호에서 끝 iteration이 iter_end인 row의 column 가운데 값이 고정되는 것(dv_idx 0의 TH)의 목록.
+
+        HD 복호의 iteration 1 ~ HBF_MAX_ITERATION은 HBF(Hybrid Bit Flipping) 구간이다. 이 구간에서 디코더는
+        dv_idx 0(가장 높은 DV, row의 맨 앞 CH와 TH)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
+        변이는 이 column을 후보에서 빼고, 난수로 만드는 row는 이 column을 HBF_OPT_TH_CONSTANT_VAL로 채운다.
+        HBF 최적화 모드(is_HBF_OPT)가 꺼져 있어도 같다. HBF 구간 뒤의 row와 HD가 아닌 복호는 빈 목록이다.
+        """
+        if self.init_n != 1 or iter_end > HBF_OPT_CONFIG.HBF_MAX_ITERATION:
+            return []
+        return list(range(self.ch_length, self.header.num_parameter_each_set))
+
     def Is_Row_In_HBF_Iterations(self, row: LLR_Row) -> bool:
         """HBF 최적화 모드에서 row가 HBF 구간(iteration 1 ~ HBF_MAX_ITERATION) 안에 있는지 알려준다.
 
-        HBF 구간에서 디코더는 dv_idx 0(가장 높은 DV, row의 맨 앞 CH와 TH)을 1 bit 정밀도로 처리해 그 TH를 읽지 않는다.
-        그래서 HBF 구간의 row는 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정하고 변이와 난수 생성 대상에서 뺀다.
-        HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV처럼 다룬다.
+        HBF 최적화 모드는 HBF 구간 row의 dv_idx 0 TH가 HBF_OPT_TH_CONSTANT_VAL인지 검사하고(Is_LLR_Valid의 HBF1),
+        보정과 REGEN_DV, REGEN_ROW가 그 값으로 채운다. 변이와 난수 생성은 모드와 상관없이
+        Get_Columns_Fixed_In_HBF_Iterations를 따른다.
         row는 HBF 구간의 경계를 걸치지 않으므로(Is_LLR_Valid의 HBF2 규칙) 끝 iteration으로 판단한다.
         """
         return bool(self.is_HBF_OPT) and row.iter_end <= HBF_OPT_CONFIG.HBF_MAX_ITERATION
@@ -707,13 +719,6 @@ class LLR_MATRIX:
         self.ch_length = 2 ** (self.init_n - 1)
         self.th_length = num_parameter_each_set - self.ch_length
 
-        # HBF 구간의 row에서 값이 고정되는 column 범위 (dv_idx 0의 TH)
-        if self.is_HBF_OPT:
-            self.HBF_immutable_col_range = (self.ch_length, num_parameter_each_set)
-
-        else:
-            self.HBF_immutable_col_range = None
-
         self.Build_SW_Branch_Layout()
 
     def Save_Matrix(self, save_dir: str) -> None:
@@ -794,9 +799,9 @@ class LLR_MATRIX:
         1. Max/Min Truncation: Header의 max/min value에 맞춰 값을 클램핑
         2. Ch/Th 정렬: 내림차순 정렬 (truncation 후 정렬해야 정렬 순서 유지)
 
-        is_row_in_HBF_iterations가 True면 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정한다
-        (판단 기준은 Is_Row_In_HBF_Iterations). iteration이 정해지기 전의 row는 False로 두고,
-        매트릭스에 들어간 뒤 Correct_LLR_Matrix가 row의 iteration을 보고 고정한다.
+        is_row_in_HBF_iterations가 True면 dv_idx 0의 TH를 HBF_OPT_TH_CONSTANT_VAL로 고정한다.
+        Correct_LLR_Matrix는 Is_Row_In_HBF_Iterations로, 난수로 row를 만드는 자리는
+        Get_Columns_Fixed_In_HBF_Iterations로 이 값을 정한다. 끝 iteration을 모르는 row는 False로 둔다.
         """
         correct_msg = []
         expected_len = self.header.num_parameter_each_set * self.header.num_dv

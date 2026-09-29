@@ -763,13 +763,16 @@ class LLR_OPT:
 
         return int(random.choice(possible.tolist())), None
 
-    def _generate_random_row(self, matrix:LLR_MATRIX) -> np.ndarray:
+    def _generate_random_row(self, matrix:LLR_MATRIX, iter_end: Optional[int] = None) -> np.ndarray:
         """헤더 범위에 맞는 랜덤 행을 생성한다.
 
         매트릭스 헤더의 최소/최대 값을 활용해 각 row를 난수로 채우고 정렬 규칙을 적용한다.
+        row가 HD 복호의 HBF 구간에 들어가면 dv_idx 0의 TH는 HBF_OPT_TH_CONSTANT_VAL로 채운다
+        (LLR_MATRIX.Get_Columns_Fixed_In_HBF_Iterations).
 
         Args:
             matrix (LLR_MATRIX): 기준이 되는 LLR 매트릭스 인스턴스.
+            iter_end (Optional[int]): 만든 row가 들어갈 자리의 끝 iteration. 아직 모르면 None (모든 column을 난수로 채운다).
 
         Returns:
             np.ndarray: 정렬된 CH/TH 값을 담은 배열.
@@ -792,7 +795,8 @@ class LLR_OPT:
             for param_idx in range(num_parameter_each_set)
         ]
         raw_array = np.array(raw_values, dtype=np.int32)
-        ch_th_values, tmp_msg = matrix.Correct_Ch_Th_In_Row(raw_array)
+        is_row_in_HBF_iterations = iter_end is not None and len(matrix.Get_Columns_Fixed_In_HBF_Iterations(iter_end)) > 0
+        ch_th_values, tmp_msg = matrix.Correct_Ch_Th_In_Row(raw_array, is_row_in_HBF_iterations=is_row_in_HBF_iterations)
 
         return ch_th_values
 
@@ -2410,14 +2414,14 @@ class LLR_OPT:
 
         CSWs = [row.CSW for row in target_group]
 
-        # matrix 랜덤 생성
-        row_values = self._generate_random_row(matrix)
-
         # 기존 행들의 기본 속성 복사
         iter_start = target_group[0].iter_start
         iter_end = target_group[0].iter_end
         floor_flag = target_group[0].floor_flag
-        
+
+        # matrix 랜덤 생성
+        row_values = self._generate_random_row(matrix, iter_end=iter_end)
+
         # 새로운 CSW 결정
         if row_idx == 0:
             if num_rows >= 2:
@@ -2687,7 +2691,7 @@ class LLR_OPT:
 
         new_group_rows: list[LLR_Row] = []
         for row_idx in range(num_rows):
-            row_values = self._generate_random_row(input_matrix)
+            row_values = self._generate_random_row(input_matrix, iter_end=new_iter_end)
             csw_value = csw_values[row_idx]
 
             new_group_rows.append(
@@ -3050,6 +3054,7 @@ class LLR_OPT:
 
         # 5. Mutation 적용 (새 그룹에 대해)
         mutations = self._generate_mutation_for_group(
+            input_matrix,
             new_group_rows,
             num_elements=INSERT_MUTATED_GROUP_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH,
             mutation_range=INSERT_MUTATED_GROUP_CONFIG.MUTATION_RANGE,
@@ -3434,6 +3439,7 @@ class LLR_OPT:
             ))
 
         mutations = self._generate_mutation_for_group(
+            input_matrix,
             back_group_rows,
             num_elements=SPLIT_GROUP_CONFIG.NUM_ELEMENTS_TO_MUTATE_CHTH,
             mutation_range=SPLIT_GROUP_CONFIG.MUTATION_RANGE,
@@ -3495,6 +3501,7 @@ class LLR_OPT:
 
     def _generate_mutation_for_group(
         self,
+        matrix: LLR_MATRIX,
         group_rows: list[LLR_Row],
         num_elements: int,
         mutation_range: int,
@@ -3502,7 +3509,10 @@ class LLR_OPT:
     ) -> list[tuple[int, int, int, int]]:
         """그룹 내 row들에 대한 mutation을 생성한다.
 
+        HD 복호의 HBF 구간 row는 dv_idx 0의 TH를 변이 후보에서 뺀다 (LLR_MATRIX.Get_Columns_Fixed_In_HBF_Iterations).
+
         Args:
+            matrix: group_rows가 들어갈 매트릭스 (값이 고정되는 column을 묻는 데 쓴다)
             group_rows: mutation 대상 row 리스트
             num_elements: 변이할 최대 요소 수
             mutation_range: 변이 범위 (-range ~ +range)
@@ -3516,7 +3526,10 @@ class LLR_OPT:
 
         element_pool = []
         for row_idx, row in enumerate(group_rows):
+            fixed_columns = matrix.Get_Columns_Fixed_In_HBF_Iterations(row.iter_end)
             for col_idx in range(len(row.ch_th_values)):
+                if col_idx in fixed_columns:
+                    continue
                 element_pool.append((row_idx, col_idx))
 
         if not element_pool:
@@ -7101,10 +7114,10 @@ class LLR_OPT:
         for row_idx, row in enumerate(group):
             if row_idx < skip_max_row_idx:
                 continue
-            # HBF 구간의 row는 immutable 범위(dv_idx 0의 TH)를 변이 후보에서 뺀다
-            immutable_col_range = matrix.HBF_immutable_col_range if matrix.Is_Row_In_HBF_Iterations(row) else None
+            # HD 복호의 HBF 구간 row는 값이 고정되는 column(dv_idx 0의 TH)을 변이 후보에서 뺀다
+            fixed_columns = matrix.Get_Columns_Fixed_In_HBF_Iterations(row.iter_end)
             for col_idx in range(len(row.ch_th_values)):
-                if immutable_col_range is not None and immutable_col_range[0] <= col_idx < immutable_col_range[1]:
+                if col_idx in fixed_columns:
                     continue
                 element_pool.append((target_group_idx, row_idx, col_idx))
 
