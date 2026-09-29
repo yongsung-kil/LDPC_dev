@@ -528,14 +528,15 @@ class COPY_ROWS_CONFIG:
 **위치:** [DAO_Main.py](DAO/SRC/DAO_Main.py)
 
 **동작:**
-- 전체 그룹을 다른 그룹으로 복사
-- 그룹 단위 패턴 복제
+- 타겟 그룹의 row를 다른 그룹(후보)의 row로 통째로 바꿈
+- 후보에서 가져오는 것은 row의 값과 CSW
+- 타겟 그룹의 iteration과 SW 분기 표시(row의 마지막 칸, 헤더의 분기 표시)는 그대로
 
 **알고리즘:**
 1. 타겟 그룹 선택
 2. 소스 그룹 후보 수집 (타겟 제외)
-3. 각 소스 그룹으로 타겟 그룹 대체
-4. iteration 범위 조정
+3. 각 소스 그룹의 값과 CSW로 타겟 그룹의 row를 대체
+4. 새 row에 타겟 그룹의 iteration과 SW 분기 표시를 적용
 5. 최적 조합 선택
 
 #### 3.1.6 INSERT_RANDOM_GROUP (40) ★
@@ -1001,6 +1002,8 @@ class DAO_CONFIG:
       - row는 iteration 구간 하나 안에 머묾 (경계는 HBF_OPT_CONFIG.ITERATION_SPAN_ENDS,
         기본 4와 8이라 구간은 1~4, 5~8, 9 이후)
       - 입력 매트릭스가 어기면 시작할 때 "Initial LLR matrix validation failed."로 멈춤
+    - RUN_DAO_MODE가 GEN_SINGLE_ROW이면 False로 둠 (후보 row가 iteration 1~CANDIDATE_ITERATION
+      하나라 경계를 걸침. True이면 시작할 때 오류)
     """
 
     MAX_RUN_ECC_ERRORS: int = 5

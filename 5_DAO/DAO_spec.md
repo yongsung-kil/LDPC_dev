@@ -137,6 +137,7 @@ LLR_MATRIX
 - ㉱ HBF 구간 뒤의 row는 dv_idx 0의 TH도 다른 DV와 같은 규칙(RW4, RW5)을 따른다. 매트릭스의 max_iteration은 `HBF_MAX_ITERATION`보다 클 수 있다
 - ㉲ HBF2의 경계 e는 iteration e와 e + 1 사이다. `ITERATION_SPAN_ENDS`의 기본값은 4와 8이라 구간은 1~4, 5~8, 9 이후다. `HBF_MAX_ITERATION`은 `ITERATION_SPAN_ENDS`에 없어도 언제나 경계다. 판단은 `Get_Iteration_Span_End_Crossed_By_Row()`가 맡는다
 - ㉶ 구간 안은 여러 그룹으로 나눌 수 있다 (예: 구간 1~4를 iteration 1, 2~3, 4로). HBF2는 입력 매트릭스와 trial 매트릭스에 똑같이 걸리므로, 경계를 걸치는 row를 만든 trial은 유효하지 않은 매트릭스로 버려진다. 예: INSERT_RANDOM_GROUP이 iteration 2~4 그룹 뒤에 붙이는 새 그룹은 5부터 `INSERT_GROUP_NUM_ITERATION`(20)칸이라 8과 9 사이를 걸쳐 버려지고, iteration 5~8 그룹 뒤에 붙이는 새 그룹(9~28)은 통과한다
+- ㉷ GEN_SINGLE_ROW의 후보 row는 iteration 1~`CANDIDATE_ITERATION` 하나다. HBF 최적화 모드에서 이 row가 경계를 걸치면(`CANDIDATE_ITERATION`이 첫 경계보다 크면) 모든 후보가 HBF2로 버려지므로 `Validate_Config`가 시작할 때 오류로 멈춘다
 
 ---
 
@@ -300,6 +301,9 @@ class GenLLRMode(IntEnum):
 - MIN_CSW(8) <= CSW <= MAX_CSW(1408)
 - 내림차순 유지: prev_row.CSW >= curr.CSW >= next_row.CSW
 
+**특수 로직**:
+- 타겟 그룹의 row가 하나뿐이면 바꿀 CSW가 없으므로 그 stage를 건너뜀 (`Set_Gen_Trial_LLR_Mode`가 trial 수를 0으로 둠)
+
 ---
 
 ### 5.4 SWAP_ROW (21)
@@ -366,10 +370,19 @@ class GenLLRMode(IntEnum):
 
 ### 5.7 COPY_GROUP (31)
 
-**목적**: 기존 그룹을 복사하여 새 그룹 생성
+**목적**: 타겟 그룹의 row를 다른 그룹(후보)의 row로 통째로 바꿈
 
 **입력 파라미터** (COPY_GROUP_CONFIG):
 - 복사 대상 그룹 선택 로직
+
+**변경 사항**:
+- 타겟 그룹의 row 수, 값(ch_th_values), CSW가 후보 그룹의 것으로 바뀜
+- 타겟 그룹의 iteration과 SW 분기 표시(row의 `floor_flag`, 헤더 `type_each_group`의 분기 표시)는 그대로
+- 타겟과 후보가 모두 보통 그룹이면 헤더의 그룹 유형(10 미만의 값)은 후보의 것을 따름
+
+**특수 로직**:
+- 후보는 restart 그룹과 타겟 그룹을 뺀 모든 그룹 (분기 그룹 포함)
+- HD 복호의 HBF 구간에 있는 타겟은 복사한 값의 dv_idx 0 TH를 상수로 채움 (3.6절 HBF3)
 
 ---
 
@@ -622,6 +635,7 @@ class GenLLRMode(IntEnum):
 
 | 모드 | 실패 조건 | 반환값 |
 |------|----------|--------|
+| MUTATE_CSW | 타겟 그룹의 row가 1개 | Skip |
 | INSERT_RANDOM_ROW | CSW 삽입 불가능한 위치 | None |
 | INSERT_RANDOM_GROUP | CSW 후보 < num_rows - 1 | None |
 | INSERT_MUTATED_GROUP | Non-restart 그룹 없음 / max_iteration >= MAX_DECODING_ITERATION | None / Skip |

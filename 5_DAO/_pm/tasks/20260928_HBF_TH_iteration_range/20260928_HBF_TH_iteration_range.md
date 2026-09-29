@@ -124,7 +124,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | 10 | `LLR_OPT.Copy_Row`, `Copy_Group` (COPY_ROWS, COPY_GROUP) | 복사한 값을 6번 함수로 채움 |
 | 11 | `LLR_OPT.Gen_LLR_Swap_Row` (SWAP_ROW) | 1번 함수의 column을 빼고 맞바꿈 |
 
-9번은 REGEN_DV가 HBF 구간 row의 dv_idx 0 자리에 만든 값(TH 0 0 0)을 다른 DV 자리로 옮기던 동작도 함께 없앤다 (라이트 리뷰의 LOW 발견). 10번의 `Copy_Group`은 값만 다루며, 후보의 분기 표시를 타겟에 복사하는 동작(라이트 리뷰 F3)은 그대로다.
+9번은 REGEN_DV가 HBF 구간 row의 dv_idx 0 자리에 만든 값(TH 0 0 0)을 다른 DV 자리로 옮기던 동작도 함께 없앤다 (라이트 리뷰의 LOW 발견). 10번은 `Copy_Group`이 복사한 값을 다루는 규칙이고, 분기 표시를 다루는 규칙은 3.9절에 있다.
 
 그대로 둔 것: 유효성 검사(HBF1, HBF2)와 보정(`Correct_LLR_Matrix`)은 `IS_HBF_OPT`가 켜져 있을 때만 규칙을 건다. 그룹의 iteration을 옮기는 모드(REORDER_GROUP, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)는 값을 쓰지 않아 이 규칙이 걸리지 않는다. 이 모드가 iteration 5 이상의 그룹을 HBF 구간으로 옮기면 `IS_HBF_OPT`가 꺼진 실행에서는 그 그룹의 dv_idx 0 TH가 그대로 남는다.
 
@@ -148,7 +148,7 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 
 ### 3.6 iteration 구간 경계와 시작 검사 (라이트 리뷰 F1, F2, F6, 사용자 결정 2026-09-29)
 
-사용자 결정: ㉮ iteration 8과 9 사이 경계도 검사한다 ㉯ 모드 시퀀스의 SW 분기 제한을 시작할 때 검사한다 ㉰ 문서에 HBF 최적화 모드의 사용 조건을 적는다. 라이트 리뷰의 F3, F4는 설명을 다시 드린 뒤 정하고, F5는 이번에 넘어간다.
+사용자 결정: ㉮ iteration 8과 9 사이 경계도 검사한다 ㉯ 모드 시퀀스의 SW 분기 제한을 시작할 때 검사한다 ㉰ 문서에 HBF 최적화 모드의 사용 조건을 적는다. 라이트 리뷰의 F4와 F5는 3.8절, F3은 3.9절에서 다룬다.
 
 | # | 위치 | 내용 |
 |---|------|------|
@@ -170,10 +170,11 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | # | 위치 | 내용 |
 |---|------|------|
 | 1 | `DAO_CONFIG.Gen_LLR_Mode_SEQUENCE` | `GenLLRMode`의 멤버 17개를 모두 이름으로 적음 (전에는 숫자 12개) |
-| 2 | `DAO_CONFIG.Gen_LLR_Mode_HBF_SEQUENCE` | `GenLLRModeHBF`의 멤버 8개를 모두 이름으로 적음 (전에는 숫자 5개) |
+| 2 | `DAO_CONFIG.Gen_LLR_Mode_HBF_SEQUENCE` | `GenLLRModeHBF`의 멤버 11개를 모두 이름으로 적음 (전에는 숫자 5개). 순서: GEN_INITIAL_GROUP, INSERT_RANDOM_GROUP, INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP, COPY_GROUP, SWAP_ROW, COPY_ROWS, REGEN_DV, REGEN_ROW |
 | 3 | `Set_Configs_Manually`의 프리셋 세 곳 (SIM_IDX 10, 20, 30) | 값은 그대로 두고 이름으로 적음 (REORDER_GROUP, MUTATE_MATRIX, MUTATE_CSW, REORDER_GROUP) |
 | 4 | `LLR_OPT.Set_Gen_Trial_LLR_Mode` | 시퀀스의 원소를 `GenLLRMode`의 멤버로 읽음. 원소가 `GenLLRMode`의 멤버든 `GenLLRModeHBF`의 멤버든 숫자든 `current_gen_trial_LLR_mode`는 `GenLLRMode`의 멤버 |
 | 5 | `LLR_OPT.Get_Mode_Sequence_Str` | 로그에 찍는 시퀀스를 값(숫자)으로 고정 |
+| 6 | `GenLLRModeHBF` (`DAO_Constants.py`) | COPY_ROWS, REGEN_DV, REGEN_ROW 멤버를 더함 (값은 같은 이름의 `GenLLRMode` 값). 사용자 결정(2026-09-29)이고, 넣지 않은 모드는 REORDER_GROUP, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP |
 
 두 목록은 돌릴 모드를 고르는 바탕이다. 순서는 GEN_INITIAL_GROUP을 맨 앞에 두었다. 이 모드는 stage 1에서만 돌고 다른 stage에서는 건너뛰므로, 맨 앞이 아니면 목록에 있어도 돌지 않는다. HBF 목록의 나머지는 `GenLLRModeHBF`에 적힌 순서이고 보통 목록의 나머지는 값이 작은 순서다.
 
@@ -189,10 +190,48 @@ SW 분기 지원(2026-09-21)은 한 구간 안에서 분기 index가 같은 그�
 | SW 분기가 없는 매트릭스, 보통 모드 | stage 1이 GEN_INITIAL_GROUP (전에는 MUTATE_MATRIX). 모든 그룹을 난수 그룹 하나로 바꾼 trial을 만듦 |
 | SW 분기가 없는 매트릭스, HBF 최적화 모드 | 기본 설정값으로는 GEN_INITIAL_GROUP(iteration 1~20)과 INSERT_RANDOM_GROUP(20칸)의 trial이 경계 검사(HBF2)로 모두 버려짐. 40회씩 돌려 확인 |
 
-HBF 최적화 모드에서 SW 분기가 없는 4그룹 매트릭스(iteration 1~1, 2~4, 5~8, 9~20)의 타겟 그룹 1(2~4)에 모드마다 trial을 만들어 본 결과: INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP, COPY_GROUP, SWAP_ROW는 유효한 trial이 나오고, GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP은 기본 설정값에서 모두 무효다.
+HBF 최적화 모드에서 SW 분기가 없는 4그룹 매트릭스(iteration 1~1, 2~4, 5~8, 9~20)의 타겟 그룹 1(2~4)에 모드마다 trial을 만들어 본 결과: INSERT_RANDOM_ROW, MUTATE_MATRIX, MUTATE_CSW, SPLIT_GROUP, COPY_GROUP, SWAP_ROW, COPY_ROWS, REGEN_DV, REGEN_ROW는 유효한 trial이 나오고, GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP은 기본 설정값에서 모두 무효다. COPY_ROWS, REGEN_DV, REGEN_ROW는 trial 4개씩 만들어 모두 유효했고 dv_idx 0의 TH가 0 0 0으로 남았다.
+
+### 3.8 헛도는 실행을 미리 막기 (라이트 리뷰 F4, F5, 사용자 결정 2026-09-29)
+
+사용자 결정: ㉮ 타겟 그룹의 row가 하나뿐이면 MUTATE_CSW stage를 건너뛴다 ㉯ GEN_SINGLE_ROW와 HBF 최적화 모드를 함께 쓰면 시작할 때 오류를 내고 멈춘다.
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `LLR_OPT.Set_Gen_Trial_LLR_Mode` | 모드가 MUTATE_CSW이고 타겟 그룹의 row가 2개 미만이면 그 stage의 trial 수를 0으로 둔다 (restart 그룹을 건너뛰는 것과 같은 방식). 로그에 "Target g{번호} has a single row (no CSW to mutate), skipping this stage"를 남긴다 |
+| 2 | `LLR_OPT.Validate_Config` | 실행 모드가 GEN_SINGLE_ROW이고 `IS_HBF_OPT`가 켜져 있으며 후보 row(iteration 1~`CANDIDATE_ITERATION`)가 구간 경계를 걸치면 오류. 문구에 걸치는 경계를 적는다 |
+
+1번의 까닭: 그룹의 첫 row는 CSW가 -1로 고정이라 row가 하나뿐이면 바꿀 CSW가 없다. `Gen_LLR_Mutate_CSW`는 바뀌지 않은 매트릭스를 돌려주고 `Gen_Trial_LLR`은 이것을 생성 성공으로 보아, 그 stage의 trial이 모두 같은 매트릭스를 측정했다. 건너뛴 stage는 유효한 trial이 없는 stage로 세어지고, 이런 stage가 시퀀스 길이의 두 배만큼 이어지면 최적화가 끝난다 (restart 그룹과 같은 규칙).
+
+2번의 조건: `CANDIDATE_ITERATION`이 첫 경계(4) 이하이면 후보 row가 구간 1~4 안에 있어 걸치지 않으므로 오류가 아니다. 기본값 50은 경계 4와 8을 걸친다.
+
+### 3.9 COPY_GROUP이 타겟 그룹의 분기 표시를 그대로 둠 (라이트 리뷰 F3, 사용자 결정 2026-09-29)
+
+COPY_GROUP은 타겟 그룹의 row를 후보 그룹의 row로 통째로 바꾸는 모드다. 후보의 값과 CSW뿐 아니라 SW 분기 표시(row의 `floor_flag`와 헤더 `type_each_group`)까지 타겟에 옮겼다. `LLR_MATRIX_2.txt`에서 보통 그룹 5(iteration 9~24)에 분기 그룹 0을 복사하면 그룹 5의 헤더가 1에서 10으로, row 꼬리가 -1에서 0으로 바뀌어 iteration 9~24에 새 분기 구간이 생겼고, 이 매트릭스가 유효성 검사를 지났다.
+
+사용자 결정: 값과 CSW만 복사하고 타겟 그룹의 분기 표시는 그대로 둔다.
+
+| # | 위치 | 내용 |
+|---|------|------|
+| 1 | `LLR_OPT.Copy_Group`의 row | 새 row의 `floor_flag`는 타겟 그룹의 값. iteration도 타겟 그룹의 값 |
+| 2 | `LLR_OPT.Copy_Group`의 헤더 | 타겟과 후보가 모두 보통 그룹(row 꼬리 -1)이면 그룹 유형(10 미만의 값)은 후보의 것을 따름. 타겟이나 후보가 분기 그룹이면 타겟의 헤더 값을 그대로 둠 |
+
+후보 목록(`Get_Copy_Group_Candidates`)은 그대로다. 분기 그룹도 후보가 되어 값과 CSW를 내준다.
+
+`LLR_MATRIX_2.txt`에서 복사 뒤 타겟 그룹의 헤더와 row 꼬리를 수정 전 소스(커밋 a615e94)와 수정 후 소스로 견준 결과다. 타겟 그룹의 iteration은 두 소스 모두 그대로다.
+
+| 타겟 (헤더, 꼬리, iteration) | 후보 (헤더, 꼬리) | 수정 전의 타겟 | 수정 후의 타겟 |
+|------|------|------|------|
+| 그룹 5 (1, -1, 9~24) | 그룹 0 (10, 0) | 10, 0. 유효 (iteration 9~24에 분기 구간이 생김) | 1, -1. 유효 |
+| 그룹 5 (1, -1, 9~24) | 그룹 2 (20, 0) | 20, 0. 무효 (trial이 버려짐) | 1, -1. 유효 |
+| 그룹 5 (1, -1, 9~24) | 그룹 3 (21, 1) | 21, 1. 무효 (trial이 버려짐) | 1, -1. 유효 |
+| 그룹 3 (21, 1, 5~5) | 그룹 6 (1, -1) | 1, -1. 무효 (trial이 버려짐) | 21, 1. 유효 |
 
 ## 4. 수정 대상 파일
 
+- `SRC/DAO_Main.py` (Copy_Group), `DAO_spec.md` (5.7절)
+- `SRC/DAO_Constants.py` (GenLLRModeHBF), `SRC/DAO_Config.py` (Gen_LLR_Mode_HBF_SEQUENCE), `README.md` (4.1.1절의 HBF 시퀀스)
+- `SRC/DAO_Main.py` (Set_Gen_Trial_LLR_Mode의 stage 건너뛰기, Validate_Config의 GEN_SINGLE_ROW 갈래), `DAO_spec.md` (3.6절 ㉷, 5.3절 특수 로직, 6.2절 표), `README.md` (4.1.1절 IS_HBF_OPT 설명)
 - `SRC/DAO_Config.py` (두 시퀀스와 프리셋 세 곳), `SRC/DAO_Main.py` (Set_Gen_Trial_LLR_Mode, Get_Mode_Sequence_Str), `README.md` (GenLLRMode 시퀀스, 4.1.1절, 4.3.1절, 4.3.2절)
 - `SRC/DAO_Config.py` (ITERATION_SPAN_ENDS, Gen_LLR_Mode_HBF_SEQUENCE 주석), `SRC/DAO_LLR_MATRIX.py` (3.6절의 2~4번), `SRC/DAO_Main.py` (3.6절의 5, 6번), `DAO_spec.md` (3.6절 HBF2와 ㉲㉶, 3.7절 ㉯㉲, 3.8절 ㉯㉰와 T5), `README.md` (타겟 그룹 설정, 3.4절 ㉮, 4.1.1절)
 
@@ -215,14 +254,15 @@ HBF 최적화 모드에서 SW 분기가 없는 4그룹 매트릭스(iteration 1~
 - ㉱ `Correct_Ch_Th_In_Row`의 `is_row_in_HBF_iterations` 인자는 기본값이 False이고, row 없이 부르는 자리는 `_generate_random_row` 하나다. 끝 iteration을 받으면 3.4절의 규칙으로 값을 정하고, 받지 않으면(GEN_INITIAL_GROUP, GEN_SINGLE_ROW) False다. 그 결과는 `Gen_Trial_LLR`과 `Build_Single_Row_Matrix`에서 `Correct_LLR_Matrix`를 거친다
 - ㉲ `FIXED_TARGET_GROUP_IDX_LIST`가 None인 실행은 타겟 목록이 `INITIAL_TARGET_GROUP_IDX`부터 마지막 그룹까지다. 시작 직후(`Initialize_LLR_Matrix`), stage 시작(`Initialize_Stage`), 목록이 비었을 때의 복원(`Update_Optimal_LLR`)이 같은 함수로 만든다
 - ㉳ `Build_Target_Group_Indices`는 잘못 적은 값(정수가 아닌 값, 범위 밖)을 건너뛰고, 알리는 일은 뒤이어 도는 `Validate_Config`가 맡는다. `Setup`이 `Initialize_LLR_Matrix` 다음에 `Validate_Config`를 부르기 때문이다
+- ㉷ SW 분기가 없는 매트릭스는 모든 그룹이 보통 그룹이라 COPY_GROUP의 결과가 3.9절 앞뒤로 같다 (row 꼬리는 -1, 헤더의 그룹 유형은 후보의 것)
+- ㉸ MUTATE_CSW의 stage 건너뛰기는 타겟 그룹의 row가 하나일 때만 걸린다. row가 둘 이상인 타겟의 stage는 trial 수와 흐름이 같다
+- ㉹ GEN_SINGLE_ROW의 시작 검사는 `IS_HBF_OPT`가 켜져 있을 때만 걸린다. `IS_HBF_OPT`를 끈 GEN_SINGLE_ROW 실행은 같은 설정으로 시작 검사를 지난다
 
 ## 6. 미결정 사항
 
 - ㉮ 그룹 수를 바꾸는 모드(INSERT_RANDOM_GROUP, SPLIT_GROUP 등)를 `FIXED_TARGET_GROUP_IDX_LIST`와 함께 쓰게 할지. 지금은 시작할 때 오류로 막는다. 함께 쓰려면 그룹이 늘거나 줄 때 목록의 index를 따라 옮기는 기능이 필요하다
 - ㉯ HD 복호의 HBF 구간 규칙(dv_idx 0의 TH는 0)을 유효성 검사와 보정에도 `IS_HBF_OPT`와 상관없이 걸지. 사용자 결정(2026-09-29)은 값을 쓰는 모드까지이고 유효성 검사와 보정은 그대로다. 걸면 HBF 구간 row의 dv_idx 0 TH가 0이 아닌 HD 입력 매트릭스는 시작할 때 검증에서 멈춘다
-- ㉰ 라이트 리뷰의 F3(COPY_GROUP이 후보의 분기 표시를 타겟에 복사함), F4(row 하나짜리 타겟의 MUTATE_CSW가 바뀌지 않은 매트릭스를 되풀이 측정함), F5(GEN_SINGLE_ROW와 HBF 최적화 모드의 조합)를 고칠지. F3과 F4는 사용자에게 설명을 다시 드린 상태이고 F5는 넘어가기로 했다
-- ㉲ HBF 기본 시퀀스의 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 그대로 둘지. 3.6절의 경계 검사로, 기본 설정값(iteration 20칸)에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 모두 버려진다. 3.7절에서 사용자 요청으로 쓸 수 있는 모드를 모두 담았으므로 목록에는 남아 있다
-- ㉳ `GenLLRModeHBF`에 없는 모드 9개(REORDER_GROUP, COPY_ROWS, INSERT_MUTATED_GROUP, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW, ADJUST_ITERATION, DELETE_ROW, INSERT_RESTART_GROUP)를 HBF 최적화 모드의 목록에 넣을지. 넣으려면 `GenLLRModeHBF`에 멤버를 더한다. 이 가운데 그룹 수, 순서, iteration 구간을 그대로 두는 것은 COPY_ROWS, INSERT_MUTATED_ROW, REGEN_DV, REGEN_ROW 넷이다
+- ㉰ HBF 기본 시퀀스의 GEN_INITIAL_GROUP과 INSERT_RANDOM_GROUP을 그대로 둘지. 3.6절의 경계 검사로, 기본 설정값(iteration 20칸)에서는 두 모드의 trial이 iteration 1~8의 그룹 뒤에서 모두 버려진다. 3.7절에서 사용자 요청으로 쓸 수 있는 모드를 모두 담았으므로 목록에는 남아 있다
 - ㉱ 실행 파일의 디코더가 HBF 구간에서 dv_idx 0의 TH를 읽지 않는지, 읽되 0이라 같은 출력을 내는지 (라이트 리뷰 F7). 그리고 부호의 열 차수가 11, 4, 3, 2뿐인지 (F8). 규칙의 결론은 어느 쪽이든 같고 문서의 설명이 달라진다
 
 ## 7. 검증
@@ -238,13 +278,15 @@ HBF 최적화 모드에서 SW 분기가 없는 4그룹 매트릭스(iteration 1~
 - 검사: `_test/20260929_hbf_two_stage_allowed/test_hbf_two_stage_allowed.py` 6건 (시작 검사 5, trial 테스트가 도는 순서 1). 3.5절을 반영하기 전에는 시작 검사 2건이 "Two-Stage 모드는 IS_HBF_OPT=True와 함께 사용할 수 없습니다"로 실패, 지금 6건 통과. trial 테스트 순서 1건은 반영 전에도 통과했다 (그 흐름이 `IS_HBF_OPT`를 읽지 않음을 보이는 검사)
 - 검사: `_test/20260929_hbf_iteration_span_ends/test_hbf_iteration_span_ends.py` 9건 (구간 안의 row 1, 경계를 걸친 row 3, HBF 최적화 모드를 끈 경우 1, 경계 설정 1, 입력 매트릭스 1, INSERT_RANDOM_GROUP 2). 3.6절을 반영하기 전에는 9건 모두 오류(설정 없음), 지금 9건 통과
 - 검사: `_test/20260929_mode_sequence_start_check/test_mode_sequence_start_check.py` 9건 (시퀀스 검사 7, `Validate_Config` 2). 3.6절을 반영하기 전에는 8건이 실패하거나 오류, 지금 9건 통과
-- 검사: `_test/20260929_mode_sequence_by_name/test_mode_sequence_by_name.py` 10건 (기본 시퀀스 4, 프리셋 1, 시퀀스를 읽는 자리 5). 3.7절을 반영하기 전에는 6건이 실패하거나 오류, 지금 10건 통과. 반영 전에도 통과한 4건은 HBF 모드의 값이 같은 이름의 보통 모드와 같은지, 로그 글, 시작 검사, pickle 왕복이다
+- 검사: `_test/20260929_mode_sequence_by_name/test_mode_sequence_by_name.py` 12건 (기본 시퀀스 5, 프리셋 1, 시퀀스를 읽는 자리 5, HBF 최적화 모드에서 만든 trial 1). 3.7절의 1~5번을 반영하기 전에는 처음 쓴 10건 가운데 6건이 실패하거나 오류였고, 그때도 통과한 4건은 HBF 모드의 값이 같은 이름의 보통 모드와 같은지, 로그 글, 시작 검사, pickle 왕복이다. 6번과 함께 더한 2건 가운데 목록 구성 검사는 6번을 반영하기 전에 실패했고 trial 검사는 그때도 통과했다. 지금 12건 통과
+- 검사: `_test/20260929_skip_and_stop_checks/test_skip_and_stop_checks.py` 8건 (MUTATE_CSW stage 건너뛰기 4, GEN_SINGLE_ROW 시작 검사 4). 3.8절을 반영하기 전에는 3건 실패, 지금 8건 통과
+- 검사: `_test/20260929_copy_group_keeps_branch_marks/test_copy_group_keeps_branch_marks.py` 7건 (입력 매트릭스의 표시 1, 분기 그룹을 복사한 보통 타겟 1, 값과 CSW 1, 다른 그룹 1, 복사 뒤의 모드 허용 1, 보통 그룹을 복사한 분기 타겟 1, 보통 그룹끼리의 그룹 유형 1). 3.9절을 반영하기 전에는 3건 실패 (분기 그룹을 복사한 보통 타겟, 복사 뒤의 모드 허용, 보통 그룹을 복사한 분기 타겟), 지금 7건 통과
 - 기존 검사: `check_dao_fixes.py`, `check_sw_branch.py`, `_test/20260921_gather_uncors_matrix_arg/` 모두 통과
 - 입력 매트릭스 `Input/Ref_C/Prime_ECC_3.0/Initial_LLR_matrix/LLR_MATRIX_1.txt`와 `LLR_MATRIX_2.txt`(max_iteration 124)를 `is_HBF_OPT=True`로 읽으면 유효하고, 보정이 dv_idx 0의 CH와 TH를 바꾸지 않음. `FIXED_TARGET_GROUP_IDX_LIST = [0, 1]`이면 두 파일 모두 타겟 목록이 `[0, 1]`
 - 라이트 리뷰 (2026-09-29 13:39 ~ 13:58, 기준 커밋 2e34036, 기록: `review/`): Round 1 관점 38개를 18개로 통합, Round 2 lv1 에이전트 5개. 발견 21건 (CRITICAL 0, HIGH 3, MEDIUM 3, LOW 15). 종합 판정은 수정 필요
-  - HIGH: F1 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤, F2 경계 검사가 4와 5 사이만 봄 (6절 ㉰), F3 COPY_GROUP이 후보의 분기 표시를 타겟에 복사함
+  - HIGH: F1 시작 검사에 SW 분기 모드 제한이 없어 시작을 통과한 설정이 중간 stage에서 멈춤, F2 경계 검사가 4와 5 사이만 봄, F3 COPY_GROUP이 후보의 분기 표시를 타겟에 복사함
   - MEDIUM: F4 row 하나짜리 타겟의 MUTATE_CSW가 바뀌지 않은 매트릭스를 되풀이 측정함, F5 GEN_SINGLE_ROW와 HBF 최적화 모드의 조합을 시작할 때 막지 않음, F6 문서에 HBF 최적화 모드의 사용 조건이 빠짐
   - 값 규칙, seed 모드, 타겟 목록, MPI로 옮기는 값에서는 결함을 찾지 못함
   - 3.4절의 수정은 리뷰 뒤에 들어갔다. 1~5번(커밋 f843c7a)으로 F15 가운데 `_generate_mutation_for_group`과 F9 가운데 INSERT_RANDOM_ROW, INSERT_RANDOM_GROUP의 로그가 풀렸고, 6~11번으로 F15의 나머지(`_generate_mutation_for_row`)와 REGEN_DV가 dv_idx 0 자리의 값을 다른 DV로 옮기던 발견이 풀렸다
-  - 3.6절의 수정으로 F1, F2, F6이 풀렸다. F3, F4, F5는 남아 있다 (6절 ㉰)
+  - 3.6절의 수정으로 F1, F2, F6이 풀렸고, 3.8절로 F4와 F5가, 3.9절로 F3이 풀렸다 (커밋 dde34bd). HIGH와 MEDIUM 발견 6건이 모두 풀렸다
 - 남은 확인: 사용자 환경 MPI 실행에서 초기 매트릭스 검증 통과 여부, stage 로그의 `[target_group_indices]` 줄이 지정한 그룹만 도는지 (같은 자리의 "Current target index" 줄은 별도 카운터라 실제 타겟과 다른 그룹을 적는다, 라이트 리뷰 F17)
