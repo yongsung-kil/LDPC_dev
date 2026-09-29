@@ -1,4 +1,4 @@
-# TODO — 저장소 공통 작업
+# TODO: 저장소 공통 작업
 
 > Claude 마지막 확인: 2026-09-29 22:03:53
 
@@ -16,13 +16,15 @@
   - [x] 실행 계획 검토 (2026-09-30, 마커 1건 반영)
   - [x] 1단계 마감 판정요청 6건 답 (2026-09-30, 전부 권고대로. 이후 결정은 8단계 뒤 한 번에)
   - [x] 저장소 뼈대와 pm, doc-check 스킬 (2026-09-30, 형제 폴더 AI_Assisted_Dev에 커밋 11개. 세션 시작 자동 실행과 두 스킬을 시험장 실제 실행으로 확인)
-  - [ ] onboard, explore, wiki 스킬 (프로젝트 프로파일)
-  - [ ] dashboard (자료 양식과 스크립트)
-  - [ ] idea-apply, speed-opt, robustness-check(안정성 검사), param-opt 스킬
-  - [ ] paper-search, paper-screen, paper-analyze 스킬 (git 이력의 수집기 일반화)
-  - [ ] plan, review, debug, test 스킬 이관
-  - [ ] evals와 배포 (marketplace.json)
-  - [ ] 소개 페이지 docs/intro.html
+  - [x] onboard, explore, wiki 스킬 (프로젝트 프로파일) (2026-09-30, 시험장 onboard 실제 실행 진행 중)
+  - [x] dashboard (자료 양식과 스크립트, html_guide.md, 자기 적용 확인) (2026-09-30)
+  - [x] idea-apply, speed-opt, robustness-check(안정성 검사), param-opt 스킬 (2026-09-30)
+  - [x] paper-search, paper-screen, paper-analyze 스킬 (2026-09-30, arXiv API와 내보내기 CSV 두 통로)
+  - [x] plan, review, debug, test-design 스킬 이관 (2026-09-30)
+  - [x] evals 13건과 배포 준비 (marketplace.json, 설치 안내) (2026-09-30)
+  - [x] 소개 페이지 docs/intro.html (2026-09-30)
+  - [x] 라이트 리뷰(2단계부터 8단계, Important 7건 반영), 시험장 onboard와 dashboard 실행 확인, 판 0.1.0 태그 (2026-09-30)
+  - [ ] 판정요청 3건 답 대기 (`판정요청_플러그인마감_260930.md`), 시험장 wiki 실행 결과 확인
 - [ ] 통합 저장소 AI_Assisted_ECC_Dev 구성 (LDPC_dev + LDPC_Paper_Analysis를 새 저장소 하나로)
   - 상세: `_pm/tasks/20260826_AI_Assisted_ECC_Dev_통합/`
   - [x] 요구 파악과 확정 사항 정리 (2026-08-26)
