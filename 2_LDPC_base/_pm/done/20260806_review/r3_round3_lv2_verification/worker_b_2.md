@@ -334,7 +334,7 @@ V1과 V4는 **양립 가능하다**. "정확성 문제 아님(V1)"과 "경로 �
 
 ## 4. 검증에 쓴 스크립트 (스크래치패드, 프로젝트 파일 불변)
 
-`C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\16fcbdf4-af26-4590-914b-4ced68125c6f\scratchpad\`
+`<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\16fcbdf4-af26-4590-914b-4ced68125c6f\scratchpad\`
 
 | 파일 | 내용 |
 |------|------|

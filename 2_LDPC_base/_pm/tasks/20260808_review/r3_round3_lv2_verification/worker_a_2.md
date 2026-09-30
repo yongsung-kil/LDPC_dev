@@ -316,13 +316,13 @@ MEDIUM(엣지케이스 위험).
 ## ㉳ 실행 환경 정보와 `git status --short`
 
 - Python 3.11.7 (MSC v.1937 64bit), numpy 1.26.4, Windows 10 Home 19045
-- cwd: `d:/OneDrive/My_Projects/LDPC_dev/2_LDPC_light` (전 실행 공통)
+- cwd: `<루트>/2_LDPC_light` (전 실행 공통)
 - H-matrix: `Input/H_matrix/example_18x147_z256.qc` (base 18x147, z=256, N=37632, K=33024,
   rate 0.8776, base edge 553개, column degree 분포 {2:17, 3:1, 4:129} → dv_max=4)
 - 실험 스크립트, config 사본, 복사·개명한 LLR matrix, 시뮬 산출물은 전부 scratchpad
   (`.../scratchpad/w_a2/`)에 두었다. 저장소 파일은 읽기만 했고, 코드 변형은 원본 수정 없이
   서브클래스 재정의(`SignbitMixin`, `CountingMixin`, `RecordMixin`, `_column_order` 재정의)로만 했다
-- 작업 종료 시 `cd d:/OneDrive/My_Projects/LDPC_dev && git status --short` 결과:
+- 작업 종료 시 `cd <루트> && git status --short` 결과:
 
 ```
  M 2_LDPC_light/_pm/TODO.md

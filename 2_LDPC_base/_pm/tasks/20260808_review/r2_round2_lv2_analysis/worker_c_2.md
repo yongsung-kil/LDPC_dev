@@ -276,7 +276,7 @@ LLR 파라미터의 정본이 둘인 것처럼 읽힌다.
 ## 확인했으나 문제 없던 항목
 
 - ㉮ **`-m` 실행이 cwd를 sys.path에 넣는 근거**: `2_LDPC_light/`에서 `python -m site`로
-  실측한 `sys.path[0]`은 `D:\OneDrive\My_Projects\LDPC_dev\2_LDPC_light`(cwd 절대경로)다.
+  실측한 `sys.path[0]`은 `<루트>\2_LDPC_light`(cwd 절대경로)다.
   이 덕분에 `LDPC_base`와 `Ideas`가 최상위 이름으로 잡힌다. `python -c`의 `sys.path[0]`은
   `''`이며, 스크립트 파일 실행은 스크립트 폴더가 들어가 cwd가 들어가지 않는다.
 - ㉯ **미등록 `decoder.type`의 에러 메시지**: 등록 가능한 목록을 그대로 알려준다.
@@ -332,7 +332,7 @@ LLR 파라미터의 정본이 둘인 것처럼 읽힌다.
 
 ## git status 결과
 
-작업 종료 시점 (`d:\OneDrive\My_Projects\LDPC_dev`):
+작업 종료 시점 (`<루트>`):
 
 ```
  M 2_LDPC_light/_pm/TODO.md

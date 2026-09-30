@@ -1,5 +1,11 @@
 # DONE — 완료 이력 (저장소 공통)
 
+### 2026-09-30 AI-Dev-Assistant 플러그인 제작과 배포 정리
+Claude Code 플러그인 ai-dev-assistant(스킬 17, 에이전트 3, 자동 실행 2, 대시보드)를 형제 저장소 AI_Dev_Assistant에 만들고, 적용 예시를 ldpc_py 저장소로 분리
+- **배경**: 기존 코드가 있는 프로젝트에서 문서화, 논문 조사, 기법 실험, 최적화, 작업 관리를 Claude가 돕게 하려는 make_plugin.md 구상 (2026-09-29)
+- **변경**: 8단계 제작(뼈대, 프로파일 스킬, 대시보드, 실험과 최적화, 논문 스킬, 절차 스킬, evals, 소개), 대시보드 개편(묶음 사이드바, 작업 보드, 변경 이력, 논문 탐색기, 색), 개명(ai-assisted-dev에서 ai-dev-assistant로), 배포용 정리(개발 산출물은 지역 브랜치 dev-artifacts에만). 예시 저장소 ldpc_py에 2_LDPC_base 사본, 온보딩, 위키 75편, 논문 아카이브 6,053편. 판정요청 답: 회사 GitHub 반영과 run.py 수정은 하지 않음, 옛 리뷰 기록의 개인 경로 21곳 치환
+- **파일**: 형제 저장소 AI_Dev_Assistant와 ldpc_py(둘 다 GitHub 비공개), 2_LDPC_base/_pm/done과 _pm/tasks의 리뷰 기록 13개, _pm/done/20260930_AI_Dev_Assistant_플러그인/
+
 ### 2026-08-14 — Project 4 (4_H_matrix_tool), Project 5 (5_DAO) 신설
 H-matrix 설계 툴을 독립 프로젝트로 승격하고, SSS의 DAO를 반입
 - **배경**: H-matrix 설계 도구와 DAO를 각각 독립 프로젝트로 발전시키기로 함 (사용자 결정 2026-08-14)

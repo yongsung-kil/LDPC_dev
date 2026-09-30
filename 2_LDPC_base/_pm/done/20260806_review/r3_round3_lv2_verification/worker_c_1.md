@@ -6,7 +6,7 @@
 저장소 전체(모든 확장자)를 grep. 추가로 스크래치패드에 **합성 트리**(본체 복사 → 개정본 `.py` 9개로 덮어쓰기)를
 만들어 임포트/실행으로 실증했다. 프로젝트 파일은 읽기만 했다.
 
-- 합성 트리 경로: `C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\16fcbdf4-af26-4590-914b-4ced68125c6f\scratchpad\work\ldpclight\`
+- 합성 트리 경로: `<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\16fcbdf4-af26-4590-914b-4ced68125c6f\scratchpad\work\ldpclight\`
 - 변경 전 비교용 트리: 같은 위치의 `ldpcbefore\`
 - 덮어써지는 파일 9개: `__init__.py`, `pcm.py`, `encoder.py`, `channel.py`, `decoder.py`, `sim.py`, `run.py`, `llr_tables.py`, (신규) `llr_matrix.py`
 
@@ -357,7 +357,7 @@ EX='--exclude-dir=.git --exclude-dir=__pycache__ --exclude-dir=20260806_review -
 ```
 (첫 패턴만 `--exclude-dir=20260806_review` 없이 실행했다. 이후 전부 제외.)
 
-저장소 루트(`d:/OneDrive/My_Projects/LDPC_dev`)에서:
+저장소 루트(`<루트>`)에서:
 
 ```bash
 # 나. channel.py 공개 함수

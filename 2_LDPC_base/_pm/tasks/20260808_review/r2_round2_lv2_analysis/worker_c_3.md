@@ -5,10 +5,10 @@
 ## 실행 환경
 
 - Python 3.11.7 (Windows, MSC v.1937 64bit), numpy 1.26.4, matplotlib 3.10.7
-- cwd: `D:\OneDrive\My_Projects\LDPC_dev\2_LDPC_light`
+- cwd: `<루트>\2_LDPC_light`
 - 콘솔 기본 인코딩: `sys.stdout.encoding == sys.stderr.encoding == cp949`
 - 모든 config 사본과 산출물은 scratchpad에 둠
-  (`C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\wc3`)
+  (`<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\wc3`)
 - 저장소 파일은 읽기만 했다. H-matrix와 LLR matrix 입력은 저장소 절대경로로 참조하고,
   `output.dir`과 생성 LLR 경로는 scratchpad로 돌렸다
 
@@ -105,7 +105,7 @@ FER CSV는 벽시계 시간을 담는 `sec` 열만 달랐고 나머지 6개 열�
 registry 경유 확인 (실행하지 않고 함수를 직접 호출, 저장소 무변경):
 
 ```
-cwd = D:\OneDrive\My_Projects\LDPC_dev\2_LDPC_light
+cwd = <루트>\2_LDPC_light
 decoder.type -> vanilla
 resolved class -> Ideas.vanilla.decoder.VanillaDecoder | MRO: ['VanillaDecoder', 'MinSumDecoder', 'object']
 ```
@@ -118,7 +118,7 @@ run dir: ...\scratchpad\wc3\Sim_Output_vanilla\260808_142517_vanilla
 ```
 
 상대경로 해석 기준 실측: **cwd가 아니라 config 파일 위치 기준**이다. cwd를 저장소 루트
-(`D:\OneDrive\My_Projects\LDPC_dev`)로 바꾸고 같은 config를 절대경로로 로드해도 결과가 동일했다.
+(`<루트>`)로 바꾸고 같은 config를 절대경로로 로드해도 결과가 동일했다.
 
 | 항목 | cwd = 2_LDPC_light | cwd = LDPC_dev |
 |------|--------------------|----------------|

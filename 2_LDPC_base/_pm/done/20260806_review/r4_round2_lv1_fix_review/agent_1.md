@@ -274,7 +274,7 @@ F1이 보고한 "상위 2블록 37.1%" 편향은 완전히 사라졌다.
 
 ## 7. 검증에 쓴 스크래치패드 스크립트
 
-`C:\Users\yongs\AppData\Local\Temp\claude\...\scratchpad\` 에 t1~t10.py로 보관.
+`<사용자 홈>\AppData\Local\Temp\claude\...\scratchpad\` 에 t1~t10.py로 보관.
 `t1`(결합분포 카이제곱), `t2`(경계 10종), `t3`(블록 균일성), `t4`(C++ 전수 대조),
 `t5`(`_validate` 18종), `t7`(config 40종), `t8`(seed null·난수 소비 회귀), `t9`(decode 3경로).
 

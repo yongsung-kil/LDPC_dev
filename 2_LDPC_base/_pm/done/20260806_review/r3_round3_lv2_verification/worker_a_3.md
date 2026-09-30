@@ -14,7 +14,7 @@
   실제로 hang하는 값은 **정수 0 하나뿐**이고, 음수/실수/None/문자열/bool은 전부 **즉시 예외**다.
 - ㉯ hang의 성질: **단일 코어 100% busy loop, 메모리 증가 0, Ctrl+C로 15 ms 만에 중단 가능,
   데이터 손상 없음**. OOM으로 죽지 않고 영원히 돈다.
-- ㉰ 심각도 기준표는 **실재한다** (`C:\Users\yongs\.claude\prompts\review.md:83-90`).
+- ㉰ 심각도 기준표는 **실재한다** (`<사용자 홈>\.claude\prompts\review.md:83-90`).
   CRITICAL 정의에 "hang"이 문자 그대로 들어 있다. context.md의 전제는 사실이다.
 - ㉱ 트리거를 **계산으로** 0으로 만드는 경로는 `batch`에는 없고 **`max_frames`에는 있다**
   (`2_LDPC_light/mpi_runner.py:55`). 즉 F19의 무게 중심은 M-5(batch)가 아니라 **M-6(max_frames)** 쪽이다.
@@ -41,7 +41,7 @@
 | **E2-㉰'** float `max_frames` 상호작용 | **확인됨 (hang 아니라 예외)** | 실측: `max_frames=256.5, batch=64` → 4배치 후 `b=0.5` → `channel_fn` TypeError. `max_frames=100.5, batch=128` → `b=100.5` → TypeError. `max_frames=256.0`(정수값 float)은 정상 종료 | 소수점 `max_frames`는 마지막 부분 배치에서 즉사 |
 | **E2-㉱** `max_frames<=0` | **확인됨 (hang 아니라 ZeroDivisionError)** | 실측: `max_frames=0` → `ZeroDivisionError: division by zero` (`sim.py:24` `fer = errors / frames`), `max_frames=-5` → 동일, `max_frame_errors=0` → 동일. 셋 다 0.00 s | agent_5 M-6 재확인. hang과 명확히 구분됨 |
 | **E2-㉱'** `max_frames`의 계산 경로 | **확인됨 (실재)** | `mpi_runner.py:55` `my_frames = args.frames // size + (1 if rank < args.frames % size else 0)`. 실측: `--frames 63 -np 64` → 64랭크 중 **1개 랭크만 my_frames=0**, `--frames 32 -np 64` → 32/64 랭크가 0, `--frames 100 -np 128` → 28/128 랭크가 0 | **나눗셈이 0을 만드는 유일한 실 경로.** 단 현행 개정본에서는 `mpi_runner.py:56`이 구 인자명 `target_errors=`를 써서 F6의 TypeError가 먼저 나므로, F6 수정 후에 드러난다 |
-| **E3** 심각도 기준표 실재 | **확인됨** | `C:\Users\yongs\.claude\prompts\review.md:83-90` (원문 §3). Round 2에서 실제로 인용해 쓴 흔적: `r2/agent_2.md:22` "**심각도: HIGH** (틀린 결과를 내지만 예외 없이 진행됨)", `r2/agent_2.md:94` "**심각도: MEDIUM** (엣지케이스, ...)" | context.md의 "심각도 기준표상 hang은 CRITICAL"은 **사실** |
+| **E3** 심각도 기준표 실재 | **확인됨** | `<사용자 홈>\.claude\prompts\review.md:83-90` (원문 §3). Round 2에서 실제로 인용해 쓴 흔적: `r2/agent_2.md:22` "**심각도: HIGH** (틀린 결과를 내지만 예외 없이 진행됨)", `r2/agent_2.md:94` "**심각도: MEDIUM** (엣지케이스, ...)" | context.md의 "심각도 기준표상 hang은 CRITICAL"은 **사실** |
 | **E4-㉰** 자동화와 무인 실행 맥락 | **반박됨 (없음)** | `.github/` 없음, `*.yml`/`*.yaml` 0건, `nohup`/`cron`/`schtasks`/`sbatch`/`slurm`/`qsub` grep 0건. MPI 언급은 `mpi_runner.py:4` docstring의 `mpirun` 사용 예시 1건과 `docs/plan.md:21,109`, `2_LDPC_light/_pm/TODO.md:30` "mpi_runner 슈퍼컴 반입"(미완 작업)뿐 | 현재는 **대화형 단일 실행**만 존재. 다만 슈퍼컴 반입이 TODO에 있어 장래에는 무인 맥락이 생긴다 |
 | **E5** 가드 유효성 | **부분 확인됨** | `batch <= 0` 단일 가드는 0/0.0/-1/False/numpy 0을 잡지만, `None`과 `str`에서는 **가드 표현식 자체가 TypeError**를 낸다(실측). 상세 §5 | 현행 동작도 None/str에서 TypeError이므로 퇴행은 아니나 메시지 개선도 없음 |
 
@@ -85,7 +85,7 @@
 
 ## 3. 심각도 기준표 — 원문 인용
 
-정본 위치: `C:\Users\yongs\.claude\prompts\review.md:83-90` (`review` 프롬프트 "### 심각도 기준"). 원문 그대로:
+정본 위치: `<사용자 홈>\.claude\prompts\review.md:83-90` (`review` 프롬프트 "### 심각도 기준"). 원문 그대로:
 
 ```
 ### 심각도 기준

@@ -329,7 +329,7 @@ A-1의 공명이 사라지고(FER 1.0 → 0.1016, 잔여 에러비트 2201 → 0
 
 ### 산출물 위치 (전부 scratchpad)
 
-`C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\`
+`<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\`
 아래 `harness.py`, `e_static.py`, `e_sweep.py`, `e_fine.py`, `e_instr.py`, `e_a5.py`,
 `e_algebra.py`, `e_fix.py`, `cfg/config_ch7.json`, `cfg/config_ch8.json`, `gen_llr/`,
 `Sim_Output/`, 로그 `fine.log`, `fix200.log`, `waterfall.log`, `run_ch7.out`, `run_ch7.err`.

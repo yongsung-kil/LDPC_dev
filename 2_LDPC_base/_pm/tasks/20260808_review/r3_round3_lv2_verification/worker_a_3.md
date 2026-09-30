@@ -358,7 +358,7 @@ A-1의 필요충분조건을 확정하는 것은 워커 1 몫이므로 자료만
 ## ㉳ 실행 환경과 저장소 오염 확인
 
 - ㉮ 실행 환경: Windows 10, Python 3.11.7 (MSC v.1937 64bit), numpy 1.26.4,
-  cwd = `d:\OneDrive\My_Projects\LDPC_dev\2_LDPC_light`
+  cwd = `<루트>\2_LDPC_light`
 - ㉯ 실험 스크립트와 중간 산출물은 전부 scratchpad에만 두었다
   (`...\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\`).
   LLR matrix 파일을 저장하지 않았고 `Sim_Output` 폴더도 만들지 않았다

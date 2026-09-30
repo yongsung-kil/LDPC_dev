@@ -141,7 +141,7 @@ python -m LDPC_base.run <scratchpad>/config_uniform6bit_gen.json
 python -m LDPC_base.run <scratchpad>/config_hd0.json
 ```
 
-`<scratchpad>` = `C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\wc1`
+`<scratchpad>` = `<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad\wc1`
 
 ### 3.2 config 사본 내용 요약
 

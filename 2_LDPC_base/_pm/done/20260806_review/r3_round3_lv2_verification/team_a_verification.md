@@ -187,7 +187,7 @@ run 키 오타의 최악 파급(실행 시간, 통계량 변화)보다 나쁘다
 | **E2 신규. `max_frames`는 계산 경로가 있다** | **확인됨 (신규)** | `mpi_runner.py:55` `my_frames = args.frames // size + …`. `--frames 63 -np 64`면 64랭크 중 1개가 `my_frames=0` → `sim.py:24`에서 ZeroDivisionError |
 | E2-㉯. `run_fer_point` 직접 호출처 | **확인됨** | 4곳 (`mpi_runner.py:56`, `examples/` 3곳). **전부 `load_config`를 우회한다** |
 | E2-㉰(CI). 무인 실행 맥락 | **부재 확인** | `.github` 없음. cron/slurm/nohup grep 0건 |
-| **H19-b. 심각도 기준표 실재** | **확인됨** | 팀 리더 직접 확인. `C:\Users\yongs\.claude\prompts\review.md:87` — CRITICAL 정의가 문자 그대로 **"프로세스 중단/hang 또는 데이터 비가역 손상"**. context.md의 전제가 사실이다 |
+| **H19-b. 심각도 기준표 실재** | **확인됨** | 팀 리더 직접 확인. `<사용자 홈>\.claude\prompts\review.md:87` — CRITICAL 정의가 문자 그대로 **"프로세스 중단/hang 또는 데이터 비가역 손상"**. context.md의 전제가 사실이다 |
 
 ### 4-2. batch 값 유형별 동작
 

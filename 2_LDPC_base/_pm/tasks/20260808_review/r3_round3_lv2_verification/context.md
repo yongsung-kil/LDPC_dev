@@ -49,7 +49,7 @@
 
 ## 기술 맥락
 
-- Python 로컬 실행 가능. 실행 시 저장소 추적 파일을 수정·생성하지 말 것 — config 사본을 scratchpad(`C:\Users\yongs\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad`)에 만들어 출력·생성 경로를 scratchpad로 돌린다
+- Python 로컬 실행 가능. 실행 시 저장소 추적 파일을 수정·생성하지 말 것 — config 사본을 scratchpad(`<사용자 홈>\AppData\Local\Temp\claude\d--OneDrive-My-Projects-LDPC-dev\96aaaa04-61b8-4b90-ac92-52ca7348de60\scratchpad`)에 만들어 출력·생성 경로를 scratchpad로 돌린다
 - C++ 원본 참조: `0_LDPC_original/` (읽기 전용, 빌드 금지). 팀 A Round 2가 인용한 근거: `decoder.cpp:2405, 4102-4115`, `common.h:328-341`
 - 심각도 정의: CRITICAL(프로세스 중단/비가역 손상) / HIGH(틀린 결과를 내지만 진행) / MEDIUM(엣지케이스 위험) / LOW(개선 제안)
 - 처방 판정 표기: 처방 유효 / 처방 수정 필요(대안 제시) / 처방 반대(사유 명시)

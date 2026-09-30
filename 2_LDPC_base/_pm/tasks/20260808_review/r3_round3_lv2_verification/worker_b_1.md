@@ -42,7 +42,7 @@
 ## 3. 실측 원자료
 
 공통: `seed=0`, `H_matrix=Input/H_matrix/example_18x147_z256.qc` (N=37632, K=33024, dv 히스토그램 {2:17, 3:1, 4:129}), `decoder.type=vanilla`.
-실행: `d:\OneDrive\My_Projects\LDPC_dev\2_LDPC_light`에서 scratchpad의 `runner.py`가 `LDPC_base.run.main()`을 호출.
+실행: `<루트>\2_LDPC_light`에서 scratchpad의 `runner.py`가 `LDPC_base.run.main()`을 호출.
 `--stub`은 `encoder.generate_message`를 `np.zeros((batch, code.K), np.uint8)` 반환(난수 소비 0)으로 교체한 대조군.
 
 ### A. 동작점 탐색 (균일 6-bit, channel_llr 8, max_iter 30, fixed_error, 128프레임)
