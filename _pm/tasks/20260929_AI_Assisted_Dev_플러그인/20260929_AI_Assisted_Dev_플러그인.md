@@ -46,14 +46,14 @@ AI_Assisted_Dev/                     LDPC_dev의 형제 폴더 (git 저장소)
 │   ├── scripts/                     파이썬 스크립트 (렌더러, 역링크, 검색, 알림)
 │   ├── templates/                   사용자 프로젝트에 복사되는 양식 (CLAUDE.md, _pm/, 프로파일, 기준서, 실험 폴더, ADR)
 │   └── evals/                       스킬별 동작 검사 사례 (8절)
-├── testbed/                         시험장 (git 무시). LDPC 코드 사본을 두고 플러그인을 돌려 본다
+├── testbed/                         임시 시험 폴더 (git 무시). 적용 예시는 형제 저장소 ldpc_py
 ├── _pm/                             이 저장소의 작업 관리 (플러그인의 pm 스킬로 운영한다)
 ├── README.md                        설치법, 스킬 목록, 겹치는 스킬 끄는 법
 └── CLAUDE.md                        이 저장소에서 작업할 때의 규칙
 ```
 
 - ㉮ `plugin/` 밖의 것은 배포되지 않는다. 회사와 LDPC 언급 검사는 `plugin/` 전체에 건다
-- ㉯ 시험장에 LDPC 코드를 두는 것은 플러그인을 실제 코드에 돌려 보기 위함이며, 시험장은 git이 추적하지 않는다
+- ㉯ 플러그인을 실제 코드에 돌려 본 예시는 형제 저장소 `ldpc_py`(2_LDPC_base 사본, GitHub 비공개)에 둔다. 플러그인 저장소의 `testbed/`는 임시 시험 폴더이며 git이 추적하지 않는다
 
 ### 2. 프로젝트 프로파일 (스킬이 읽는 유일한 도메인 지식)
 
@@ -137,10 +137,10 @@ onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 �
 - ㉰ 결과는 `papers.db` (형제 저장소 db.py의 표 구조를 일반화). 같은 질의를 다시 돌리면 이어받는다
 - ㉱ 검색어와 기준서는 프로파일의 문제 정의에서 뽑는다
 
-### 8. 시험 절차 (시험장)
+### 8. 시험 절차 (예시 저장소)
 
-- 1. LDPC 코드 한 벌(2_LDPC_base 사본과 1_LDPC_revised의 C++ 사본)을 `testbed/`에 둔다 (git 무시)
-- 2. `claude --plugin-dir ./plugin` 으로 시험장에서 onboard부터 스킬을 순서대로 돌려 보고 절차서를 고친다
+- 1. LDPC 코드 한 벌(2_LDPC_base 사본)을 형제 저장소 `ldpc_py`에 둔다 (GitHub 비공개, 플러그인 저장소와 독립)
+- 2. `claude --plugin-dir ./plugin` 으로 예시 저장소에서 onboard부터 스킬을 순서대로 돌려 보고 절차서를 고친다
 - 3. 스킬마다 `evals/` 사례를 하나 이상 두고 `claude plugin validate`와 `claude plugin eval`로 검사한다
 - 4. 커밋마다 `plugin/` 전체에 회사와 LDPC 언급 검사를 돌려 0건을 확인한다
 
