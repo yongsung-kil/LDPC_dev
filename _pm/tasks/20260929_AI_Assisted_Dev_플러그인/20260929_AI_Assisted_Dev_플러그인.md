@@ -1,4 +1,4 @@
-# Claude 플러그인 AI_Assisted_Dev 제작
+# Claude 플러그인 AI_Dev_Assistant 제작
 
 > 작성: 2026-09-29 21:49:39
 > 상태: 설계 승인 (2026-09-30). 실행 계획: [실행계획.md](%EC%8B%A4%ED%96%89%EA%B3%84%ED%9A%8D.md)
@@ -22,7 +22,7 @@ Claude Code 플러그인(Claude Code에 설치하는 기능 묶음) 하나를 �
 | 항목 | 결정 |
 |---|---|
 | 범위 | 어떤 프로젝트에도 맞는 뼈대 + 프로젝트 프로파일. 프로파일은 LDPC가 아닌 문제, C++가 아닌 언어, Verilog나 RTL 같은 하드웨어 설계 환경도 담는다 |
-| 저장소 | LDPC_dev의 형제 폴더에 새 git 저장소 (작업 이름 `AI_Assisted_Dev`). 플러그인 내용물에 회사와 LDPC 언급을 두지 않는다 |
+| 저장소 | LDPC_dev의 형제 폴더에 새 git 저장소 (작업 이름 `AI_Dev_Assistant`). 플러그인 내용물에 회사와 LDPC 언급을 두지 않는다 |
 | 시험 대상 | LDPC 코드를 새 폴더의 시험장에 가져가 절차서를 돌려 보며 고친다. 시험 대상은 정상 빌드되는 코드 한 벌 (파편화된 코드나 빌드 불가 상황은 다루지 않는다) |
 | 기능 범위 | 초안의 여섯 기능 전부. 기능마다 스킬로 나뉘어 있어 쓰는 사람이 골라 쓴다 |
 | 링크 규약 | 일반 md 링크 + 머리말 태그. 역링크는 스크립트가 계산한다 |
@@ -37,7 +37,7 @@ Claude Code 플러그인(Claude Code에 설치하는 기능 묶음) 하나를 �
 ### 1. 새 저장소의 폴더 구성
 
 ```
-AI_Assisted_Dev/                     LDPC_dev의 형제 폴더 (git 저장소)
+AI_Dev_Assistant/                     LDPC_dev의 형제 폴더 (git 저장소)
 ├── plugin/                          플러그인 본체 (배포 단위, 이 폴더만 남에게 준다)
 │   ├── .claude-plugin/plugin.json   이름, 버전, 설명
 │   ├── skills/{이름}/SKILL.md       스킬 (3절 표)
@@ -168,7 +168,7 @@ onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 �
 
 ## 수정 대상
 
-- ㉮ LDPC_dev의 형제 폴더 `AI_Assisted_Dev/` 전체 (신규 git 저장소)
+- ㉮ LDPC_dev의 형제 폴더 `AI_Dev_Assistant/` 전체 (신규 git 저장소)
 - ㉯ LDPC_dev: 루트 `_pm/TODO.md`(항목 등록), 이 태스크 폴더
 - ㉰ 형제 저장소 LDPC_Paper_Analysis: 읽기만 한다 (git 이력에서 수집기 셋을 꺼내 일반화)
 - ㉱ 홈 폴더 절차 문서: 수정하지 않고 복사해 일반화한다
@@ -183,7 +183,7 @@ onboard 스킬이 사용자 프로젝트에 만들고, 다른 모든 스킬은 �
 
 ## 미결정 사항
 
-- ㉮ 폴더와 플러그인 이름: 작업 이름은 `AI_Assisted_Dev`(폴더), `ai-assisted-dev`(plugin.json의 이름). 다른 이름을 원하면 첫 커밋 전에 바꾼다
+- ㉮ 폴더와 플러그인 이름: 작업 이름은 `AI_Dev_Assistant`(폴더), `ai-dev-assistant`(plugin.json의 이름). 다른 이름을 원하면 첫 커밋 전에 바꾼다
 - ㉯ 새 저장소의 원격: 개인 GitHub 비공개로 시작하고 회사 GitHub 반영은 뒤에 정한다
 - ㉰ 프로파일 폴더 이름: `docs/profile/` (사용자 프로젝트 안)
 - ㉱ 사내 PC에서 Claude in Chrome을 쓸 수 있는지 (안 되면 selenium 스크립트만 쓴다)
