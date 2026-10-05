@@ -1,12 +1,18 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-09-29 22:03:53
+> Claude 마지막 확인: 2026-10-05 13:28:12
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
 ---
 
 ## 작업 목록
+
+- [ ] 집단 통신 타임아웃 메시지에 도착하지 않은 rank를 적고, ECC를 돌린 rank의 result가 없으면 멈춤
+  - 상세: `_pm/tasks/20261005_barrier_timeout_and_missing_result/`
+  - [x] 원인 확인과 재현 (2026-10-05 13:28, 사용자 관측 2건. 타임아웃 메시지의 rank는 기다리던 rank이고 root가 아닌 rank가 먼저 대기 상한에 닿으면 메인 로그에 줄이 남지 않음. result 파일이 없는 rank는 테스트 0회로 합산되어 rank 4개 재현에서 FER이 530/4000 대신 30/3000으로 계산됨)
+  - [x] 수정과 검사 (2026-10-05 13:50, 사용자 결정: result가 없으면 멈춤. 60초 넘게 기다린 rank가 `8_End_flag/mpi_wait/`에 대기 기록을 남기고, 대기 상한에 닿은 rank가 그 기록으로 도착하지 않은 rank를 메시지에 적음. `MPI_Barrier`의 이름에 부른 함수 이름을 넣음. 테스트 종료 집계에서 ECC를 돌린 rank의 result 파일이 없거나 읽은 테스트 수가 0이면 root가 `MPI_Abort`. rank 4개 mpiexec 검사 10건 통과(수정 전 소스에서는 6건 실패), 기존 검사 163건 통과. 소스 커밋 a0d6e54. README 부록 A와 TIME_CONFIG, DAO_spec.md 6.1절 반영)
+  - [ ] 사용자 환경 MPI 실행 확인 (정상 실행에서 `ranks that ran ECC but left no usable result file` 중단이 나오지 않는지, 오래 기다리는 동안 `8_End_flag/mpi_wait/`에 기다리는 rank의 파일이 생기고 통신이 끝나면 없어지는지)
 
 - [ ] HBF 최적화 모드의 dv_idx 0 TH 고정을 HBF 구간(iteration 1~4)의 row로 한정
   - 상세: `_pm/tasks/20260928_HBF_TH_iteration_range/`

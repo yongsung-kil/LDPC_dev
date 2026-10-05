@@ -381,8 +381,12 @@ class PRINT_LOG_CONFIG:
 **TIME_CONFIG:** 시간 제한 설정 (신규)
 ```python
 class TIME_CONFIG:
-    MAX_STAGE_TIME_SECONDS = 2 * 60 * 60       # Stage별 최대 실행 시간 (2시간)
-    MPI_COMM_TIMEOUT_SECONDS = 1 * 60 * 60     # MPI 통신 타임아웃 (1시간)
+    MAX_STAGE_TIMEOUT_SECONDS = 1 * 60 * 60    # Stage별 최대 실행 시간 (1시간)
+    MAX_ECC_MEMORY_RETRY = 10                  # ECC 실행 메모리 에러 최대 재시도 횟수
+    MAX_ECC_MEMORY_RETRY_DELAY = 60            # 메모리 에러 재시도 시 최대 대기 시간 (초)
+    MPI_COMM_TIMEOUT_SECONDS = 1200            # 짧은 집단 통신(bcast, gather)의 대기 상한 (20분)
+    MPI_TEST_BARRIER_TIMEOUT_SECONDS = 37800   # ECC 실행을 사이에 둔 배리어와 allgather의 대기 상한 (10시간 30분)
+    MPI_WAIT_RECORD_DELAY_SECONDS = 60         # 집단 통신에서 이 시간 넘게 기다린 rank는 대기 기록 파일을 남긴다
 ```
 
 **DEBUG_CONFIG:** 디버그 설정
@@ -1174,16 +1178,32 @@ class PRINT_LOG_CONFIG:
 class TIME_CONFIG:
     """시간 제한 관련 설정"""
 
-    MAX_STAGE_TIME_SECONDS: int = 2 * 60 * 60
+    MAX_STAGE_TIMEOUT_SECONDS = 1 * 60 * 60
     """Stage별 최대 실행 시간 (초 단위)
-    - 기본값: 2시간
+    - 기본값: 1시간
     - 100시간 이상이면 제한 없음과 동일
     """
 
-    MPI_COMM_TIMEOUT_SECONDS: int = 1 * 60 * 60
-    """MPI 통신 타임아웃 (초 단위)
-    - 기본값: 1시간
-    - 100시간 이상이면 타임아웃 없음과 동일
+    MAX_ECC_MEMORY_RETRY = 10
+    """ECC 실행 메모리 에러(Errno 12) 최대 재시도 횟수"""
+
+    MAX_ECC_MEMORY_RETRY_DELAY = 60
+    """메모리 에러 재시도 시 최대 대기 시간 (초 단위, 0부터 이 값 사이에서 무작위)"""
+
+    MPI_COMM_TIMEOUT_SECONDS = 2 * int(MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY)
+    """짧은 집단 통신(bcast, gather)의 대기 상한 (초 단위)
+    - 기본값: 20분 (메모리 재시도 최대 소요 시간의 2배)
+    """
+
+    MPI_TEST_BARRIER_TIMEOUT_SECONDS = SIM_MAX_TIME_OUT + MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY + MPI_COMM_TIMEOUT_SECONDS
+    """ECC 실행을 사이에 둔 배리어와 allgather의 대기 상한 (초 단위)
+    - 기본값: 10시간 30분 (ECC 1회 허용 시간 10시간과 재시도 대기를 모두 덮는다)
+    """
+
+    MPI_WAIT_RECORD_DELAY_SECONDS = 60
+    """집단 통신에서 이 시간 넘게 기다린 rank가 대기 기록 파일을 남긴다 (초 단위)
+    - 기록 위치: 8_End_flag/mpi_wait/mpi_wait_rank{N}.txt
+    - 타임아웃이 난 rank가 이 기록으로 도착하지 않은 rank를 가려 메시지에 적는다
     """
 ```
 
@@ -1440,6 +1460,19 @@ class REFC_CONFIG:
 | `TARGET_GROUP_IDX must define at least one index` | 타겟 그룹 인덱스 비어있음 | [DAO_Config.py:35](DAO/SRC/DAO_Config.py#L35)에서 `INITIAL_TARGET_GROUP_IDX` 설정 |
 | `Gen_LLR_Insert_Random_Group: Matrix must not be None` | 매트릭스 초기화 실패 | Run_Initial_Test 로그 확인 |
 | `MPI_Abort` 호출 | 치명적 에러 발생 | 로그 파일의 에러 메시지 확인 |
+| `MPI_Barrier[N] called from {함수} timed out after {초} seconds. ... Ranks not waiting in this call: rank K (...)` | rank K가 대기 상한 안에 그 배리어에 도착하지 않음 | 아래 「집단 통신 타임아웃 메시지 읽는 법」에 따라 rank K의 위치를 확인 |
+| `Gather_Ref_C_Results: ranks that ran ECC but left no usable result file for ch_idx={채널}. Missing file: rank K. Unreadable or empty file: ... First one: {경로}` | ECC를 돌린 rank K가 result 파일을 남기지 않았거나, 읽을 수 없는 파일 또는 빈 파일을 남김 | `First one`의 경로와 그 rank의 ECC 실행을 확인 |
+
+**집단 통신 타임아웃 메시지 읽는 법**
+
+집단 통신은 배리어, bcast, gather처럼 모든 rank가 함께 불러야 끝나는 MPI 통신이다.
+
+- ㉮ `Ranks not waiting in this call`에 적힌 rank가 그 통신에 도착하지 않은 rank다
+  - ㉠ `(no wait record)`: MPI 통신 밖에서 실행 중이거나 멈춰 있다
+  - ㉡ `(waiting in X since T)`: 다른 통신 X에서 시각 T부터 기다리고 있다
+- ㉯ `Ranks waiting in this call`에 적힌 rank는 같은 통신에서 함께 기다리던 rank다
+- ㉰ 메시지의 맨 앞 `[Rank N]`은 가장 먼저 대기 상한에 닿은 rank다. N이 0이면 메시지가 메인 로그에도 남고, 0이 아니면 콘솔과 `6_Error_Log/error_logs_{N}.txt`에 남는다
+- ㉱ 집단 통신에서 `TIME_CONFIG.MPI_WAIT_RECORD_DELAY_SECONDS`(기본 60초) 넘게 기다린 rank는 `8_End_flag/mpi_wait/mpi_wait_rank{N}.txt`에 통신 이름과 기다리기 시작한 시각을 남기고, 통신이 끝나면 지운다. 실행이 멈춘 것처럼 보일 때 이 폴더에 파일이 없는 rank가 아직 도착하지 않은 rank다
 
 ### B. 로그 파일 위치
 
