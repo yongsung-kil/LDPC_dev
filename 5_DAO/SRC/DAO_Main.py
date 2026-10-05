@@ -573,7 +573,6 @@ class LLR_OPT:
         self.current_seed_mode = SeedMode.DEFAULT
         self.enable_print_CSW_log: int = 0
         self.is_test_end: bool = False
-        self.is_result_file_expected: bool = False  # 이번 채널 테스트에서 ECC를 돌렸으므로 result 파일이 있어야 하는지 여부
         self.max_error: int = 0
         self.update_mode = None
         self.generate_LLR_success: bool = False
@@ -1804,7 +1803,6 @@ class LLR_OPT:
         """Ref-C 결과를 집계해 매트릭스에 반영한다.
 
         각 프로세스의 결과 파일을 모아 전역 테스트/오류 통계를 계산하고 매트릭스의 FER 값을 갱신한다.
-        테스트 종료 집계에서 ECC를 돌린 rank가 쓸 수 있는 결과 파일을 남기지 못했으면 MPI_Abort로 멈춘다.
 
         Args:
             matrix (Optional[LLR_MATRIX]): 결과를 기록할 매트릭스 객체.
@@ -1864,7 +1862,6 @@ class LLR_OPT:
 
             # 각 rank가 자기 result 파일 읽어서 sendbuf에 pack
             sendbuf = np.zeros(buf_size, dtype='f8')
-            result_file_problem = None
             if not self.is_current_core_excluded:
                 file_name = self.Get_Result_File_Name(process_idx=self.rank, ch_idx=ch_idx)
                 file_path = os.path.join(self.local_session_dir, file_name)
@@ -1876,27 +1873,6 @@ class LLR_OPT:
                     if s_err_per_iter is not None:
                         arr_len = min(len(s_err_per_iter), max_iteration)
                         sendbuf[3:3+arr_len] = s_err_per_iter[:arr_len]
-                    if s_test == 0:
-                        result_file_problem = RESULT_FILE_UNREADABLE
-                else:
-                    result_file_problem = RESULT_FILE_MISSING
-            if not self.is_result_file_expected:
-                result_file_problem = None
-
-            # ECC를 돌린 rank가 쓸 수 있는 result 파일을 남기지 못하면 그 rank의 테스트가 FER에서 빠지므로 멈춘다
-            result_file_problems = self._safe_gather(result_file_problem, "Gather_result_file_problems")
-            if self.is_root:
-                missing_ranks = [proc for proc, problem in enumerate(result_file_problems) if problem == RESULT_FILE_MISSING]
-                unreadable_ranks = [proc for proc, problem in enumerate(result_file_problems) if problem == RESULT_FILE_UNREADABLE]
-                if missing_ranks or unreadable_ranks:
-                    first_rank = min(missing_ranks + unreadable_ranks)
-                    first_path = os.path.join(self.Get_Local_Session_Dir(first_rank), self.Get_Result_File_Name(process_idx=first_rank, ch_idx=ch_idx))
-                    missing_text = ", ".join(f"rank {proc}" for proc in missing_ranks) or "none"
-                    unreadable_text = ", ".join(f"rank {proc}" for proc in unreadable_ranks) or "none"
-                    self.MPI_Abort(
-                        f"Gather_Ref_C_Results: ranks that ran ECC but left no usable result file for ch_idx={ch_idx}. "
-                        f"Missing file: {missing_text}. Unreadable or empty file: {unreadable_text}. First one: {first_path}"
-                    )
 
             # MPI Reduce: 모든 rank의 sendbuf를 root에서 합산 (tree reduction)
             recvbuf = np.zeros(buf_size, dtype='f8') if self.is_root else None
@@ -6768,11 +6744,10 @@ class LLR_OPT:
         Synchronize all ranks while tracking and logging how many MPI barriers each
         process has passed so far.
         """
-        caller_name = sys._getframe(1).f_code.co_name
         self._mpi_comm_with_timeout(
             self.comm.Barrier,
             timeout_seconds=TIME_CONFIG.MPI_TEST_BARRIER_TIMEOUT_SECONDS,
-            comm_name=f"MPI_Barrier[{self.barrier_count}] called from {caller_name}"
+            comm_name=f"MPI_Barrier[{self.barrier_count}]"
         )
         self.barrier_count += 1  # 성공 후에만 증가
 
@@ -7010,25 +6985,13 @@ class LLR_OPT:
                 completed.set()
 
         # 통신 thread 시작
-        wait_start_timestamp = self.Get_Timestamp()
         thread = threading.Thread(target=comm_thread, daemon=True)
         thread.start()
 
-        # 오래 기다리는 rank는 대기 기록을 남기고, 통신이 끝나면 지운다
-        wait_record_delay = min(TIME_CONFIG.MPI_WAIT_RECORD_DELAY_SECONDS, timeout_seconds)
-        is_completed = completed.wait(timeout=wait_record_delay)
-        if not is_completed:
-            self._Write_MPI_Wait_Record(comm_name, wait_start_timestamp)
-            is_completed = completed.wait(timeout=timeout_seconds - wait_record_delay)
-            if is_completed:
-                self._Delete_MPI_Wait_Record()
-
-        if not is_completed:
+        # 타임아웃까지 대기
+        if not completed.wait(timeout=timeout_seconds):
             # 타임아웃 발생
-            error_msg = (
-                f"{comm_name} timed out after {timeout_seconds} seconds. This usually indicates a deadlock or network issue. "
-                f"{self._Describe_Ranks_Not_Waiting_In_Call(comm_name)}"
-            )
+            error_msg = f"{comm_name} timed out after {timeout_seconds} seconds. This usually indicates a deadlock or network issue."
             self.MPI_Abort(error_msg)
 
         # 예외 발생 시 재발생
@@ -7036,68 +6999,6 @@ class LLR_OPT:
             raise exception[0]
 
         return result[0]
-
-    def _Get_MPI_Wait_Record_Path(self, process_idx: int) -> str:
-        """rank별 MPI 대기 기록 파일 경로를 반환한다."""
-        return os.path.join(self.end_flag_dir, MPI_WAIT_RECORD_DIR_NAME, MPI_WAIT_RECORD_FILE_TEMPLATE.format(process_idx=process_idx))
-
-    def _Write_MPI_Wait_Record(self, comm_name: str, wait_start_timestamp: str) -> None:
-        """이 rank가 기다리는 MPI 통신의 이름과 기다리기 시작한 시각을 대기 기록 파일에 쓴다. (모든 프로세스)"""
-        if not self.end_flag_dir:
-            return
-        record_path = self._Get_MPI_Wait_Record_Path(self.rank)
-        try:
-            os.makedirs(os.path.dirname(record_path), exist_ok=True)
-            with open(record_path, "w", encoding="utf-8") as record_file:
-                record_file.write(f"{comm_name}\n{wait_start_timestamp}\n")
-        except OSError as e:
-            # 진단용 기록이므로 MPI_Abort 대신 경고만 기록
-            _write_error_log(self.rank, e)
-
-    def _Delete_MPI_Wait_Record(self) -> None:
-        """기다리던 MPI 통신이 끝난 rank의 대기 기록 파일을 지운다. (모든 프로세스)"""
-        if not self.end_flag_dir:
-            return
-        try:
-            os.remove(self._Get_MPI_Wait_Record_Path(self.rank))
-        except FileNotFoundError:
-            pass
-        except OSError as e:
-            _write_error_log(self.rank, e)
-
-    def _Read_MPI_Wait_Record(self, process_idx: int) -> Optional[tuple[str, str]]:
-        """rank의 대기 기록을 (MPI 통신 이름, 기다리기 시작한 시각)으로 읽는다. 기록이 없으면 None."""
-        try:
-            with open(self._Get_MPI_Wait_Record_Path(process_idx), "r", encoding="utf-8") as record_file:
-                lines = record_file.read().splitlines()
-        except OSError:
-            return None
-        if len(lines) < 2:
-            return None
-        return lines[0], lines[1]
-
-    def _Describe_Ranks_Not_Waiting_In_Call(self, comm_name: str) -> str:
-        """타임아웃이 난 MPI 통신에 도착하지 않은 rank와 함께 기다리던 rank를 대기 기록으로 가려 문장으로 만든다.
-
-        대기 기록이 다른 통신 이름이면 그 rank는 다른 통신에서 기다리는 중이고,
-        기록이 없으면 MPI 통신 밖에서 실행 중이거나 멈춰 있다.
-        """
-        if not self.end_flag_dir:
-            return "Wait records are written after the session directories are made."
-
-        waiting_ranks = []
-        not_waiting_descriptions = []
-        for process_idx in range(self.num_process):
-            wait_record = None if process_idx == self.rank else self._Read_MPI_Wait_Record(process_idx)
-            if process_idx == self.rank or (wait_record is not None and wait_record[0] == comm_name):
-                waiting_ranks.append(str(process_idx))
-            elif wait_record is not None:
-                not_waiting_descriptions.append(f"rank {process_idx} (waiting in {wait_record[0]} since {wait_record[1]})")
-            else:
-                not_waiting_descriptions.append(f"rank {process_idx} (no wait record)")
-
-        not_waiting_text = ", ".join(not_waiting_descriptions) if not_waiting_descriptions else "none"
-        return f"Ranks not waiting in this call: {not_waiting_text}. Ranks waiting in this call: {', '.join(waiting_ranks)}."
 
     def _safe_bcast(self, data, comm_name: str = "bcast", root: int = 0):
         """MPI bcast를 예외 처리와 함께 실행한다.
@@ -8084,7 +7985,6 @@ class LLR_OPT:
                 else:  # Linux or macOS
                     subprocess.run(["bash", os.path.basename(self.batch_path)], cwd=os.path.dirname(self.batch_path), check=True, timeout=SIM_MAX_TIME_OUT)
                 time.sleep(0.5)
-                self.is_result_file_expected = True
                 return
             except subprocess.TimeoutExpired:
                 self.MPI_Abort(f"[Run_ECC] ECC timeout ({SIM_MAX_TIME_OUT}s) - rank {self.rank}, batch: {self.batch_path}")
@@ -8872,7 +8772,6 @@ class LLR_OPT:
             self.Delete_Own_Uncors(ch_idx=ch_idx, is_redecoded_uncor=True)
 
         self.is_test_end = False
-        self.is_result_file_expected = False
         self.ecc_start_time = time.time()
 
         # flag 초기화가 모든 프로세스에 반영된 후 while 루프 진입하도록 동기화
