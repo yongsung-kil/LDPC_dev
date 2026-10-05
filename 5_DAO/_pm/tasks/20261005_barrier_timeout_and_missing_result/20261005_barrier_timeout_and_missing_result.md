@@ -3,6 +3,7 @@
 > 작성: 2026-10-05
 > 등급: Review (타임아웃 메시지와 진단 기록 추가, 집계 단계의 중단 조건 추가)
 > 출처: 사용자 관측 2건 (2026-10-05)
+> 상태: 소스는 이 수정을 담지 않는다. 3절의 설계를 담은 커밋 a0d6e54는 사용자 환경 실행에서 중단을 일으켜 소스를 그 이전 내용으로 되돌렸다. 다시 적용하기 전에 7절을 반영한다
 
 이 문서에서 rank는 MPI 프로세스 번호(`Process_N` 폴더의 N)이고, 집단 통신은 배리어, bcast, gather처럼 모든 rank가 함께 불러야 끝나는 MPI 통신이다.
 
@@ -93,9 +94,32 @@
 - ㉰ `Set_Test_Environment`의 초기화 줄을 뺀 소스에서는 「앞 테스트에서 ECC를 돌리고 이번에는 돌리지 않은 rank」 검사가 실패함을 확인
 - ㉱ 기존 5_DAO 검사 163건 통과
 
-## 7. 미결정 사항과 남은 확인
+## 7. 사용자 환경 실행에서 나온 중단과 다시 설계할 것
 
-- ㉮ 사용자 환경 MPI 실행 확인
-  - ㉠ 정상 실행에서 `ranks that ran ECC but left no usable result file` 중단이 나오지 않는지
-  - ㉡ 오래 기다리는 동안 `8_End_flag/mpi_wait/`에 기다리는 rank의 파일이 생기고, 통신이 끝나면 없어지는지
-- ㉯ 지난 테스트의 result 파일이 지워지지 않고 남았을 때 다음 테스트의 집계에 섞이는 경우는 이 작업의 범위 밖이다 (`Cleanup_Test_Environment`의 삭제 실패는 root의 경고로만 남는다)
+### 7.1 관측
+
+- ㉮ a0d6e54를 넣은 사용자 환경의 MPI 실행이 `MPI_Abort: Gather_result_file_problems timed out after 1200 seconds`로 중단됐다 (2026-10-05)
+- ㉯ 이 gather는 3.2절 ㉰에서 넣은 것으로, 테스트 종료 집계의 첫 배리어를 지나 각 rank가 자기 result 파일을 읽은 뒤에 불린다. 노드마다 다른 테스트 시간은 그 앞의 배리어(대기 상한 10시간 30분)가 흡수하므로, 중단은 배리어를 지난 뒤 어떤 rank가 20분 동안 gather에 오지 않았다는 뜻이다
+- ㉰ 20분은 대기 상한을 따로 주지 않은 bcast와 gather에 쓰이는 `TIME_CONFIG.MPI_COMM_TIMEOUT_SECONDS`다
+- ㉱ 수정 전 소스에서는 result 파일 읽기 다음이 대기 상한 없는 `comm.Reduce`라, 이 구간에서 늦는 rank를 기다렸다
+
+### 7.2 원인 후보 (확인 전)
+
+배리어와 gather 사이에서 rank가 하는 일은 두 가지다.
+
+- ㉮ 대기 기록 파일 삭제 (3.1절 ㉮): 배리어에서 60초 넘게 기다린 모든 rank가 같은 순간에 공용 폴더 `8_End_flag/mpi_wait/`에서 자기 파일을 지운다. 검사는 로컬 디스크의 rank 4개로만 했고, rank가 많은 공유 파일시스템에서 걸리는 시간은 재지 않았다
+- ㉯ result 파일 읽기: 수정 전에도 있던 일이며, 대기 상한이 없어 느려도 드러나지 않았을 수 있다
+
+중단 메시지의 `Ranks not waiting in this call` 부분이 어느 rank가 gather에 오지 않았는지와 그 rank의 대기 기록을 담고 있다. 이것으로 ㉮와 ㉯를 가린다.
+
+### 7.3 다시 적용할 때 바꿀 것
+
+- ㉮ result 문제를 모으는 gather의 대기 상한을 테스트 종료 배리어와 같게 둔다 (`MPI_TEST_BARRIER_TIMEOUT_SECONDS`)
+- ㉯ 대기 기록 파일을 공용 폴더가 아니라 각 rank의 `Process_N` 폴더에 둔다
+- ㉰ 대기 기록을 남기는 시점을 늦추고(60초에서 600초), 대기 상한이 짧은 통신에서는 상한의 절반을 넘지 않게 한다
+- ㉱ 배리어와 gather 사이에서 한 rank가 짧은 집단 통신의 대기 상한보다 오래 걸리는 경우를 검사에 넣는다 (`_test/20261005_DAO_barrier_timeout_and_missing_result/`의 `slow_result_read`)
+- ㉲ rank 수가 많은 사용자 환경에서 먼저 짧게 돌려 본다
+
+### 7.4 범위 밖
+
+- 지난 테스트의 result 파일이 지워지지 않고 남았을 때 다음 테스트의 집계에 섞이는 경우 (`Cleanup_Test_Environment`의 삭제 실패는 root의 경고로만 남는다)

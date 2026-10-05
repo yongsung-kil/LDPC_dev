@@ -12,7 +12,8 @@
   - 상세: `_pm/tasks/20261005_barrier_timeout_and_missing_result/`
   - [x] 원인 확인과 재현 (2026-10-05 13:28, 사용자 관측 2건. 타임아웃 메시지의 rank는 기다리던 rank이고 root가 아닌 rank가 먼저 대기 상한에 닿으면 메인 로그에 줄이 남지 않음. result 파일이 없는 rank는 테스트 0회로 합산되어 rank 4개 재현에서 FER이 530/4000 대신 30/3000으로 계산됨)
   - [x] 수정과 검사 (2026-10-05 13:50, 사용자 결정: result가 없으면 멈춤. 60초 넘게 기다린 rank가 `8_End_flag/mpi_wait/`에 대기 기록을 남기고, 대기 상한에 닿은 rank가 그 기록으로 도착하지 않은 rank를 메시지에 적음. `MPI_Barrier`의 이름에 부른 함수 이름을 넣음. 테스트 종료 집계에서 ECC를 돌린 rank의 result 파일이 없거나 읽은 테스트 수가 0이면 root가 `MPI_Abort`. rank 4개 mpiexec 검사 10건 통과(수정 전 소스에서는 6건 실패), 기존 검사 163건 통과. 소스 커밋 a0d6e54. README 부록 A와 TIME_CONFIG, DAO_spec.md 6.1절 반영)
-  - [ ] 사용자 환경 MPI 실행 확인 (정상 실행에서 `ranks that ran ECC but left no usable result file` 중단이 나오지 않는지, 오래 기다리는 동안 `8_End_flag/mpi_wait/`에 기다리는 rank의 파일이 생기고 통신이 끝나면 없어지는지)
+  - [x] 소스를 수정 전 내용으로 되돌림 (2026-10-05 19:51, 사용자 지시. 사용자 환경의 MPI 실행이 `Gather_result_file_problems timed out after 1200 seconds`로 중단됨. 테스트 종료 배리어를 지난 뒤 result 문제를 모으는 gather에 어떤 rank가 20분 동안 오지 않은 것. `SRC`의 세 파일은 a0d6e54 이전과 같은 내용이고, README 부록 A와 TIME_CONFIG, DAO_spec.md 6.1절에서 해당 설명을 뺌)
+  - [ ] 다시 설계 (태스크 문서 7절. 먼저 중단 메시지의 `Ranks not waiting in this call` 부분으로 늦은 rank와 원인을 확인)
 
 - [ ] HBF 최적화 모드의 dv_idx 0 TH 고정을 HBF 구간(iteration 1~4)의 row로 한정
   - 상세: `_pm/tasks/20260928_HBF_TH_iteration_range/`

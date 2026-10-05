@@ -640,8 +640,6 @@ class GenLLRMode(IntEnum):
 | 그룹이 비어있음 | 해당 모드 실패 (None 반환) |
 | CSW 후보 부족 | 해당 모드 실패 (None 반환) |
 | 파라미터 범위 초과 | 자동 보정 (`Correct_LLR_Matrix`) |
-| ECC를 돌린 rank가 result 파일을 남기지 않았거나, 읽을 수 없는 파일 또는 빈 파일을 남김 | 채널 테스트 종료 집계에서 `MPI_Abort()` 호출 (메시지에 해당 rank와 첫 파일 경로) |
-| 집단 통신(배리어, bcast, gather)이 대기 상한 안에 끝나지 않음 | `MPI_Abort()` 호출 (메시지에 도착하지 않은 rank와 함께 기다리던 rank) |
 
 ### 6.2 모드별 실패 조건
 
