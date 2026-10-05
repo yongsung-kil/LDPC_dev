@@ -359,6 +359,7 @@ class TIME_CONFIG:
     MAX_ECC_MEMORY_RETRY_DELAY = 60       # 메모리 에러 재시도 시 최대 대기 시간 (초, 0~이 값 사이 랜덤)
     MPI_COMM_TIMEOUT_SECONDS = 2*int(MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY)  # 짧은 집단 통신(bcast, gather)의 대기 상한. 메모리 재시도 최대 소요시간의 2배
     MPI_TEST_BARRIER_TIMEOUT_SECONDS = SIM_MAX_TIME_OUT + MAX_ECC_MEMORY_RETRY * MAX_ECC_MEMORY_RETRY_DELAY + MPI_COMM_TIMEOUT_SECONDS  # ECC 실행을 사이에 둔 배리어와 allgather의 대기 상한. ECC 1회 허용 시간과 재시도 대기를 모두 덮는다
+    MPI_WAIT_RECORD_DELAY_SECONDS = 60    # 집단 통신에서 이 시간 넘게 기다린 rank는 대기 기록 파일을 남긴다. 타임아웃이 난 rank가 이 기록으로 도착하지 않은 rank를 가린다
 
 # Debug / logging toggles
 class DEBUG_CONFIG:

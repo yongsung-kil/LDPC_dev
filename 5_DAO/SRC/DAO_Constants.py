@@ -106,6 +106,8 @@ SESSION_UNCOR_DIR_NAME = "5_Uncors"
 PROCESS_DIR_NAME_HEAD = "Process"
 END_FLAG_DIR_NAME = "8_End_flag"
 RUN_ECC_END_FLAG_FILE_NAME = "run_ecc_end_flag.txt"
+MPI_WAIT_RECORD_DIR_NAME = "mpi_wait"
+MPI_WAIT_RECORD_FILE_TEMPLATE = "mpi_wait_rank{process_idx}.txt"
 TRIAL_END_FLAG_FILE_NAME = "trial_end_flag.txt"
 DAO_END_FLAG_FILE_NAME = "dao_end_flag.txt"
 GEN_SINGLE_ROW_STOP_IDX_FILE_NAME = "gen_single_row_stop_idx.txt"
@@ -134,6 +136,10 @@ MAX_SUMMARY_DEPTH = 4
 
 EXTENSIONS_TO_REMOVE = [".bat", ".sh", ".tmp"]
 HEADER_TO_REMOVE = ["result", "log_CSW", "Ref_C_result"]
+
+# ECC를 돌린 rank의 result 파일에서 찾은 문제
+RESULT_FILE_MISSING = "missing"
+RESULT_FILE_UNREADABLE = "unreadable"
 
 SEPARATOR_LENGTH = 20
 SEPARATOR_TYPE1 = "-" * SEPARATOR_LENGTH
