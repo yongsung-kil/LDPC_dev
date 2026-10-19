@@ -1,0 +1,164 @@
+# 메모: ieee:11449331 ULPBF (Ultra-Low Power Bit-Flipping)
+
+- 출처: ieee:11449331, 2025 NVMSA (IEEE Non-Volatile Memory Systems and Applications Symposium), "Ultra-Low Power LDPC Decoder Design for NAND Flash Storage", Silicon Motion
+- 전문: `../LDPC_Paper_Analysis/data/pdfs/ieee/2025/08/ieee_11449331.txt` (PDF 추출본, 그림 수치 일부 깨짐)
+
+---
+
+## 1. 논문이 푸는 문제
+
+NAND 플래시의 SLC(single-level cell, 셀당 1bit 저장) 블록과 dynamic SLC(TLC/QLC NAND 일부를 SLC처럼 쓰는 모드) 블록은 에러가 극히 적다. 저자 실측으로 PE(program/erase, 기록과 소거) 10만 회와 10년 보존이라는 최악 조건에서도 4KB chunk당 에러는 8bit 이하이고(확률 1-10^-11 이상), 98.6%의 chunk는 에러가 0개다.
+
+이 영역에서 GDBF(gradient descent bit flipping, 경사 하강 비트 플리핑) 같은 일반 LDPC(low-density parity-check, 저밀도 패리티 검사) 디코더를 그대로 쓰면 두 가지가 전력을 낭비한다.
+
+- ㉮ iteration(반복)마다 syndrome(패리티 검사 결과 벡터, 이 코드에서 3680bit)을 전부 재계산해 수렴을 판정한다
+- ㉯ GD 메모리(채널 원본 비트를 복원하기 위한 비트 저장소)를 읽고 써서 에너지 함수의 채널 항을 만든다
+
+논문은 저에러 조건 전용의 경량 1단 디코더 ULPBF를 제안하고, 에러가 많으면 GDBF로 넘기는 2단 구조로 전력을 줄인다.
+
+## 2. 기법 상세
+
+### 코드 구성
+
+- ㉮ (5, 50)-regular (36800, 33120) LDPC 코드 (dv(변수 노드 차수) 5, dc(검사 노드 차수) 50, syndrome 3680bit)
+- ㉯ 연접 구조: 데이터 33,088bit에 CRC(cyclic redundancy check, 순환 중복 검사)-32 패리티를 붙인 뒤 LDPC 인코딩 (CRC가 외부 코드, LDPC가 내부 코드)
+- ㉰ 잡음 모델: FNN(fixed number noise, 프레임당 에러 개수 t를 고정해 주입하는 모델). AWGN(additive white Gaussian noise, 가산 백색 가우스 잡음) 대신 SLC의 극저 에러율 표현에 사용
+
+### GDBF 기준선 (Algorithm 1)
+
+에너지 함수 E_GD[j] = (c_j XOR z_j) + Σ_{i in M(j)} s_i. 현재 추정 비트와 채널 원본 비트 z의 불일치 항에 j가 속한 불만족 검사 수를 더한다. iteration마다 전체 변수 노드의 에너지를 계산해 문턱 T_GD 이상이면 플립하고, 플립이 하나도 없으면 T_GD를 1 내리고, syndrome을 재계산해 0이면 종료한다. 채널 항 때문에 GD 메모리가 필요하다.
+
+### ULPBF (Algorithm 2) 의사코드 요지
+
+```
+c ← z, s ← cH^T                 # 초기 syndrome 1회 계산
+if s == 0: 성공 반환
+for j in 0..n-1:                 # 단 한 번의 플립 pass (Lmax = 1)
+    E_ULP[j] = Σ_{i in M(j)} s_i   # 불만족 검사 합만 사용 (채널 항 없음)
+    if E_ULP[j] >= T_ULP: c_j 플립
+CRC 패리티 계산                   # syndrome 재계산 없음
+if CRC 통과: 성공 반환
+실패 반환                         # 이후 GDBF로 재시작
+```
+
+핵심 세 가지는 다음과 같다.
+
+- ㉮ **수렴 판정을 CRC-32로 대체**: 플립 후 성공 여부를 3,680bit syndrome 재계산 대신 32bit CRC로 판정한다. CRC는 플립 결과 비트가 흘러나오는 decoding 단계 중에 함께 계산되므로 output 단계의 추가 계산이 없다
+- ㉯ **GD 메모리 제거**: 에너지 함수에서 채널 항 (c_j XOR z_j)를 빼고 불만족 검사 합만 쓴다. GD 메모리의 읽기와 쓰기 전력이 사라진다
+- ㉰ **초기 syndrome 기반 모드 선택과 재시작**: 초기 syndrome이 ULPBF의 교정 능력을 넘는 에러를 시사하면 decoding 단계에서 GDBF로 전환한다. ULPBF가 실패해도 초기 syndrome은 시작 시 이미 계산되어 있으므로 재계산 없이 즉시 GDBF를 재기동한다. 하드웨어는 GDBF와 같은 구조를 공유하고 ULPBF는 그중 최소 기능만 켠다
+
+### 문턱 선정 근거 (패턴 분석)
+
+t = 6의 FNN으로 10^7 chunk를 시뮬레이션해, 시작 시점에 불만족 검사를 정확히 f개 가진 변수 노드가 c개 이상 존재할 확률(패턴 cxf)을 정상 비트와 에러 비트로 나눠 측정했다.
+
+- ㉮ 정상 비트: 패턴 1x5는 0%, 1x4는 0.02%, 1x3은 9.76%
+- ㉯ 에러 비트: 패턴 1x4는 9.53%, 1x3은 0.2% (이 chunk는 교정 불능)
+- ㉰ 결론: T_ULP = 4. 문턱을 3으로 내리면 정상 비트 오플립(9.76%)이 에러 비트 구제(0.2%)를 압도하므로 내릴 수 없다
+
+(그림 6의 개별 막대 수치 배치는 추출 텍스트에서 1x4와 2x4가 같은 값으로 읽혀 원문 확인 필요)
+
+## 3. 보고된 이득
+
+- ㉮ **BLER(block error rate, 블록 오류율)**: 실측 SLC 잡음 모델(PE 10만 회, 10년 보존, t별 확률표) 기준 ULPBF 단독 BLER = 5.08 x 10^-9. t >= 7은 전부 실패로 가정한 보수적 계산
+- ㉯ **미검출 오류 확률**: CRC-32는 4KB 메시지에서 4bit 미만 에러 패턴을 전부 검출하므로, 에러 4bit 이상일 확률(2.97 x 10^-6 이하)과 2^-32를 곱해 P_undetected <= 6.9 x 10^-16
+- ㉰ **전력** (Lmax = 1로 양쪽 고정, Synopsys SpyGlass, TSMC 12nm, GDBF 총전력을 100%로 정규화):
+  - ㉠ initialization 단계: 동일 (둘 다 초기 syndrome 계산 필요)
+  - ㉡ decoding 단계: 42% 감소 (syndrome 재계산 제거가 주원인)
+  - ㉢ output 단계: GDBF는 CRC 계산에 6.11% 추가 소비, ULPBF는 0 (decoding 중 이미 계산)
+  - ㉣ 총합: ULPBF는 GDBF의 67% (33% 감소. 초록의 42%는 decoding 단계 수치)
+- ㉱ 처리량은 동일 (같은 Lmax, 같은 하드웨어 구조)
+
+## 4. HBF/HD 적용 방법
+
+적용처는 `0_LDPC_original/src/decoder.cpp`의 HBF(Hybrid Bit Flipping, 1bit 플립 단계와 3bit min-sum 단계를 잇는 혼합) 구조다. 현 구조와 논문 요소의 대응은 다음과 같다.
+
+| 논문 요소 | 현 코드의 대응물 | 간극 |
+|---|---|---|
+| 초기 syndrome weight로 모드 선택 | `Select_BF()`가 iteration 0에서 syn_weight < `syn_th_BF0`(현 값 680)이면 `flag_BF_on` | 이미 있음. 문턱 1개뿐 |
+| CRC로 수렴 판정 | PCRC(partial CRC, 부분 순환 중복 검사, termination point 4개, 레지스터 길이 `CRC_LEN` 80bit)의 조기 종료 | 판정기는 있으나 syndrome도 매 iteration 갱신됨 |
+| syndrome 재계산 생략 | 없음 (파이프라인이 column 진행마다 syndrome 레지스터 갱신) | **새로 넣을 핵심** |
+| GD 메모리 제거 | 1bit 단계의 에너지 계산 (VN_Cal_HD의 1bit precision 경로, `flag_BF_on && iter <= ITER_MAX_HBF` 분기) | 채널 항 사용 여부 코드 확인 필요 |
+| 실패 시 재계산 없는 재시작 | `mn == ITER_MAX_HBF + 1`에서 min-sum 전환 전 preprocessing | 초기값 재사용 여부 코드 확인 필요 |
+
+### 끼워 넣는 지점
+
+- ㉮ **문턱 2단화 (Select_BF 확장)**: `syn_th_BF0` 아래에 더 낮은 2차 문턱 `syn_th_ULP`를 추가한다
+  - ㉠ syn_weight < `syn_th_ULP`: ULPBF 1 pass (아래 ㉯)
+  - ㉡ `syn_th_ULP` <= syn_weight < `syn_th_BF0`: 기존 1bit HBF 4회
+  - ㉢ syn_weight >= `syn_th_BF0`: 기존대로 min-sum 직행
+- ㉯ **ULPBF 1 pass 모드**: 이 모드의 iteration 1에서는 syndrome 갱신 로직을 끄고 초기 syndrome을 읽기 전용으로 써서 에너지(불만족 검사 합)를 계산해 일괄 플립하고, 종료 판정은 PCRC만 쓴다. 전력 대리 지표로는 iteration당 syndrome 레지스터 갱신 비트 수가 3680급에서 0으로, 판정 비용이 80bit CRC로 바뀌는 효과다
+- ㉰ **실패 시 전이**: PCRC 불통과면 플립 상태를 버리고 HD(hard decision, 경판정) 원본과 보관된 초기 syndrome으로 다음 단(기존 HBF 또는 min-sum)을 시작한다. 손해는 1 pass만큼의 지연이다
+- ㉱ **GD 항 정리**: 1bit 단계 에너지에 채널 원본과의 비교 항이 있으면 ULPBF 모드에서는 빼서 해당 메모리 접근을 없앤다
+
+### 유효 범위 추정 (우리 영역 0-150bit와의 간극)
+
+논문의 유효 영역은 t <= 8이고 Lmax = 1이다. (5, 50)-regular, n = 36800, m = 3680 가정의 대략 추정(독립 근사)으로 1 pass의 한계를 짚으면 다음과 같다.
+
+- ㉮ 정상 비트 오플립 기대값은 약 184000 x (t/736)^4: t = 8에서 0.003개, t = 20에서 0.1개, t = 50에서 4개, t = 150에서 수백 개
+- ㉯ 에러 비트 누락(검사 공유 충돌로 에너지가 3 이하) 기대값: t = 8에서 0.007개, t = 20에서 0.1개, t = 50에서 2개
+- ㉰ 따라서 1 pass 완전 교정은 t 15-25 부근까지 높은 확률로 성립하고 t 40-50부터 대부분 실패한다 (우리 H-matrix는 비규칙이라 실측 필요, dv별 문턱 T[dv]를 따로 둬야 함)
+
+즉 150bit 영역 전체의 대체물이 아니라, 저에러 프레임(대략 20bit 이하)을 1 pass로 끝내는 다단 구조의 맨 앞 단이다. 그 위 구간은 문턱 게이트가 걸러 기존 경로로 보내므로 성능 손해 없이 지연 1 pass만 추가된다.
+
+## 5. 예상 이득과 위험
+
+### 예상 이득
+
+- ㉮ 저에러 프레임이 syndrome 재계산 없이 1 pass + CRC 판정으로 끝난다. 전력 대리 지표로 iteration당 syndrome 갱신량과 GD성 메모리 접근이 0이 된다
+- ㉯ 실패해도 다음 단이 초기 syndrome을 재사용하므로 추가 비용이 1 pass 지연뿐이다
+- ㉰ PCRC 조기 종료가 이미 있어 판정기 추가 비용 없이 "syndrome 갱신 생략"의 이득만 얹을 수 있다
+
+### 위험
+
+- ㉮ **성능 열화**: 1 pass가 정상 비트를 오플립한 상태로 다음 단에 넘기면 열화된다. 실패 시 HD 원본으로 되돌리는 설계로 막을 수 있으나, 되돌리는 메모리 동작 자체의 비용을 따져야 한다
+- ㉯ **미검출 오류**: syndrome 0 확인 없이 CRC만으로 성공을 선언하므로, CRC가 우연히 통과하는 프레임은 조용한 오류가 된다. 논문의 6.9 x 10^-16 상계는 t <= 8 전제다. 우리 영역(최대 150bit)에서는 게이트를 통과한 저에러 프레임에만 ULPBF가 적용되므로 전제가 유지되지만, PCRC(80bit 레지스터, termination point 단위 판정) 기준으로 미검출 확률을 다시 계산해야 한다
+- ㉰ **영역 간극**: 유효 한계가 t 20bit 안팎이면 0-150bit 분포에서 몇 %의 프레임이 혜택을 보는지가 이득의 전부를 결정한다. 평가 영역의 프레임당 에러 분포 실측이 선행되어야 한다
+- ㉱ **다회 pass 확장 불가**: syndrome 재계산 생략은 pass가 1회라서 성립한다. 2회 이상 돌리려면 플립 비트 주변만 고치는 증분 syndrome 갱신이 필요한데 이는 별도 설계다
+- ㉲ **검증 포인트**: 1단 성공률의 t별 곡선, 오플립 발생량, CRC 거짓 통과 빈도, 2단 구성의 FER(frame error rate, 프레임 오류율) 비열화
+
+## 6. 실험 설계 초안
+
+BF 계열이므로 교체용 함수 재정의로는 안 되고 `decoder_main` 전체 재정의가 필요하다 (`3_LDPC_ideas/새논문적용규칙.md` 2절의 세 번째 갈래). `_init_state`, `_check_errors` 같은 엔진 부품은 부모 것을 재사용한다.
+
+### 구현 골격
+
+- ㉮ `ULPBFDecoder(BaseDecoder)`: `decoder_main` 재정의
+  - ㉠ 초기 syndrome과 syndrome weight 계산
+  - ㉡ 1 pass: 열마다 E[j] = 불만족 검사 합, dv별 문턱 T[dv] 이상이면 플립 (일괄 적용, 순차 전파 없음)
+  - ㉢ 판정 2종 동시 기록: syndrome 0 여부(이상적 판정)와 32bit CRC 모델 판정 (거짓 통과 측정용)
+  - ㉣ 실패 시 HD 원본으로 부모 min-sum `decoder_main` 호출 (2단 구성)
+- ㉯ 채널: 프레임당 고정 에러 수 t 주입 (FNN 대응). 측정점 예: t = 1, 2, 4, 8, 12, 16, 20, 30, 50, 100, 150
+- ㉰ 비교 기준: base_run과 seed, 포인트, `run.frames_per_batch`를 같게 맞춘 min-sum 단독
+
+### 지표 계획 표
+
+| 지표 | 무엇을 판별하나 | 수집 방법 |
+|---|---|---|
+| 1단 단독 성공률 vs t | 경량 1 pass의 유효 한계 (논문 그림 7 대응) | 아이디어 자체 수집 |
+| 1단 후 잔여 에러 수, 오플립 수 | 실패 pass가 다음 단에 짐이 되는지 | 아이디어 자체 수집 (genie 비교) |
+| 2단 구성 FER vs base_run FER | 성능 비열화 확인 | 항상 수집 (FER) |
+| 평균 iteration, syndrome 갱신 횟수 | 연산 수 대리 전력 지표 (갱신 비트 수, VN/CN 접근 수) | 아이디어 자체 수집 |
+| CRC 거짓 통과 수 | 미검출 위험 정량화 (syndrome이 0 아닌데 CRC 통과) | 아이디어 자체 수집 |
+| iteration별 미수렴 프레임 수 | 조기 종료 분포 | 본체 로그 `log_active` |
+
+### 비교 변수
+
+- ㉮ 문턱 T[dv]를 dv, dv - 1, dv - 2 세 값으로 바꿔 가며 성공률과 오플립의 균형점을 찾는다
+- ㉯ 게이트 문턱 `syn_th_ULP`를 바꿔 가며 ULPBF 적용률과 낭비 pass율을 측정한다
+- ㉰ 실패 시 ㉠ HD 원본 복원과 ㉡ 플립 상태 유지 두 방식의 2단 FER을 비교한다 (논문의 재시작 의미 확정용)
+
+## 7. 미해결 질문
+
+- ㉮ 그림 6(에러 비트 패턴 확률)의 막대별 수치 배치가 추출 텍스트에서 겹쳐 읽힘 (1x4와 2x4가 둘 다 9.53E-02). 원문 확인 필요
+- ㉯ 그림 7(ULPBF의 t별 BLER)의 수치가 축 라벨만 추출됨. t = 4-7 구간 값 원문 확인 필요
+- ㉰ ULPBF 실패 후 GDBF 재기동 시 추정 코드워드를 z로 되돌리는지, ULPBF가 플립한 상태에서 잇는지 본문에 명시가 없음. 원문 확인 필요 (초기 syndrome 재사용 서술은 z 복원을 시사)
+- ㉱ 모드 선택(초기 syndrome weight 몇에서 GDBF로 보내는지)의 문턱 수치가 본문에 없음
+- ㉲ CRC-32의 "4bit 미만 전부 검출" 전제가 참고문헌 [6]의 특정 길이 조건인지, 우리 데이터 길이에서도 성립하는지 원문 확인 필요
+- ㉳ 코드 확인 사항 둘:
+  - ㉠ `decoder.cpp` VN_Cal_HD의 1bit precision 경로가 채널 원본과의 비교 항(GD 항)을 쓰는지
+  - ㉡ min-sum 전환 시 preprocessing이 HD 원본과 초기 syndrome을 재사용하는지, 재계산하는지
+- ㉴ 평가 영역의 프레임당 에러 수 분포 (ULPBF 적용률을 정하는 근거 데이터)
+
+## 8. 등록 권고
+
+**상.** 저에러 영역의 전력 감축이라는 과제 목표와 정확히 겹치고, 기존 `Select_BF` 게이트와 PCRC 조기 종료 위에 "syndrome 갱신 생략 1 pass" 단 하나를 얹는 구조라 구현 부담이 작다. 유효 영역이 프레임당 약 20bit 이하로 좁지만 다단 구조의 맨 앞 단이라는 자리에서는 그 좁음이 설계 전제이고, py 스크리닝으로 성공률 곡선과 비열화를 먼저 확인하면 된다.

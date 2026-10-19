@@ -1,0 +1,162 @@
+# 메모: ieee:9902993 UP-GDBF (2022, IEEE OJCAS)
+
+"UP-GDBF: A 19.3 Gbps Error Floor Free 4KB LDPC Decoder for NAND Flash Applications" (Liu, Liao, Chang, 국립양명교통대).
+NAND 플래시용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환 저밀도 패리티 검사) 부호의 경판정(HD, Hard Decision) 비트 플리핑 디코더 논문이다. 알고리즘 기여(UP-GDBF)와 하드웨어 기여(energy-based backtracking)가 분리되어 있다.
+
+---
+
+## 1. 논문이 푸는 문제
+
+- ㉮ NAND 저장용 LDPC 디코더의 세 가지 요구인 error floor(FER 곡선이 낮은 오류 영역에서 꺾이지 않고 바닥을 그리는 현상) 제거, 수렴 속도, 처리량을 비트 플리핑 계열에서 동시에 만족시키는 것
+- ㉯ GDBF(Gradient Descent Bit Flipping, 경사 하강 비트 플리핑) 같은 전역 탐색 계열(코드워드 전체에서 에너지 최대 비트를 찾아 플립)은 짧은 부호에서는 우수하지만 4KB급 긴 부호에서의 효과가 검증되지 않았고, 기존 NAND용 구현은 비전역 탐색(비트별 문턱 판정)에 한정되어 있었음
+- ㉰ 저자들이 4KB 부호에서 기존 전역 탐색 알고리즘들을 평가한 결과, CRGDBF(Counter Random GDBF)와 tabu list(최근 플립한 비트를 일정 기간 플립 금지 목록에 넣는 기법) 계열이 error floor를 보임을 발견
+- ㉱ floor의 원인 분석 (CRGDBF 실패 사례 추적):
+  - ㉠ 과교정(한 iteration의 플립 수가 실제 오류 수보다 많음)으로 올바른 비트 2개가 새 오류가 됨
+  - ㉡ 그 비트들이 tabu list에 들어가 에너지 최적화에서 완전히 배제됨 (penalty 계수가 사실상 음의 무한대인 하드 제약)
+  - ㉢ 디코더가 대신 올바른 비트 572개를 최대 에너지로 선택해 플립, 오류가 폭증해 복구 불능
+
+## 2. 기법 상세
+
+### 2.1 평가 환경과 표기
+
+- ㉮ 부호: (N=36864, K=33028, M=3840) QC-LDPC, 순환 치환 행렬 크기 Z=256, 변수 노드 차수 5. 코드워드를 144개 column block(각 256bit)으로 나눠 부분 병렬 처리
+- ㉯ 채널: 고정 오류 비트 수(EBC, Error Bit Count) 채널. 모든 시험 프레임이 같은 오류 수를 가지되 위치만 다름. 성능은 FER(Frame Error Rate, 프레임 오류율)로 비교
+- ㉰ 표기: xi는 추정 비트, yi는 채널 초기 비트, sj는 syndrome(j번째 패리티 검사 위반 여부), Ei는 i번째 비트의 에너지, Emax는 전역 최대 에너지, Tmax는 최대 iteration 수
+
+### 2.2 penalty 방법에 의한 기존 알고리즘 해석
+
+제약 최적화 arg max{fi : hi=0}을 비제약 꼴 arg max{fi + Mi(hi)²}로 바꾸는 penalty 변환으로 기존 알고리즘들을 통일 해석한다.
+
+- ㉮ CRGDBF: 하드 제약이 tabu list 소속 여부이고 penalty 계수 Mtabu가 음의 무한대. 배제가 절대적이라 위 1절의 체계 결함이 생기면 floor로 직결
+- ㉯ PGDBF w/M(Probabilistic GDBF with Momentum): 하드 제약이 Bernoulli 난수 η(플립 후보 중 확률적으로 일부만 플립)이고 계수 Mη가 0과 1 사이. momentum 항 ρ(di)(di는 마지막 플립 후 경과 iteration)가 에너지의 일부로만 작동해 배제가 부드러움. 4KB 시뮬레이션에서 floor 없음
+
+### 2.3 제안 UP-GDBF (Unified Penalty GDBF, Algorithm 3)
+
+의사코드 요지 (초기 xi = yi):
+
+```
+t = 0 .. Tmax-1 반복:
+  syndrome 계산: sj = XOR(xv, v는 cj에 연결된 변수 노드)
+  s가 전부 0이면 조기 종료
+  최대 탐색 단계 (비트 i 전체):
+    Ei = (xi XOR yi) + (연결 syndrome 합) + I(li=1) + ηi
+    Emax = max(Emax, Ei)
+  플리핑 단계 (비트 i 전체):
+    Ei == Emax 이면 xi 반전, li = 0
+    아니면 li = 1
+```
+
+세 penalty를 에너지 함수 하나로 통합한 것이 이름의 유래다.
+
+- ㉮ 상관 penalty (xi XOR yi): 채널 초기값과 어긋난 비트를 플립 후보로 우대
+- ㉯ 플리핑 penalty I(li=1): li=1은 직전 iteration에서 플립되지 않았음을 뜻하고, 그런 비트에 +1을 준다. 직전에 플립된 비트는 상대적으로 에너지가 1 낮아져 연속 재플립 진동이 억제된다 (momentum 길이 L=1과 등가, 비트당 기록 1bit)
+- ㉰ 난수 penalty ηi: 난수를 플립 허가 조건(하드 제약)이 아니라 에너지 가산항(소프트 제약, Mη=1 등가)으로 옮긴 것이 핵심 변경. 효과는 플립 집합의 확장으로, 기본 에너지 fi가 Emax인 비트만이 아니라 fi = Emax-1인 비트도 η 추첨에 따라 플립될 수 있다. 그 결과 flip miss(그 iteration에서 플립되지 못한 오류 비트) 수가 통계적으로 줄고(Fig 3) 평균 iteration이 감소
+- ㉱ active iteration 메커니즘 (식 (5)): t가 tactive 이하인 동안 ηi=1로 고정(난수 꺼짐, 결정적 동작)하고, t > tactive부터 Bernoulli(P=0.9)를 적용. 초기 iteration에는 오류가 많아 난수가 올바른 플립을 방해하는 역효과(저자 표현으로 double-edged sword)가 크므로 이를 차단. tactive는 고정 EBC 채널에서 오프라인 Monte-Carlo 탐색으로 결정 (수치 미공개, 원문 확인 필요)
+- ㉲ 에너지 범위: 변수 노드 차수 5 기준 Ei는 0-8. E=0인 비트는 플립되지 않으므로 하드웨어는 상위 8레벨만 one-hot으로 유지
+
+### 2.4 하드웨어 기여: energy-based backtracking
+
+- ㉮ 배경: 부분 병렬 구조에서 한 iteration은 두 pass로 구성된다. 최대 탐색 pass가 144개 column block을 순회(144 cycle)하고, 플리핑 pass가 다시 144 cycle을 순회한다. 그런데 플립이 실제로 일어나는 column block은 소수라 플리핑 pass의 대부분이 유휴 접근이다 (Fig 8의 시각화)
+- ㉯ 기법: 최대 탐색 pass를 도는 동안 에너지 레벨별 분류 entry 8개와 backtracking memory(column index를 주소로 사용)에 흔적을 남긴다. 같은 지역 최대 에너지를 공유하는 column index들이 역방향 연결 사슬로 기록된다. 플리핑 pass는 전역 최대에 해당하는 entry에서 시작해 사슬을 거슬러 가며 플립이 있는 column block만 접근하고, 종료 표지(-1)를 만나면 끝낸다
+- ㉰ 오버헤드: 단계 전환 시 파이프라인 bubble 2 cycle과 종료 표지 1 cycle, 면적 0.8%
+- ㉱ 성격: 순수 스케줄링 기법이라 FER과 iteration 수에는 영향이 없고 cycle 수만 줄인다
+
+## 3. 보고된 이득
+
+- ㉮ error floor: 4KB 부호, Tmax=100에서 CRGDBF와 tabu 계열은 floor 발생, UP-GDBF와 PGDBF w/M은 floor 없음 (Fig 1, Fig 4. FER 축의 절대값은 그림이라 추출 텍스트에 없음, 원문 확인 필요)
+- ㉯ 수렴 속도: EBC 220 이하에서 PGDBF w/M 대비 평균 iteration 10-20% 감소. EBC=110에서는 PGDBF w/M의 평균 10 iteration에서 약 20% 감소
+- ㉰ backtracking: 고정 EBC 110 이상 조건에서 42% 넘는 cycle 감소, 처리량 1.72배 (Fig 12)
+- ㉱ 구현 (TSMC 16nm): 1 GHz, 면적 0.120 mm², 처리량 19.3 Gbps로 ONFI 5.0(Open NAND Flash Interface 규격 5.0) 최대 속도 충족, EBC=138 채널 조건까지 견딤 (Fig 14, 처리량 = 코드워드 길이 / (평균 cycle 수 x 클록 주기))
+- ㉲ 면적 내역: 메모리 매크로 48%(코드워드 관련 정보와 플립 기록), syndrome 저장 26.2%(두 벌, flip-flop 구현), 난수 penalty 생성부 2.7%, backtracking부 0.8%
+- ㉳ 1KB 비교 (90nm 재구현): EBC=40에서 MGDBF(Modified GDBF) 대비 데이터율 1.23배, 복호 성능 152배
+- ㉴ 4KB 비교: EBC=110에서 전역 탐색 계열이 비전역 탐색(MBF, Multi-Bit Flipping 등) 대비 10^4배 이상 신뢰성 우위
+- ㉵ 전력(mW)과 에너지 효율 수치는 표가 깨져 추출 텍스트에 없음 (원문 Table 1, 2 확인 필요)
+
+## 4. HBF/HD 적용 방법
+
+적용처인 `0_LDPC_original/src/decoder.cpp`의 HBF(Hybrid Bit Flipping, 실패 시 min-sum으로 전환하는 혼성 비트 플리핑) 구조 요지:
+
+- ㉮ `Select_BF()` (L2082 부근): iteration 0에서 HD 입력이고 syndrome weight가 `syn_th_BF0` 미만이면 `flag_BF_on`을 켠다. 미진입이면 mn을 `ITER_MAX_HBF`만큼 건너뛴다
+- ㉯ 1bit 모드 (L4058 부근, VN_Cal_HD): `flag_BF_on`이고 iter가 `ITER_MAX_HBF`(4) 이하이면 변수 노드 출력 크기를 최대값(EDGE_MAG_7 또는 8)으로 포화시킨다. 즉 현재의 1bit HBF는 min-sum 엔진 위의 메시지 전달형이고, 각 비트가 지역 다수결(sum_t 부호)로 스스로 판정한다. 전역 최대 탐색 단계가 없다
+- ㉰ 4회 실패 시 iter 5부터 3bit min-sum으로 전환. PCRC(Partial CRC, 4개 종결점) 조기 종료 보유
+
+적용 갈래 세 가지:
+
+- ㉮ UP-GDBF를 별도 BF 엔진으로 추가 (논문 본령에 충실한 길):
+  - ㉠ 진입 지점은 지금의 `Select_BF()` 그대로 두고, 1bit min-sum 4회 대신 UP-GDBF 루프를 돌린다. 실패 시 3bit min-sum 전환이라는 HBF 뼈대는 유지
+  - ㉡ 구조 변화가 크다. UP-GDBF는 iteration마다 두 pass(전체 column을 돌며 Emax 탐색, 다시 돌며 플립)가 필요해 현재의 단일 pass 파이프라인과 다르다. decoder.cpp에 새 상태기와 pass 제어를 넣는 Decision 등급 변경
+  - ㉢ 추가 상태: 비트당 li 1bit, 전역 Emax 레지스터, 난수 생성(기존 XOR25 재사용 가능), 에너지 계산(상관 1bit + syndrome 합 + li + η)
+  - ㉣ 노림수: 논문대로면 EBC 138급까지 HD 단독 복호가 되므로, 우리 평가 영역(프레임당 오류 0-150bit)의 거의 전부를 min-sum 가동 없이 끝낼 수 있다. 현 HBF는 `syn_th_BF0` 문턱 이하의 쉬운 프레임만 4회 시도하는 보조 장치인데, 이를 주 엔진으로 격상하는 그림
+- ㉯ penalty 두 가지만 현 1bit HBF에 약화 이식 (가벼운 길):
+  - ㉠ 플리핑 penalty: 직전 iteration에서 판정이 뒤집힌 비트의 이번 판정 문턱을 1 올린다 (비트당 1bit 기록만 추가)
+  - ㉡ active iteration식 난수: 초기 1-2회는 결정적으로, 이후 확률적 판정 완화
+  - ㉢ 한계: 논문 데이터는 전역 탐색 틀 안에서만 효과를 보였고, 같은 논문에서 비전역 탐색이 10^4배 불리하다고 보고하므로 지역 판정에 옮겼을 때의 효과는 보장이 없다. 스크리닝으로 판별할 사안
+- ㉰ energy-based backtracking의 cycle 수 재현:
+  - ㉠ 전제는 ㉮의 두 pass 구조. 그 위에서라면 C++ 파이프라인 시뮬레이터의 cycle 계상으로 재현 가능하다. 최대 탐색 pass는 column block 수만큼 고정, 플리핑 pass는 "플립 발생 column block 수 + 3"(bubble 2 + 종료 1)으로 계상하면 된다
+  - ㉡ 알고리즘 결과(FER, iteration)와 완전히 독립이라, py 스크리닝에서는 플립 발생 block 수만 세어 절감률을 미리 추정할 수 있다
+  - ㉢ 현재의 1bit HBF는 단일 pass라 건너뛸 플리핑 pass 자체가 없어 직접 대응물이 없다
+
+## 5. 예상 이득과 위험
+
+예상 이득:
+
+- ㉮ BF iteration은 1bit 연산이라 3bit min-sum iteration보다 연산량과 메모리 접근이 크게 적다. UP-GDBF가 0-150bit 영역 대부분을 BF로 끝내면 min-sum 가동 자체가 줄어 에너지 감축 폭이 가장 크다
+- ㉯ 평균 iteration 10-20% 감소는 그대로 프레임당 에너지와 지연 감소로 이어진다
+- ㉰ backtracking의 42% cycle 감소는 클록 수 절감이므로 지연과 (클록 게이팅 전제의) 동적 전력에 직결된다
+
+위험과 간극:
+
+- ㉮ 부호 차이: 논문 부호는 변수 노드 차수 5 균일. 평가 대상 파라미터의 차수 분포가 다르면 에너지 레벨 수와 과교정 양상이 달라지고, 높은 차수 열에서는 penalty 1의 상대 비중이 작아져 효과가 약해질 수 있다
+- ㉯ floor 재검증: error floor 없음은 논문 부호, Tmax=100, 그림의 FER 범위 안에서의 결과다. 우리 목표 FER 깊이까지는 별도 확인이 필요하다
+- ㉰ tactive 민감도: 고정 EBC 조건별 오프라인 탐색값인데 실제로는 프레임의 오류 수를 모른다. 단일 tactive로 전 영역을 덮을 때의 열화가 미보고
+- ㉱ 150bit 상단 간극: 논문의 견딤 한계가 EBC=138이므로 140-150bit 프레임은 BF 실패 후 min-sum 재복호가 남는다. 하이브리드 뼈대는 유지해야 하고, 이때 BF에 쓴 iteration과 Tmax 설정이 추가 비용이 된다 (논문의 Tmax=100을 그대로 쓰면 실패 프레임의 지연이 과도, BF 단계 상한을 작게 두는 재탐색 필요)
+- ㉲ 두 pass 구조는 iteration당 접근량이 비전역 BF의 2배다. backtracking 없이는 지연에서 손해
+
+검증 포인트:
+
+- ㉮ 평가 대상 파라미터에서 UP-GDBF 단독의 EBC별 FER 곡선과 견딤 한계 (논문의 138에 상응하는 값)
+- ㉯ BF 성공 영역 확장이 `syn_th_BF0` 문턱 상향과 어떻게 맞물리는지 (진입 판단 기준 재설계 여부)
+- ㉰ 과교정 빈도와 그 직후 오류 수 추이 (floor 메커니즘의 재현 여부)
+
+## 6. 실험 설계 초안
+
+제약: `2_LDPC_base/src/decoder.py`의 BaseDecoder는 min-sum 엔진이고 BF 계열은 교체용 함수 6개로 표현이 안 되므로, 규칙대로 `decoder_main` 전체를 재정의한다 (`_init_state`, `_check_errors` 같은 엔진 부품은 부모 것을 호출해 재사용). 에너지 계산과 전역 최대 탐색은 numpy 벡터 연산으로 쓰면 코드워드 37000bit급에서도 속도가 나온다.
+
+비교군 (HD 입력, 같은 seed, 프레임당 오류 수 고정 채널, EBC 격자는 0-150 구간에서 10-20 간격):
+
+- ㉮ base_run min-sum (기준선, 총비용 비교용)
+- ㉯ UP-GDBF (tactive를 0, 2, 4, 8로 바꿔가며 소규모 탐색, P=0.9 고정)
+- ㉰ PGDBF w/M 상당 (난수를 플립 허가 조건으로 되돌린 판): 난수의 소프트 제약화가 주는 기여를 분리
+- ㉱ 플리핑 penalty 제거판 (li 항 삭제): momentum 기여를 분리
+- ㉲ (선택) 현 HBF 근사판 (1bit 4회 후 min-sum 전환을 py로 흉내): 현 구조 대비 이득 추정용
+
+측정 지표 (지표 계획 표):
+
+| 지표 | 무엇을 판별하나 | 수집 방법 |
+|---|---|---|
+| EBC별 FER | BF 단독 커버 영역과 floor 징후 (논문 Fig 1, 4 대응) | 자체 수집 |
+| 평균 iteration (EBC별) | 수렴 속도, min-sum 대비 연산 절감의 입력값 | 자체 수집 |
+| iteration별 flip miss 수 (genie 기준) | penalty 통합 효과의 중간 근거 (논문 Fig 3 재현) | 자체 수집 |
+| 과교정 빈도 (플립 수 > 오류 수인 iteration 비율)와 직후 오류 수 | floor 원인 메커니즘 관찰 | 자체 수집 |
+| iteration별 플립 발생 column block 수 (index를 Z로 나눈 몫의 고유 수) | backtracking cycle 절감의 대리 지표 (플리핑 pass cycle = 해당 block 수 + 3으로 환산) | 자체 수집 |
+| 연산 수 대리 지표: BF iteration 수에 1bit 비용 가중치, 실패 프레임은 min-sum iteration 비용 가산 | 프레임당 에너지 감축 추정 | 자체 수집 |
+
+판정 기준 초안:
+
+- ㉮ 통과: EBC 110급에서 FER이 floor 없이 유지되고, BF 단독 성공 상한이 현 HBF의 커버 영역보다 뚜렷이 넓으며, 연산 수 대리 지표가 min-sum 기준선보다 낮음
+- ㉯ 탈락: floor 발생, 또는 BF 실패 프레임의 추가 비용까지 합산한 총비용이 기준선을 역전
+
+## 7. 미해결 질문
+
+- ㉮ tactive의 실제 값과, EBC 조건마다 다른 값을 쓰는지 단일 값인지 (본문에 수치 없음, 원문 확인 필요)
+- ㉯ PGDBF w/M의 momentum 함수 ρ(di) 값 (참조 [13] Savin 2021. UP-GDBF에서는 계수 1의 지시 함수로 수렴하지만 비교군 구현에 필요)
+- ㉰ P=0.9가 η=1일 확률인지 (식 (5) 표기상 그렇게 읽히나 원문 확인 필요)
+- ㉱ Fig 1, 4, 12, 14의 축 수치: FER 절대 레벨, 평균 iteration 절대값, cycle 수, 19.3 Gbps가 측정된 EBC 지점 (그림이라 추출 텍스트에 없음, 원문 확인 필요)
+- ㉲ Table 1, 2의 전력, 에너지 효율, 비교 대상별 세부 수치 (표 추출 깨짐, 원문 확인 필요)
+- ㉳ Algorithm 2의 조기 종료 조건이 추출 텍스트에 s == 1로 나오는데 s == 0의 추출 오류로 판단 (원문 확인 필요)
+- ㉴ syndrome을 두 벌 저장하는 까닭 (최대 탐색 pass와 플리핑 pass 사이의 일관성 유지로 추정, 원문 확인 필요)
+- ㉵ 1KB 비교의 "152배 복호 성능"이 FER 비인지 다른 척도인지 (원문 확인 필요)
+
+## 8. 등록 권고
+
+상. 부호 규모(약 37000bit, Z=256급)와 채널 모델(프레임당 오류 수 고정)이 우리 평가 영역과 사실상 같고, EBC 138급까지 HD 단독 복호라는 보고가 재현된다면 0-150bit 영역에서 min-sum 가동을 대부분 없애는 가장 큰 전력 지렛대가 된다. py 스크리닝은 decoder_main 재정의 한 벌로 가능하고, backtracking은 알고리즘과 독립인 cycle 계상이라 C++ 반영 결정 전에 플립 발생 block 수 대리 지표로 미리 평가할 수 있다.
