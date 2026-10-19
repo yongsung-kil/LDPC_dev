@@ -5,6 +5,20 @@ NAND 플래시용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순�
 
 ---
 
+## 쉬운 설명: 현 디코더에 어떻게 넣나
+
+- ㉮ 현 C++ 디코더(`0_LDPC_original/src/decoder.cpp`)의 HD(Hard Decision, 경판정) 복호가 도는 방식:
+  - ㉠ `Select_BF()`: 첫 iteration에서 syndrome weight(위반된 패리티 검사의 수)를 문턱과 비교해, 오류가 적어 보이는 프레임만 BF(Bit Flipping, 비트 플리핑) 모드를 켠다
+  - ㉡ `VN_Cal_HD()`: 각 비트(변수 노드)가 받은 메시지를 합쳐 자기 값을 뒤집을지 판정하는 함수. BF 모드의 처음 4 iteration 동안 출력 크기를 최대값으로 포화시켜, min-sum(검사식마다 들어온 메시지의 최솟값만 전달하는 연판정 복호) 엔진이 사실상 1bit 다수결처럼 돌게 한다
+  - ㉢ `C2V_Cal()`: 검사 노드가 비트에게 보내는 메시지를 저장된 최솟값들로 복원하는 함수. BF 모드에서도 같은 통로가 그대로 쓰인다
+  - ㉣ 4회 안에 못 풀면 3bit min-sum으로 전환한다 (이 혼성 구조가 HBF, Hybrid Bit Flipping)
+- ㉯ 현 1bit HBF는 비트마다 제자리 다수결로 판정하는 지역 방식이고, UP-GDBF는 이 1bit 구간을 통째로 대체하는 별도 엔진이다. 메시지 전달 대신 iteration마다 두 pass로 돈다:
+  - ㉠ 최대 탐색 pass: 모든 비트의 에너지(그 비트가 틀렸다는 증거 점수)를 계산해 코드워드 전체의 최대값을 찾는다. 에너지는 채널 초기값과 어긋나면 +1, 그 비트에 연결된 위반 검사 수만큼 +, 직전 iteration에서 플립되지 않았으면 +1, 난수로 +0 또는 +1을 더한 합이다
+  - ㉡ 플리핑 pass: 에너지가 그 최대값과 같은 비트만 모두 반전한다
+  - ㉢ 초기 iteration(tactive 이하)에는 난수를 꺼서 결정적으로 돌고, 이후에는 확률 0.9로 +1을 준다 (오류가 많은 초반에 난수가 올바른 플립을 방해하는 역효과를 막는 장치)
+- ㉰ C++에 넣는 자리: `Select_BF()`의 진입 판정은 그대로 두고, `VN_Cal_HD()` 포화로 돌던 1bit 구간을 위의 두 pass 루프로 바꾼다. 실패 시 3bit min-sum 전환이라는 HBF 뼈대는 유지한다. 두 pass는 column 전체를 두 번 돌므로 pass 제어 상태기가 새로 필요하다 (상세는 4절 ㉮)
+- ㉱ py에 넣는 자리: `2_LDPC_base/src/decoder.py`의 BaseDecoder는 min-sum 엔진이라 두 pass 구조가 교체용 함수 6개(`_vn_decide`, `_c2v_reconstruct` 등) 어디에도 맞지 않는다. 진입 함수 `decoder_main()`을 통째로 재정의해, column을 하나씩 돌며 판정하는 `_run_iteration()`과 `_process_column()`의 자리에 에너지 계산과 전역 최대 비트 플립 루프를 넣고, 채널 입력 해석(`_read_channel_input()`) 같은 엔진 부품은 부모 것을 재사용한다
+
 ## 1. 논문이 푸는 문제
 
 - ㉮ NAND 저장용 LDPC 디코더의 세 가지 요구인 error floor(FER 곡선이 낮은 오류 영역에서 꺾이지 않고 바닥을 그리는 현상) 제거, 수렴 속도, 처리량을 비트 플리핑 계열에서 동시에 만족시키는 것

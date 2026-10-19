@@ -1,0 +1,45 @@
+{
+  "_desc": [
+    "CB-ET 그림자 측정: 15x145, z=256 H-matrix와 짝 HD LLR matrix",
+    "채널: fixed_error(HD) E=10-150 (10 간격), 포인트당 1000 프레임 고정",
+    "그림자 측정이라 FER 불변, max_frame_errors는 사실상 무제한으로 둔다"
+  ],
+
+  "H_matrix": {
+    "dir": "../../2_LDPC_base/Input/H_matrix",
+    "file": "matrix_sel_1.txt"
+  },
+
+  "decoder": {
+    "use_input_llr_matrix": true,
+    "llr_matrix": {
+      "dir": "../../2_LDPC_base/Input/LLR",
+      "file": "LLR_MATRIX_HD_matrix_sel_1.txt"
+    }
+  },
+
+  "run": {
+    "seed": 0,
+    "max_frame_errors": 1000000,
+    "max_frames": 1000,
+    "frames_per_batch": 128,
+    "stop_below_fer": null,
+    "progress_interval_frames": 256
+  },
+
+  "channels": {
+    "type": "fixed_error",
+    "fixed_error": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
+  },
+
+  "log": {
+    "enabled": false,
+    "items": {}
+  },
+
+  "output": {
+    "dir": "Sim_Output",
+    "csv_prefix": "fer",
+    "label": "007_cbet_shadow"
+  }
+}

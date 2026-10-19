@@ -1,0 +1,40 @@
+{
+  "_desc": [
+    "UP-GDBF(ieee:9902993) py 스크리닝: 프레임당 고정 에러 수(EBC) 격자에서 BF 단독 성능 측정",
+    "비교군(변형 디코더)과 t_active, BF iteration 상한은 run.py 상단 상수가 담당",
+    "run.py가 포인트마다 새 디코더를 만들며 전 비교군이 같은 채널 에러 패턴을 본다",
+    "상대경로는 이 config 파일 위치 기준 (../../ = 저장소 루트 LDPC_dev)"
+  ],
+  "H_matrix": {
+    "dir": "../../2_LDPC_base/Input/H_matrix",
+    "file": "matrix_sel_1.txt"
+  },
+  "decoder": {
+    "use_input_llr_matrix": true,
+    "llr_matrix": {
+      "dir": "../../2_LDPC_base/Input/LLR",
+      "file": "LLR_MATRIX_HD_matrix_sel_1.txt"
+    }
+  },
+  "run": {
+    "seed": 0,
+    "max_frame_errors": 300,
+    "max_frames": 300,
+    "frames_per_batch": 150,
+    "stop_below_fer": null,
+    "progress_interval_frames": 150
+  },
+  "channels": {
+    "type": "fixed_error",
+    "fixed_error": [20, 40, 60, 80, 100, 120, 140, 150]
+  },
+  "log": {
+    "enabled": false,
+    "items": {}
+  },
+  "output": {
+    "dir": "Sim_Output",
+    "csv_prefix": "fer",
+    "label": "upgdbf"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "_desc": [
+    "ATBF 사다리 디코더의 기본 실행 설정 (run.py 경로, 합산 FER만 측정)",
+    "본 스크리닝(사다리 4단, 격자, 자체 지표)은 scan.py가 수행한다",
+    "키 설명 정본은 _template/config.json"
+  ],
+  "H_matrix": {
+    "dir": "../../2_LDPC_base/Input/H_matrix",
+    "file": "matrix_sel_1.txt"
+  },
+  "decoder": {
+    "use_input_llr_matrix": true,
+    "llr_matrix": {
+      "dir": "../../2_LDPC_base/Input/LLR",
+      "file": "LLR_MATRIX_HD_matrix_sel_1.txt"
+    }
+  },
+  "run": {
+    "seed": 0,
+    "max_frame_errors": 1000,
+    "max_frames": 256,
+    "frames_per_batch": 64,
+    "stop_below_fer": null,
+    "progress_interval_frames": 256
+  },
+  "channels": {
+    "type": "fixed_error",
+    "fixed_error": [50, 90, 130]
+  },
+  "log": {
+    "enabled": false,
+    "items": {
+      "csw_per_iter": false,
+      "bit_err_per_iter": false,
+      "bit_err_by_dv": false,
+      "iter_histogram": false,
+      "fer_vs_iter": false,
+      "fail_frame_detail": false,
+      "fer_curve_png": false
+    }
+  },
+  "output": {
+    "dir": "Sim_Output",
+    "csv_prefix": "fer",
+    "label": "atbf_quiescent"
+  }
+}

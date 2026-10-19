@@ -1,0 +1,40 @@
+{
+  "_desc": [
+    "ulpbf_1pass 스크리닝: 프레임당 고정 에러 수 t 격자에서 2단 구성 측정",
+    "상대경로는 이 config 파일 위치 기준 (../../ = 저장소 루트 LDPC_dev)",
+    "실행: python run.py (표준 하니스, 2단 FER) / python -X utf8 scan.py (지표 전체)",
+    "log는 끈 채 유지 (ulpbf_1pass decoder_main이 log 항목 미지원)"
+  ],
+  "H_matrix": {
+    "dir": "../../2_LDPC_base/Input/H_matrix",
+    "file": "matrix_sel_1.txt"
+  },
+  "decoder": {
+    "use_input_llr_matrix": true,
+    "llr_matrix": {
+      "dir": "../../2_LDPC_base/Input/LLR",
+      "file": "LLR_MATRIX_HD_matrix_sel_1.txt"
+    }
+  },
+  "run": {
+    "seed": 0,
+    "max_frame_errors": 1000,
+    "max_frames": 1000,
+    "frames_per_batch": 64,
+    "stop_below_fer": null,
+    "progress_interval_frames": 256
+  },
+  "channels": {
+    "type": "fixed_error",
+    "fixed_error": [1, 2, 4, 8, 12, 16, 20, 30, 50, 100, 150]
+  },
+  "log": {
+    "enabled": false,
+    "items": {}
+  },
+  "output": {
+    "dir": "Sim_Output",
+    "csv_prefix": "fer",
+    "label": "ulpbf_1pass"
+  }
+}

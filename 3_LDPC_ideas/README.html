@@ -69,6 +69,7 @@
 }
 #ldpcDocRoot pre code { background: none; padding: 0; }
 #ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+#ldpcDocRoot .key { color: #d1242f; font-weight: 600; }
 </style>
 <h1>Project 3: 논문 아이디어 적용</h1>
 <blockquote>
@@ -117,6 +118,41 @@ py 실험은 <code>2_LDPC_base</code>의 src 정본을 import해 수행한다.</
 <td>논문 ieee:6865103 (IEEE 2014)</td>
 <td>실험중 (py 환경 대조로 조건부 유효: 이득 조건은 001과 동일하고, 그 조건에서 클리핑과 결합 시 전 조합 최량. 격차 임계 T는 edge 레벨 간격으로 튜닝 필수. 평가 대상 파라미터로 최종 판정)</td>
 <td><code>002_minsum_dynamic_normalization/</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>ULPBF 1 pass (syndrome 갱신 생략, CRC 판정)</td>
+<td>논문 ieee:11449331 (NVMSA 2025)</td>
+<td>실험중 (py 스크리닝 조건부 유의미: 에러 약 16bit 이하 전용 1단, dv별 혼합 문턱 필수, CRC 판정 비열화와 미검출 0 확인. C++ 반영 검토 대기)</td>
+<td><code>003_ulpbf_1pass/</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>UP-GDBF 전역 탐색 BF (penalty 통합)</td>
+<td>논문 ieee:9902993 (IEEE OJCAS 2022)</td>
+<td>실패 (dv 혼합 H에서 전역 최대 비교가 비호환, 커버 에러 40bit에 그침. dv 균일 부호 채택 시 재평가)</td>
+<td><code>004_upgdbf/</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>ATBF 비트별 임계 적응과 휴면</td>
+<td>논문 ieee:5671820 (PIMRC 2010)</td>
+<td>실험중 (py 스크리닝 조건부 유의미: 휴면 절감 5-50%, ES 단축 44%. 전제는 1bit 창 8회 연장과 1bit 단가가 min-sum의 1/4 이하)</td>
+<td><code>005_atbf_quiescent/</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>BF 단계 적응 전환과 잔여 오류 기준 재튜닝</td>
+<td>논문 ieee:8742682 (IEEE Comm. Letters 2019)</td>
+<td>실패 (적응 전환은 감지 신호 부재, ρ 재튜닝은 인과 경로 없음. 파생: 1bit 창 4에서 8로 고정 연장이 genie 상한 달성, 결정거리로 이관)</td>
+<td><code>006_bf_stage_switch/</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>열 단위 조기 종료 CB-ET</td>
+<td>논문 ieee:6865738 (IEEE 2014)</td>
+<td>실패 (기존 PCRC 대비 순증 음수, -7.2%에서 -14.0%)</td>
+<td><code>007_cbet_column_stop/</code></td>
 </tr>
 </tbody>
 </table>

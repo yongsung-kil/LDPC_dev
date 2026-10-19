@@ -5,6 +5,38 @@
 
 ---
 
+## 쉬운 설명: 현 디코더에 어떻게 넣나
+
+핵심은 한 가지다. 디코더가 이미 들고 있는 패리티 검사 상태를 column(열) 블록
+하나를 끝낼 때마다 들여다보고, 위반이 0이면 그 자리에서 멈춘다. 새 연산을 더하는
+것이 아니라 확인 시점을 iteration(전체 column을 한 바퀴 도는 반복 단위) 경계에서
+column 경계로 촘촘하게 당기는 것이다.
+
+C++ 디코더(0_LDPC_original/src/decoder.cpp)에서는:
+
+- ㉮ CNU_Remove_Old_Sgn과 CNU_Update_New_Sgn이 column 하나를 처리할 때마다
+  check sum(패리티 검사식마다 들어온 메시지 부호를 XOR로 누적한 값)에서 그
+  column의 옛 기여를 빼고 새 기여를 넣는다. 그래서 check sum은 어느 column
+  경계에서든 이미 최신이다. 이 두 함수는 바꾸지 않는다
+- ㉯ Syndrome 레지스터(처음 읽은 비트로 한 번 계산해 둔 패리티 검사 결과)와
+  check sum을 XOR하면 지금 판정 비트의 패리티 검사 결과가 나온다. CB-ET는 이
+  XOR 결과가 전부 0인지(위반 수 CSW == 0인지) column마다 한 번 보는 비교를
+  더하는 일이 전부다
+- ㉰ 멈추는 길은 새로 깔지 않는다. 기존에는 Cal_PCRC(정보 비트의 CRC, 곧 cyclic
+  redundancy check 오류 검출 부호를 iteration 중간 4개 지점에서 부분 확인하는
+  조기 종료)가 정지 신호 stop_by_partial_crc를 세우고, Check_End_Iter가 그
+  신호를 보고 반복을 끝낸다. CB-ET 발화도 같은 신호에 새 정지 타입으로 실어 보낸다
+
+Python 스크리닝(2_LDPC_base/src/decoder.py의 BaseDecoder)에서는:
+
+- ㉮ _run_iteration이 한 iteration의 column 루프를 돌리고 끝에서 CSW(check sum
+  weight, 패리티 검사 위반 개수)를 계산한다. 이 함수를 재정의해
+  _process_column(한 column의 메시지 계산과 비트 판정) 호출 직후마다
+  (check_sum XOR syndrome)의 위반 수를 보고, 처음 0에 닿는 (iteration, column)
+  좌표를 프레임별로 기록한다
+- ㉯ 실제 종료 판정을 건드리지 않으면 FER(frame error rate, 프레임 오류율)은
+  정의상 그대로이므로, 한 실행에서 여러 종료 기준을 동시에 재어 비교할 수 있다
+
 ## 1. 논문이 푸는 문제
 
 - ㉮ NVM 저장장치용 LDPC 복호기는 반복 복호를 쓰는데, 이미 수렴한 뒤에도 최대 iteration까지 도는 잉여 연산이 처리량을 깎고 전력을 낭비한다

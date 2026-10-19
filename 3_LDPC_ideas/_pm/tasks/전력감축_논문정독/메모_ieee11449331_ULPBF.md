@@ -5,6 +5,33 @@
 
 ---
 
+## 쉬운 설명: 현 디코더에 어떻게 넣나
+
+논문의 요지는 "에러가 아주 적은 프레임은 반복 복호를 돌리기 전에 딱 한 번 훑어서 고치고, 성공 확인은
+CRC(cyclic redundancy check, 순환 중복 검사)로만 하자"다. C++ 디코더(`0_LDPC_original/src/decoder.cpp`)에서는 함수 네 곳에 손이 간다.
+
+- ㉮ `Select_BF` (모드 선택): 복호 시작 때 syndrome(패리티 검사 결과 벡터)의 weight(1의 개수)를 문턱과 비교해
+  1bit 플립 단계로 들어갈지 정하는 함수다. 여기에 더 낮은 2차 문턱을 추가해, syndrome weight가 아주 작은
+  프레임을 새 ULPBF 1 pass 모드로 보낸다 (문턱 비교 하나 추가)
+- ㉯ `VN_Cal_HD` (변수 노드 계산): column(코드워드를 이루는 비트 묶음)마다 "이 비트를 뒤집을까"를 정하는 함수다.
+  ULPBF 모드에서는 판단 재료를 불만족 검사 합(그 비트가 걸린 패리티 검사 중 어긋난 것의 개수) 하나로 줄이고,
+  dv(변수 노드 차수, 그 비트가 걸린 검사 개수)별 문턱 T[dv] 이상이면 뒤집는다. 채널 원본 비트와 비교하는
+  항이 빠지므로 그 저장소를 읽는 전력도 사라진다
+- ㉰ syndrome 레지스터 갱신 생략 (파이프라인): 현 구조는 column을 진행할 때마다 syndrome 레지스터를 갱신한다.
+  ULPBF 모드의 1 pass에서는 이 갱신을 끄고, 시작할 때 계산한 초기 syndrome을 읽기 전용으로만 쓴다.
+  전력 감축의 핵심이 이것이고, pass가 1회뿐이라서 가능하다
+- ㉱ `Cal_PCRC` (부분 CRC 계산): column block마다 CRC 레지스터를 갱신하고 정해진 지점에서 통과를 판정하는
+  함수다 (이미 있다). ULPBF 모드의 성공 판정은 syndrome 재계산 대신 이 CRC 통과 하나로 한다
+- ㉲ `Check_End_Iter` (종료 판정): iteration(반복) 끝에 CRC 결과를 보고 복호를 끝낼지 정하는 함수다. ULPBF
+  pass가 CRC를 통과하지 못하면 플립 결과를 버리고, HD(hard decision, 경판정) 원본과 보관해 둔 초기
+  syndrome으로 기존 단(1bit 플립 또는 min-sum)을 그대로 시작한다. 손해는 1 pass만큼의 시간이다
+
+py 시뮬레이터(`2_LDPC_base/src/decoder.py`의 BaseDecoder)는 `decoder_main` 하나가 iteration 루프 전체를
+돌리므로 위와 같은 함수 경계가 없다. 그래서 아이디어 폴더에서 BaseDecoder를 상속해 `decoder_main`을 통째로
+재정의하고, 그 안에 ㉮ 초기 syndrome 계산, ㉯ column마다 불만족 검사 합을 구해 T[dv] 이상이면 일괄 플립,
+㉰ CRC 모델로 성공 판정, ㉱ 실패 프레임만 HD 원본으로 부모의 min-sum `decoder_main`을 호출하는 2단 구성을
+넣는다 (구현: `3_LDPC_ideas/003_ulpbf_1pass/decoder.py`).
+
 ## 1. 논문이 푸는 문제
 
 NAND 플래시의 SLC(single-level cell, 셀당 1bit 저장) 블록과 dynamic SLC(TLC/QLC NAND 일부를 SLC처럼 쓰는 모드) 블록은 에러가 극히 적다. 저자 실측으로 PE(program/erase, 기록과 소거) 10만 회와 10년 보존이라는 최악 조건에서도 4KB chunk당 에러는 8bit 이하이고(확률 1-10^-11 이상), 98.6%의 chunk는 에러가 0개다.
