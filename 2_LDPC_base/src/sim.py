@@ -180,3 +180,70 @@ def save_csv(point_results, path, param_name="param"):
                  point_result["errors"],
                  f"{point_result['avg_decoding_iteration']:.3f}",
                  f"{point_result['sec']:.1f}"])
+
+
+
+def decode_frame_seeds(code, decoder, channel_type, point, frame_seeds, frames_per_batch=64,
+                       log=None, **extra):
+    """seed 목록을 복호한다 (5_DAO RowStack이 uncor를 seed로 재현해 시험할 때 쓴다).
+
+    프레임은 channel.channel_output_from_frame_seeds가 seed마다 default_rng(int(seed))로
+    만들므로 frames_per_batch와 무관하게 같은 결과가 나온다. seed를 frames_per_batch씩
+    잘라 decoder.decoder_main을 부르고 결과를 이어 붙인다. extra는 채널 함수의 추가 인자다
+    (strong_error: scr, ser). 디코딩 모드는 decoder의 LLR matrix에서 온다.
+
+    반환 dict:
+      seeds (int64 배열), success (bool 배열), decode_success_iteration (int 배열, 실패 0),
+      final_err_bits (int 배열, 마지막 처리 iteration의 codeword 잔여 에러 bit 수).
+      log(decoder.LOG_ITEMS 부분집합)를 주면 iteration별 배치 합계 log_active와,
+      "bit_err"이면 log_err_sum, "csw"이면 log_csw_sum을 더한다. 배치마다 돈 iteration 수가
+      다르면 짧은 쪽을 0으로 채워 가장 긴 길이에 맞춘다 (seed 1개면 그 프레임의 값이다).
+    """
+    from . import channel as chan
+    if (isinstance(frames_per_batch, bool) or not isinstance(frames_per_batch, numbers.Integral)
+            or frames_per_batch < 1):
+        raise ValueError(f"frames_per_batch={frames_per_batch!r}: 1 이상의 정수여야 함")
+    log = set() if log is None else set(log)
+    unknown_log_items = log - LOG_ITEMS
+    if unknown_log_items:
+        raise ValueError(
+            f"log 항목 {sorted(unknown_log_items)} 미지원 (허용: {sorted(LOG_ITEMS)})")
+    seeds = np.asarray(list(frame_seeds), np.int64)
+    mode = decoder.llr_matrix.mode
+    per_frame = {"success": [], "decode_success_iteration": [], "final_err_bits": []}
+    log_sums = {"log_active": np.zeros(0, np.int64), "log_err_sum": np.zeros(0, np.int64),
+                "log_csw_sum": np.zeros(0, np.int64)}
+
+    def add_padded(key, values):
+        values = np.asarray(values, np.int64)
+        total = np.zeros(max(len(log_sums[key]), len(values)), np.int64)
+        total[:len(log_sums[key])] += log_sums[key]
+        total[:len(values)] += values
+        log_sums[key] = total
+
+    for start in range(0, len(seeds), frames_per_batch):
+        batch_seeds = seeds[start:start + frames_per_batch]
+        channel_out = chan.channel_output_from_frame_seeds(
+            code, channel_type, point, batch_seeds, mode=mode, **extra)
+        decode_result = decoder.decoder_main(channel_out, log=log or None)
+        for key in per_frame:
+            per_frame[key].append(decode_result[key])
+        if log:
+            add_padded("log_active", decode_result["log_active"])
+            if "bit_err" in log:
+                add_padded("log_err_sum", decode_result["log_err_sum"])
+            if "csw" in log:
+                add_padded("log_csw_sum", decode_result["log_csw_sum"])
+
+    out = {"seeds": seeds}
+    for key, dtype in (("success", bool), ("decode_success_iteration", np.int64),
+                       ("final_err_bits", np.int64)):
+        out[key] = (np.concatenate(per_frame[key]).astype(dtype) if per_frame[key]
+                    else np.zeros(0, dtype))
+    if log:
+        out["log_active"] = log_sums["log_active"]
+        if "bit_err" in log:
+            out["log_err_sum"] = log_sums["log_err_sum"]
+        if "csw" in log:
+            out["log_csw_sum"] = log_sums["log_csw_sum"]
+    return out

@@ -11,6 +11,7 @@
 
 - [ ] seed로 프레임을 재현하는 채널 함수와 seed 목록 복호 함수 추가 (5_DAO의 RowStack 도구가 쓴다)
   - 설계와 판정요청: `5_DAO/_pm/tasks/20261021_uncor별_row누적_탐색/` (5절이 이 저장소의 수정 내용)
+  - [x] `channel_output_from_frame_seeds`(channel.py)와 `decode_frame_seeds`(sim.py) 추가 (2026-10-22 00:00, 검사 9건 통과, 기존 `run_fer_point` 회귀 검사 포함. 기록: `_test/20261021_seed_channel/`. README 채널 절 반영)
   - 후순위 로그 `fail_frame_seed`는 이 기능이 대신한다
 - [ ] 딥 리뷰 후속 처리: 마지막 리뷰(r4, ea88882) 이후 변경분 딥 리뷰 완료 (2026-08-08, Round 1~3)
   - 상세: `_pm/tasks/20260808_review/` (종합보고.md에 사용자 답변 반영 완료)
@@ -36,7 +37,7 @@
   - 구버전은 본체 반영 때 삭제하고, 새 구조(src.run) 기준으로 새로 설계
 - [ ] src 후순위 분석 로그 항목 (2026-08-07 핵심 세트 구현 시 잔류분)
   - bit_err_by_col, flip_count_per_iter, table_row_history, min_sum_stats,
-    fail_frame_positions, fail_frame_seed, channel_stats
+    fail_frame_positions, fail_frame_seed(seed 목록 방식이 대신함, 2026-10-22), channel_stats
   - 상세: `_pm/done/20260807_출력폴더_로그기능/` 후보표 참조
 - [ ] 평가 대상 H-matrix와 LLR 테이블(z_sb=256 대상)을 `Input/`에 넣고 config 기본값 교체
   - 3-bit internal precision 잔여 갭은 소실된 HW TH/CH 값 없이는 추정 튜닝 한계. 값을 받으면 재검증

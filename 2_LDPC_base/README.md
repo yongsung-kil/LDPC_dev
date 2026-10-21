@@ -188,6 +188,12 @@ dict {"mode", "hd", "sd", "cc"}.
 - 2SD/3SD 디코딩: LLR matrix를 2SD/3SD 파일(또는 균일 생성 mode)로 지정하고
   rber 또는 strong_error 채널과 조합한다
 - 난수는 original XOR25 대신 numpy Generator
+- seed 목록 방식: `channel.channel_output_from_frame_seeds(code, type, point, seeds, mode, **extra)`는
+  seed마다 `default_rng(int(seed))`로 프레임 1개를 만들어 배치로 쌓고,
+  `sim.decode_frame_seeds(code, decoder, type, point, seeds, frames_per_batch, log, **extra)`는
+  그 프레임들을 복호해 seed마다 성공 여부와 iteration별 합계를 돌려준다. 같은 seed와 채널 설정이면
+  배치 크기와 무관하게 재현된다. `5_DAO/RowStack/`(uncor 하나씩 row를 쌓아 고치는 탐색기)이
+  uncor를 seed로 재현할 때 쓴다
 
 ## DAO LLR_MATRIX: syndrome-aided decoding
 
