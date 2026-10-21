@@ -1,12 +1,19 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-10-05 13:28:12
+> Claude 마지막 확인: 2026-10-21 18:05:22
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
 ---
 
 ## 작업 목록
+
+- [ ] uncor 하나씩 row를 쌓아 고치는 LLR matrix 탐색기 (새 DAO 방식, Decision 등급)
+  - 상세: `_pm/tasks/20261021_uncor별_row누적_탐색/`
+  - [x] 요구 정리, 설계 문서, 시간 측정 (2026-10-21 18:05. 후보 row 하나의 시험이 2.8초, 측정 기록: `2_LDPC_base/_test/20261021_단일프레임_복호시간/`)
+  - [ ] 판정요청 2건 (새 row의 CSW 문턱 규칙, "n번 반복"의 n의 뜻)
+  - [ ] 구현 계획 작성 → 2_LDPC_base에 seed 채널 함수와 seed 목록 복호 함수 추가 → `5_DAO/RowStack/` 도구 → 단일 프로세스 검사
+  - [ ] 사용자 환경 MPI 실행 확인
 
 - [ ] 집단 통신 타임아웃 메시지에 도착하지 않은 rank를 적고, ECC를 돌린 rank의 result가 없으면 멈춤
   - 상세: `_pm/tasks/20261005_barrier_timeout_and_missing_result/`
