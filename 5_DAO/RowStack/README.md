@@ -46,16 +46,19 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 ## 동작 규칙
 
 - ㉮ row 1의 CSW 문턱은 -1이다 (CSW가 어느 문턱에도 들지 않을 때 쓰는 row). row k(k ≥ 2)의 문턱은 고정된 row들이
-  최소 잔여 에러에 닿은 iteration의 CSW를 8의 배수로 올린 값이고, 앞 row의 문턱보다 8 이상 작다. 그 값을 쓸 수
-  없으면(마지막 iteration이거나 앞 row 문턱 이상) 닿을 수 있는 iteration 가운데 잔여 에러가 가장 작은 것의 CSW를
-  쓰고, 그마저 없으면 그 uncor는 `no reachable CSW threshold`로 실패 처리한다
-- ㉯ 후보 순위: 성공이 먼저(성공 iteration이 빠른 쪽), 실패끼리는 최소 잔여 에러 bit 수, 같으면 그때 CSW, 같으면
+  최소 잔여 에러에 닿은 iteration의 CSW를 8의 배수로 올린 값이고, 앞 row의 문턱보다 8 이상 작으며, 초기 CSW와
+  그 앞 iteration들의 CSW가 모두 그 값보다 커야 한다 (그래야 새 row가 정확히 그 다음 iteration부터 이어받는다).
+  그 값을 쓸 수 없으면 조건을 만족하는 iteration 가운데 잔여 에러가 가장 작은 것의 CSW를 쓰고, 그마저 없으면
+  그 uncor는 `no reachable CSW threshold`로 실패 처리한다
+- ㉯ 새 row를 붙인 최고 후보가 고정된 row들만으로 복호한 결과보다 나쁘면 그 row를 고정하지 않고
+  `no improving candidate`로 실패 처리한다 (고정된 row들만의 매트릭스가 더 낫기 때문)
+- ㉰ 후보 순위: 성공이 먼저(성공 iteration이 빠른 쪽), 실패끼리는 최소 잔여 에러 bit 수, 같으면 그때 CSW, 같으면
   그 iteration이 빠른 쪽. rank 사이 동점은 rank 번호가 작은 쪽
-- ㉰ row를 고정한 직후 변이 블록을 한 번 돈다. rank마다 변이 후보 m개를 시험하고 root가 최고를 골라 지금 row보다
+- ㉱ row를 고정한 직후 변이 블록을 한 번 돈다. rank마다 변이 후보 m개를 시험하고 root가 최고를 골라 지금 row보다
   좋을 때만 교체한다
-- ㉱ 어느 시험에서든 uncor가 고쳐지면 그 자리에서 성공으로 끝낸다. row 상한까지 성공이 없으면 큰 반복 횟수만큼
+- ㉲ 어느 시험에서든 uncor가 고쳐지면 그 자리에서 성공으로 끝낸다. row 상한까지 성공이 없으면 큰 반복 횟수만큼
   row 1부터 다시 시작하고, 다 쓰면 실패로 적는다
-- ㉲ 찾은 매트릭스 먼저 시험: 고친 uncor 수가 많은 매트릭스부터 rank마다 나눠 시험하고, 여럿이 고치면 고친 수가
+- ㉳ 찾은 매트릭스 먼저 시험: 고친 uncor 수가 많은 매트릭스부터 rank마다 나눠 시험하고, 여럿이 고치면 고친 수가
   많은 쪽에 적는다. 실패한 uncor의 매트릭스는 목록에 넣지 않는다
 
 ## 출력 폴더
@@ -65,12 +68,14 @@ Output_RowStack/{YYYYMMDD_HHMMSS}/
 ├── log.txt                      # root 로그
 ├── config_used.py               # 실행에 쓴 RowStack_Config.py 사본
 ├── collected_uncors/            # uncor_seeds.txt (한 줄에 seed 하나), info.json (채널 설정, 모은 수, 돌린 프레임 수), 기존 매트릭스 사본
-├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, takeover_iteration, best_rank,
+├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, source_iteration, takeover_iteration, best_rank,
 │                                #   min_err, min_err_iteration, csw_at_min_err, success, success_iteration, replaced, elapsed_sec, note
 ├── per_uncor/seed_{seed}/LLR_MATRIX_{모드}_uncor_{seed}.txt   # 성공이면 고치는 매트릭스, 실패면 마지막 stage의 매트릭스
 ├── summary.csv                  # seed, result(success/reused/fail), num_rows, final_min_err, matrix_file, elapsed_sec, fail_reason
 └── found_matrices.csv           # matrix_file, origin_seed, num_fixed, fixed_seeds
 ```
+
+어느 rank에서든 예외가 나면 traceback을 찍고 `MPI_Abort`로 모든 rank를 멈춘다 (한 rank만 죽어 나머지가 기다리는 일을 막는다).
 
 seed는 `numpy.random.default_rng(seed)`로 프레임을 다시 만드는 정수다. 같은 seed와 같은 채널 설정이면 같은 프레임이다.
 
