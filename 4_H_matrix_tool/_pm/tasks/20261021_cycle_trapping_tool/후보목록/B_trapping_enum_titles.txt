@@ -1,0 +1,593 @@
+# id | year | fulltext(T=txt available, -=abstract only) | title
+ieee:11329401 | 2026 | T | A Local Re-Decoding Algorithm for LDPC-Coded Modulation With CCDMs
+ieee:11240558 | 2026 | T | The Impact of the Distance Between Cycles on Elementary Trapping Sets
+ieee:11489022 | 2026 | T | In-Memory Bit Error Rate Estimation Using Syndromes of LDPC Codes
+ieee:11004875 | 2025 | T | Performance Analysis of Normalized Min-Sum Decoder for LDPC using non-uniform Quantization
+ieee:11250073 | 2025 | T | Sharp Error-Rate Transitions in Quantum QC-LDPC Codes Under Joint BP Decoding
+ieee:10798570 | 2025 | T | Trapping-Set-Assisted Decoding for Short-Length Low-Density Parity-Check Codes
+ieee:11079633 | 2025 | T | AsLDPC: Improving Decoding Performance With Absorbing Set Characteristic Aware Low-Density Parity-Check Code
+ieee:10793401 | 2025 | T | Rate-Adaptive Protograph-Based MacKay-Neal Codes
+ieee:11154620 | 2025 | T | Effect of redundancy on syndrome-based decoding for QLDPC codes
+ieee:11195685 | 2025 | T | Belief Propagation Decoding for Short Codes on Structured Sparse Parity-Check Matrices
+ieee:11249819 | 2025 | T | Single-Shot Decoding of Biased-Tailored Quantum LDPC Codes
+ieee:10226284 | 2024 | T | Construction of Protograph-Based LDPC Codes With Chordless Short Cycles
+ieee:10826749 | 2024 | T | Constructing Random QC-LDPC Codes Based on the Relationship between 8-Cycles and Trapping Sets
+ieee:10510143 | 2024 | T | Small Elementary Trapping Sets Elimination of Girth-8 QC-LDPC Codes
+ieee:10510058 | 2024 | T | Mixed Integer Linear Programming Method for Energy-Based Model Trapping Sets Enumerating
+ieee:10806922 | 2024 | T | Theoretical Bounds for the Size of Elementary Trapping Sets by Graph Theory Methods
+ieee:10113442 | 2023 | T | Low Error Floor QC-LDPC Codes Construction Using Modified Cole's Trapping Sets Enumerating
+ieee:10052347 | 2023 | T | Multiple Flipping Strategy LISBF for LDPC Codes
+ieee:9999449 | 2023 | T | A Low-Complexity RS-SPC Product Coding Scheme for Optical Systems
+ieee:10032179 | 2023 | T | Trapping and Absorbing Set Enumerators for Irregular Generalized Low-Density Parity-Check Code Ensembles
+ieee:10313486 | 2023 | T | Trapping and Absorbing Set Enumerators for Multi-Edge Type LDPC Code Ensembles
+ieee:10113636 | 2023 | T | The Syndrome Bit Flipping Algorithm for LDPC Codes
+ieee:10273526 | 2023 | T | Learning to Decode Trapping Sets in QLDPC Codes
+ieee:10273573 | 2023 | T | Analysis of Syndrome-Based Iterative Decoder Failure of QLDPC Codes
+ieee:10330177 | 2023 | T | Trapping and Absorbing Set Enumerators for Protograph-Based Generalized Low-Density Parity-Check Code Ensembles
+ieee:9656848 | 2022 | T | Stopping-Set Assisted Reinforced Belief Propagation for Decoding Short LDPC Codes
+ieee:9810937 | 2022 | T | On the Construction of QC-LDPC Codes Based on Integer Sequence With Low Error Floor
+ieee:9817675 | 2022 | T | Protograph-based LDPC codes with chordless short cycles and large minimum distance
+ieee:9942354 | 2022 | T | Decoding Short LDPC Codes via BP-RNN Diversity and Reliability-Based Post-Processing
+ieee:9841605 | 2022 | T | Overcoming Data Availability Attacks in Blockchain Systems: Short Code-Length LDPC Code Design for Coded Merkle Tree
+ieee:9899448 | 2022 | T | Fully Absorbing Set Enumerators for Protograph-Based LDPC Code Ensembles
+ieee:9913495 | 2022 | T | A Semi Linear State Space Model for Error Floor Estimation of LDPC Codes Over the AWGN Channel
+ieee:9729722 | 2022 | T | Deep-Learning for Breaking the Trapping Sets in Low-Density Parity-Check Codes
+ieee:9844740 | 2022 | T | Adaptive Gradient Descent Bit-Flipping Diversity Decoding
+ieee:9656896 | 2022 | T | Error Floor Analysis of LDPC Column Layered Decoders
+ieee:9663353 | 2022 | T | QC-LDPC Codes With Large Column Weight and Free of Small Size ETSs
+ieee:9834504 | 2022 | T | A Semi Linear State Space Model for Error Floor Estimation of LDPC codes over the AWGN Channel
+ieee:9834902 | 2022 | T | Graph-based codes for hierarchical recovery
+ieee:9211414 | 2021 | T | Construction of Irregular Protograph-Based QC-LDPC Codes With Low Error Floor
+ieee:9613326 | 2021 | T | Lowering the Error Floor of Quantized NR LDPC Decoders by a Post-Processing on Trapping Sets
+ieee:9492129 | 2021 | T | Error Floor Analysis of LDPC Row Layered Decoders
+ieee:9349511 | 2021 | T | Error Floor Estimation of LDPC Coded Modulation Systems Using Importance Sampling
+ieee:9569696 | 2021 | T | Search for Good Irregular Low-Density Parity-Check Codes Via Graph Spectrum
+ieee:9361568 | 2021 | T | Nested Array-Based Spatially Coupled LDPC Codes
+ieee:9398939 | 2021 | T | Spatially Coupled Generalized LDPC Codes: Asymptotic Analysis and Finite Length Scaling
+ieee:9378578 | 2021 | T | ADMM Check Node Penalized Decoders for LDPC Codes
+ieee:9186682 | 2021 | T | Error Floor Estimation of QC-LDPC Coded Modulation With Importance Sampling
+ieee:9594253 | 2021 | T | FAID Diversity via Neural Networks
+ieee:9359793 | 2021 | T | Construction of Time Invariant Spatially Coupled LDPC Codes Free of Small Trapping Sets
+ieee:9457630 | 2021 | T | Concentrated Stopping Set Design for Coded Merkle Tree: Improving Security Against Data Availability Attacks in Blockchain Systems
+ieee:9516718 | 2021 | T | Counter Random Gradient Descent Bit-Flipping Decoder for LDPC Codes
+ieee:8897699 | 2020 | T | On the Construction of Regular QC-LDPC Codes With Low Error Floor
+ieee:8999573 | 2020 | T | Layered Construction of Quasi-Cyclic LDPC Codes
+ieee:8901173 | 2020 | T | Construction of QC LDPC Codes With Low Error Floor by Efficient Systematic Search and Elimination of Trapping Sets
+ieee:8970554 | 2020 | T | A Threshold-Based Min-Sum Algorithm to Lower the Error Floors of Quantized LDPC Decoders
+ieee:9005250 | 2020 | T | Error Floor Estimation of LDPC Decoders — A Code Independent Approach to Measuring the Harmfulness of Trapping Sets
+ieee:8897669 | 2020 | T | Performance Bounds and Estimates for Quantized LDPC Decoders
+ieee:9094192 | 2020 | T | Multi-Round Belief Propagation Decoding With Impulsive Perturbation for Short LDPC Codes
+ieee:8943947 | 2020 | T | Edge-Coloring Technique to Analyze Elementary Trapping Sets of Spatially-Coupled LDPC Convolutional Codes
+ieee:8911359 | 2020 | T | Spatially Coupled LDPC Codes With Small Constraint Length and Low Error Floor
+ieee:9366194 | 2020 | T | The 5G New Radio Code: Elementary Absorbing Sets and Error Floor Performance
+ieee:9072180 | 2020 | T | A Sub-Graph Expansion-Contraction Method for Error Floor Computation
+ieee:9174483 | 2020 | T | Message Flow Analysis in Practical LDPC Decoders for the Interpretation of Absorbing Set Thresholds
+ieee:9174513 | 2020 | T | Analysis of Absorbing Sets using Cosets and Syndromes
+ieee:8756119 | 2019 | T | Optimization of QC-LDPC Codes by Edge Exchange Method Based on ACE
+ieee:9136635 | 2019 | T | Lowering the error floor of LDPC codes based on bit-rectification strategy
+ieee:8736998 | 2019 | T | Asymptotic Average Multiplicity of Structures Within Different Categories of Trapping Sets, Absorbing Sets, and Stopping Sets in Random Regular and Irregular LDPC Code Ensembles
+ieee:8525278 | 2019 | T | From Cages to Trapping Sets and Codewords: A Technique to Derive Tight Upper Bounds on the Minimum Size of Trapping Sets and Minimum Distance of LDPC Codes
+ieee:8434325 | 2019 | T | Characterization and Efficient Search of Non-Elementary Trapping Sets of LDPC Codes With Applications to Stopping Sets
+ieee:8667301 | 2019 | T | Hardness Results on Finding Leafless Elementary Trapping Sets and Elementary Absorbing Sets of LDPC Codes
+ieee:8989047 | 2019 | T | Small stopping sets in projective low-density parity-check codes
+ieee:8702143 | 2019 | T | A New Probabilistic Gradient Descent Bit Flipping Decoder for LDPC Codes
+ieee:8792126 | 2019 | T | Construction of Girth-8 QC-LDPC Codes Free of Small Trapping Sets
+ieee:8752015 | 2019 | T | Thresholds of Absorbing Sets Under Scaled Min-Sum LDPC Decoding
+ieee:8760172 | 2019 | T | Importance Sampling Based Software Kit for LLR BP Decoding Simulation
+ieee:9013118 | 2019 | T | Efficient Search and Elimination of Harmful Objects for the Optimization of QC-SC-LDPC Codes
+ieee:8693677 | 2019 | T | An Improved Gradient Descent Bit-Flipping Decoder for LDPC Codes
+ieee:8849308 | 2019 | T | A Modified Min-Sum Algorithm for Quantized LDPC Decoders
+ieee:8989313 | 2019 | T | Optimization of Nested Array-based LDPC Codes Via Spatial Coupling
+ieee:8279531 | 2018 | T | Characterization of Elementary Trapping Sets in Irregular LDPC Codes and the Corresponding Efficient Exhaustive Search Algorithms
+ieee:7874123 | 2018 | T | On the Construction of LDPC Codes Free of Small Trapping Sets by Controlling Cycles
+ieee:8415746 | 2018 | T | On the Stopping Distance of SA-LDPC Codes by Transversal Designs
+ieee:8290933 | 2018 | T | Analytical Lower Bounds on the Size of Elementary Trapping Sets of Variable-Regular LDPC Codes With Any Girth and Irregular Ones With Girth 8
+ieee:8625327 | 2018 | T | Spatially Coupled Generalized LDPC Codes: Introduction and Overview
+ieee:8664369 | 2018 | T | Error Floor Estimation of Spatially-Coupled Irregular LDPC Code Ensembles
+ieee:8625374 | 2018 | T | Computing the Asymptotic Expected Multiplicity of Elementary Trapping Sets (ETSs) in Random LDPC Code Ensembles
+ieee:8437465 | 2018 | T | From Cages to Trapping Sets: A New Technique to Derive Tight Upper Bounds on the Minimum Size of Trapping Sets and Minimum Distance of LDPC Codes
+ieee:8437485 | 2018 | T | Finding Leafless Elementary Trapping Sets and Elementary Absorbing Sets of LDPC Codes is Hard
+ieee:8625273 | 2018 | T | Computing the Asymptotic Expected Multiplicity of Leafless Elementary Trapping Sets (LETSs) in Random Irregular LDPC Code Ensembles
+ieee:8437710 | 2018 | T | Performance Bounds for Quantized Spatially Coupled LDPC Decoders Based on Absorbing Sets
+ieee:8437769 | 2018 | T | Characterization and Efficient Search of Non-Elementary Trapping Sets of LDPC Codes with Applications to Stopping Sets
+ieee:8422965 | 2018 | T | Trapping Set Analysis of Horizontal Layered Decoder
+ieee:8437701 | 2018 | T | Elimination of Cyclic Stopping Sets for Enhanced Decoding of LDPC Codes
+ieee:8437837 | 2018 | T | Asymptotic Average Number of Different Categories of Trapping Sets, Absorbing Sets and Stopping Sets in Random LDPC Code Ensembles
+ieee:8364571 | 2018 | T | Classification-Based Algorithm for Bit-Flipping Decoding of GLDPC Codes Over AWGN Channels
+ieee:8359616 | 2017 | T | An efficient post processing scheme to lower the error floor of LDPC decoders
+ieee:7740920 | 2017 | T | Improved Penalty Functions of ADMM Penalized Decoder for LDPC Codes
+ieee:7935340 | 2017 | T | Lower Bounds on the Size of Smallest Elementary and Non-Elementary Trapping Sets in Variable-Regular LDPC Codes
+ieee:8270513 | 2017 | T | Concatenated finite geometry and finite field LDPC codes
+ieee:8254151 | 2017 | T | An Upper Bounding Technique on the Error Floor Performance of LDPC Codes
+ieee:8277936 | 2017 | T | Lowering the error floors of low-density parity-check codes with additional check nodes
+ieee:7959166 | 2017 | T | Two-Side State-Aided Bit-Flipping Decoding of Generalized Low Density Parity Check Codes
+ieee:7934127 | 2017 | T | Thresholds of Absorbing Sets in Low-Density Parity-Check Codes
+ieee:7932177 | 2017 | T | Selection of Parity Check Equations For the Iterative Message-Passing Detection of M-Sequences
+ieee:8277929 | 2017 | T | On practical LDPC code construction for NAND flash applications
+ieee:8006717 | 2017 | T | Characterization and efficient exhaustive search algorithm for elementary trapping sets of irregular LDPC codes
+ieee:8277973 | 2017 | T | Analysis of practical LDPC decoders in tanner graphs with absorbing sets
+ieee:8006551 | 2017 | T | Time-invariant LDPC convolutional codes
+ieee:8007068 | 2017 | T | Edge spreading design of high rate array-based SC-LDPC codes
+ieee:8262805 | 2017 | T | Lower bounds for quantized LDPC min-sum decoders based on absorbing sets
+ieee:8249332 | 2017 | T | Hard-decision decoding of LDPC codes under timing errors: Overview and new results
+ieee:8292048 | 2017 | T | Efficient FPGA implementation of probabilistic gallager B LDPC decoder
+ieee:8262802 | 2017 | T | A generalized algebraic approach to optimizing SC-LDPC codes
+ieee:8262806 | 2017 | T | Stopping set elimination for LDPC codes
+ieee:7593102 | 2016 | T | Improved minimum weight, girth, and ACE distributions in ensembles of short block length irregular LDPC codes constructed using PEG and cyclic PEG (CPEG) algorithms
+ieee:7593100 | 2016 | T | A linear model for the iterative decoding of random LDPC codes in the high SNR region
+ieee:7355344 | 2016 | T | New Classes of Partial Geometries and Their Associated LDPC Codes
+ieee:7456284 | 2016 | T | The ADMM Penalized Decoder for LDPC Codes
+ieee:7575635 | 2016 | T | New Characterization and Efficient Exhaustive Search Algorithm for Leafless Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:7593069 | 2016 | T | Construction of high-rate QC-LDPC codes with multi-weight circulants
+ieee:7320999 | 2016 | T | Breaking the Trapping Sets in LDPC Codes: Check Node Removal and Collaborative Decoding
+ieee:7541757 | 2016 | T | Performance bounds for quantized LDPC decoders based on absorbing sets
+ieee:7593068 | 2016 | T | Wrap-around sliding-window near-ML decoding of binary LDPC codes over the BEC
+ieee:7593098 | 2016 | T | Spatially Coupled LDPC codes affected by a single random burst of erasures
+ieee:7506265 | 2016 | T | Exhaustive Enumeration of Elementary Trapping Sets of an Arbitrary Tanner Graph
+ieee:7489038 | 2016 | T | Design of LDPC Codes Based on Multipath EMD Strategies for Progressive Edge Growth
+ieee:7529198 | 2016 | T | Optimized Design of Finite-Length Separable Circulant-Based Spatially-Coupled Codes: An Absorbing Set-Based Analysis
+ieee:7811566 | 2016 | T | Design and FPGA verification of a quasi-cyclic LDPC code for optical communication systems
+ieee:7818771 | 2016 | T | Error floor reduction for LDPC codes using self-correction technique
+ieee:7511551 | 2016 | T | An efficient exhaustive search algorithm for elementary trapping sets of variable-regular LDPC codes
+ieee:7541754 | 2016 | T | Minimal characterization and provably efficient exhaustive search algorithm for elementary trapping sets of variable-regular LDPC codes
+ieee:7509624 | 2016 | T | Error Errore Eicitur: A Stochastic Resonance Paradigm for Reliable Storage of Information on Unreliable Media
+ieee:7531650 | 2016 | T | Research on LDPC code decoding algorithm based on scheduling strategy
+ieee:7840415 | 2016 | T | Avoiding trapping sets in SC-LDPC codes under windowed decoding
+ieee:7541852 | 2016 | T | Integrated parallel interleaved concatenation for lowering error floors of LDPC codes
+ieee:7541598 | 2016 | T | Probabilistic bounds on the trapping redundancy of linear codes
+ieee:7897085 | 2016 | T | REAL: A retention error aware LDPC decoding scheme to improve NAND flash read performance
+ieee:7888184 | 2016 | T | Message-aggregation enhanced iterative hard-decision decoders
+ieee:7541562 | 2016 | T | Performance evaluation of faulty iterative decoders using absorbing Markov chains
+ieee:7593125 | 2016 | T | Noise-aided gradient descent bit-flipping decoders approaching maximum likelihood decoding
+ieee:7006675 | 2015 | T | On Characterization and Efficient Exhaustive Search of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:7421418 | 2015 | T | Trapping sets in stochastic LDPC decoders
+ieee:7177241 | 2015 | T | Lowering error floors by removing dominant trapping sets of low-density parity-check codes for broadcasting systems
+ieee:7279944 | 2015 | T | Design and Implementation of Low Bit Error Rate of LDPC Decoder
+ieee:7072507 | 2015 | T | Impact of Redundant Checks on the LP Decoding Thresholds of LDPC Codes
+ieee:7282415 | 2015 | T | Optimized array-based spatially-coupled LDPC Codes: An absorbing set approach
+ieee:7073646 | 2015 | T | Stopping Set Elimination by Parity-Check Matrix Extension via Integer Linear Programming
+ieee:7120101 | 2015 | T | On Fault Tolerance of the Gallager B Decoder Under Data-Dependent Gate Failures
+ieee:7282621 | 2015 | T | A PEG-like LDPC code design avoiding short trapping sets
+ieee:7178520 | 2015 | T | Enhancing LDPC code performance using pilot bits
+ieee:7282939 | 2015 | T | ADMM decoding on trapping sets
+ieee:6932472 | 2014 | T | On the Construction of Low Error Floor LDPC Codes on Rectangular Lattices
+ieee:6992175 | 2014 | T | Lower error floor of LDPC codes based on trapping sets elimination
+ieee:6804933 | 2014 | T | Enhanced Precision Through Multiple Reads for LDPC Decoding in Flash Memories
+ieee:6847681 | 2014 | T | On Characterization of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:6835193 | 2014 | T | Fast and Accurate Error Floor Estimation of Quantized Iterative Decoders for Variable-Regular LDPC Codes
+ieee:6874924 | 2014 | T | An application of generalized belief propagation: splitting trapping sets in LDPC codes
+ieee:6928457 | 2014 | T | Error Floor Approximation for LDPC Codes in the AWGN Channel
+ieee:6853403 | 2014 | T | On the Minimum/Stopping Distance of Array Low-Density Parity-Check Codes
+ieee:6830327 | 2014 | T | Adaptive linear programming for decoding LDPC codes
+ieee:6742731 | 2014 | T | Reduced-Complexity Min-Sum Algorithm for Decoding LDPC Codes With Low Error-Floor
+ieee:6685976 | 2014 | T | Quantized Iterative Message Passing Decoders with Low Error Floor for LDPC Codes
+ieee:6766441 | 2014 | T | Generalized Belief Propagation to break trapping sets in LDPC codes
+ieee:6880827 | 2014 | T | LDPC Decoding Scheduling for Faster Convergence and Lower Error Floor
+ieee:6874960 | 2014 | T | Absorbing set characterization of array-based spatially coupled LDPC codes
+ieee:6804215 | 2014 | T | Check-hybrid GLDPC codes without small trapping sets
+ieee:6750416 | 2014 | T | Two-Bit Bit Flipping Algorithms for LDPC Codes and Collective Error Correction
+ieee:6811346 | 2014 | T | An improved puncturing method for rate-compatible LDPC codes
+ieee:6983914 | 2014 | T | Failure analysis of two-bit flipping decoding algorithms
+ieee:6955086 | 2014 | T | On characterization of elementary trapping sets of variable-regular LDPC codes
+ieee:7050116 | 2014 | T | A technique for the identification of trapping sets in LDPC codes
+ieee:6874923 | 2014 | T | Check-hybrid GLDPC codes: Systematic elimination of trapping sets by super checks
+ieee:7054299 | 2014 | T | Work in progress: A new algorithm to improve the decoding success probability of Raptor code
+ieee:6955082 | 2014 | T | Error floors and finite geometries
+ieee:6874922 | 2014 | T | Instanton search algorithm for the ADMM penalized decoder
+ieee:6868233 | 2014 | T | Fault-Tolerant Probabilistic Gradient-Descent Bit Flipping Decoder
+ieee:6262475 | 2013 | T | Minimum Distance and Trapping Set Analysis of Protograph-Based LDPC Convolutional Codes
+ieee:6656081 | 2013 | T | Lowering Error Floors of Systematic LDPC Codes Using Data Shortening
+ieee:10284018 | 2013 | T | A Belief Propagation Algorithm with Set-Breaking to Lower Error-Floors of Low-Density Parity-Check Codes
+ieee:6487954 | 2013 | T | An improved technique to find the trapping sets of the irregular LDPC codes
+ieee:6510023 | 2013 | T | Low-Density Parity-Check Codes from Transversal Designs with Improved Stopping Set Distributions
+ieee:6387307 | 2013 | T | The Cycle Consistency Matrix Approach to Absorbing Sets in Separable Circulant-Based LDPC Codes
+ieee:6588899 | 2013 | T | LDPC Codes on Partial Geometries: Construction, Trapping Set Structure, and Puncturing
+ieee:6600720 | 2013 | T | Finite Alphabet Iterative Decoders—Part II: Towards Guaranteed Error Correction of LDPC Codes via Iterative Decoder Diversity
+ieee:6502175 | 2013 | T | Evaluation of the Low Error-Rate Performance of LDPC Codes over Rayleigh Fading Channels Using Importance Sampling
+ieee:6502981 | 2013 | T | An efficient exhaustive low-weight codeword search for structured LDPC codes
+ieee:6567866 | 2013 | T | Controlling the Error Floor in LDPC Decoding
+ieee:6648352 | 2013 | T | Robust Rate-Compatible Punctured LDPC Convolutional Codes
+ieee:6384614 | 2013 | T | Asymptotic Distribution of Absorbing Sets and Fully Absorbing Sets for Regular Sparse Code Ensembles
+ieee:6620776 | 2013 | T | On the relevance of graph covers and zeta functions for the analysis of SPA decoding of cycle codes
+ieee:6600695 | 2013 | T | Finite Alphabet Iterative Decoders—Part I: Decoding Beyond Belief Propagation on the Binary Symmetric Channel
+ieee:6645826 | 2013 | T | An modified beyond belief propagation algorithm over AWGN channel
+ieee:6557539 | 2013 | T | Graphical Characterizations of Linear Programming Pseudocodewords for Cycle Codes
+ieee:6502922 | 2013 | T | Trapping set structure of LDPC codes on finite geometries
+ieee:6502951 | 2013 | T | Trapping set structure of LDPC codes on finite geometries
+ieee:6135499 | 2012 | T | Cyclic and Quasi-Cyclic LDPC Codes on Constrained Parity-Check Matrices and Their Trapping Sets
+ieee:6211373 | 2012 | T | A PEG Construction of Finite-Length LDPC Codes with Low Error Floor
+ieee:6196149 | 2012 | T | Trapping Set Error Correction through Adaptive Informed Dynamic Scheduling Decoding of LDPC Codes
+ieee:6166933 | 2012 | T | On the Smallest Absorbing Sets of LDPC Codes From Finite Planes
+ieee:6259854 | 2012 | T | Efficient Algorithm for Finding Dominant Trapping Sets of LDPC Codes
+ieee:6122000 | 2012 | T | Addendum to “An Efficient Algorithm to Find All Small-Size Stopping Sets of Low-Density Parity-Check Matrices”
+ieee:6363723 | 2012 | T | Design of bilayer QC-LDPC codes for decode-and forward based cooperative relaying communication
+ieee:6338417 | 2012 | T | Effects of belief propagation computational precision on LDPC codes error floors
+ieee:6542911 | 2012 | T | In praise of nontrivial redundant rows of algebraic LDPC codes
+ieee:6284048 | 2012 | T | A two stage selective averaging LDPC decoding
+ieee:6302118 | 2012 | T | A Deviation-Based Conditional Upper Bound on the Error Floor Performance for Min-Sum Decoding of Short LDPC Codes
+ieee:6176774 | 2012 | T | Additional check node to improve the performance of LDPC codes in the error floor region
+ieee:6218777 | 2012 | T | Adaptive Cut Generation Algorithm for Improved Linear Programming Decoding of Binary Linear Codes
+ieee:6192273 | 2012 | T | Finding the Exhaustive List of Small Fully Absorbing Sets and Designing the Corresponding Low Error-Floor Decoder
+ieee:6169192 | 2012 | T | On the Construction of Structured LDPC Codes Free of Small Trapping Sets
+ieee:6284130 | 2012 | T | Trapping set structure of finite geometry LDPC codes
+ieee:6181800 | 2012 | T | A transform approach for constructing quasi-cyclic Euclidean geometry LDPC codes
+ieee:6387166 | 2012 | T | On the combinatorial substructures of LDPC codes causing error floors in the AWGN channel
+ieee:6325224 | 2012 | T | Absorbing sets and cycles
+ieee:6477656 | 2012 | T | A new fountain decoder escaping almost all absorbing sets
+ieee:6221348 | 2012 | T | Absorbing sets of Fountain codes over noisy channels
+ieee:6489224 | 2012 | T | Quantization, absorbing regions and practical message passing decoders
+ieee:6406159 | 2012 | T | A novel region graph construction based on trapping sets for the Generalized Belief Propagation
+ieee:6284050 | 2012 | T | Enhancing the error correction of finite alphabet iterative decoders via adaptive decimation
+ieee:6483408 | 2012 | T | The l1 penalized decoder and its reweighted LP
+ieee:6325182 | 2012 | T | A puncturing algorithm for rate-compatible LDPC convolutional codes
+ieee:6404695 | 2012 | T | Suppressing pseudocodewords by penalizing the objective of LP decoding
+ieee:6284051 | 2012 | T | Selecting two-bit bit flipping algorithms for collective error correction
+ieee:6363940 | 2012 | T | On the error-prone substructures for the binary-input ternary-output channel and its corresponding exhaustive search algorithm
+ieee:6204555 | 2012 | T | An integer programming based trapping set search technique
+ieee:6181824 | 2012 | T | Finite alphabet iterative decoders approaching maximum likelihood performance on the Binary Symmetric Channel
+ieee:6077622 | 2011 | T | Design of good QC-LDPC codes without small girth in the p-plane
+ieee:5682215 | 2011 | T | Tree-Structured Expectation Propagation for Decoding Finite-Length LDPC Codes
+ieee:5695100 | 2011 | T | Enumerators for Protograph-Based Ensembles of LDPC and Generalized LDPC Codes
+ieee:5741762 | 2011 | T | Improved Stopping Set Elimination by Parity-Check Matrix Extension of LDPC Codes
+ieee:5954141 | 2011 | T | Hardware Implementation of a Backtracking-Based Reconfigurable Decoder for Lowering the Error Floor of Quasi-Cyclic LDPC Codes
+ieee:5993490 | 2011 | T | Joint Decoding of LDPC Codes and Finite-State Channels Via Linear-Programming
+ieee:5695135 | 2011 | T | Divide and Concur and Difference-Map BP Decoders for LDPC Codes
+ieee:5743618 | 2011 | T | LDPC absorbing sets, the null space of the cycle consistency matrix, and Tanner's constructions
+ieee:5730557 | 2011 | T | Lowering the Error Floor of LDPC Codes Using Cyclic Liftings
+ieee:5605921 | 2011 | T | An Iterative Decoding Algorithm with Backtracking to Lower the Error-Floors of LDPC Codes
+ieee:5895058 | 2011 | T | An Efficient Instanton Search Algorithm for LP Decoding of LDPC Codes Over the BSC
+ieee:5743566 | 2011 | T | AWGN channel analysis of terminated LDPC convolutional codes
+ieee:6033699 | 2011 | T | An efficient algorithm for finding dominant trapping sets of irregular LDPC codes
+ieee:6089476 | 2011 | T | On the selection of finite alphabet iterative decoders for LDPC codes on the BSC
+ieee:5695120 | 2011 | T | Lifting the Fundamental Cone and Enumerating the Pseudocodewords of a Parity-Check Code
+ieee:6190087 | 2011 | T | Achieving flexibility in LDPC code design by absorbing set elimination
+ieee:6134315 | 2011 | T | Enhancing Binary Images of Non-Binary LDPC Codes
+ieee:5962723 | 2011 | T | Controlling LDPC Absorbing Sets via the Null Space of the Cycle Consistency Matrix
+ieee:6120280 | 2011 | T | Causes and dynamics of LDPC error floors on AWGN channels
+ieee:6133832 | 2011 | T | Efficient Algorithms to Find All Small Error-Prone Substructures in LDPC Codes
+ieee:6034068 | 2011 | T | Absorbing set spectrum approach for practical code design
+ieee:6120564 | 2011 | T | Erasing Bit Nodes on the Bipartite Graph for Enhanced Performance of LDPC Codes
+ieee:5963620 | 2011 | T | Effective Informed Dynamic Scheduling for Belief Propagation Decoding of LDPC Codes
+ieee:6033824 | 2011 | T | Polytope of correct (linear programming) decoding and low-weight pseudo-codewords
+ieee:5962724 | 2011 | T | Comparison of the Detrimental Effects of Trapping Sets in LDPC Codes
+ieee:5872141 | 2011 | T | Combinatorial Properties as Predictors for the Performance of the Sum-Product Algorithm
+ieee:6120169 | 2011 | T | Error floor approximation for LDPC codes in the AWGN channel
+ieee:6033698 | 2011 | T | Trapping sets of structured LDPC codes
+ieee:5541895 | 2010 | T | Construction of quasi cyclic LDPC with ACE constraint
+ieee:5437420 | 2010 | T | On Trapping Sets and Guaranteed Error Correction Capability of LDPC Codes and GLDPC Codes
+ieee:5545626 | 2010 | T | On the Number of Minimum Stopping Sets and Minimum Codewords of Array LDPC Codes
+ieee:5545624 | 2010 | T | Adaptive Mixed Scheduling for Correcting Errors in Trapping Sets of LDPC Codes
+ieee:5541918 | 2010 | T | Decoding low-density parity-check codes with error-floor free over the AWGN channel
+ieee:6073063 | 2010 | T | Ruling out small stopping sets and small girth in Tanner graph of QC-LDPC code
+ieee:5361490 | 2010 | T | Linear Time Encoding of LDPC Codes
+ieee:5361488 | 2010 | T | Analysis of Absorbing Sets and Fully Absorbing Sets of Array-Based LDPC Codes
+ieee:5613902 | 2010 | T | An efficient algorithm for finding dominant trapping sets of LDPC codes
+ieee:5447125 | 2010 | T | Fast BER estimation of LDPC codes
+ieee:5567183 | 2010 | T | Constructing Short-Length Irregular LDPC Codes with Low Error Floor
+ieee:5466541 | 2010 | T | Error Correction Capability of Column-Weight-Three LDPC Codes Under the Gallager A Algorithm—Part II
+ieee:5654357 | 2010 | T | Detailed evaluation of error floors of LDPC codes using the probabilistic algorithm
+ieee:5513605 | 2010 | T | Lowering the error floor of LDPC codes using cyclic liftings
+ieee:5454137 | 2010 | T | On absorbing sets of structured sparse graph codes
+ieee:5485006 | 2010 | T | On the Dynamics of the Error Floor Behavior in (Regular) LDPC Codes
+ieee:5592767 | 2010 | T | Structured LDPC codes from permutation matrices free of small trapping sets
+ieee:5513614 | 2010 | T | On the joint decoding of LDPC codes and finite-state channels via linear programming
+ieee:5680460 | 2010 | T | Analysis of error-prone patterns for LDPC codes under belief propagation decoding
+ieee:5467506 | 2010 | T | Error Floor Estimation of Long LDPC Codes on Magnetic Recording Channels
+ieee:5613812 | 2010 | T | Characterization of small trapping sets in LDPC codes from Steiner triple systems
+ieee:5502377 | 2010 | T | Spectral Shape of Check-Hybrid GLDPC Codes
+ieee:5706904 | 2010 | T | Short column-weight-three LDPC codes without small trapping sets
+ieee:5608383 | 2010 | T | Lower the error floor of LDPC with fixed error pattern
+ieee:5613896 | 2010 | T | Towards improved LDPC code designs using absorbing set spectrum properties
+ieee:5613852 | 2010 | T | Connections between problematic trapping sets and deviations on the computation trees of LDPC codes
+ieee:5402492 | 2010 | T | Low-Floor Detection/Decoding of LDPC-Coded Partial Response Channels
+ieee:5513611 | 2010 | T | Exhaustive search for small fully absorbing sets and the corresponding low error-floor decoder
+ieee:5513620 | 2010 | T | Multilevel decoders surpassing belief propagation on the binary symmetric channel
+ieee:5454095 | 2010 | T | Trapping set enumerators for specific LDPC codes
+ieee:5513360 | 2010 | T | Worst configurations (instantons) for Compressed Sensing over reals: A channel coding approach
+ieee:5613861 | 2010 | T | Finite alphabet iterative decoding (FAID) of the (155,64,20) Tanner code
+ieee:5513623 | 2010 | T | On minimal pseudo-codewords
+ieee:4957655 | 2009 | T | Pseudocodeword Performance Analysis for LDPC Convolutional Codes
+ieee:5174519 | 2009 | T | On asymptotic ensemble weight enumerators of LDPC-like codes
+ieee:5257218 | 2009 | T | Highly Parallel FPGA Emulation for LDPC Error Floor Characterization in Perpendicular Magnetic Recording Channel
+ieee:5090428 | 2009 | T | Eliminating small stopping sets in irregular low-density parity-check codes
+ieee:4839030 | 2009 | T | Reversible Low-Density Parity-Check Codes
+ieee:5208476 | 2009 | T | An Efficient Algorithm to Find All Small-Size Stopping Sets of Low-Density Parity-Check Matrices
+ieee:5075878 | 2009 | T | On the Pairwise Error Probability of Linear Programming Decoding on Independent Rayleigh Flat-Fading Channels
+ieee:5089505 | 2009 | T | Low-floor decoders for LDPC codes
+ieee:5336848 | 2009 | T | Design of LDPC decoders for improved low error rate performance: quantization and algorithm choices
+ieee:5174520 | 2009 | T | Predicting error floors of structured LDPC codes: deterministic bounds and estimates
+ieee:5351244 | 2009 | T | On the dynamics of the error floor behavior in regular LDPC codes
+ieee:4839029 | 2009 | T | Finding All Small Error-Prone Substructures in LDPC Codes
+ieee:5285248 | 2009 | T | Seed graph expansion for construction of structured LDPC codes
+ieee:5205954 | 2009 | T | On the probabilistic computation of the stopping redundancy of LDPC codes
+ieee:4939226 | 2009 | T | Construction of Near-Optimum Burst Erasure Correcting Low-Density Parity-Check Codes
+ieee:4729779 | 2009 | T | The Trapping Redundancy of Linear Block Codes
+ieee:4799040 | 2009 | T | Burst erasure correcting LDPC codes
+ieee:5199011 | 2009 | T | Evaluation of the Extremely Low Block Error Rate of Irregular LDPC Codes
+ieee:5205687 | 2009 | T | Trapping set analysis of protograph-based LDPC convolutional codes
+ieee:5044956 | 2009 | T | Asymptotic trapping set analysis of regular protograph-based LDPC convolutional code ensembles
+ieee:5165375 | 2009 | T | Low BER performance estimation of LDPC codes via application of importance sampling to trapping sets
+ieee:5174515 | 2009 | T | Instanton-based techniques for analysis and reduction of error floors of LDPC codes
+ieee:5394917 | 2009 | T | FPGA-based low-complexity high-throughput tri-mode decoder for quasi-cyclic LDPC codes
+ieee:5205739 | 2009 | T | Analysis of error floors of LDPC codes under LP decoding over the BSC
+ieee:5201020 | 2009 | T | Transactions papers evaluation and design of irregular LDPC codes using ACE spectrum
+ieee:5044939 | 2009 | T | On trapping sets for repeat accumulate accumulate codes
+ieee:5397616 | 2009 | T | Differentiating trapping sets with the same label [w; u]
+ieee:5345453 | 2009 | T | An efficient pseudo-codeword search algorithm for Belief Propagation decoding of LDPC codes
+ieee:5394825 | 2009 | T | Trapping set ontology
+ieee:4670752 | 2008 | T | A novel algorithm of constructing LDPC codes with graph theory
+ieee:4697481 | 2008 | T | A new algorithm of counting the number of small stopping sets and girth in QC-LDPC Codes
+ieee:4475359 | 2008 | T | An Efficient Pseudocodeword Search Algorithm for Linear Programming Decoding of LDPC Codes
+ieee:4418506 | 2008 | T | Minimum Pseudoweight and Minimum Pseudocodewords of LDPC Codes
+ieee:6414772 | 2008 | T | Construction of good Quasi-Cyclic LDPC codes based on the row vectors of generator matrix
+ieee:4658671 | 2008 | T | Pinning techniques for low-floor detection/decoding of LDPC-Coded partial response channels
+ieee:4567579 | 2008 | T | Eliminating trapping sets in low-density parity-check codes by using Tanner graph covers
+ieee:4455763 | 2008 | T | Results on Parity-Check Matrices With Optimal Stopping And/Or Dead-End Set Enumerators
+ieee:4895509 | 2008 | T | Approximate examination of trapping sets of LDPC codes using the probabilistic algorithm
+ieee:4594995 | 2008 | T | On the probabilistic computation algorithm for the minimum-size stopping sets of LDPC codes
+ieee:4578623 | 2008 | T | A probabilistic algorithm for finding the minimum-size stopping sets of LDPC codes
+ieee:4746396 | 2008 | T | Construction of short-length LDPC codes with low error floor
+ieee:4697990 | 2008 | T | A Two-Stage Iterative Decoding of LDPC Codes for Lowering Error Floors
+ieee:4658725 | 2008 | T | Average min-sum decoding of LDPC codes
+ieee:4697993 | 2008 | T | Clustering of Cycles and Construction of LDPC Codes
+ieee:4601062 | 2008 | T | LDPC decoder strategies for achieving low error floors
+ieee:4698365 | 2008 | T | Lowering LDPC Error Floors by Postprocessing
+ieee:4697991 | 2008 | T | Fast Identification of Error-Prone Patterns for LDPC Codes under Message Passing Decoding
+ieee:4753229 | 2008 | T | Error floor analysis for an ensemble of easily implementable irregular (2048, 1024) LDPC codes
+ieee:4595023 | 2008 | T | On the guaranteed error correction capability of LDPC codes
+ieee:4797702 | 2008 | T | Girth of the Tanner graph and error correction capability of LDPC codes
+ieee:4602573 | 2008 | T | Code construction algorithm for architecture aware LDPC codes with low-error-floor
+ieee:4711170 | 2008 | T | Design of versatile eIRA codes for parallel decoders
+ieee:4895647 | 2008 | T | On the design of irregular gldpc codes with low error floor over the BEC
+ieee:4595166 | 2008 | T | Optimizing burst erasure correction of LDPC codes by interleaving
+ieee:4533259 | 2008 | T | Maximum Likelihood Decoding of Turbo Codes on the Binary Erasure Channel
+ieee:4100904 | 2007 | T | LDPC Codes Based on Latin Squares: Cycle Structure, Stopping Set, and Trapping Set Analysis
+ieee:4288785 | 2007 | T | ACE Spectrum of LDPC Codes and Generalized ACE Design
+ieee:4063488 | 2007 | T | LDPC Codes Based on Latin Squares: Cycle Structure, Stopping, and Trapping Set Analysis
+ieee:4380282 | 2007 | T | Use of Low-Density Parity-Check Codes for Dominant Error Events Detection and $k$-Constraint Enforcement
+ieee:4273701 | 2007 | T | Augmented Belief Propagation Decoding of Low-Density Parity Check Codes
+ieee:4373411 | 2007 | T | Pseudocodewords of Tanner Graphs
+ieee:4137902 | 2007 | T | Results on the Improved Decoding Algorithm for Low-Density Parity-Check Codes Over the Binary Erasure Channel
+ieee:4557664 | 2007 | T | An Algorithm to Find All Small-Size Stopping Sets of Low-Density Parity-Check Matrices
+ieee:4039670 | 2007 | T | Asymptotic Spectra of Trapping Sets in Regular and Irregular LDPC Code Ensembles
+ieee:4381399 | 2007 | T | Efficient Puncturing Method for Rate-Compatible Low-Density Parity-Check Codes
+ieee:4313082 | 2007 | T | On the Hardness of Approximating Stopping and Trapping Sets in LDPC Codes
+ieee:4454752 | 2007 | T | Short Protograph-Based LDPC Codes
+ieee:4557666 | 2007 | T | Stopping-Set Enumerator Approximations for Finite-Length Protograph LDPC Codes
+ieee:4557557 | 2007 | T | Designing LDPC Codes without small trapping sets by using Tanner Graph Covers
+ieee:4196284 | 2007 | T | Weighted IS Method of Estimating FER of LDPC Codes in High SNR Region
+ieee:4557391 | 2007 | T | Constructing LDPC Codes by 2-Lifts
+ieee:4288827 | 2007 | T | Lowering Error Floor of LDPC Codes Using a Joint Row-Column Decoding Algorithm
+ieee:4273776 | 2007 | T | LDPC Code Construction with Low Error Floor Based on the IPEG Algorithm
+ieee:4212885 | 2007 | T | Modification on the IPEG Algorithm for Constructing LDPC Codes with Low Error Floor
+ieee:4215144 | 2007 | T | Computing the Stopping Distance of a Tanner Graph Is NP-Hard
+ieee:4557390 | 2007 | T | On Deriving Good LDPC Convolutional Codes from QC LDPC Block Codes
+ieee:4288831 | 2007 | T | Systematic Modification of Parity-Check Matrices for Efficient Encoding of LDPC Codes
+ieee:4289703 | 2007 | T | Quantization Effects in Low-Density Parity-Check Decoders
+ieee:4313040 | 2007 | T | On the pseudocodeword weight and parity-check matrix redundancy of linear codes
+ieee:4039661 | 2007 | T | LP Decoding Corrects a Constant Fraction of Errors
+ieee:4288829 | 2007 | T | Informed Dynamic Scheduling for Belief-Propagation Decoding of LDPC Codes
+ieee:4313074 | 2007 | T | Evaluation of the Low Frame Error Rate Performance of LDPC Codes Using Importance Sampling
+ieee:4557442 | 2007 | T | Pseudo-codeword Landscape
+ieee:4557459 | 2007 | T | ML decoding via mixed-integer adaptive linear programming
+ieee:4318057 | 2007 | T | On the Effects of Pseudo-Codewords on Independent Rayleigh Flat-Fading Channels
+ieee:4373428 | 2007 | T | Turbo Decoding on the Binary Erasure Channel: Finite-Length Analysis and Turbo Stopping Sets
+ieee:4410966 | 2007 | T | Error Floor Estimation of Long LDPC Codes on Partial Response Channels
+ieee:4289708 | 2007 | T | Analysis of Absorbing Sets for Array-Based LDPC Codes
+ieee:4557558 | 2007 | T | On the Exhaustion and Elimination of Trapping Sets: Algorithms & The Suppressing Effect
+ieee:4067922 | 2006 | T | Analysis and Design of Moderate Length Regular LDPC Codes with Low Error Floors
+ieee:4024289 | 2006 | T | On a Construction Method of Irregular LDPC Codes Without Small Stopping Sets
+ieee:4086892 | 2006 | T | Regular {4, 8} LDPC Codes and Their Lowerror Floors
+ieee:5755900 | 2006 | T | Finding Small Stopping Sets in the Tanner Graphs of LDPC Codes
+ieee:1683079 | 2006 | T | Modified Belief Propagation Decoding Algorithm for Low-Density Parity Check Code Based on Oscillation
+ieee:1710348 | 2006 | T | Augmented Belief-Propagation Decoding of Low-Density Parity-Check Codes
+ieee:4024284 | 2006 | T | Error Floors of LDPC Codes on the Binary Symmetric Channel
+ieee:4036023 | 2006 | T | Instanton analysis of Low-Density Parity-Check codes in the error-floor regime
+ieee:4119260 | 2006 | T | Code Annealing and the Suppressing Effect of the Cyclically Lifted LDPC Code Ensemble
+ieee:4024286 | 2006 | T | Trapping Sets in Irregular LDPC Code Ensembles
+ieee:4150674 | 2006 | T | CTH02-4: When Does One Redundant Parity-Check Equation Matter?
+ieee:4024285 | 2006 | T | An IS Simulation Technique for Very Low BER Performance Evaluation of LDPC Codes
+ieee:5755901 | 2006 | T | A Probabilistic Subspace Approach to the Minimal Stopping Set Problem
+ieee:4036189 | 2006 | T | Pseudo-Codewords in LDPC Convolutional Codes
+ieee:1494431 | 2005 | T | Design of variable-rate irregular LDPC codes with low error floor
+ieee:1397932 | 2005 | T | Stopping set distribution of LDPC code ensembles
+ieee:1437362 | 2005 | T | Flexible construction of irregular partitioned permutation LDPC codes with low, error floors
+ieee:1397933 | 2005 | T | Using linear programming to Decode Binary linear codes
+ieee:1523486 | 2005 | T | Design of an LDPC code with low error floor
+ieee:1547738 | 2005 | T | Hardware Aware eIRA LDPC Code Generation
+ieee:1549481 | 2005 | T | Algorithmic and combinatorial analysis of trapping sets in structured LDPC codes
+ieee:1523728 | 2005 | T | Enumerators for protograph ensembles of LDPC codes
+ieee:1523566 | 2005 | T | Improved reversible LDPC codes
+ieee:1606100 | 2005 | T | Approximate cycle extrinsic message degree regular quasi circulant LDPC codes
+ieee:1523456 | 2005 | T | Tree-based construction of LDPC codes
+ieee:1523483 | 2005 | T | On the stopping distance and the stopping redundancy of codes
+ieee:1651870 | 2005 | T | A performance improvement and error floor avoidance technique for belief propagation decoding of LDPC codes
+ieee:1365274 | 2004 | T | Explicit construction of families of LDPC codes with no 4-cycles
+ieee:1312521 | 2004 | T | Construction of short block length irregular low-density parity-check codes
+ieee:1365107 | 2004 | T | Analysis of an algorithm for irregular LDPC code construction
+ieee:1405265 | 2004 | T | Pseudo-codewords of cycle codes via zeta functions
+ieee:1337111 | 2004 | T | Explicit construction of families of LDPC codes with no 4-cycles
+ieee:1228137 | 2003 | T | Stopping set distribution of LDPC code ensembles
+ieee:1203996 | 2003 | T | Construction of irregular LDPC codes with low error floors
+ieee:1228136 | 2003 | T | Stopping sets in codes from designs
+ieee:1228061 | 2003 | T | Channel precoding and low-density parity-check codes for magnetic recording
+ieee:910587 | 2001 | T | Signal-space characterization of iterative decoding
+ieee:708741 | 1998 | T | Skewness and pseudocodewords in iterative decoding
+arxiv:2604.07365v1 | 2026 | - | Tunneling-Augmented Simulated Annealing for Short-Block LDPC Code Construction
+arxiv:2604.12332v2 | 2026 | - | Turán-Theoretic Bounds on Several Elementary Trapping Sets in LDPC Codes
+arxiv:2604.15307v1 | 2026 | - | Heuristic Search for Minimum-Distance Upper-Bound Witnesses in Quantum APM-LDPC Codes
+arxiv:2605.01942v1 | 2026 | - | Combinatorial Analysis of Dyadic and Quasi-Dyadic Codes
+arxiv:2605.18323v1 | 2026 | - | Existence and Counting Bounds for High-Memory Spatially-Coupled Codes via the Combinatorial Nullstellensatz
+ieee:11030804 | 2025 | - | Cluster Decomposition for Improved Erasure Decoding of Quantum LDPC Codes
+ieee:11195550 | 2025 | - | On the Efficacy of the Peeling Decoder for the Quantum Expander Code
+arxiv:2501.08036v3 | 2025 | - | Decoding Quantum LDPC Codes using Collaborative Check Node Removal
+arxiv:2502.20189v2 | 2025 | - | Quantum low-density parity-check codes for erasure-biased atomic quantum processors
+arxiv:2504.01728v1 | 2025 | - | Linear Time Iterative Decoders for Hypergraph-Product and Lifted-Product Codes
+arxiv:2507.02239v1 | 2025 | - | Bias-tailored single-shot quantum LDPC codes
+arxiv:2508.18717v3 | 2025 | - | Natural Image Classification via Quasi-Cyclic Graph Ensembles and Random-Bond Ising Models at the Nishimori Temperature
+arxiv:2509.13040v2 | 2025 | - | Linear Complexity Computation of Code Distance and Minimum Size of Trapping Sets for LDPC Codes with Bounded Treewidth
+arxiv:2512.02941v1 | 2025 | - | Pseudocodewords of quantum, quasi-cyclic, and spatially-coupled LDPC codes: a fundamental cone perspective
+arxiv:2512.24232v1 | 2025 | - | SC-LDPC Codes Over $\mathbb{F}_q$: Minimum Distance, Decoding Analysis and Threshold Saturation
+ieee:10510073 | 2024 | - | Topology-Aware Sparse Factorization in Energy-Based Models: Tori QC-LDPC Codes and Circular Hyperboloid MET QC-LDPC Codes
+ieee:10409156 | 2024 | - | Enhanced Message-Passing Decoding of Degenerate Quantum Codes Utilizing Trapping Set Dynamics
+ieee:10369673 | 2023 | - | Optimization of NB-QC-LDPC Codes with Column Weight Not Exceeding Three
+ieee:10206469 | 2023 | - | Weight and Trapping Set Distributions for Non-Binary Regular Low-Density Parity-Check Code Ensembles
+ieee:10032599 | 2023 | - | Trapping and Absorbing Set Enumerators for Nonbinary Protograph-Based Low-Density Parity-Check Code Ensembles
+arxiv:2307.14532v2 | 2023 | - | Absorbing Sets in Quantum LDPC Codes
+arxiv:2307.15778v2 | 2023 | - | Spherical and Hyperbolic Toric Topology-Based Codes On Graph Embedding for Ising MRF Models: Classical and Quantum Topology Machine Learning
+arxiv:2208.05795v1 | 2022 | - | An Modified Cole's Importance Sampling Method For Low Error Floor QC-LDPC Codes Construction
+ieee:9434940 | 2021 | - | A Construction Method of Doped Low-Density Parity-Check Codes Based on Quadratic Residue Codes
+ieee:9518154 | 2021 | - | Trapping Set Analysis of Finite-Length Quantum LDPC Codes
+ieee:9034032 | 2020 | - | Improved EXIT Algorithm Based on Gaussian Mixture Model and its Application to LDPC Construction in Coding Cooperative Systems With Hybrid Fading
+ieee:9174036 | 2020 | - | Asymptotic Absorbing Set Enumerators for Non-Binary Protograph-Based LDPC Code Ensembles
+ieee:9174510 | 2020 | - | Construction of Rate (n — 1 )/n Non-Binary LDPC Convolutional Codes via Difference Triangle Sets
+arxiv:2001.07969v1 | 2020 | - | Construction of Rate (n-1)/n Non-Binary LDPC Convolutional Codes via Difference Triangle Sets
+arxiv:2004.06875v1 | 2020 | - | On Cyclic Polar Codes and The Burst Erasure Performance of Spatially-Coupled LDPC Codes
+arxiv:2008.13470v1 | 2020 | - | Construction of LDPC convolutional codes via difference triangle sets
+arxiv:2010.07363v2 | 2020 | - | Concentrated Stopping Set Design for Coded Merkle Tree: Improving Security Against Data Availability Attacks in Blockchain Systems
+arxiv:2011.14753v3 | 2020 | - | Topologically Driven Methods for Construction Of Multi-Edge Type (Multigraph with nodes puncturing) Quasi-Cyclic Low-density Parity-check Codes for Wireless Channel, WDM Long-Haul and Archival Holographic Memory
+arxiv:2012.15297v2 | 2020 | - | Trapping Sets of Quantum LDPC Codes
+ieee:8466851 | 2019 | - | A Combinatorial Methodology for Optimizing Non-Binary Graph-Based Codes: Theoretical Analysis and Applications in Data Storage
+ieee:8761366 | 2019 | - | Syndrome-Generalized Belief Propagation Decoding for Quantum Memories
+arxiv:1902.07332v3 | 2019 | - | Construction of QC-LDPC Codes with Low Error Floor by Efficient Systematic Search and Elimination of Trapping Sets
+arxiv:1904.07158v1 | 2019 | - | Efficient Search and Elimination of Harmful Objects in Optimized QC SC-LDPC Codes
+ieee:8388219 | 2018 | - | Design of Nonbinary LDPC Codes Based on Message-Passing Algorithms
+ieee:8613507 | 2018 | - | Free Pseudodistance Growth Rates for Spatially Coupled LDPC Codes over the BEC
+ieee:8362743 | 2018 | - | Symmetric Block-Wise Concatenated BCH Codes for NAND Flash Memories
+ieee:8437844 | 2018 | - | A Message-Passing Algorithm for Counting Short Cycles in Nonbinary LDPC Codes
+ieee:8437905 | 2018 | - | LP Decoding of Quantum Stabilizer Codes
+arxiv:1801.02028v1 | 2018 | - | Characterization and Efficient Search of Non-Elementary Trapping Sets of LDPC Codes with Applications to Stopping Sets
+arxiv:1801.08270v2 | 2018 | - | Analysis and Design of Serially Concatenated LDGM Codes
+arxiv:1803.08141v1 | 2018 | - | Efficient Search of QC-LDPC Codes with Girths 6 and 8 and Free of Elementary Trapping Sets with Small Size
+arxiv:1808.05258v1 | 2018 | - | Edge Coloring Technique to Remove Small Elementary Trapping Sets from Tanner Graph of QC-LDPC Codes with Column Weight 4
+ieee:7922520 | 2017 | - | Asymmetric Spatially Coupled LDPC Codes for Multiple-Burst Erasure Channels
+ieee:8006550 | 2017 | - | Average spectra for ensembles of LDPC codes and applications
+ieee:7805299 | 2017 | - | Weight Distributions of Non-Binary Multi-Edge Type LDPC Code Ensembles: Analysis and Efficient Evaluation
+ieee:7996747 | 2017 | - | Stochastic resonance decoding for quantum LDPC codes
+ieee:8262804 | 2017 | - | Serial concatenation of reed muller and LDPC codes with low error floor
+ieee:7996749 | 2017 | - | Non-binary LDPC codes for orthogonal modulations: Analysis and code design
+ieee:8006721 | 2017 | - | Finite-length LDPC codes on the q-ary multi-bit channel
+arxiv:1705.05996v1 | 2017 | - | A Survey on Trapping Sets and Stopping Sets
+arxiv:1706.01703v1 | 2017 | - | Analytical lower bounds for the size of elementary trapping sets of variable-regular LDPC codes with any girth and irregular ones with girth 8
+arxiv:1706.06648v1 | 2017 | - | Pseudocodeword-Free Criterion for Codes with Cycle-Free Tanner Graph
+arxiv:1709.09936v1 | 2017 | - | A Branch-and-Cut Algorithm to Design LDPC Codes without Small Cycles in Communication Systems
+ieee:7482740 | 2016 | - | Non-Binary LDPC Codes for Magnetic Recording Channels: Error Floor Analysis and Optimized Code Design
+ieee:7553518 | 2016 | - | A General Non-Binary LDPC Code Optimization Framework Suitable for Dense Flash Memory and Magnetic Storage
+ieee:7453187 | 2016 | - | ADMM LP Decoding of Non-Binary LDPC Codes in  $ \mathbb {F}_{2^{m}}$
+ieee:7470554 | 2016 | - | An Efficient Algorithm to Improve the Success Threshold of Node-Based Verification-Based Algorithms in Compressed Sensing
+ieee:7541791 | 2016 | - | The weight consistency matrix framework for general non-binary LDPC code optimization: Applications in flash memories
+arxiv:1604.00761v1 | 2016 | - | Probabilistic bounds on the trapping redundancy of linear codes
+arxiv:1604.05256v1 | 2016 | - | Check-hybrid GLDPC Codes: Systematic Elimination of Trapping Sets and Guaranteed Error Correction Capability
+arxiv:1607.05647v2 | 2016 | - | Design of LDPC Codes using Multipath EMD Strategies and Progressive Edge Growth
+ieee:7282487 | 2015 | - | Impact of redundant checks on the LP decoding thresholds of LDPC codes
+ieee:7417425 | 2015 | - | Non-Binary LDPC Code Optimization for Partial-Response Channels
+ieee:7041306 | 2015 | - | Corrections to “On Characterization of Elementary Trapping Sets of Variable-Regular LDPC Codes” [Sep 14 5188-5203]
+arxiv:1501.04394v1 | 2015 | - | Band Splitting Permutations for Spatially Coupled LDPC Codes Enhancing Burst Erasure Immunity
+arxiv:1510.04954v1 | 2015 | - | New Characterization and Efficient Exhaustive Search Algorithm for Elementary Trapping Sets of Variable-Regular LDPC Codes
+arxiv:1511.00133v3 | 2015 | - | Some problems of Graph Based Codes for Belief Propagation decoding
+ieee:6785991 | 2014 | - | Non-Binary Protograph-Based LDPC Codes: Enumerators, Analysis, and Designs
+ieee:6841613 | 2014 | - | Pseudocodewords of Parity-Check Codes Over Fields of Prime Cardinality
+ieee:6874925 | 2014 | - | Design of high-rate irregular non-binary LDPC codes using algorithmic stopping-set cancellation
+ieee:6970874 | 2014 | - | Design of non-binary quasi-cyclic LDPC codes by absorbing set removal
+ieee:6997475 | 2014 | - | Parity modifications and stopping sets in high-rate codes for physical-layer security
+ieee:6955072 | 2014 | - | Program
+arxiv:1401.8168v1 | 2014 | - | Thresholds of absorbing sets in Low-Density-Parity-Check codes
+arxiv:1403.4405v1 | 2014 | - | Absorbing Set Analysis and Design of LDPC Codes from Transversal Designs over the AWGN Channel
+arxiv:1409.5141v2 | 2014 | - | ADMM LP decoding of non-binary LDPC codes in $\mathbb{F}_{2^m}$
+arxiv:1409.5783v1 | 2014 | - | LDPC Code Density Evolution in the Error Floor Region
+arxiv:1410.1627v1 | 2014 | - | New Results on the Pseudoredundancy
+arxiv:1411.7554v3 | 2014 | - | Impact of redundant checks on the LP decoding thresholds of LDPC codes
+ieee:6515184 | 2013 | - | Spectral Shape of Doubly-Generalized LDPC Codes: Efficient and Exact Evaluation
+ieee:6620782 | 2013 | - | Finite length analysis on listing failure probability of Invertible Bloom Lookup Tables
+arxiv:1308.1259v1 | 2013 | - | On Characterization of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:6419272 | 2012 | - | Performances of Progressive Edge-Growth LDPC codes in Nakagami fading channel
+ieee:6325207 | 2012 | - | NB-LDPC: Absorbing set and importance sampling
+ieee:6325208 | 2012 | - | Signal recovery performance of the interval-passing algorithm
+ieee:6317120 | 2012 | - | Interval-Passing Algorithm for Non-Negative Measurement Matrices: Performance and Reconstruction Analysis
+ieee:6283972 | 2012 | - | Graph cover ensembles of non-binary protograph LDPC codes
+arxiv:1202.1337v2 | 2012 | - | Enhancing the Error Correction of Finite Alphabet Iterative Decoders via Adaptive Decimation
+arxiv:1202.1348v2 | 2012 | - | Selecting Two-Bit Bit Flipping Algorithms for Collective Error Correction
+arxiv:1207.4800v1 | 2012 | - | Finite Alphabet Iterative Decoders, Part I: Decoding Beyond Belief Propagation on BSC
+arxiv:1210.0149v1 | 2012 | - | LDPC Decoding with Limited-Precision Soft Information in Flash Memories
+ieee:5773020 | 2011 | - | On the Growth Rate of the Weight Distribution of Irregular Doubly Generalized LDPC Codes
+ieee:6034271 | 2011 | - | Enumerators for protograph-based ensembles of nonbinary LDPC codes
+ieee:6089475 | 2011 | - | Ensemble analysis of pseudocodewords of protograph-based non-binary LDPC codes
+ieee:5723052 | 2011 | - | Pseudocodeword Weights for LDPC Codes under Differential PSK Transmission over the Noncoherent AWGN Channel
+ieee:6101300 | 2011 | - | Full diversity random LDPC codes
+ieee:6134057 | 2011 | - | On q-ary LDPC Code Design for a Low Error Floor
+ieee:5753935 | 2011 | - | Coding for Cryptographic Security Enhancement Using Stopping Sets
+ieee:5730554 | 2011 | - | Some Results on MAP Decoding of Non-Binary LDPC Codes Over the BEC
+ieee:6033700 | 2011 | - | Exact free distance and trapping set growth rates for LDPC convolutional codes
+arxiv:1107.2867v1 | 2011 | - | A Two Stage Selective Averaging LDPC Decoding
+arxiv:1107.5550v2 | 2011 | - | The solution space geometry of random linear equations
+arxiv:1108.5547v2 | 2011 | - | Instantons causing iterative decoding to cycle
+ieee:5502378 | 2010 | - | The Design of Rate-Compatible LDPC Codes for IR-HARQ Systems over Erasure Channels
+ieee:5437429 | 2010 | - | On the Hardness of Approximating Stopping and Trapping Sets
+ieee:5592770 | 2010 | - | Strong secrecy for erasure wiretap channels
+ieee:5545659 | 2010 | - | Trapping Sets of Fountain Codes
+ieee:5592686 | 2010 | - | Stopping sets for physical-layer security
+ieee:5402490 | 2010 | - | An Iteratively Decodable Tensor Product Code with Application to Data Storage
+ieee:5706906 | 2010 | - | On bit error rate performance of polar codes in finite regime
+arxiv:1001.1730v1 | 2010 | - | Divide & Concur and Difference-Map BP Decoders for LDPC Codes
+arxiv:1001.3421v2 | 2010 | - | Multilevel Decoders Surpassing Belief Propagation on the Binary Symmetric Channel
+arxiv:1001.5113v2 | 2010 | - | Worst Configurations (Instantons) for Compressed Sensing over Reals: a Channel Coding Approach
+arxiv:1002.4311v1 | 2010 | - | Lowering the Error Floor of LDPC Codes Using Cyclic Liftings
+arxiv:1005.0052v3 | 2010 | - | On the Joint Decoding of LDPC Codes and Finite-State Channels via Linear Programming
+arxiv:1008.4177v2 | 2010 | - | LDPC Codes from Latin Squares Free of Small Trapping Sets
+arxiv:1012.3201v1 | 2010 | - | Cyclic and Quasi-Cyclic LDPC Codes on Row and Column Constrained Parity-Check Matrices and Their Trapping Sets
+ieee:5431553 | 2009 | - | A study on quick simulation for estimation of low FER of LDPC codes
+ieee:5351204 | 2009 | - | Binary linear-time erasure decoding for non-binary LDPC codes
+ieee:5425250 | 2009 | - | Ensemble Pseudocodeword Weight Enumerators for Protograph-Based Generalized LDPC Codes
+ieee:5208570 | 2009 | - | Linear-Programming Decoding of Nonbinary Linear Codes
+ieee:5373632 | 2009 | - | On the weight and stopping set size distributions of LDPC codes and their generalizations
+ieee:5205355 | 2009 | - | Trapping set enumerators for repeat multiple accumulate code ensembles
+arxiv:0902.1786v2 | 2009 | - | On the Dynamics of the Error Floor Behavior in (Regular) LDPC Codes
+arxiv:0910.1922v1 | 2009 | - | Binary Linear-Time Erasure Decoding for Non-Binary LDPC codes
+ieee:4595126 | 2008 | - | Conditional entropy of non-binary LDPC codes over the BEC
+ieee:4641893 | 2008 | - | Design of regular (2,d/sub c/)-LDPC codes over GF(q) using their binary images
+ieee:4450790 | 2008 | - | Generalized LDPC codes and generalized stopping sets
+ieee:4601024 | 2008 | - | Asymptotic ensemble enumerators for protograph-based generalized LDPC codes: Computational complexity
+ieee:4407566 | 2008 | - | Iterative Decoding Based on Error Pattern Correction
+arxiv:0805.1662v1 | 2008 | - | Eliminating Trapping Sets in Low-Density Parity Check Codes by using Tanner Graph Covers
+arxiv:0808.2515v2 | 2008 | - | Provably efficient instanton search algorithm for LP decoding of LDPC codes over the BSC
+ieee:4137889 | 2007 | - | Tree-Based Construction of LDPC Codes Having Good Pseudocodeword Weights
+ieee:4449724 | 2007 | - | Design and performance of LDPC codes extended with parity-check symbols from a larger alphabet
+ieee:4411197 | 2007 | - | Ensemble Enumerators for Protograph-Based Generalized LDPC Codes
+ieee:4252347 | 2007 | - | Pseudo-Codeword Analysis of Tanner Graphs From Projective and Euclidean Planes
+ieee:4357567 | 2007 | - | Searching for low weight pseudo-codewords
+arxiv:0704.2258v2 | 2007 | - | On the Hardness of Approximating Stopping and Trapping Sets in LDPC Codes
+arxiv:0708.2462v1 | 2007 | - | Eigenvalue bounds on the pseudocodeword weight of expander codes
+arxiv:0709.4466v1 | 2007 | - | Serially Concatenated IRA Codes
+ieee:4119265 | 2006 | - | Minimum Pseudo-Codewords of LDPC Codes
+ieee:1683937 | 2006 | - | On the Asymptotic Weight and Stopping Set Distribution of Regular LDPC Ensembles
+ieee:4086595 | 2006 | - | Protograph LDPC Codes over Burst Erasure Channels
+ieee:1633324 | 2006 | - | On the minimum pseudo-codewords of LDPC codes
+ieee:4035993 | 2006 | - | Upper Bounding the Performance of Arbitrary Finite LDPC Codes on Binary Erasure Channels
+ieee:1564445 | 2006 | - | Performance of low-density parity-check codes with linear minimum distance
+ieee:1633330 | 2006 | - | On the stopping distance of finite geometry LDPC codes
+ieee:5755902 | 2006 | - | On Parity-Check Matrices with Optimal Stopping and/or Dead- End Set Enumerators
+ieee:1603762 | 2006 | - | On the stopping distance and the stopping redundancy of codes
+ieee:4067794 | 2006 | - | On the Complexity of finding stopping set size in Tanner Graphs
+ieee:4036192 | 2006 | - | Pseudocodeword weights for non-binary LDPC codes
+ieee:5755823 | 2006 | - | On the Connection Between Finite Graph Covers, Pseudo-Codewords, and Linear Programming Decoding of Turbo Codes
+ieee:4150765 | 2006 | - | CTHp1-1: A Soft Decision Decoding Scheme for Long-Haul Optical Transmission Systems Based on the Instanton Approach
+ieee:4035928 | 2006 | - | Design of non binary LDPC codes using their binary image: algebraic properties
+ieee:5755957 | 2006 | - | Using binary images of non binary LDPC codes to improve overall performance
+ieee:4119247 | 2006 | - | On Decoding Failure Probabilities for Linear Block Codes on the Binary Erasure Channel
+arxiv:cs/0601070v1 | 2006 | - | Instanton analysis of Low-Density-Parity-Check codes in the error-floor regime
+arxiv:cs/0605051v1 | 2006 | - | A General Method for Finding Low Error Rates of LDPC Codes
+arxiv:cs/0607064v1 | 2006 | - | How to Find Good Finite-Length Codes: From Art Towards Science
+arxiv:cs/0609046v1 | 2006 | - | Exhausting Error-Prone Patterns in LDPC Codes
+arxiv:cs/0609154v1 | 2006 | - | Loop Calculus Helps to Improve Belief Propagation and Linear Programming Decodings of Low-Density-Parity-Check Codes
+ieee:1523485 | 2005 | - | Stopping set distributions of two-edge type LDPC code ensembles
+ieee:1554051 | 2005 | - | Finite-Length Repeat-Accumulate Codes on the Binary Erasure Channel
+ieee:1523541 | 2005 | - | Finite-length analysis of turbo decoding on the binary erasure channel
+ieee:1523542 | 2005 | - | Turbo stopping sets: the uniform interleaver and efficient enumeration
+arxiv:cs/0502033v1 | 2005 | - | Pseudo-Codewords of Cycle Codes via Zeta Functions
+arxiv:cs/0506091v1 | 2005 | - | A New Construction for LDPC Codes using Permutation Polynomials over Integer Rings
+arxiv:cs/0507031v2 | 2005 | - | The error-floor of LDPC codes in the Laplacian channel
+arxiv:cs/0508049v3 | 2005 | - | Characterizations of Pseudo-Codewords of LDPC Codes
+arxiv:cs/0510049v1 | 2005 | - | Bounds on the Pseudo-Weight of Minimal Pseudo-Codewords of Projective Geometry Codes
+ieee:1365243 | 2004 | - | Asymptotic weight and stopping set distributions for detailedly represented irregular LDPC code ensembles
+ieee:1365245 | 2004 | - | Performance of low-density parity-check codes with linear minimum distance
+ieee:1365027 | 2004 | - | Proceedings. 2004 IEEE International Symposium on Information Theory (IEEE Cat. No.04CH37522)

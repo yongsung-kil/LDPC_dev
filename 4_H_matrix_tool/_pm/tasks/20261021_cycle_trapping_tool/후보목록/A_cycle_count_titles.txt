@@ -1,0 +1,826 @@
+# id | year | fulltext(T=txt available, -=abstract only) | title
+ieee:11498587 | 2026 | T | Deep-Learning-Enabled and Quantization-Aware Burst-Resilient LDPC Decoding for 6G Sensor and IoT Communication Systems: A Review
+ieee:11313566 | 2026 | T | A Markov Chain Monte Carlo Method for Efficient Finite-Length LDPC Code Design
+ieee:11240558 | 2026 | T | The Impact of the Distance Between Cycles on Elementary Trapping Sets
+ieee:11263820 | 2026 | T | Belief Propagation Decoding of Primitive Rateless Codes
+ieee:11154552 | 2025 | T | High Girth Spatially-Coupled LDPC Codes with Hierarchical Structure
+ieee:11148129 | 2025 | T | Random Constructions of Girth-Eight QC-LDPC Codes with Structural Shaping
+ieee:11148120 | 2025 | T | Construction of QC-LDPC Codes with Product-like Exponent Matrices Based on Rectangular Area
+ieee:11512606 | 2025 | T | Design and Implementation of an Efficient Parallel Decoding Algorithm for Regular LDPC Codes with Girth Length of Eight
+ieee:11184547 | 2025 | T | VN-Based Tail-Biting Globally-Coupled LDPC Codes
+ieee:11142887 | 2025 | T | Efficient Encoding Algorithm and Architecture for 2-D Quasi-Cyclic LDPC Codes With Applications to 2-D Magnetic Recording
+ieee:11430116 | 2025 | T | A Performance-Aware Framework For LDPC Code Enhancement Using Shortening Techniques
+ieee:11195483 | 2025 | T | Construction of QC-LDPC Codes with Girth $g$ from the Hermite Normal Form of a Matrix
+ieee:11432165 | 2025 | T | Quasi-Cyclic LDPC Codes from Generalized Behrend Sequences for Space Applications
+ieee:11148217 | 2025 | T | Quasi-Cyclic Spatially Coupled LDPC Codes Construction with Girth Eight
+ieee:11154487 | 2025 | T | Quantum LDPC Codes with Enhanced Error-Floor Performance under Min-Sum Decoding
+ieee:11195685 | 2025 | T | Belief Propagation Decoding for Short Codes on Structured Sparse Parity-Check Matrices
+ieee:11195214 | 2025 | T | Bounds and New Constructions for Girth-Constrained Regular Bipartite Graphs
+ieee:11148122 | 2025 | T | A Fast Messages-Passing Algorithm for Counting Short Cycles in Bipartite Graphs
+ieee:11250323 | 2025 | T | Turbo-Annihilation of Hook Errors in Stabilizer Measurement Circuits
+ieee:11195322 | 2025 | T | High-Rate Spatially Coupled LDPC Codes Based on Massey's Convolutional Self-Orthogonal Codes
+ieee:10887536 | 2025 | T | Toward Universal Belief Propagation Decoding for Short Binary Block Codes
+ieee:10226284 | 2024 | T | Construction of Protograph-Based LDPC Codes With Chordless Short Cycles
+ieee:10418118 | 2024 | T | Efficient Construction of Quasi-Cyclic LDPC Codes With Multiple Lifting Sizes
+ieee:10553056 | 2024 | T | Disjoint Difference Sets and QC-LDPC Codes With Girth 10
+ieee:10946320 | 2024 | T | New Construction of QC-LDPC Codes Based on Full-Length Row-Multiplier
+ieee:10409168 | 2024 | T | Tanner (3, 23)-Regular QC-LDPC Codes: Cycle Structure and Girth Distribution
+ieee:10705346 | 2024 | T | Dual-Diagonal QC-LDPC Codes Free of Small Cycles From GCD Framework via Negative Coefficients
+ieee:10826749 | 2024 | T | Constructing Random QC-LDPC Codes Based on the Relationship between 8-Cycles and Trapping Sets
+ieee:10430452 | 2024 | T | A Neural Network-Based Compressive LDPC Decoder Design Over Correlated Noise Channel
+ieee:10827040 | 2024 | T | Design of Spatially Coupled LDPC Codes with Girth at Least 8
+ieee:10806926 | 2024 | T | Explicit Constructions of Girth-Eight QC-LDPC Codes: A Unified Framework Motivated by TDGS
+ieee:10619083 | 2024 | T | Belief Propagation Decoding of Quantum LDPC Codes with Guided Decimation
+ieee:10619229 | 2024 | T | Short Regular Girth-8 QC-LDPC Codes from Exponent Matrices with Vertical Symmetry
+ieee:10510143 | 2024 | T | Small Elementary Trapping Sets Elimination of Girth-8 QC-LDPC Codes
+ieee:10806922 | 2024 | T | Theoretical Bounds for the Size of Elementary Trapping Sets by Graph Theory Methods
+ieee:10436674 | 2024 | T | Belief Propagation Decoding for Short-Length Codes Based on Sparse Tanner Graph
+ieee:10619442 | 2024 | T | Probabilistic Design of Multi-Dimensional Spatially-Coupled Codes
+ieee:10758647 | 2024 | T | Modified CC-PEG Algorithm for Protograph-Based QC-LDPC Codes Over Non-Uniform Channel
+ieee:10522681 | 2024 | T | Four-Cycle Free Spatially Coupled LDPC Codes With an Explicit Construction
+ieee:10273465 | 2023 | T | Using Partial Orthomorphisms to Construct Short Quasi-Cyclic LDPC Codes with Girth at Least 6
+ieee:10227247 | 2023 | T | Efficient Genetic Algorithm-based LDPC Code Design for IoT Applications
+ieee:10355791 | 2023 | T | Binary QC-LDPC Codes Based on Whiteman's Generalized Cyclotomy
+ieee:10251427 | 2023 | T | An Efficient Strategy to Count Cycles in the Tanner Graph of Quasi-Cyclic LDPC Codes
+ieee:10405132 | 2023 | T | Constructions of Girth-Eight QC-LDPC Codes with Dual-Diagonal Structure Based on GCD Framework
+ieee:10146256 | 2023 | T | The Cycle-Concentrating PEG Algorithm for Protograph Generalized LDPC Codes
+ieee:10054043 | 2023 | T | Full-Length Row-Multiplier QC-LDPC Codes With Girth Eight and Short Circulant Sizes
+ieee:9878357 | 2023 | T | A Unified, SNR-Aware SC-LDPC Code Design With Applications to Magnetic Recording
+ieee:10233824 | 2023 | T | On Disjoint Difference Sets and Their Associated QC-LDPC Codes with Large Girth
+ieee:10113442 | 2023 | T | Low Error Floor QC-LDPC Codes Construction Using Modified Cole's Trapping Sets Enumerating
+ieee:10113447 | 2023 | T | An Approach to Routes Enumeration in QC LDPC Base Matrices
+ieee:9934899 | 2023 | T | Quasi-Cyclic LDPC Codes With Girth at Least Eight Based on Disjoint Difference Sets
+ieee:10097058 | 2023 | T | Improved Belief Propagation Decoding of Turbo Codes
+ieee:10207005 | 2023 | T | On the Tanner Cycle Distribution of QC-LDPC Codes from Polynomial Parity-Check Matrices
+ieee:10273481 | 2023 | T | A Low Complexity PEG-like Algorithm to Construct Quasi-Cyclic LDPC Codes
+ieee:9456076 | 2023 | T | Boost Sum-Product Performance for Multiuser Detection in mMTC at Millimeter Wave
+ieee:10251403 | 2023 | T | A Graph-Based Soft-Decision Decoding Scheme for Reed-Solomon Codes
+ieee:10130586 | 2023 | T | A Neural Network Empowered Belief Propagation Algorithm Optimized for Short-Cycles in Tanner Graph
+ieee:10182494 | 2023 | T | A Novel Labeling Scheme for Neural Belief Propagation in Polar Codes
+ieee:9734044 | 2022 | T | Some Short-Length Girth-8 QC-LDPC Codes From Primes of the Form t2 + 1
+ieee:9896662 | 2022 | T | Design of 4-cycles Free Short-length LDPC Codes Based on the Kirkman Triple Systems
+ieee:9780420 | 2022 | T | Construction of QC-LDPC Codes from Sidon Sequence Using Permutation and Segmentation
+ieee:9810937 | 2022 | T | On the Construction of QC-LDPC Codes Based on Integer Sequence With Low Error Floor
+ieee:9817675 | 2022 | T | Protograph-based LDPC codes with chordless short cycles and large minimum distance
+ieee:9762914 | 2022 | T | A Unifying Framework to Construct QC-LDPC Tanner Graphs of Desired Girth
+ieee:9721882 | 2022 | T | Lower Bounds of Regular QC-LDPC Codes and SES Generation Algorithm
+ieee:9552834 | 2022 | T | Integer Ring Sieve for Constructing Compact QC-LDPC Codes With Girths 8, 10, and 12
+ieee:9663353 | 2022 | T | QC-LDPC Codes With Large Column Weight and Free of Small Size ETSs
+ieee:9943662 | 2022 | T | Performance Analysis of QC-LDPC codes constructed by using Golomb rulers
+ieee:9834826 | 2022 | T | Trade-Based LDPC Codes
+ieee:9834404 | 2022 | T | Cycle-Free Windows of SC-LDPC Codes
+ieee:9834637 | 2022 | T | On Average Number of Cycles in Finite-Length Spatially Coupled LDPC Codes
+ieee:9211414 | 2021 | T | Construction of Irregular Protograph-Based QC-LDPC Codes With Low Error Floor
+ieee:9685071 | 2021 | T | Algebraic Design of a Class of Rate 1/3 Quasi-Cyclic LDPC Codes
+ieee:9568927 | 2021 | T | Efficient Parallel Decoding Architecture for Cluster Erasure Correcting 2-D LDPC Codes for 2-D Data Storage
+ieee:9354189 | 2021 | T | Girth Analysis and Design of Periodically Time-Varying SC-LDPC Codes
+ieee:9521885 | 2021 | T | Construction of Multi-Rate Quasi-Cyclic LDPC Codes for Satellite Communications
+ieee:9613550 | 2021 | T | Optimized Construction of Short and High Rate Protograph QC-LDPC Codes
+ieee:9434943 | 2021 | T | Construction of Quasi-Cyclic Low-Density Parity-Check Codes based on Quadratic Residue Codes
+ieee:9399069 | 2021 | T | On the Construction of Multitype Quasi-Cyclic Low-Density Parity-Check Codes With Different Girth and Length
+ieee:9518125 | 2021 | T | Quasi-Cyclic Protograph-Based Raptor-Like LDPC Codes With Girth 6 and Shortest Length
+ieee:9481154 | 2021 | T | Relation Between GCD Constraint and Full-Length Row-Multiplier QC-LDPC Codes With Girth Eight
+ieee:9594176 | 2021 | T | Necessary and Sufficient Girth Conditions for LDPC Tanner Graphs with Denser Protographs
+ieee:9359793 | 2021 | T | Construction of Time Invariant Spatially Coupled LDPC Codes Free of Small Trapping Sets
+ieee:9518132 | 2021 | T | Construction of Algebraic-Based Variable-Rate QC-LDPC Codes
+ieee:9518241 | 2021 | T | Necessary and Sufficient Girth Conditions for Tanner Graphs of Quasi-Cyclic LDPC Codes
+ieee:9045939 | 2020 | T | On the Class of High-Rate QC-LDPC Codes With Girth 8 From Sequences Satisfied in GCD Condition
+ieee:9124803 | 2020 | T | Design of Protograph-Based Quasi-Cyclic Spatially Coupled Ldpc Codes
+ieee:9232125 | 2020 | T | RS-LDPC Concatenated Coding for NAND Flash Memory: Designs and Reduction of Short Cycles
+ieee:8999573 | 2020 | T | Layered Construction of Quasi-Cyclic LDPC Codes
+ieee:8901173 | 2020 | T | Construction of QC LDPC Codes With Low Error Floor by Efficient Systematic Search and Elimination of Trapping Sets
+ieee:9134139 | 2020 | T | An Approach to the Generation of Regular QC-LDPC Codes with Girth 8
+ieee:9241207 | 2020 | T | Improving the minimum distance of QC-LDPC codes by removing cycles
+ieee:9112247 | 2020 | T | Designing Protograph-Based Quasi-Cyclic Spatially Coupled LDPC Codes With Large Girth
+ieee:9067006 | 2020 | T | Analysis of the Error Correction Capability of LDPC and MDPC Codes Under Parallel Bit-Flipping Decoding and Application to Cryptography
+ieee:9094192 | 2020 | T | Multi-Round Belief Propagation Decoding With Impulsive Perturbation for Short LDPC Codes
+ieee:9130338 | 2020 | T | Algorithm for Removal of Short Cycles in Tanner Graphs with Minimum-Hamming-Distance Check
+ieee:8968331 | 2020 | T | Failure Analysis of the Interval-Passing Algorithm for Compressed Sensing
+ieee:8943145 | 2020 | T | Counting Short Cycles in Bipartite Graphs: A Fast Technique/Algorithm and a Hardness Result
+ieee:8911359 | 2020 | T | Spatially Coupled LDPC Codes With Small Constraint Length and Low Error Floor
+ieee:9146593 | 2020 | T | On Computing the Number of Short Cycles in Bipartite Graphs Using the Spectrum of the Directed Edge Matrix
+ieee:9154734 | 2020 | T | Type-II QC-LDPC Codes From Multiplicative Subgroup of Prime Field
+ieee:9072180 | 2020 | T | A Sub-Graph Expansion-Contraction Method for Error Floor Computation
+ieee:9169668 | 2020 | T | On Finding Bipartite Graphs With a Small Number of Short Cycles and Large Girth
+ieee:9146916 | 2020 | T | Refined Belief Propagation Decoding of Sparse-Graph Quantum Codes
+ieee:9367482 | 2020 | T | Refined Belief-Propagation Decoding of Quantum Codes with Scalar Messages
+ieee:9174265 | 2020 | T | Spatially Coupled Codes with Sub-Block Locality: Joint Finite Length-Asymptotic Design Approach
+ieee:8745471 | 2019 | T | Optimal Search for Girth-8 Quasi Cyclic and Spatially Coupled Multiple-Edge LDPC Codes
+ieee:8756119 | 2019 | T | Optimization of QC-LDPC Codes by Edge Exchange Method Based on ACE
+ieee:8928034 | 2019 | T | Concatenated Reed-Solomon/Spatially Coupled LDPC Codes
+ieee:8766677 | 2019 | T | Scheme for High-rate LDPC Codes Based on Dual–Diagonal Matrix with Girth-6
+ieee:9095155 | 2019 | T | Analysis of the Short Cycles on the Performance of LDPC Coded OFDM Underwater Acoustic System
+ieee:8969774 | 2019 | T | Constructing QC-LDPC codes based on dimension reduction for physical layer security
+ieee:8934212 | 2019 | T | PEG based Construction of Irregular QC-LDPC Codes by jointly Optimizing the Girth and the Number and ACE of Short cycles
+ieee:8714057 | 2019 | T | Reed-Solomon Based Quasi-Cyclic LDPC Codes: Designs, Girth, Cycle Structure, and Reduction of Short Cycles
+ieee:8750852 | 2019 | T | Automatic Verification of GCD Constraint for Construction of Girth-Eight QC-LDPC Codes
+ieee:8821723 | 2019 | T | An Unequal Error Protection of Quasi-Cyclic Low Density Parity Check (QC-LDPC) Codes Based on Combinatorial Designs
+ieee:8736998 | 2019 | T | Asymptotic Average Multiplicity of Structures Within Different Categories of Trapping Sets, Absorbing Sets, and Stopping Sets in Random Regular and Irregular LDPC Code Ensembles
+ieee:8927973 | 2019 | T | Construction of Finite Field Based QC-LDPC Codes from Isomorphism Perspective
+ieee:8588334 | 2019 | T | On the Girth of Tanner (3, 13) Quasi-Cyclic LDPC Codes
+ieee:8651338 | 2019 | T | Constructions of Type-II QC-LDPC Codes With Girth Eight from Sidon Sequence
+ieee:8571223 | 2019 | T | Tanner  $(J,L)$  Quasi-Cyclic LDPC Codes: Girth Analysis and Derived Codes
+ieee:9067531 | 2019 | T | Searching for Large Girth Quasi-Cyclic Spatially Coupled LDPC Codes
+ieee:8525278 | 2019 | T | From Cages to Trapping Sets and Codewords: A Technique to Derive Tight Upper Bounds on the Minimum Size of Trapping Sets and Minimum Distance of LDPC Codes
+ieee:8765603 | 2019 | T | Girth Analysis of Tanner’s (3, 17)-Regular QC-LDPC Codes Based on Euclidean Division Algorithm
+ieee:8836079 | 2019 | T | Design of High-Rate LDPC Codes Based on Matroid Theory
+ieee:8573763 | 2019 | T | Protograph Based Low-Density Parity-Check Codes Design With Mixed Integer Linear Programming
+ieee:9064256 | 2019 | T | An Efficient Encoding Method for Spatially Coupled Low-Density Parity-Check Codes
+ieee:8792126 | 2019 | T | Construction of Girth-8 QC-LDPC Codes Free of Small Trapping Sets
+ieee:9064210 | 2019 | T | A General Decoder Architecture for LDPC and Polar Codes on Sparse Bipartite Graphs
+ieee:8594652 | 2019 | T | Additive, Structural, and Multiplicative Transformations for the Construction of Quasi-Cyclic LDPC Matrices
+ieee:8849323 | 2019 | T | Girth Properties of Time-Varying SC-LDPC Convolutional Codes
+ieee:8626151 | 2019 | T | On Computing the Multiplicity of Cycles in Bipartite Graphs Using the Degree Distribution and the Spectrum of the Graph
+ieee:8849632 | 2019 | T | AVN-based Elimination of Short Cycles in Tanner Graphs of QC LDPC Codes
+ieee:9125510 | 2019 | T | FPGA assisted design of concatenated LDPC convolutional and BCH codes for optical fiber communications
+ieee:8989394 | 2019 | T | From the Spectrum of the Adjacency Matrix to the Spectrum of Directed Edge Matrix: Counting Cycles of a Bipartite Graph Through a Simple Equation
+ieee:8989134 | 2019 | T | On the Computational Complexity of Finding Bipartite Graphs with a Small Number of Short Cycles and Large Girth
+ieee:8849422 | 2019 | T | Linear Permutation Polynomial Codes
+ieee:8291725 | 2018 | T | On the Tanner Graph Cycle Distribution of Random LDPC, Random Protograph-Based LDPC, and Random Quasi-Cyclic LDPC Code Ensembles
+ieee:8564291 | 2018 | T | Girth Analysis of Tanner (5,11) Quasi-Cyclic LDPC Codes
+ieee:8339512 | 2018 | T | Efficient Search of Compact QC-LDPC and SC-LDPC Convolutional Codes With Large Girth
+ieee:8325286 | 2018 | T | Anti Quasi-Cyclic LDPC Codes
+ieee:8049482 | 2018 | T | Construction of QC-LDPC Codes Based on Pre-Masking and Local Optimal Searching
+ieee:8368304 | 2018 | T | Analytical Lower Bound on the Lifting Degree of Multiple-Edge QC-LDPC Codes With Girth 6
+ieee:8507336 | 2018 | T | QC-LDPC Codes with Fast Encoding for Error Control in NAND Flash Memories
+ieee:7874123 | 2018 | T | On the Construction of LDPC Codes Free of Small Trapping Sets by Controlling Cycles
+ieee:8599317 | 2018 | T | LDPC Code Design via Masking Technology and Progressive Optimization
+ieee:8564322 | 2018 | T | Smart Construct High Girth LDPC Codes Based on Permutation Groups
+ieee:8595774 | 2018 | T | Construction of Irregular QC-LDPC Codes via Arbitrary Degree Distribution Masking Algorithm
+ieee:8456498 | 2018 | T | Algebra-Assisted Construction of Quasi-Cyclic LDPC Codes for 5G New Radio
+ieee:8633521 | 2018 | T | Construction of Reed-Solomon Based Quasi-Cyclic LDPC Codes Based on Protograph
+ieee:8233210 | 2018 | T | Tree-Permutation-Matrix Based LDPC Codes
+ieee:8441303 | 2018 | T | Simulated Annealing Method for Construction of High-Girth QC-LDPC Codes
+ieee:8290933 | 2018 | T | Analytical Lower Bounds on the Size of Elementary Trapping Sets of Variable-Regular LDPC Codes With Any Girth and Irregular Ones With Girth 8
+ieee:8539649 | 2018 | T | Performance of Reed-Solomon Based Quasi-Cyclic LDPC Codes Based on Protograph
+ieee:8350277 | 2018 | T | Lower Bounds on the Lifting Degree of QC-LDPC Codes by Difference Matrices
+ieee:8580758 | 2018 | T | Compact QC-LDPC Block and SC-LDPC Convolutional Codes for Low-Latency Communications
+ieee:8625339 | 2018 | T | A New Algebraic-Based Method for Constructing Protograph LDPC Codes
+ieee:8326474 | 2018 | T | An Approach to Evaluating the Number of Closed Paths in an All-One Base Matrix
+ieee:8039508 | 2018 | T | A New Multi-Edge Metric-Constrained PEG Algorithm for Designing Binary LDPC Code With Improved Cycle-Structure
+ieee:8625328 | 2018 | T | Girth-Eight Reed-Solomon Based QC-LDPC Codes
+ieee:8464851 | 2018 | T | Optimized Short-Length Rate-Adaptive LDPC Codes for Slepian-Wolf Source Coding
+ieee:8625374 | 2018 | T | Computing the Asymptotic Expected Multiplicity of Elementary Trapping Sets (ETSs) in Random LDPC Code Ensembles
+ieee:8437465 | 2018 | T | From Cages to Trapping Sets: A New Technique to Derive Tight Upper Bounds on the Minimum Size of Trapping Sets and Minimum Distance of LDPC Codes
+ieee:8625355 | 2018 | T | On Counting Short Cycles of LDPC Codes Using the Tanner Graph Spectrum
+ieee:8625273 | 2018 | T | Computing the Asymptotic Expected Multiplicity of Leafless Elementary Trapping Sets (LETSs) in Random Irregular LDPC Code Ensembles
+ieee:8323661 | 2018 | T | An approach to evaluating the number of potential cycles in an all-one base matrix
+ieee:8503226 | 2018 | T | Reed-Solomon-Based Quasi-Cyclic LDPC Codes: Designs, Cycle Structure and Erasure Correction
+ieee:8503249 | 2018 | T | Improved Trellis-Based Algorithm for Locating and Breaking Cycles in Bipartite Graphs with Applications to LDPC Codes
+ieee:8323662 | 2018 | T | An approach to evaluating the number of potential cycles in an all-one base matrix
+ieee:8542328 | 2018 | T | Efficient Construction for QC-LDPC Convolutional Codes with Periodic Bit-Filling
+ieee:8225637 | 2018 | T | On Short Cycle Enumeration in Biregular Bipartite Graphs
+ieee:8613426 | 2018 | T | Type-II Quasi-Cyclic LDPC Codes with Girth Eight from Sidon Sequence
+ieee:8613440 | 2018 | T | A Neural Network Lattice Decoding Algorithm
+ieee:7590040 | 2017 | T | Symmetrical Constructions for Regular Girth-8 QC-LDPC Codes
+ieee:7987518 | 2017 | T | A Multi-Gbps Fully Pipelined Layered Decoder for IEEE 802.11n/ac/ax LDPC Codes
+ieee:7888536 | 2017 | T | Explicit APM-LDPC Codes With Girths 6, 8, and 10
+ieee:7940234 | 2017 | T | A Greedy Search Based Method with Optimized Lower Bound for QC-LDPC Codes
+ieee:8322785 | 2017 | T | A LDPC convolutional code optimization method for FTN systems
+ieee:8006816 | 2017 | T | A protograph-based design of quasi-cyclic spatially coupled LDPC codes
+ieee:8230087 | 2017 | T | Construction of IRA-LDPC codes based on identity column vectors
+ieee:7762770 | 2017 | T | Explicit Constructions for Type-1 QC-LDPC Codes With Girth 12
+ieee:7893750 | 2017 | T | Constructing Large Girth QC Protograph LDPC Codes Based on PSD-PEG Algorithm
+ieee:8171065 | 2017 | T | An algebraic approach to design low rate low density parity check code
+ieee:8261240 | 2017 | T | A simple design for large girth LDPC matrix
+ieee:7347352 | 2016 | T | Finite-Length Algebraic Spatially-Coupled Quasi-Cyclic LDPC Codes
+ieee:7491830 | 2016 | T | A subtraction based method for the construction of quasi-cyclic LDPC codes of girth eight
+ieee:7398027 | 2016 | T | Efficient Search of Girth-Optimal QC-LDPC Codes
+ieee:7565543 | 2016 | T | Construction of Quasi-Cyclic LDPC Codes via Masking With Successive Cycle Elimination
+ieee:7593102 | 2016 | T | Improved minimum weight, girth, and ACE distributions in ensembles of short block length irregular LDPC codes constructed using PEG and cyclic PEG (CPEG) algorithms
+ieee:7312464 | 2016 | T | Searching for Binary and Nonbinary Block and Convolutional LDPC Codes
+ieee:7752486 | 2016 | T | Construction of multiple-rate quasi-cyclic LDPC codes with girth eight
+ieee:7546443 | 2016 | T | Recursive construction of quasi-cyclic cycle LDPC codes based on replacement products
+ieee:7593094 | 2016 | T | Improved PEG construction of large girth QC-LDPC codes
+ieee:7833579 | 2016 | T | Construction of QC-LDPC codes based on generalized RS codes with girth larger than 6
+ieee:7562999 | 2016 | T | A base matrix method to construct column weight 3 quasi-cyclic LDPC codes with high girth
+ieee:7575635 | 2016 | T | New Characterization and Efficient Exhaustive Search Algorithm for Leafless Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:7772157 | 2016 | T | Lowering the error floor of short-to-medium length LDPC codes using optimal low-correlated-edge density (OED) PEG Tanner graphs
+ieee:7752623 | 2016 | T | Construction of quasi-cyclic low-density parity-check codes using Hamming codewords
+ieee:7774904 | 2016 | T | Quasi-Cyclic Low-Density Parity-Check Codes Based on Progressive Cycle Growth Algorithm
+ieee:7593119 | 2016 | T | (3, L) quasi-cyclic LDPC codes: Simplified exhaustive search and designs
+ieee:7764787 | 2016 | T | Novel types of cyclically-coupled quasi-cyclic LDPC block codes
+ieee:7440704 | 2016 | T | Modified PEG algorithm for large girth Quasi-cyclic protograph LDPC codes
+ieee:7328274 | 2016 | T | Construction of Near-Capacity Protograph LDPC Code Sequences With Block-Error Thresholds
+ieee:7924880 | 2016 | T | Analysis and elimination of short cycles in LDPC convolutional codes
+ieee:7317762 | 2016 | T | Row and Column Extensions of 4-Cycle Free LDPC Codes
+ieee:8680529 | 2016 | T | Construction of Large Girth QC-LDPC Codes Based on Finite Geometries and Fast Searching Method
+ieee:7869546 | 2016 | T | The finite length analysis of spatially-coupled codes for 1-D magnetic recording channels
+ieee:7558194 | 2016 | T | Binary Linear Locally Repairable Codes
+ieee:7843926 | 2016 | T | Novel method for improving performances of normalized MS decoder using WIMAX code
+ieee:7527261 | 2016 | T | Construction of parallelized-decoding LDPC codes
+ieee:7511551 | 2016 | T | An efficient exhaustive search algorithm for elementary trapping sets of variable-regular LDPC codes
+ieee:7541754 | 2016 | T | Minimal characterization and provably efficient exhaustive search algorithm for elementary trapping sets of variable-regular LDPC codes
+ieee:7843313 | 2016 | T | An efficient algorithm for determining the girth and ACE distributions in LDPC code Tanner graphs
+ieee:7006675 | 2015 | T | On Characterization and Efficient Exhaustive Search of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:7340967 | 2015 | T | Joint design of QC-LDPC codes for cascade-based multisource coded cooperation
+ieee:7265216 | 2015 | T | Rate-compatible LDPC codes based on the PEG algorithm for relay communication systems
+ieee:7406090 | 2015 | T | Research on Performance of Visible Light Communication Based on LDPC Code
+ieee:10855193 | 2015 | T | Construction of Type-II QC LDPC Codes Based on Perfect Cyclic Difference Set
+ieee:7387584 | 2015 | T | New PEG algorithm with low error floor for construction of irregular LDPC codes
+ieee:7497930 | 2015 | T | Improved decoding of LDPC codes by variable-to-check residual belief propagation
+ieee:7489843 | 2015 | T | Novel construction and cycle analysis of Quasi-Cyclic Low-Density Parity-Check codes
+ieee:7147163 | 2015 | T | Fast estimation of error floor effect for irregular low-density parity-check codes
+ieee:7387582 | 2015 | T | Linear-encodable rate-compatible QC-LDPC codes with low error floor
+ieee:7426007 | 2015 | T | Improved quasi-cyclic LDPC codes based on Euclidean geometry
+ieee:7086871 | 2015 | T | A link between consensus building and Low Density Parity Check decoding
+ieee:7072507 | 2015 | T | Impact of Redundant Checks on the LP Decoding Thresholds of LDPC Codes
+ieee:10856913 | 2015 | T | A Novel Construction Approach of Irregular LDPC Codes Based on QC Structure and Zigzag Pattern
+ieee:7354346 | 2015 | T | Construction of LDPC codes based on resolvable group divisible designs
+ieee:7249017 | 2015 | T | Construction of protographs for large-girth structured LDPC convolutional codes
+ieee:7405686 | 2015 | T | (7, 4)-Hamming generalized LDPC code for Rayleigh fading channel
+ieee:7163287 | 2015 | T | A New Scheme of High Performance Quasi-Cyclic LDPC Codes With Girth 6
+ieee:7073646 | 2015 | T | Stopping Set Elimination by Parity-Check Matrix Extension via Integer Linear Programming
+ieee:7282621 | 2015 | T | A PEG-like LDPC code design avoiding short trapping sets
+ieee:7282488 | 2015 | T | Improved message-passing algorithm for counting short cycles in bipartite graphs
+ieee:7178520 | 2015 | T | Enhancing LDPC code performance using pilot bits
+ieee:7282414 | 2015 | T | The multi-step PEG and ACE constrained PEG algorithms can design the LDPC codes with better cycle-connectivity
+ieee:7154407 | 2015 | T | Polar Codes: Graph Representation and Duality
+ieee:6932472 | 2014 | T | On the Construction of Low Error Floor LDPC Codes on Rectangular Lattices
+ieee:6763131 | 2014 | T | Deterministic Girth-Eight QC-LDPC Codes with Large Column Weight
+ieee:6992175 | 2014 | T | Lower error floor of LDPC codes based on trapping sets elimination
+ieee:6979809 | 2014 | T | A construction of LDPC convolutional codes with close distance bounds
+ieee:6847681 | 2014 | T | On Characterization of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:6881655 | 2014 | T | Large Girth Column-Weight Two and Three LDPC Codes
+ieee:6925956 | 2014 | T | PEG-like algorithm for LDPC codes
+ieee:6875275 | 2014 | T | Quasi-cyclic LDPC codes on two arbitrary sets of a finite field
+ieee:6970869 | 2014 | T | Explicit constructions for type-1 QC-LDPC codes with girth at least ten
+ieee:7015290 | 2014 | T | Low Density Parity Check codes with quasi-cyclic structure and zigzag pattern
+ieee:7039123 | 2014 | T | Sparse generator matrices for some families of Quasi-Cyclic Low-Density Parity-Check codes
+ieee:6984679 | 2014 | T | Quasi-Cyclic LDPC Codes Based on the Improved Combining Method
+ieee:6951946 | 2014 | T | Connectivity of cycles constrained Root-LDPC codes for block fading channels
+ieee:6955087 | 2014 | T | On the equivalence of the ACE and the EMD of a cycle for the ACE spectrum constrained LDPC codes
+ieee:6863699 | 2014 | T | Quasi-Cyclic LDPC Codes Based on Pre-Lifted Protographs
+ieee:6856622 | 2014 | T | Optimized geometric LDPC codes with quasi-cyclic structure
+ieee:6804221 | 2014 | T | Decoding of quasi-cyclic LDPC codes with section-wise cyclic structure
+ieee:6715252 | 2014 | T | Construction of Irregular QC-LDPC Codes via Masking with ACE Optimization
+ieee:6856152 | 2014 | T | Algebraic Quasi-Cyclic LDPC Codes: Construction, Low Error-Floor, Large Girth and a Reduced-Complexity Decoding Scheme
+ieee:6811346 | 2014 | T | An improved puncturing method for rate-compatible LDPC codes
+ieee:6955086 | 2014 | T | On characterization of elementary trapping sets of variable-regular LDPC codes
+ieee:6875339 | 2014 | T | LDPC convolutional codes versus QC LDPC block codes in communication standard scenarios
+ieee:6725573 | 2014 | T | Efficient Progressive Edge-Growth Algorithm Based on Chinese Remainder Theorem
+ieee:6626647 | 2014 | T | On Decoding Irregular Tanner Codes With Local-Optimality Guarantees
+ieee:6811288 | 2014 | T | Node-splitting constructions for large girth irregular and protograph LDPC codes
+ieee:7054299 | 2014 | T | Work in progress: A new algorithm to improve the decoding success probability of Raptor code
+ieee:6883618 | 2014 | T | An analysis into the loopy belief propagation algorithm over short cycles
+ieee:6887154 | 2014 | T | Advanced coded modulation for ultrahigh speed optical transmission
+ieee:6365873 | 2013 | T | A Rate-Compatible Puncturing Scheme for Finite-Length LDPC Codes
+ieee:6620709 | 2013 | T | Necessary conditions for quasi-cyclic LDPC codes to have a given girth
+ieee:6400356 | 2013 | T | Construction of Girth-Eight QC-LDPC Codes from Greatest Common Divisor
+ieee:6626311 | 2013 | T | QC-LDPC Codes with Girth Eight Based on Independent Row-Column Mapping Sequence
+ieee:6475181 | 2013 | T | On the Girth of Quasi-Cyclic Protograph LDPC Codes
+ieee:6519409 | 2013 | T | Column-Weight Three QC LDPC Codes with Girth 20
+ieee:6560010 | 2013 | T | Several Explicit Constructions for (3,L) QC-LDPC Codes with Girth at Least Eight
+ieee:6676434 | 2013 | T | Construction of Quasi-Cyclic LDPC codes with large girth based on circulant permutation matirx
+ieee:6615361 | 2013 | T | An efficient LDPC encoder based on block-column-cycle structure for CMMB
+ieee:6629867 | 2013 | T | Stressing the BER simulation of LDPC codes in the error floor region using GPU clusters
+ieee:6472317 | 2013 | T | Design of Multiple-Edge Protographs for QC LDPC Codes Avoiding Short Inevitable Cycles
+ieee:6587468 | 2013 | T | Bounds on the Size of Parity-Check Matrices for Quasi-Cyclic Low-Density Parity-Check Codes
+ieee:6694726 | 2013 | T | Construction of quasi-cyclic LDPC codes based on euclidean geometries
+ieee:6468978 | 2013 | T | Breaking Cycles with Dummy Bits: Improved Rate-Compatible LDPC Codes with Short Block Lengths
+ieee:6560065 | 2013 | T | Construction of High-Rate Regular Quasi-Cyclic LDPC Codes Based on Cyclic Difference Families
+ieee:6482638 | 2013 | T | Hierarchical and High-Girth QC LDPC Codes
+ieee:6718855 | 2013 | T | LDPC codes based on MPEG algorithm for block fading channels
+ieee:6387307 | 2013 | T | The Cycle Consistency Matrix Approach to Absorbing Sets in Separable Circulant-Based LDPC Codes
+ieee:6466338 | 2013 | T | Construction of Structured Regular LDPC Codes: A Design-Theoretic Approach
+ieee:6698188 | 2013 | T | A class of structured quasi-cyclic LDPC codes based on planar difference families
+ieee:6698119 | 2013 | T | A construction of LDPC codes with low error floors
+ieee:6747811 | 2013 | T | An efficient LDPC encoder based on block-row-cycle structure for CMMB
+ieee:6459503 | 2013 | T | Design of Binary and Nonbinary Codes from Lifting of Girth-8 Cycle Codes with Minimum Lengths
+ieee:6403864 | 2013 | T | Error Rate Estimation of Low-Density Parity-Check Codes Decoded by Quantized Soft-Decision Iterative Algorithms
+ieee:6566542 | 2013 | T | Performance analysis of QC-LDPC construction based on distance graph
+ieee:6677054 | 2013 | T | Length-compatible PEG-CRT algorithm
+ieee:6502981 | 2013 | T | An efficient exhaustive low-weight codeword search for structured LDPC codes
+ieee:6663929 | 2013 | T | Probabilistic analysis of cycles in random Tanner graphs
+ieee:6342879 | 2013 | T | Distributed Network-Channel Codes Design with Short Cycles Removal
+ieee:6648352 | 2013 | T | Robust Rate-Compatible Punctured LDPC Convolutional Codes
+ieee:6620513 | 2013 | T | Deterministic constructions for large girth protograph LDPC codes
+ieee:6150653 | 2012 | T | Counting Short Cycles of Quasi Cyclic Protograph LDPC Codes
+ieee:6328513 | 2012 | T | Generalised Quasi-Cyclic LDPC codes based on Progressive Edge Growth Techniques for block fading channels
+ieee:6542860 | 2012 | T | Construction of QC-LDPC codes with girth larger than eight based on GPU
+ieee:6325193 | 2012 | T | New quasi-cyclic LDPC codes with girth at least eight based on Sidon sequences
+ieee:6328515 | 2012 | T | Knowledge-aided reweighted belief propagation decoding for regular and irregular LDPC codes with short blocks
+ieee:6261588 | 2012 | T | Low-Latency Reweighted Belief Propagation Decoding for LDPC Codes
+ieee:6202041 | 2012 | T | Efficient encoding of quasi-cyclic LDPC codes with continuously variable length
+ieee:6084747 | 2012 | T | Searching for Voltage Graph-Based LDPC Tailbiting Codes With Large Girth
+ieee:6164079 | 2012 | T | Maximum-Girth Cylinder-Type Block-Circulant LDPC Codes
+ieee:6145509 | 2012 | T | Quasi-Cyclic LDPC Codes: Influence of Proto- and Tanner-Graph Structure on Minimum Hamming Distance Upper Bounds
+ieee:6259854 | 2012 | T | Efficient Algorithm for Finding Dominant Trapping Sets of LDPC Codes
+ieee:6157090 | 2012 | T | Construction of One-Coincidence Sequence Quasi-Cyclic LDPC Codes of Large Girth
+ieee:6249279 | 2012 | T | A fast searching method for the construction of QC-LDPC codes with large girth
+ieee:6398190 | 2012 | T | An efficient algorithm for irregular Low density Parity Check code with reduced computational complexity and error floor
+ieee:6363723 | 2012 | T | Design of bilayer QC-LDPC codes for decode-and forward based cooperative relaying communication
+ieee:6307785 | 2012 | T | Progressive Differences Convolutional Low-Density Parity-Check Codes
+ieee:6398982 | 2012 | T | Hybrid Construction of Long LDPC Codes with Very Low Density
+ieee:6325217 | 2012 | T | High-rate QC LDPC codes of short and moderate length with good girth profile
+ieee:6418989 | 2012 | T | Improvements of quasi-cyclic low-density parity-check codes based on hybrid structures of BIBD's schemes
+ieee:6405647 | 2012 | T | A Construction Method of QC-LDPC Codes without Short Cycles
+ieee:6388262 | 2012 | T | Necessary conditions for avoiding cycles of length 4 or 6 in regular quasi-cyclic LDPC codes
+ieee:6398992 | 2012 | T | An Efficient Method of Constructing Quasi-Cyclic Low-Density Parity-Check Codes
+ieee:6047544 | 2012 | T | A New Construction of Structured Binary Regular LDPC Codes Based on Steiner Systems with Parameter t>2
+ieee:6284129 | 2012 | T | A greedy search for improved QC LDPC codes with good girth profile and degree distribution
+ieee:6202087 | 2012 | T | A serial concatenated scheme for LDPC code to achieve better error correction performance
+ieee:6413492 | 2012 | T | Design of length compatible quasi cyclic LDPC code
+ieee:6399027 | 2012 | T | Low Complexity Progressive Edge-Growth Algorithm Based on Chinese Remainder Theorem
+ieee:6294713 | 2012 | T | Novel technique for scaling down LDPC code lengths in DVB-T2 standard
+ieee:6404658 | 2012 | T | Constructing good QC-LDPC codes by pre-lifting protographs
+ieee:6284128 | 2012 | T | On the girth of quasi cyclic protograph LDPC codes
+ieee:6208082 | 2012 | T | Girth analysis of polynomial-based time-invariant LDPC convolutional codes
+ieee:6118253 | 2012 | T | Analysis and Design of Binary Message Passing Decoders
+ieee:6376924 | 2012 | T | Message-passing decoding beyond the girth with local-optimality guarantees
+ieee:6489223 | 2012 | T | Iterative detection and decoding for MIMO systems with knowledge-aided belief propagation algorithms
+ieee:6325182 | 2012 | T | A puncturing algorithm for rate-compatible LDPC convolutional codes
+ieee:6284007 | 2012 | T | Linear-programming decoding of Tanner codes with local-optimality certificates
+ieee:5654635 | 2011 | T | Recursive Design of High Girth (2,k) LDPC Codes from (k,k) LDPC Codes
+ieee:6146165 | 2011 | T | Quasi Cyclic-LDPC codes based on PEG algorithm with maximized girth property
+ieee:5696808 | 2011 | T | Iterative Construction of Regular LDPC Codes from Independent Tree-Based Minimum Distance Bounds
+ieee:6150451 | 2011 | T | A new interconnection structure method for QC-LDPC codes
+ieee:6077622 | 2011 | T | Design of good QC-LDPC codes without small girth in the p-plane
+ieee:5768233 | 2011 | T | A time-saving algorithm for constructing QC-LDPC codes based on PEG algorithm
+ieee:6197838 | 2011 | T | Construction of QC-LDPC codes based on PSO algorithm
+ieee:6197836 | 2011 | T | A class of (3, k) quasi-cyclic LDPC codes from difference sequences with girth 8
+ieee:5872931 | 2011 | T | Analysis of balanced cycles of QC-LDPC codes
+ieee:6155922 | 2011 | T | Circulant search algorithm for the construction of QC-LDPC codes
+ieee:6158218 | 2011 | T | A novel puncturing scheme for rate-compatible low-density parity-check codes
+ieee:6086319 | 2011 | T | A Modified Construction Method of Low-Density Parity-Check Codes Based on PEGPC
+ieee:5671565 | 2011 | T | On Girth Conditioning for Low-Density Parity-Check Codes
+ieee:5759853 | 2011 | T | Design of turbo codes without 4-cycles in Tanner graph representation for message passing algorithm
+ieee:6033743 | 2011 | T | On error correction capability of bit-flipping algorithm for LDPC codes
+ieee:5695116 | 2011 | T | LP Decoding of Regular LDPC Codes in Memoryless Channels
+ieee:5958912 | 2011 | T | New QC-LDPC codes implementation on FPGA platform in Rayleigh fading environment
+ieee:5759741 | 2011 | T | Strong Secrecy on the Binary Erasure Wiretap Channel Using Large-Girth LDPC Codes
+ieee:6034273 | 2011 | T | Double-Hamming based QC LDPC codes with large minimum distance
+ieee:5990282 | 2011 | T | An Improved Construction Method of QC-LDPC Codes Based on the PEG Algorithm
+ieee:5730557 | 2011 | T | Lowering the Error Floor of LDPC Codes Using Cyclic Liftings
+ieee:6033699 | 2011 | T | An efficient algorithm for finding dominant trapping sets of irregular LDPC codes
+ieee:6125390 | 2011 | T | LDPC codes based on Progressive Edge Growth techniques for block fading channels
+ieee:6004903 | 2011 | T | Novel intentional puncturing schemes for finite-length irregular LDPC codes
+ieee:6034272 | 2011 | T | Protograph design with multiple edges for regular QC LDPC codes having large girth
+ieee:6125306 | 2011 | T | Finite-length rate-compatible LDPC codes based on extension techniques
+ieee:5963333 | 2011 | T | Partially Quasi-Cyclic Protograph-Based LDPC Codes
+ieee:5962723 | 2011 | T | Controlling LDPC Absorbing Sets via the Null Space of the Cycle Consistency Matrix
+ieee:6033864 | 2011 | T | Dynamic scheduling-aided decoding strategies for LDPC convolutional codes with rational parity-check matrices
+ieee:6034230 | 2011 | T | Some voltage graph-based LDPC tailbiting codes with large girth
+ieee:6034068 | 2011 | T | Absorbing set spectrum approach for practical code design
+ieee:6027427 | 2011 | T | Construction of high-rate QC-LDPC codes
+ieee:5963620 | 2011 | T | Effective Informed Dynamic Scheduling for Belief Propagation Decoding of LDPC Codes
+ieee:6088962 | 2011 | T | The power cost of over-designing codes
+ieee:5668918 | 2011 | T | Iterative Algorithms for Decoding a Class of Two-Step Majority-Logic Decodable Cyclic Codes
+ieee:5898001 | 2011 | T | Unavoidable Cycles in Polynomial-Based Time-Invariant LDPC Convolutional Codes
+ieee:5872141 | 2011 | T | Combinatorial Properties as Predictors for the Performance of the Sum-Product Algorithm
+ieee:5682631 | 2010 | T | On the reduced-complexity of LDPC decoders for beyond 400 Gb/s serial optical transmission
+ieee:5467496 | 2010 | T | Performance and Complexity of 32 k-bit Binary LDPC Codes for Magnetic Recording Channels
+ieee:5680317 | 2010 | T | A design of rate-adaptive LDPC codes for distributed source coding using PEG algorithm
+ieee:5656484 | 2010 | T | Construction of protograph LDPC codes based on Jacket matrices
+ieee:5541895 | 2010 | T | Construction of quasi cyclic LDPC with ACE constraint
+ieee:5456061 | 2010 | T | Construction of quasi-cyclic LDPC codes based on a two-dimensional MDS code
+ieee:5437420 | 2010 | T | On Trapping Sets and Guaranteed Error Correction Capability of LDPC Codes and GLDPC Codes
+ieee:5513639 | 2010 | T | New low-density parity-check codes with large girth based on hypergraphs
+ieee:5634050 | 2010 | T | Reverse Concatenated Coded Modulation for High-Speed Optical Communication
+ieee:5716175 | 2010 | T | Novel code-construction of high rate (3, k) regular LDPC codes
+ieee:6073063 | 2010 | T | Ruling out small stopping sets and small girth in Tanner graph of QC-LDPC code
+ieee:5674261 | 2010 | T | Hybrid construction of quasi-cyclic low-density parity-check codes with large girth based on euclidean geometries
+ieee:5513631 | 2010 | T | Decoding of LDPC convolutional codes with rational parity-check matrices from a new graphical perspective
+ieee:5613902 | 2010 | T | An efficient algorithm for finding dominant trapping sets of LDPC codes
+ieee:5466541 | 2010 | T | Error Correction Capability of Column-Weight-Three LDPC Codes Under the Gallager A Algorithm—Part II
+ieee:5594175 | 2010 | T | Modified Progressive Edge-Growth Algorithm for Fast-Encoding LDPC Codes
+ieee:5513612 | 2010 | T | LP decoding of regular LDPC codes in memoryless channels
+ieee:5513640 | 2010 | T | Circulant arrays: Rank analysis and construction of quasi-cyclic LDPC codes
+ieee:5650164 | 2010 | T | A new construction of irregular LDPC convolutional codes with cycle removal
+ieee:5513605 | 2010 | T | Lowering the error floor of LDPC codes using cyclic liftings
+ieee:5454137 | 2010 | T | On absorbing sets of structured sparse graph codes
+ieee:5716198 | 2010 | T | (5, k) regular LDPC codes using novel code-construction
+ieee:5674263 | 2010 | T | Protograph design for QC LDPC codes with large girth
+ieee:5635634 | 2010 | T | Regular Quasi-cyclic LDPC Codes with Girth 6 from Prime Fields
+ieee:5689706 | 2010 | T | Improved method for detecting the short cycles of LDPC codes
+ieee:5613896 | 2010 | T | Towards improved LDPC code designs using absorbing set spectrum properties
+ieee:5683369 | 2010 | T | A Class of Generalized Quasi-Cyclic LDPC Codes: High-Rate and Low-Complexity Encoder for Data Storage Devices
+ieee:5478744 | 2010 | T | Cycle analysis of time-invariant LDPC convolutional codes
+ieee:5613871 | 2010 | T | Cycle analysis of time-variant LDPC convolutional codes
+ieee:4689312 | 2009 | T | Multi-Gb/s LDPC Code Design and Implementation
+ieee:5371660 | 2009 | T | A new method of detecting cycles in Tanner graph of LDPC codes
+ieee:5295850 | 2009 | T | Improving performance of some irregular LDPC codes by means of three optimization techniques
+ieee:4939346 | 2009 | T | Large girth quasi-cyclic LDPC codes based on the chinese remainder theorem
+ieee:5072428 | 2009 | T | Row Division Method to Generate QC-LDPC Codes
+ieee:5339908 | 2009 | T | An improved algorithm for constructing QC-LDPC codes based on the PEG algorithm
+ieee:5257171 | 2009 | T | Construction of Quasi-Cyclic LDPC Codes and the Performance on the PR4-Equalized MRC Channel
+ieee:5355908 | 2009 | T | A modified PEG algorithm for construction of LDPC codes with Polynomial of Cycle
+ieee:5174513 | 2009 | T | Geometrically-structured maximum-girth LDPC block and convolutional codes
+ieee:5231310 | 2009 | T | Regular LDPC Codes from Strongly Regular (a ,ß )-Geometries
+ieee:10028701 | 2009 | T | Construction of low-density parity-check codes based on frequency-hopping sequences
+ieee:4796979 | 2009 | T | On the Low Complexity Construction of Quasi-Cyclic Low-Density Parity-Check Codes by Progressive-Block Growth
+ieee:5339739 | 2009 | T | Design of High-Rate LDGM codes
+ieee:5356472 | 2009 | T | A new Quasi-Cyclic low density parity check codes
+ieee:4839030 | 2009 | T | Reversible Low-Density Parity-Check Codes
+ieee:5089484 | 2009 | T | Error rate estimation of low-density parity-check codes on binary symmetric channels using cycle enumeration
+ieee:5233993 | 2009 | T | A random construction of LDPC codes using a sub-optimal search algorithm
+ieee:5205685 | 2009 | T | Short quasi-cyclic LDPC codes from convolutional codes
+ieee:4796985 | 2009 | T | Structured LDPC Codes with Linear Complexity Encoding
+ieee:5068956 | 2009 | T | Cooperative relay channel with LDPC codes constructed from array codes
+ieee:4909226 | 2009 | T | Construction of regular quasi-cyclic LDPC codes based on cosets
+ieee:5300880 | 2009 | T | Girth 4 and Low Minimum Weights' Problems of LDPC Codes in DVB-S2 and Solutions
+ieee:5207892 | 2009 | T | Extended PEG Algorithm for High Rate LDPC Codes
+ieee:5288480 | 2009 | T | A lattice-based systematic recursive construction of quasi-cyclic LDPC codes
+ieee:5044922 | 2009 | T | Guaranteed error correction capability of codes on graphs
+ieee:5351491 | 2009 | T | Generating random Tanner-graphs with large girth
+ieee:4785996 | 2009 | T | LDPC Decoding by Parity Augmentation and Maximization
+ieee:5351658 | 2009 | T | Iterative Decoding using Eigenmessages
+ieee:5118355 | 2009 | T | Decoding a family of dense codes using the Sum-Product Algorithm
+ieee:4389049 | 2008 | T | Construction of Regular Quasi-Cyclic Protograph LDPC Codes Based on Vandermonde Matrices
+ieee:4357432 | 2008 | T | Lowering the Error Floor of Optimized Short-Block-Length LDPC-Coded OFDM via Spreading
+ieee:4670752 | 2008 | T | A novel algorithm of constructing LDPC codes with graph theory
+ieee:6414771 | 2008 | T | Searching the minimum distances of LDPC codes
+ieee:4737397 | 2008 | T | Compressing construction of QC-LDPC codes
+ieee:4697481 | 2008 | T | A new algorithm of counting the number of small stopping sets and girth in QC-LDPC Codes
+ieee:4357296 | 2008 | T | Girth-10 LDPC Codes Based on 3-D Cyclic Lattices
+ieee:4418506 | 2008 | T | Minimum Pseudoweight and Minimum Pseudocodewords of LDPC Codes
+ieee:6414772 | 2008 | T | Construction of good Quasi-Cyclic LDPC codes based on the row vectors of generator matrix
+ieee:4678261 | 2008 | T | Construction of Quasi Cyclic LDPC Codes Based on Girth Opt-PSO Algorithm
+ieee:4609695 | 2008 | T | A Construction of Linearly Encodable QC-LDPC Codes by Grouping Cyclic Shift and Block Elimination
+ieee:4678269 | 2008 | T | Two Algebraic Methods for Constructing Efficiently Encodable Quasi-Cyclic LDPC Codes
+ieee:4524251 | 2008 | T | Generalized Combining Method for Design of Quasi-Cyclic LDPC Codes
+ieee:4533264 | 2008 | T | A Class of Low-Density Parity-Check Convolutional Codes Based on Difference Families
+ieee:4528208 | 2008 | T | Large Girth Low-Density Parity-Check Codes for Long-Haul High-Speed Optical Communications
+ieee:4737391 | 2008 | T | Good encodable irregular quasi-cyclic LDPC codes
+ieee:4608248 | 2008 | T | An effective algorithm for construction of LDPC codes
+ieee:4536705 | 2008 | T | Efficient Encoder Design of the Q-LDPC Codes
+ieee:4737394 | 2008 | T | The analysis of cycle structure for a class of quasi-cyclic LDPC codes
+ieee:4525805 | 2008 | T | A New Approach for the Construction of Powerful LDPC Convolutional Codes
+ieee:4632040 | 2008 | T | Efficient code construction of (3, k) Regular LDPC codes
+ieee:4595145 | 2008 | T | New construction of LDPC convolutional codes
+ieee:5755776 | 2008 | T | On a Class of High-Girth LDPC Codes Based on Finite Multidimensional Lattices
+ieee:4658694 | 2008 | T | Construction of high-girth QC-LDPC codes
+ieee:4658715 | 2008 | T | Codes that have tanner graphs with non-overlapping cycles
+ieee:4595023 | 2008 | T | On the guaranteed error correction capability of LDPC codes
+ieee:4797702 | 2008 | T | Girth of the Tanner graph and error correction capability of LDPC codes
+ieee:4542738 | 2008 | T | A necessary and sufficient condition for determining the girth of quasi-cyclic LDPC codes
+ieee:4773764 | 2008 | T | Improved augmented belief propagation decoding based on oscillation
+ieee:4600167 | 2008 | T | Combinatorial Interleavers for Systematic Regular Repeat-Accumulate Codes [Transactions Letters]
+ieee:4595024 | 2008 | T | Error rate estimation of finite-length low-density parity-check codes decoded by soft-decision iterative algorithms
+ieee:4658712 | 2008 | T | Randomized Progressive Edge-Growth (RandPEG)
+ieee:4489674 | 2008 | T | Design of cages with a randomized progressive edge-growth algorithm
+ieee:4259757 | 2007 | T | LDPC Codes of Arbitrary Girth
+ieee:4106128 | 2007 | T | TS-LDPC Codes: Turbo-Structured Codes With Large Girth
+ieee:4100904 | 2007 | T | LDPC Codes Based on Latin Squares: Cycle Structure, Stopping Set, and Trapping Set Analysis
+ieee:4579179 | 2007 | T | Construction of irregular LDPC codes based on Balanced Incomplete Block Designs
+ieee:4339991 | 2007 | T | Construction of LDPC Codes with Cycles Hold in Tanner Graph
+ieee:4063488 | 2007 | T | LDPC Codes Based on Latin Squares: Cycle Structure, Stopping, and Trapping Set Analysis
+ieee:4276926 | 2007 | T | Quasi-Cyclic Low-Density Parity-Check Codes With Girth Larger Than  $12$
+ieee:4557138 | 2007 | T | Error Rate Estimation of Finite-Length Low-Density Parity-Check Codes on Binary Symmetric Channels Using Cycle Enumeration
+ieee:4454752 | 2007 | T | Short Protograph-Based LDPC Codes
+ieee:4224354 | 2007 | T | A Modified PEG Algorithm for Construction of LDPC Codes with Strictly Concentrated Check-Node Degree Distributions
+ieee:4557555 | 2007 | T | Cycle Analysis and Construction of Protographs for QC LDPC Codes With Girth Larger Than 12
+ieee:4155636 | 2007 | T | A Measure of the Girth Histogram for Improved Girth-Conditioning Construction of LDPC Codes
+ieee:4446102 | 2007 | T | Girth conditioning of LDPC codes through modified breadth first search algorithm
+ieee:4039683 | 2007 | T | Construction of Regular and Irregular LDPC Codes: Geometry Decomposition and Masking
+ieee:4557390 | 2007 | T | On Deriving Good LDPC Convolutional Codes from QC LDPC Block Codes
+ieee:4289999 | 2007 | T | Relation Between Parity-Check Matrixes and Cycles of Associated Tanner Graphs
+ieee:4728629 | 2007 | T | Construction of Regular and Irregular LDPC Codes using (n, {k1, k2}, 1) Block Design
+ieee:4259740 | 2007 | T | Cycle and Distance Properties of Structured LDPC Codes Based on Circulant Permutation Matrices
+ieee:4557392 | 2007 | T | On Codes Constructed by Generalized Kronecker Product
+ieee:4212898 | 2007 | T | Optimized LDPC Codes for OFDM and Spread OFDM in Correlated Channels
+ieee:4557574 | 2007 | T | Explicit Construction of Type-II QC LDPC Codes with Girth at least 6
+ieee:4381604 | 2007 | T | Construction of Girth 8 LDPC Codes based on Multidimensional Finite Lattices
+ieee:4557316 | 2007 | T | A Combinatorial Family of Near Regular LDPC Codes
+ieee:1580676 | 2006 | T | Structured LDPC codes for high-density recording: large girth and low error floor
+ieee:5195491 | 2006 | T | An improved PEG construction of irregular LDPC codes by conditioning low-degree nodes
+ieee:5195480 | 2006 | T | Lower bounds of weights and distances of good LDPC codes
+ieee:1614101 | 2006 | T | On the girth of tanner (3, 5) quasi-cyclic LDPC codes
+ieee:5195621 | 2006 | T | A design of LDPC codes with large girth based on the sub-matrix shifting
+ieee:4129289 | 2006 | T | A Method of Counting the Number of Cycles in LDPC Codes
+ieee:5195498 | 2006 | T | Construction of good quasi-cyclic LDPC codes
+ieee:1638625 | 2006 | T | Lifting methods for quasi-cyclic LDPC codes
+ieee:4036049 | 2006 | T | Generalized Construction of Quasi-Cyclic Regular LDPC Codes Based on Permutation Matrices
+ieee:4036048 | 2006 | T | A Combining Method of Structured LDPC Codes from Affine Permutation Matrices
+ieee:1684779 | 2006 | T | Performance of turbo irregular LDPC codes
+ieee:4149306 | 2006 | T | Construction of Large Girth (3,k) LDPC Codes Based on Cuboid
+ieee:1710383 | 2006 | T | A Turbo-Decoding Message-Passing Algorithm for Sparse Parity-Check Matrix Codes
+ieee:1618876 | 2006 | T | Code construction and FPGA implementation of a low-error-floor multi-rate low-density Parity-check code decoder
+ieee:4024288 | 2006 | T | The Minimal Product Parity Check Matrix and Its Application
+ieee:4063991 | 2006 | T | A Class of Improved Low-Density Parity-Check Codes Constructed Based on Gallager's Form
+ieee:1683078 | 2006 | T | Improved Belief Propagation (BP) Decoding for LDPC Codes with a large number of short cycles
+ieee:1661848 | 2006 | T | Shortened Array Codes of Large Girth
+ieee:4024284 | 2006 | T | Error Floors of LDPC Codes on the Binary Symmetric Channel
+ieee:4119258 | 2006 | T | A Euclidean Geometry Based Algebraic Construction Technique for Girth-8 Gallager LDPC Codes
+ieee:4135347 | 2006 | T | Design Considerations and Performance Analysis of Good π-Rotation LDPC Codes
+ieee:4149322 | 2006 | T | Cycle Properties Analysis of Matrix-Filled LDPC Codes
+ieee:4129240 | 2006 | T | Very Large Girth Column-weight two Quasi-cyclic LDPC Codes
+ieee:4150746 | 2006 | T | CTH14-6: Error Correction Using a Message-Passing Decoder to Process Cyclic Redundancy Checks
+ieee:1644558 | 2006 | T | Capacity-Approaching LDPC Codes with Low Error Floors for High-Speed Digital Communications
+ieee:4036088 | 2006 | T | Which Codes Have 4-Cycle-Free Tanner Graphs?
+ieee:1683938 | 2006 | T | Which Codes Have$4$-Cycle-Free Tanner Graphs?
+ieee:4035925 | 2006 | T | A Compact Construction for LDPC Codes using Permutation Polynomials
+ieee:4123943 | 2006 | T | Construction of Girth 8 LDPC Codes based on Finite Lattice Geometries
+ieee:4036005 | 2006 | T | Analysis of One Step Majority Logic Decoders Constructed From Faulty Gates
+ieee:1580807 | 2006 | T | Algebraic construction of sparse matrices with large girth
+ieee:4036077 | 2006 | T | An Efficient Girth-Locating Algorithm for Quasi-Cyclic LDPC Codes
+ieee:1519179 | 2005 | T | Partition-and-shift LDPC codes
+ieee:1549580 | 2005 | T | Performance Analysis and Design of (3, ρ ) - Regular Quasi Cyclic LDPC Codes
+ieee:1463924 | 2005 | T | Partition-and-shift LDPC codes for high density magnetic recording
+ieee:1468309 | 2005 | T | Quasi-cyclic LDPC codes for fast encoding
+ieee:1522647 | 2005 | T | LDPC codes from generalized polygons
+ieee:1506715 | 2005 | T | A combining method of quasi-cyclic LDPC codes by the Chinese remainder theorem
+ieee:1523759 | 2005 | T | Extension of quasi-cyclic LDPC codes by lifting
+ieee:1630128 | 2005 | T | An Improvement of the PEG Algorithm for LDPC Codes in the Waterfall Region
+ieee:1430473 | 2005 | T | Short-block LDPC codes for a low-frequency power-line communications system
+ieee:1523621 | 2005 | T | Girth analysis of Tanner's (3, 5) QC LDPC codes
+ieee:1377521 | 2005 | T | Regular and irregular progressive edge-growth tanner graphs
+ieee:1543360 | 2005 | T | High girth LDPC codes construction based on combinatorial design
+ieee:1556819 | 2005 | T | On maximum-length linear congruential-sequences-based low-density parity-check codes
+ieee:1415906 | 2005 | T | Error floor investigation and girth optimization for certain types of low-density parity check codes
+ieee:1493379 | 2005 | T | A new random construction for low-density parity-check codes
+ieee:1402646 | 2005 | T | Construction of low-density parity-check codes by superposition
+ieee:1618129 | 2005 | T | Low-density parity-check codes based on sparse binary sequences
+ieee:1577854 | 2005 | T | VLSI implementation of a low-error-floor and capacity-approaching low-density parity-check code decoder with multi-rate capacity
+ieee:1531903 | 2005 | T | Construction of LDPC codes for AWGN and binary erasure channels based on finite fields
+ieee:1549481 | 2005 | T | Algorithmic and combinatorial analysis of trapping sets in structured LDPC codes
+ieee:1579967 | 2005 | T | Coset-based quasi-cyclic LDPC codes for optimal overlapped message passing decoding
+ieee:1577831 | 2005 | T | Generalized quad, hex, and octagon LDPC codes
+ieee:1549400 | 2005 | T | Construction of structured LDPC codes for AWGN and binary erasure channels
+ieee:1431126 | 2005 | T | On the application of factor graphs and the sum-product algorithm to ISI channels
+ieee:1499067 | 2005 | T | Iterative decoding of linear block codes: a parity-check orthogonalization approach
+ieee:1576587 | 2005 | T | Construction of low-density parity-check convolutional codes through progressive edge-growth
+ieee:1515671 | 2005 | T | Iteratively decodable codes from orthogonal arrays for optical communication systems
+ieee:1523756 | 2005 | T | A class of quasi-cyclic regular LDPC codes from cyclic difference families with girth 8
+ieee:1599819 | 2005 | T | Improvements on Accelerating Iterative Decoding Using Eigenmessages
+ieee:1651870 | 2005 | T | A performance improvement and error floor avoidance technique for belief propagation decoding of LDPC codes
+ieee:1365275 | 2004 | T | Grouping-and-shifting designs for structured LDPC codes with large girth
+ieee:1312524 | 2004 | T | A class of structured LDPC codes with large girth
+ieee:1312607 | 2004 | T | Analysis of the cycle-structure of LDPC codes based on Latin squares
+ieee:1414689 | 2004 | T | Design semialgebraic LDPC codes on u/u+v construction
+ieee:1312604 | 2004 | T | Geometry based designs of LDPC codes
+ieee:1365274 | 2004 | T | Explicit construction of families of LDPC codes with no 4-cycles
+ieee:1312527 | 2004 | T | The semi-algebra low-density parity-check codes
+ieee:1365107 | 2004 | T | Analysis of an algorithm for irregular LDPC code construction
+ieee:1365272 | 2004 | T | Construction of good LDPC codes using dilation matrices
+ieee:1362891 | 2004 | T | LDPC block and convolutional codes based on circulant matrices
+ieee:1300585 | 2004 | T | Systematic recursive construction of LDPC codes
+ieee:1369622 | 2004 | T | Graph-based message-passing schedules for decoding LDPC codes
+ieee:1327837 | 2004 | T | Selective avoidance of cycles in irregular LDPC code construction
+ieee:1299062 | 2004 | T | Several properties of short LDPC codes
+ieee:1337111 | 2004 | T | Explicit construction of families of LDPC codes with no 4-cycles
+ieee:1291813 | 2004 | T | Several Properties of Short LDPC Codes
+ieee:1269971 | 2004 | T | Codes for iterative decoding from partial geometries
+ieee:1317123 | 2004 | T | Quasicyclic low-density parity-check codes from circulant permutation matrices
+ieee:1303577 | 2004 | T | Block-circulant low-density parity-check codes for optical communication systems
+ieee:1327838 | 2004 | T | High-rate girth-eight low-density parity-check codes on rectangular integer lattices
+ieee:1324685 | 2004 | T | MacNeish-Mann theorem based iteratively decodable codes for optical communication systems
+ieee:1300678 | 2004 | T | High code rate low-density parity-check codes for optical communication systems
+ieee:1315671 | 2004 | T | A trellis-based method for removing cycles from bipartite graphs and construction of low density parity check codes
+ieee:1258594 | 2003 | T | High-rate LDPC codes from unital designs
+ieee:1318928 | 2003 | T | Turbo design for LDPC codes with large girth
+ieee:1203996 | 2003 | T | Construction of irregular LDPC codes with low error floors
+ieee:1248291 | 2003 | T | Structured LDPC codes for high-speed long-haul optical communications
+ieee:1258984 | 2003 | T | The design of structured regular LDPC codes with large girth
+ieee:1228045 | 2003 | T | Graph-theoretic construction of low-density parity-check codes
+ieee:1318930 | 2003 | T | Large-girth LDPC codes based on graphical models
+ieee:1228073 | 2003 | T | High-rate, short length, (3,3s)-regular LDPC of girth 6 and 8
+ieee:1204639 | 2003 | T | A forward error correction scheme for ultra long haul optical transmission systems based on low-density parity-check codes
+ieee:1228164 | 2003 | T | Quasicyclic low density parity check codes
+ieee:1193828 | 2003 | T | Low-density parity check codes and iterative decoding for long-haul optical communication systems
+ieee:1195500 | 2003 | T | Graph-theoretic construction of low-density parity-check codes
+ieee:1188406 | 2002 | T | Low complexity LDPC codes for partial response channels
+ieee:1023752 | 2002 | T | Irregular progressive edge-growth (PEG) Tanner graphs
+ieee:1188405 | 2002 | T | Iterative encoding of low-density parity-check codes
+ieee:997067 | 2002 | T | High-rate low-density parity check codes based on anti-Pasch affine geometries
+ieee:965565 | 2001 | T | Extended bit-filling and LDPC code design
+ieee:936272 | 2001 | T | Designing LDPC codes using bit-filling
+ieee:965562 | 2001 | T | Construction of low-density parity-check codes from Kirkman triple systems
+ieee:955146 | 2001 | T | Regular low-density parity-check codes from combinatorial designs
+ieee:965567 | 2001 | T | Progressive edge-growth Tanner graphs
+ieee:936054 | 2001 | T | Mathematical analysis of iterative decoding of LDPC convolutional codes
+ieee:936269 | 2001 | T | A heuristic search for good low-density parity-check codes at short block lengths
+ieee:965634 | 2001 | T | An efficient decoding algorithm for cycle-free convolutional codes and its applications
+ieee:959255 | 2001 | T | Low-density parity-check codes based on finite geometries: a rediscovery and new results
+ieee:910573 | 2001 | T | Codes on graphs: normal realizations
+ieee:11493571 | 2026 | - | A New NB-LDPC Code Construction Method With Arbitrary Generalized Girth
+arxiv:2601.05340v1 | 2026 | - | The Number of Cycles of Bi-regular Tanner Graphs in Terms of the Eigenvalues of the Adjacency Matrix
+arxiv:2601.08636v1 | 2026 | - | Quantum CSS LDPC Codes based on Dyadic Matrices for Belief Propagation-based Decoding
+arxiv:2601.08824v3 | 2026 | - | Breaking the Orthogonality Barrier in Quantum LDPC Codes
+arxiv:2601.08927v2 | 2026 | - | Two-dimensional Entanglement-assisted Quantum Quasi-cyclic Low-density Parity-check Codes
+arxiv:2601.09674v2 | 2026 | - | Counting and Entropy Bounds for Structure-Avoiding Spatially-Coupled LDPC Constructions
+arxiv:2601.10170v1 | 2026 | - | On Existence of Girth-8 QC-LDPC Code with Large Column Weight: Combining Mirror-sequence with Classification Modulo Ten
+arxiv:2603.10192v1 | 2026 | - | Learning to Decode Quantum LDPC Codes Via Belief Propagation
+arxiv:2603.25824v1 | 2026 | - | Exploiting the Degrees of Freedom: Multi-Dimensional Spatially-Coupled Codes Based on Gradient Descent
+arxiv:2604.07365v1 | 2026 | - | Tunneling-Augmented Simulated Annealing for Short-Block LDPC Code Construction
+arxiv:2604.12332v2 | 2026 | - | Turán-Theoretic Bounds on Several Elementary Trapping Sets in LDPC Codes
+arxiv:2604.15307v1 | 2026 | - | Heuristic Search for Minimum-Distance Upper-Bound Witnesses in Quantum APM-LDPC Codes
+arxiv:2604.20838v2 | 2026 | - | High-Girth Regular Quantum LDPC Codes from Affine-Coset Structures
+arxiv:2604.27817v1 | 2026 | - | High-Girth Regular Quantum LDPC Codes from Square-Base Hypergraph Products via CPM Lifts
+arxiv:2605.01942v1 | 2026 | - | Combinatorial Analysis of Dyadic and Quasi-Dyadic Codes
+arxiv:2605.14170v1 | 2026 | - | Multiple-Bases Belief Propagation List Decoding for Quantum LDPC Codes
+arxiv:2605.18323v1 | 2026 | - | Existence and Counting Bounds for High-Memory Spatially-Coupled Codes via the Combinatorial Nullstellensatz
+arxiv:2605.23894v1 | 2026 | - | A Two-Branch Finite-Field Construction for Regular CSS LDPC Bases
+arxiv:2606.11454v1 | 2026 | - | Lifted Gabidulin Construction for LDPC Representations of Finite Geometry Codes
+ieee:11195217 | 2025 | - | Efficient Mitigation of Error Floors in Quantum Error Correction Using Non-Binary Low-Density Parity-Check Codes
+ieee:11154564 | 2025 | - | Quantum Error Correction with Girth-16 Non-Binary LDPC Codes via Affine Permutation Construction
+ieee:11154589 | 2025 | - | Quantum CSS LDPC Codes with Quasi-Dyadic Structure
+ieee:11195424 | 2025 | - | Optimizing Hypergraph Product Codes with Random Walks, Simulated Annealing and Reinforcement Learning
+ieee:10978743 | 2025 | - | Learning to Decode Non-Binary LDPC Codes
+arxiv:2501.07363v2 | 2025 | - | Entanglement-Assisted Quantum Quasi-Cyclic LDPC Codes with Transversal Logical Operators
+arxiv:2501.08036v3 | 2025 | - | Decoding Quantum LDPC Codes using Collaborative Check Node Removal
+arxiv:2501.13444v2 | 2025 | - | Explicit Construction of Quantum Quasi-Cyclic Low-Density Parity-Check Codes with Column Weight 2 and Girth 12
+arxiv:2503.01738v1 | 2025 | - | Automorphism Ensemble Decoding of Quantum LDPC Codes
+arxiv:2503.03936v3 | 2025 | - | Construction and Decoding of Quantum Margulis Codes
+arxiv:2503.14058v1 | 2025 | - | Strongly regular generalized partial geometries and associated LDPC codes
+arxiv:2504.17790v2 | 2025 | - | Quantum Error Correction with Girth-16 Non-Binary LDPC Codes via Affine Permutation Construction
+arxiv:2507.00591v1 | 2025 | - | Construction of LDPC convolutional codes with large girth from Latin squares
+arxiv:2507.10185v1 | 2025 | - | High Girth Spatially-Coupled LDPC Codes with Hierarchical Structure
+arxiv:2509.21112v3 | 2025 | - | Adapt or Regress: Rate-Memory-Compatible Spatially-Coupled Codes
+arxiv:2510.14060v2 | 2025 | - | Decoding Correlated Errors in Quantum LDPC Codes
+arxiv:2511.01741v1 | 2025 | - | HyperNQ: A Hypergraph Neural Network Decoder for Quantum LDPC Codes
+arxiv:2511.22183v1 | 2025 | - | Constructions of block MDS LDPC codes from punctured circulant matrices
+ieee:10619120 | 2024 | - | A Joint Code and Belief Propagation Decoder Design for Quantum LDPC Codes
+ieee:10806978 | 2024 | - | Entanglement-Assisted Quasi-Cyclic LDPC Codes
+ieee:10758537 | 2024 | - | Low-Density Lattice Codes Based on Golomb Rulers
+ieee:10622968 | 2024 | - | Cycle-Detection Based Decimation Policies for Lossy Source Encoding
+arxiv:2409.18689v1 | 2024 | - | Fault-Tolerant Belief Propagation for Practical Quantum Memory
+arxiv:2410.07998v1 | 2024 | - | A Graphical Correlation-Based Method for Counting the Number of Global 8-Cycles on the SCRAM Three-Layer Tanner Graph
+arxiv:2410.11111v2 | 2024 | - | A Combinatorial Approach to Avoiding Weak Keys in the BIKE Cryptosystem
+arxiv:2412.02526v1 | 2024 | - | On the lifting degree of girth-8 QC-LDPC codes
+ieee:10390907 | 2023 | - | Density Evolution Analysis for 5G NR Quasi-Cyclic Low Density Parity Check (QC-LDPC) Codes
+ieee:10392287 | 2023 | - | QC-LDPC codes from various Golomb Rulers
+ieee:10161656 | 2023 | - | Neural Belief Propagation Decoding of Quantum LDPC Codes Using Overcomplete Check Matrices
+arxiv:2305.00137v6 | 2023 | - | Spatially-Coupled QLDPC Codes
+arxiv:2310.12556v1 | 2023 | - | An Efficient Algorithm for Counting Cycles in QC and APM LDPC Codes
+arxiv:2310.12657v1 | 2023 | - | 4-Cycle Free Spatially Coupled LDPC Codes with an Explicit Construction
+ieee:9737098 | 2022 | - | Design and Analysis of NB QC-LDPC Codes Over Small Alphabets
+arxiv:2201.11112v1 | 2022 | - | A Number Theoretic Approach to Cycles in LDPC Codes
+arxiv:2203.02052v3 | 2022 | - | A Unified Spatially Coupled Code Design: Threshold, Cycles, and Locality
+arxiv:2208.05795v1 | 2022 | - | An Modified Cole's Importance Sampling Method For Low Error Floor QC-LDPC Codes Construction
+ieee:9570287 | 2021 | - | Some New Constructions of Girth-8 QC-LDPC Codes for Future GNSS
+ieee:9352748 | 2021 | - | A Note on the Girth of (3, 19)-Regular Tanner’s Quasi-Cyclic LDPC Codes
+ieee:9660280 | 2021 | - | Design of Lossy Compression of the Gaussian Source with Protograph LDPC Codes
+ieee:9457656 | 2021 | - | Optimization of Irregular NB QC-LDPC Block Codes over Small Alphabets
+ieee:9542859 | 2021 | - | Log-Domain Decoding of Quantum LDPC Codes Over Binary Finite Fields
+ieee:9359736 | 2021 | - | Low-Density Spreading Codes for NOMA Systems and a Gaussian Separability-Based Design
+ieee:9701750 | 2021 | - | A Short Note on the Girth of Tanner (5,13)-Regular QC-LDPC Codes
+ieee:9518154 | 2021 | - | Trapping Set Analysis of Finite-Length Quantum LDPC Codes
+ieee:9594229 | 2021 | - | Multi Coding Rates Nested Recursive Convolutional Doubly-Orthogonal Codes
+arxiv:2104.00304v3 | 2021 | - | Log-domain decoding of quantum LDPC codes over binary finite fields
+arxiv:2105.03462v1 | 2021 | - | Necessary and Sufficient Girth Conditions for Tanner Graphs of Quasi-Cyclic LDPC Codes
+ieee:10251837 | 2020 | - | An Optimized Algorithm to Construct QC-LDPC Matrix in Compressed Sensing
+ieee:9289268 | 2020 | - | A simple construction for QC-LDPC codes of short lengths with girth at least 8
+ieee:9398883 | 2020 | - | Design of Time-Invariant SC-LDPC Codes Based on PEG Algorithm
+ieee:9174510 | 2020 | - | Construction of Rate (n — 1 )/n Non-Binary LDPC Convolutional Codes via Difference Triangle Sets
+arxiv:2002.06690v1 | 2020 | - | LDPC codes constructed from cubic symmetric graphs
+arxiv:2003.00734v1 | 2020 | - | Binary Representaion for Non-binary LDPC Code with Decoder Design
+arxiv:2006.12147v2 | 2020 | - | Optimization of NB QC-LDPC Block Codes and Their Performance Analysis
+arxiv:2011.14753v3 | 2020 | - | Topologically Driven Methods for Construction Of Multi-Edge Type (Multigraph with nodes puncturing) Quasi-Cyclic Low-density Parity-check Codes for Wireless Channel, WDM Long-Haul and Archival Holographic Memory
+arxiv:2012.15297v2 | 2020 | - | Trapping Sets of Quantum LDPC Codes
+ieee:8662618 | 2019 | - | Optimized Rate-Adaptive Protograph-Based LDPC Codes for Source Coding With Side Information
+ieee:8934825 | 2019 | - | Superposition Construction of NB-QC-LDPC Codes for optical communication systems
+ieee:8425638 | 2019 | - | A Novel Weight Coefficient PEG Algorithm for Ultra-Reliable Short Length Analog Fountain Codes
+ieee:8761366 | 2019 | - | Syndrome-Generalized Belief Propagation Decoding for Quantum Memories
+arxiv:1902.07332v3 | 2019 | - | Construction of QC-LDPC Codes with Low Error Floor by Efficient Systematic Search and Elimination of Trapping Sets
+arxiv:1905.13228v1 | 2019 | - | Cospectral Bipartite Graphs with the Same Degree Sequences but with Different Number of Large Cycles
+ieee:8334238 | 2018 | - | An LDPC Code Based Physical Layer Message Authentication Scheme With Prefect Security
+ieee:8388219 | 2018 | - | Design of Nonbinary LDPC Codes Based on Message-Passing Algorithms
+ieee:8437844 | 2018 | - | A Message-Passing Algorithm for Counting Short Cycles in Nonbinary LDPC Codes
+ieee:8635990 | 2018 | - | Array LDPC Code-based Compressive Sensing
+ieee:8478140 | 2018 | - | Optimized Construction of Protograph G-LDPC Codes by Modified EXIT Chart and MACE for New-Generation Wireless Communications
+arxiv:1801.08811v1 | 2018 | - | Constructing LDPC Codes from Partition and Latin-Style Splicing
+arxiv:1802.05960v1 | 2018 | - | Study of Knowledge-Aided Iterative Detection and Decoding for Multiuser MIMO Systems
+arxiv:1803.08141v1 | 2018 | - | Efficient Search of QC-LDPC Codes with Girths 6 and 8 and Free of Elementary Trapping Sets with Small Size
+arxiv:1808.00352v2 | 2018 | - | Counting short cycles of (c,d)-regular bipartite graphs
+arxiv:1808.05258v1 | 2018 | - | Edge Coloring Technique to Remove Small Elementary Trapping Sets from Tanner Graph of QC-LDPC Codes with Column Weight 4
+ieee:8365366 | 2017 | - | Performance analysis of QC-LDPC codes with girth 6 using Log Domain sum product algorithm
+ieee:7996747 | 2017 | - | Stochastic resonance decoding for quantum LDPC codes
+ieee:8288397 | 2017 | - | A Nonbinary LDPC-Coded SCMA System with Optimized Codebook Design
+ieee:7870658 | 2017 | - | Reconstruction Guarantee Analysis of Basis Pursuit for Binary Measurement Matrices in Compressed Sensing
+ieee:8288399 | 2017 | - | A Novel Uplink NOMA Scheme Based on Low Density Superposition Modulation
+ieee:8300235 | 2017 | - | Non-binary LDPC codes for compressed sensing image reconstruction on AWGN channel
+ieee:8255008 | 2017 | - | Constructions of Fractional Repetition Codes with Flexible Per-Node Storage and Repetition Degree
+arxiv:1701.05686v1 | 2017 | - | High Rate LDPC Codes from Difference Covering Arrays
+arxiv:1701.08213v1 | 2017 | - | Tapering off qubits to simulate fermionic Hamiltonians
+arxiv:1705.10717v1 | 2017 | - | A method for constructing parity-check matrices of non-binary quasi-cyclic LDPC codes
+arxiv:1706.01703v1 | 2017 | - | Analytical lower bounds for the size of elementary trapping sets of variable-regular LDPC codes with any girth and irregular ones with girth 8
+arxiv:1706.06648v1 | 2017 | - | Pseudocodeword-Free Criterion for Codes with Cycle-Free Tanner Graph
+arxiv:1707.01025v1 | 2017 | - | Distance Properties of Short LDPC Codes and their Impact on the BP, ML and Near-ML Decoding Performance
+arxiv:1709.00825v1 | 2017 | - | Lower bounds on the lifting degree of single-edge and multiple-edge QC-LDPC codes by difference matrices
+ieee:7466096 | 2016 | - | Superposition Construction of  $Q$ -Ary LDPC Codes by Jointly Optimizing Girth and Number of Shortest Cycles
+ieee:7307109 | 2016 | - | Construction of High-Performance Array-Based Non-Binary LDPC Codes With Moderate Rates
+ieee:7397900 | 2016 | - | Nonbinary Protograph-Based LDPC Codes Based on Additive Group of Finite Field
+ieee:10855863 | 2016 | - | Joint Design of QC-LDPC Codes for Coded Relay Cooperation
+ieee:7746650 | 2016 | - | A cycle-based rate-compatible puncturing technique for non-binary LDPC codes
+ieee:7350103 | 2016 | - | Construction of Quantum LDPC Codes From Classical Row-Circulant QC-LDPCs
+ieee:7541756 | 2016 | - | Near-capacity protograph doubly-generalized LDPC codes with block thresholds
+ieee:7550346 | 2016 | - | Approaching terabit optical transmission over strong atmospheric turbulence channels
+arxiv:1612.03279v1 | 2016 | - | Graph based linear error correcting codes
+ieee:7433810 | 2015 | - | Analysis of MIMO OFDM Based WiMAX System with LDPC
+ieee:7248355 | 2015 | - | Iterative symbol-level detection and decoding for nonbinary LDPC coded 2D intersymbol interference channels
+ieee:7109897 | 2015 | - | Construction of QC LDPC Cycle Codes Over GF( ${q}$ ) Based on Cycle Entropy and Applications on Patterned Media Storage
+ieee:7001068 | 2015 | - | Nonbinary LDPC Codes on Cages: Structural Property and Code Optimization
+ieee:7157325 | 2015 | - | Construction of quasi-cyclic LDPC cycle codes over Galois Field GF(q) based on cycle entropy and application on patterned media storage
+ieee:7184332 | 2015 | - | FPGA-based non-binary QC-LDPC coding for high-speed coherent optical transmission
+ieee:7282491 | 2015 | - | On the girth of (3,L) quasi-cyclic LDPC codes based on complete protographs
+ieee:7282487 | 2015 | - | Impact of redundant checks on the LP decoding thresholds of LDPC codes
+ieee:7282780 | 2015 | - | Linear locally repairable codes with availability
+arxiv:1504.04975v2 | 2015 | - | On the Girth of (3,L) Quasi-Cyclic LDPC Codes based on Complete Protographs
+arxiv:1510.04954v1 | 2015 | - | New Characterization and Efficient Exhaustive Search Algorithm for Elementary Trapping Sets of Variable-Regular LDPC Codes
+arxiv:1511.00133v3 | 2015 | - | Some problems of Graph Based Codes for Belief Propagation decoding
+ieee:6839791 | 2014 | - | A high rate non-binary QC-LDPC codes in high order Galois Field for PR2 and EPR2 channels
+ieee:6955098 | 2014 | - | Information shortening for joint source-channel coding schemes based on low-density parity-check codes
+ieee:6979845 | 2014 | - | Low complexity construction of low density lattice codes based on array codes
+ieee:10851212 | 2014 | - | A Novel Least-Entanglement-Assisted Asymmetric Quantum Codes Based on Sliding Grill
+ieee:6979823 | 2014 | - | Entanglement-assisted quantum error-correcting codes based on the circulant permutation matrix
+ieee:6868298 | 2014 | - | Generalized Binary Representation for the Nonbinary LDPC Code With Decoder Design
+ieee:6916686 | 2014 | - | Symbol-based parallel message-passing decoding on partial-response channels
+ieee:6805582 | 2014 | - | Iterative Decoding Algorithms for a Class of Non-Binary Two-Step Majority-Logic Decodable Cyclic Codes
+arxiv:1403.0804v1 | 2014 | - | Double Cylinder Cycle codes of Arbitrary Girth
+arxiv:1403.0847v2 | 2014 | - | Knowledge-Aided Reweighted Belief Propagation LDPC Decoding using Regular and Irregular Designs
+arxiv:1403.6090v1 | 2014 | - | Column Weight Two and Three LDPC Codes with High Rates and Large Girths
+arxiv:1405.3775v1 | 2014 | - | Quasi Cyclic LDPC Codes Based on Finite Set Systems
+arxiv:1407.5136v1 | 2014 | - | Rate-Compatible LDPC Codes Based on Puncturing and Extension Techniques for Short Block Lengths
+arxiv:1407.5364v1 | 2014 | - | Quasi-Cyclic LDPC Codes based on Pre-Lifted Protographs
+arxiv:1411.7554v3 | 2014 | - | Impact of redundant checks on the LP decoding thresholds of LDPC codes
+ieee:6476784 | 2013 | - | A class of check matrices constructed from Euclidean geometry and their application to quantum LDPC codes
+ieee:6303915 | 2013 | - | Effects of Single-Cycle Structure on Iterative Decoding of Low-Density Parity-Check Codes
+ieee:6620777 | 2013 | - | Near maximum-likelihood decoding of Generalized LDPC and woven graph codes
+ieee:6620271 | 2013 | - | Reconstruction guarantee analysis of binary measurement matrices based on girth
+arxiv:1304.6152v1 | 2013 | - | Iterative Detection and Decoding for MIMO Systems with Knowledge-Aided Message Passing Algorithms
+arxiv:1308.1259v1 | 2013 | - | On Characterization of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:6478269 | 2012 | - | A Compact Construction for Nonbinary LDPC Codes Using Permutation Polynomials
+ieee:6478463 | 2012 | - | Construction of Non-Binary LDPC Codes with Very Large Girth
+ieee:6176801 | 2012 | - | LDPC codes for the Slepian-Wolf coding
+ieee:6310171 | 2012 | - | 4-Cycle Free LDPC Codes Based on Difference Sets
+ieee:6404676 | 2012 | - | Non-binary protograph-based LDPC codes for short block-lengths
+ieee:6196162 | 2012 | - | Design of Convergence-Optimized Non-Binary LDPC Codes over Binary Erasure Channel
+ieee:6296575 | 2012 | - | A combined scheme of LDPC-STBC for image transmission in asynchronous cooperative MIMO systems
+ieee:6135505 | 2012 | - | LDPC Codes for Compressed Sensing
+ieee:6325183 | 2012 | - | Improved message passing techniques in fast correlation attacks on stream ciphers
+ieee:6253865 | 2012 | - | Optimum signal constellation design for ultra-high-speed optical transport networks
+arxiv:1204.4864v1 | 2012 | - | Tight lower bound of consecutive lengths for QC-LDPC codes with girth twelve
+ieee:6061600 | 2011 | - | Application analysis of QC-LDPC codes in shallow water acoustic channels
+ieee:6197837 | 2011 | - | Construction of nonbinary LDPC codes: Prime difference approach
+ieee:6067586 | 2011 | - | Design of nonbinary LDPC cycle codes based on cycle entropy
+ieee:6067599 | 2011 | - | Puncturing schemes for rate-compatible non-binary LDPC codes
+ieee:5955062 | 2011 | - | Cavity Quantum Electrodynamics (CQED)-Based Quantum LDPC Encoders and Decoders
+ieee:5875671 | 2011 | - | On the reverse concatenated coded-modulation for ultra-high-speed optical transport
+ieee:6040191 | 2011 | - | Optimization of Bilayer Lengthened QC-LDPC Code for Relay Channel Based on Differential Evolution
+ieee:6040540 | 2011 | - | Code Design and Performance Analysis of a Novel Concatenated LDPC-STBC for Media Communication in Asynchronous Cooperative MIMO Systems
+ieee:5875083 | 2011 | - | 1-Tb/s large girth LDPC-coded coherent optical OFDM transmission over 1040-km standard single-mode fiber
+ieee:6025245 | 2011 | - | SigSag: Iterative Detection Through Soft Message-Passing
+ieee:5403627 | 2010 | - | Construction of nonbinary quasi-cyclic LDPC cycle codes based on singer perfect difference set
+ieee:5426595 | 2010 | - | Nonbinary LDPC codes constructed based on a cyclic MDS code and a low-complexity nonbinary message-passing decoding algorithm
+ieee:6388486 | 2010 | - | Design of non-binary quasi-cyclic LDPC codes based on multiplicative groups and Euclidean geometries
+ieee:5474626 | 2010 | - | Minimum distance lower bounds for girth-constrained RA code ensembles
+ieee:5671702 | 2010 | - | Optimized relay selection strategy for adaptive network coded cooperation
+ieee:5702984 | 2010 | - | LDPC coded MIMO communication system with time varying linear transformation
+ieee:5513621 | 2010 | - | Two-dimensional generalized Reed-Solomon codes: A unified framework for quasi-cyclic LDPC codes constructed based on finite fields
+ieee:5649852 | 2010 | - | Probabilistic search of nonbinary LDPC codes for distributed video coding
+ieee:5605922 | 2010 | - | Large-Girth Nonbinary QC-LDPC Codes of Various Lengths
+ieee:5679760 | 2010 | - | A novel structure of high rate (3,L) regular QC-LDPC codes for magnetic recording channels
+ieee:5513622 | 2010 | - | Recursive convolutional codes for time-invariant LDPC convolutional codes
+ieee:5513602 | 2010 | - | Error floors of non-binary LDPC codes
+ieee:5600227 | 2010 | - | Design of Irregular Quasi-Cyclic LDPC Codes
+ieee:5592770 | 2010 | - | Strong secrecy for erasure wiretap channels
+ieee:5541009 | 2010 | - | An efficient computation model for coarse grained reconfigurable architectures and its applications to a reconfigurable computer
+ieee:5624777 | 2010 | - | Instruction set support and algorithm-architecture for fully parallel multi-standard soft-output demapping on baseband processors
+ieee:5455876 | 2010 | - | Adaptive Modulation and Coding for Free-Space Optical Channels
+arxiv:1001.3916v1 | 2010 | - | Girth-12 Quasi-Cyclic LDPC Codes with Consecutive Lengths
+arxiv:1002.3117v3 | 2010 | - | LP Decoding of Regular LDPC Codes in Memoryless Channels
+arxiv:1002.4311v1 | 2010 | - | Lowering the Error Floor of LDPC Codes Using Cyclic Liftings
+arxiv:1004.1184v1 | 2010 | - | Circulant Arrays on Cyclic Subgroups of Finite Fields: Rank Analysis and Construction of Quasi-Cyclic LDPC Codes
+ieee:4814742 | 2009 | - | LDPC-Coded $M$ -ary PSK Optical Coherent State Quantum Communication
+ieee:4840630 | 2009 | - | Large Girth Non-Binary LDPC Codes Based on Finite Fields and Euclidean Geometries
+ieee:5032303 | 2009 | - | A class of non-binary regular girth-8 LDPC codes for optical communication channels
+ieee:4787613 | 2009 | - | Low-Density Graph Codes That Are Optimal for Binning and Coding With Side Information
+ieee:5076201 | 2009 | - | Design of Quasi-Cyclic LDPC Codes Based on Euclidean Geometries
+ieee:5164224 | 2009 | - | Multi-carrier frequency hopping spread spectrum system with girth-six low-density parity-check codes
+ieee:4917856 | 2009 | - | On the Impact of Imperfect Cophasing in Uncoded and LDPC-Coded EGC Receivers over Generalized Fading Channels
+ieee:5076200 | 2009 | - | Design of q-ary Irregular Repeat-Accumulate Codes
+ieee:5425675 | 2009 | - | Cooperative Uplink of Two Mobile Stations with Network Coding Based on the WiMax LDPC Code
+ieee:4957637 | 2009 | - | Quantum Serial Turbo Codes
+ieee:5072430 | 2009 | - | System Model Performance Coupled with DPSK Modulation over Flat Rayleigh Fading Channels
+ieee:5308590 | 2009 | - | Suppression of Fiber Nonlinearities and PMD in Coded-Modulation Schemes With Coherent Detection by Using Turbo Equalization
+arxiv:0906.2061v1 | 2009 | - | On the Minimum Distance of Non Binary LDPC Codes
+arxiv:0906.3410v1 | 2009 | - | Quasi-cyclic LDPC codes with high girth
+ieee:4699586 | 2008 | - | Three algebraic methods for constructing nonbinary LDPC codes based on finite fields
+ieee:4595437 | 2008 | - | Irregular low-density parity-check lattices
+ieee:4656992 | 2008 | - | Novel Algebraic Constructions of Nonbinary Structured LDPC Codes over Finite Fields
+ieee:4588335 | 2008 | - | Mitigation of linear and nonlinear impairments in high-speed optical networks by using LDPC-coded turbo equalization
+ieee:4590536 | 2008 | - | Mitigation of linear and nonlinear impairments in high-speed optical networks by using LDPC-coded turbo equalization
+ieee:4594998 | 2008 | - | Quantum serial turbo-codes
+ieee:4737184 | 2008 | - | A method to construct girth-8 low density lattice codes
+arxiv:0803.0100v2 | 2008 | - | Entanglement-Assisted Quantum Quasi-Cyclic Low-Density Parity-Check Codes
+arxiv:0807.3337v1 | 2008 | - | Algebraic constructions of LDPC codes with no short cycles
+ieee:4786362 | 2007 | - | A new class of non-binary LDPC codes design based on inverse block jacket matrices
+ieee:4215245 | 2007 | - | Design and Performance of LDPC Codes for OFDM Based Aeronautical Communication Systems
+ieee:4410636 | 2007 | - | Improved Construction of Low-Density Parity-Check Codes Based on Lattices
+ieee:4313042 | 2007 | - | Design of Nonbinary Quasi-Cyclic LDPC Cycle Codes
+ieee:4357607 | 2007 | - | Group Factorizations and Information Theory
+ieee:4313291 | 2007 | - | A Graph Approach to the Structural Analysis of Simplified Convolutional Self-Doubly-Orthogonal Codes
+arxiv:0704.1818v1 | 2007 | - | Low-density graph codes that are optimal for source/channel coding and binning
+ieee:1684775 | 2006 | - | A Comparative Performance and Complexity Study of Short-Length LDPC and Turbo Product Codes
+ieee:4119265 | 2006 | - | Minimum Pseudo-Codewords of LDPC Codes
+ieee:4129290 | 2006 | - | Evaluations of Good LDPC Codes Based on Generator Matrices
+ieee:4063003 | 2006 | - | A Real Time Programmable Encoder for Low Density Parity Check Code as specified in the IEEE P802.16E/D7 Standard and its Efficient Implementation on a DSP Processor
+ieee:4016773 | 2006 | - | Multiple Constraint Satisfaction by Belief Propagation: An Example Using Sudoku
+arxiv:cs/0602046v1 | 2006 | - | Analysis of LDGM and compound codes for lossy compression and binning
+ieee:1425759 | 2005 | - | On the Application of Factor Graphs and the Sum-Product Algorithm to ISI Channels
+arxiv:cs/0506091v1 | 2005 | - | A New Construction for LDPC Codes using Permutation Polynomials over Integer Rings
+ieee:1365313 | 2004 | - | Structured LDPC codes over GF(2/sup m/) and companion matrix based decoding
+ieee:1207364 | 2003 | - | Parity-check density versus performance of binary linear block codes over memoryless symmetric channels
+ieee:910592 | 2001 | - | Tanner graphs for group block codes and lattices: construction and complexity
+ieee:782170 | 1999 | - | Which codes have cycle-free Tanner graphs?

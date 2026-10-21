@@ -1,0 +1,387 @@
+# id | year | fulltext(T=txt available, -=abstract only) | title
+ieee:11329401 | 2026 | T | A Local Re-Decoding Algorithm for LDPC-Coded Modulation With CCDMs
+ieee:11539179 | 2026 | T | SSALDPC: A Syndrome-Sum Based Adaptive LDPC Decoding Scheme for NAND Flash Memory
+ieee:11420819 | 2026 | T | MASS: A Masking-aware Search Framework for Reliable QC-LDPC Code Construction in SSDs
+ieee:11278092 | 2026 | T | Low-Complexity Syndrome-Based Linear Programming Decoding of Quantum LDPC Codes
+ieee:11408621 | 2026 | T | Fully Parallelized BP Decoding for Quantum LDPC Codes Can Outperform BP-OSD
+ieee:11532867 | 2026 | T | Would Learning Help? Adaptive CRC-QC-LDPC Selection for Integrity in 5G-NR V2X
+ieee:11052258 | 2025 | T | RXO-LDPC: A Physics-Inspired Relaxation Oscillator-Based Solver Leveraging Six-Body Spin Interactions for Soft Decoding of LDPC Codes
+ieee:10845827 | 2025 | T | Boosted Neural Decoders: Achieving Extreme Reliability of LDPC Codes for 6G Networks
+ieee:10833618 | 2025 | T | Telecommand Rejection Probability in CCSDS-Compliant LDPC-Coded Space Transmissions With Tail Sequence
+ieee:11071260 | 2025 | T | Protomatrix-Based LDPC Codes for Continuous Phase Modulation
+ieee:11432491 | 2025 | T | GLDPC Codes Based on Polar Constraints and Their Near-Optimal Decoding
+ieee:11145588 | 2025 | T | Highly Efficient Information Reconciliation Based on Correlation Thresholding Driven by Experimental Data in Classical Key Distribution
+ieee:11195438 | 2025 | T | Threshold Selection for Iterative Decoding of $(v,\ w)$-Regular Binary Codes
+ieee:11353785 | 2025 | T | CMOS Physics-Inspired Architectures and Circuits for Combinatorial Optimization Solvers
+ieee:10778976 | 2025 | T | Soft-Output Successive Cancellation List Decoding
+ieee:10608331 | 2024 | T | Adaptive LDPC Decoder with Performance Prediction Based on Average Mutual Information
+ieee:10318173 | 2024 | T | Adaptive Granularity Progressive LDPC Decoding for NAND Flash Memory
+ieee:10901442 | 2024 | T | An Efficient Ordered Likelihood Decoder for Rate-Compatible Short LDPC codes
+ieee:10622622 | 2024 | T | Low-Complexity Linear Programming Based Decoding of Quantum LDPC Codes
+ieee:10677441 | 2024 | T | List-Based Optimization of Proximal Decoding for LDPC Codes
+ieee:10619589 | 2024 | T | Graph Neural Networks for Enhanced Decoding of Quantum LDPC Codes
+ieee:10719549 | 2024 | T | A Relaxation Oscillator-Based Probabilistic Combinatorial Optimization Engine for Soft Decoding of LDPC Codes
+ieee:10706909 | 2024 | T | Boosting Ordered Statistics Decoding of Short LDPC Codes With Simple Neural Network Models
+ieee:10506589 | 2024 | T | Burst Error Identification Method for LDPC Coded Systems
+ieee:10684720 | 2024 | T | An Embedded Module of Enhanced Turbo Product Code Algorithm
+ieee:10265139 | 2023 | T | ALCod: Adaptive LDPC Coding for 3-D NAND Flash Memory Using Inter-Layer RBER Variation
+ieee:10113442 | 2023 | T | Low Error Floor QC-LDPC Codes Construction Using Modified Cole's Trapping Sets Enumerating
+ieee:10052347 | 2023 | T | Multiple Flipping Strategy LISBF for LDPC Codes
+ieee:10032179 | 2023 | T | Trapping and Absorbing Set Enumerators for Irregular Generalized Low-Density Parity-Check Code Ensembles
+ieee:10138607 | 2023 | T | Improving LDPC-Coded PNC Decoders via Informed Dynamic Scheduling
+ieee:10113636 | 2023 | T | The Syndrome Bit Flipping Algorithm for LDPC Codes
+ieee:10098900 | 2023 | T | Interleaved LDPC Decoding Scheme Improves 3-D TLC NAND Flash Memory System Performance
+ieee:10273526 | 2023 | T | Learning to Decode Trapping Sets in QLDPC Codes
+ieee:10273573 | 2023 | T | Analysis of Syndrome-Based Iterative Decoder Failure of QLDPC Codes
+ieee:10273537 | 2023 | T | Sets of complementary LLRs to improve OSD post-processing of BP decoding
+ieee:9942354 | 2022 | T | Decoding Short LDPC Codes via BP-RNN Diversity and Reliability-Based Post-Processing
+ieee:9496601 | 2022 | T | A Low Bit-Width LDPC Min-Sum Decoding Scheme for NAND Flash
+ieee:9729722 | 2022 | T | Deep-Learning for Breaking the Trapping Sets in Low-Density Parity-Check Codes
+ieee:9844740 | 2022 | T | Adaptive Gradient Descent Bit-Flipping Diversity Decoding
+ieee:9834902 | 2022 | T | Graph-based codes for hierarchical recovery
+ieee:9613326 | 2021 | T | Lowering the Error Floor of Quantized NR LDPC Decoders by a Post-Processing on Trapping Sets
+ieee:9349511 | 2021 | T | Error Floor Estimation of LDPC Coded Modulation Systems Using Importance Sampling
+ieee:9653357 | 2021 | T | Applicability of single- and two-hidden-layer neural networks in decoding linear block codes
+ieee:9369532 | 2021 | T | Logistic Regression for LDPC Decoding Failure Prediction
+ieee:9186682 | 2021 | T | Error Floor Estimation of QC-LDPC Coded Modulation With Importance Sampling
+ieee:9618067 | 2021 | T | An Energy Efficient Hybrid FEC-ARQ Communication Scheme for Small Satellite Applications
+ieee:9594253 | 2021 | T | FAID Diversity via Neural Networks
+ieee:9516718 | 2021 | T | Counter Random Gradient Descent Bit-Flipping Decoder for LDPC Codes
+ieee:9443863 | 2021 | T | Minimum-Variance Importance Sampling Estimator for Fast Simulation of Linear Block Codes over Binary Erasure Channels
+ieee:9295784 | 2020 | T | A Deep Learning-Aided Post-Processing Scheme to Lower the Error Floor of LDPC Codes
+ieee:9005250 | 2020 | T | Error Floor Estimation of LDPC Decoders — A Code Independent Approach to Measuring the Harmfulness of Trapping Sets
+ieee:9072180 | 2020 | T | A Sub-Graph Expansion-Contraction Method for Error Floor Computation
+ieee:9055021 | 2020 | T | CeSR + Assisted LDPC: A Holistic Strategy to Improve MLC NAND Flash Reliability
+ieee:9174513 | 2020 | T | Analysis of Absorbing Sets using Cosets and Syndromes
+ieee:8769083 | 2019 | T | Construction of High Performance Block and Convolutional Multi-Edge Type QC-LDPC codes
+ieee:8395069 | 2019 | T | An Efficient Post-Processor for Lowering the Error Floor of LDPC Codes
+ieee:8702143 | 2019 | T | A New Probabilistic Gradient Descent Bit Flipping Decoder for LDPC Codes
+ieee:8855823 | 2019 | T | A New Low-Resolution Min-Sum Decoder Based on Dynamic Clipping for LDPC Codes
+ieee:9056915 | 2019 | T | A 3.01 mm2 65.38Gb/s Stochastic LDPC Decoder for IEEE 802.3an in 65 nm
+ieee:8877237 | 2019 | T | Neighbor-Cell-Information Based Detection for LDPC Coded MLC NAND Flash Memory
+ieee:8445606 | 2019 | T | BP-LED Decoding Algorithm for LDPC Codes Over AWGN Channels
+ieee:8760172 | 2019 | T | Importance Sampling Based Software Kit for LLR BP Decoding Simulation
+ieee:8703377 | 2019 | T | Variable-Node-Based Belief-Propagation Decoding With Message Pre-Processing for NAND Flash Memory
+ieee:8693677 | 2019 | T | An Improved Gradient Descent Bit-Flipping Decoder for LDPC Codes
+ieee:8994785 | 2019 | T | Design of High Throughput FPGA-Based Testbed for Accelerating Error Characterization of LDPC Codes
+ieee:8279531 | 2018 | T | Characterization of Elementary Trapping Sets in Irregular LDPC Codes and the Corresponding Efficient Exhaustive Search Algorithms
+ieee:8664386 | 2018 | T | Further Results on the Error Correction Capability of Irregular LDPC Codes under the Gallager A Algorithm
+ieee:8437485 | 2018 | T | Finding Leafless Elementary Trapping Sets and Elementary Absorbing Sets of LDPC Codes is Hard
+ieee:8600003 | 2018 | T | An Improved Variable-Node-Based BP Decoding Algorithm for NAND Flash Memory
+ieee:8422965 | 2018 | T | Trapping Set Analysis of Horizontal Layered Decoder
+ieee:8625312 | 2018 | T | Avoiding Burst-like Error Patterns in Windowed Decoding of Spatially Coupled LDPC Codes
+ieee:7959126 | 2018 | T | Decision-Directed Retention-Failure Recovery With Channel Update for MLC NAND Flash Memory
+ieee:8364571 | 2018 | T | Classification-Based Algorithm for Bit-Flipping Decoding of GLDPC Codes Over AWGN Channels
+ieee:8359616 | 2017 | T | An efficient post processing scheme to lower the error floor of LDPC decoders
+ieee:7935340 | 2017 | T | Lower Bounds on the Size of Smallest Elementary and Non-Elementary Trapping Sets in Variable-Regular LDPC Codes
+ieee:8109969 | 2017 | T | A modified gradient descent bit flipping decoding scheme for LDPC codes
+ieee:7959166 | 2017 | T | Two-Side State-Aided Bit-Flipping Decoding of Generalized Low Density Parity Check Codes
+ieee:8064481 | 2017 | T | Enhancing SSD performance with LDPC-aware garbage collection
+ieee:8006717 | 2017 | T | Characterization and efficient exhaustive search algorithm for elementary trapping sets of irregular LDPC codes
+ieee:8016398 | 2017 | T | Reliability-Oriented Decoding Strategy for LDPC Codes-Based D-JSCC System
+ieee:7786873 | 2017 | T | Efficient Hardware Implementation of Probabilistic Gradient Descent Bit-Flipping
+ieee:7553579 | 2016 | T | Euclidean Geometry-Based Spatially Coupled LDPC Codes for Storage
+ieee:7527440 | 2016 | T | Bit-flipping LDPC under noise conditions and its application to physically unclonable functions
+ieee:7593100 | 2016 | T | A linear model for the iterative decoding of random LDPC codes in the high SNR region
+ieee:7472936 | 2016 | T | Convergence-optimized variable node structure for stochastic LDPC decoder
+ieee:7419905 | 2016 | T | Strategies for Reducing Decoding Cycles in Stochastic LDPC Decoders
+ieee:7575635 | 2016 | T | New Characterization and Efficient Exhaustive Search Algorithm for Leafless Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:7840492 | 2016 | T | Error correction capability of irregular LDPC codes under the Gallager a algorithm
+ieee:7593098 | 2016 | T | Spatially Coupled LDPC codes affected by a single random burst of erasures
+ieee:7804004 | 2016 | T | A post-processing algorithm for reducing strong error effects in NAND flash memory
+ieee:7853052 | 2016 | T | An escaping scheme for gradient descent bit-flipping decoding of LDPC codes
+ieee:7811566 | 2016 | T | Design and FPGA verification of a quasi-cyclic LDPC code for optical communication systems
+ieee:7541754 | 2016 | T | Minimal characterization and provably efficient exhaustive search algorithm for elementary trapping sets of variable-regular LDPC codes
+ieee:7593079 | 2016 | T | Min-Sum decoding of irregular LDPC codes with adaptive scaling based on mutual information
+ieee:7593125 | 2016 | T | Noise-aided gradient descent bit-flipping decoders approaching maximum likelihood decoding
+ieee:7767651 | 2016 | T | Improved Soft-Decision Forward Error Correction via Post-Processing of Mismatched Log-Likelihood Ratios
+ieee:7006675 | 2015 | T | On Characterization and Efficient Exhaustive Search of Elementary Trapping Sets of Variable-Regular LDPC Codes
+ieee:6994784 | 2015 | T | Variable-Node-Based Dynamic Scheduling Strategy for Belief-Propagation Decoding of LDPC Codes
+ieee:7490926 | 2015 | T | An efficient early stopping analog decoder for LDPC codes
+ieee:7265217 | 2015 | T | New decoding scheme for LDPC codes based on simple product code structure
+ieee:7127471 | 2015 | T | A local flat histogram method for evaluating the performance of LDPC codes
+ieee:7255170 | 2015 | T | A new reliability-based incremental redundancy hybrid ARQ scheme using LDPC codes
+ieee:7157702 | 2015 | T | A soft decodable concatenated LDPC code
+ieee:7248997 | 2015 | T | MUDRI: A fault-tolerant decoding algorithm
+ieee:7069413 | 2015 | T | Soft decision decoding of RAID stripe for higher endurance of flash memory based solid state drives
+ieee:6882148 | 2014 | T | Overclocking NAND Flash Memory I/O Link in LDPC-Based SSDs
+ieee:7136294 | 2014 | T | Modeling BP decoding error events with the LDPC codes of the DVB-S2 standard
+ieee:6875417 | 2014 | T | On the upper bound on undetected error probability for LDPC code
+ieee:6965878 | 2014 | T | Analysis of Decoding Failures of DVB-S2 LDPC Codes
+ieee:6778012 | 2014 | T | Subcarrier Reliability Aware Soft-Decision LDPC Code in CO-OFDM Systems
+ieee:6750416 | 2014 | T | Two-Bit Bit Flipping Algorithms for LDPC Codes and Collective Error Correction
+ieee:6983914 | 2014 | T | Failure analysis of two-bit flipping decoding algorithms
+ieee:6757514 | 2014 | T | 27.6 An 821MHz 7.9Gb/s 7.3pJ/b/iteration charge-recovery LDPC decoder
+ieee:6955085 | 2014 | T | On the guaranteed error-correction of decimation-enhanced iterative decoders
+ieee:7094412 | 2014 | T | Decoder diversity architectures for finite alphabet iterative decoders
+ieee:6868233 | 2014 | T | Fault-Tolerant Probabilistic Gradient-Descent Bit Flipping Decoder
+ieee:6262475 | 2013 | T | Minimum Distance and Trapping Set Analysis of Protograph-Based LDPC Convolutional Codes
+ieee:6502175 | 2013 | T | Evaluation of the Low Error-Rate Performance of LDPC Codes over Rayleigh Fading Channels Using Importance Sampling
+ieee:6616219 | 2013 | T | A new modified UMP BP decoding algorithm of quasi-cyclic LDPC codes based on oscillation estimation
+ieee:6567866 | 2013 | T | Controlling the Error Floor in LDPC Decoding
+ieee:6504218 | 2013 | T | Design of LDPC coding schemes for exploitation of bit error rate diversity across dies in NAND flash memory
+ieee:6384614 | 2013 | T | Asymptotic Distribution of Absorbing Sets and Fully Absorbing Sets for Regular Sparse Code Ensembles
+ieee:6210385 | 2012 | T | Reweighted LP Decoding for LDPC Codes
+ieee:6284048 | 2012 | T | A two stage selective averaging LDPC decoding
+ieee:6302118 | 2012 | T | A Deviation-Based Conditional Upper Bound on the Error Floor Performance for Min-Sum Decoding of Short LDPC Codes
+ieee:6192273 | 2012 | T | Finding the Exhaustive List of Small Fully Absorbing Sets and Designing the Corresponding Low Error-Floor Decoder
+ieee:6511401 | 2012 | T | Low complexity product codes with LDPC codes achieving ultra low BER
+ieee:6169192 | 2012 | T | On the Construction of Structured LDPC Codes Free of Small Trapping Sets
+ieee:6363199 | 2012 | T | Error Floor Compensation for LDPC Codes Using Concatenated Schemes
+ieee:6404188 | 2012 | T | An FPGA-based prototyping method for verification, characterization and optimization of LDPC error correction systems
+ieee:6284051 | 2012 | T | Selecting two-bit bit flipping algorithms for collective error correction
+ieee:6204555 | 2012 | T | An integer programming based trapping set search technique
+ieee:5937929 | 2011 | T | Low power LDPC decoder with efficient stopping scheme for undecodable blocks
+ieee:5993490 | 2011 | T | Joint Decoding of LDPC Codes and Finite-State Channels Via Linear-Programming
+ieee:6004950 | 2011 | T | A syndrome-based LDPC decoder with very low error floor
+ieee:5605921 | 2011 | T | An Iterative Decoding Algorithm with Backtracking to Lower the Error-Floors of LDPC Codes
+ieee:5715839 | 2011 | T | Message-Wise Unequal Error Protection Based on Low-Density Parity-Check Codes
+ieee:6120280 | 2011 | T | Causes and dynamics of LDPC error floors on AWGN channels
+ieee:6133616 | 2011 | T | Non-Concatenated FEC Codes for Ultra-High Speed Optical Transport Networks
+ieee:6120564 | 2011 | T | Erasing Bit Nodes on the Bipartite Graph for Enhanced Performance of LDPC Codes
+ieee:5962724 | 2011 | T | Comparison of the Detrimental Effects of Trapping Sets in LDPC Codes
+ieee:5437420 | 2010 | T | On Trapping Sets and Guaranteed Error Correction Capability of LDPC Codes and GLDPC Codes
+ieee:5599947 | 2010 | T | A Unified Early Stopping Criterion for Binary and Nonbinary LDPC Codes Based on Check-Sum Variation Patterns
+ieee:6073063 | 2010 | T | Ruling out small stopping sets and small girth in Tanner graph of QC-LDPC code
+ieee:5447125 | 2010 | T | Fast BER estimation of LDPC codes
+ieee:5613994 | 2010 | T | Fast simulation of LDPC codes over additive non-Gaussian noise channel
+ieee:5654357 | 2010 | T | Detailed evaluation of error floors of LDPC codes using the probabilistic algorithm
+ieee:5649219 | 2010 | T | Importance sampling for LDPC codes based on optimal simulation probability density function
+ieee:5513614 | 2010 | T | On the joint decoding of LDPC codes and finite-state channels via linear programming
+ieee:5467506 | 2010 | T | Error Floor Estimation of Long LDPC Codes on Magnetic Recording Channels
+ieee:5613812 | 2010 | T | Characterization of small trapping sets in LDPC codes from Steiner triple systems
+ieee:5513487 | 2010 | T | A practical message-wise unequal error protection coding scheme
+ieee:5706904 | 2010 | T | Short column-weight-three LDPC codes without small trapping sets
+ieee:5608383 | 2010 | T | Lower the error floor of LDPC with fixed error pattern
+ieee:5706905 | 2010 | T | Reweighted LP decoding for LDPC codes
+ieee:5402492 | 2010 | T | Low-Floor Detection/Decoding of LDPC-Coded Partial Response Channels
+ieee:5513611 | 2010 | T | Exhaustive search for small fully absorbing sets and the corresponding low error-floor decoder
+ieee:5513620 | 2010 | T | Multilevel decoders surpassing belief propagation on the binary symmetric channel
+ieee:5613861 | 2010 | T | Finite alphabet iterative decoding (FAID) of the (155,64,20) Tanner code
+ieee:5757668 | 2010 | T | Iterative weighted ℓ1 Optimization for compressed sensing and coding
+ieee:4957655 | 2009 | T | Pseudocodeword Performance Analysis for LDPC Convolutional Codes
+ieee:5336833 | 2009 | T | Waterfall Performance Analysis of Finite-Length LDPC Codes on Symmetric Channels
+ieee:5336848 | 2009 | T | Design of LDPC decoders for improved low error rate performance: quantization and algorithm choices
+ieee:5174520 | 2009 | T | Predicting error floors of structured LDPC codes: deterministic bounds and estimates
+ieee:5090867 | 2009 | T | A novel LDPC decoder for DVB-S2 IP
+ieee:5450159 | 2009 | T | Linear encoding of LDPC codes using approximate lower triangulation with postprocessing
+ieee:5199011 | 2009 | T | Evaluation of the Extremely Low Block Error Rate of Irregular LDPC Codes
+ieee:5205687 | 2009 | T | Trapping set analysis of protograph-based LDPC convolutional codes
+ieee:5044956 | 2009 | T | Asymptotic trapping set analysis of regular protograph-based LDPC convolutional code ensembles
+ieee:5425765 | 2009 | T | Undetected Errors in Quasi-Cyclic LDPC Codes Caused by Receiver Symbol Slips
+ieee:5165375 | 2009 | T | Low BER performance estimation of LDPC codes via application of importance sampling to trapping sets
+ieee:5174515 | 2009 | T | Instanton-based techniques for analysis and reduction of error floors of LDPC codes
+ieee:5044939 | 2009 | T | On trapping sets for repeat accumulate accumulate codes
+ieee:6414772 | 2008 | T | Construction of good Quasi-Cyclic LDPC codes based on the row vectors of generator matrix
+ieee:4711302 | 2008 | T | Concatenated Low-Density Parity-Check and BCH Coding System for Magnetic Recording Read Channel With 4 kB Sector Format
+ieee:4685036 | 2008 | T | Hybrid decoding for one class of low-density parity-check codes
+ieee:4753226 | 2008 | T | Bounded angle iterative decoding of LDPC codes
+ieee:4698365 | 2008 | T | Lowering LDPC Error Floors by Postprocessing
+ieee:4595025 | 2008 | T | Error floors in LDPC codes: Fast simulation, bounds and hardware emulation
+ieee:4595023 | 2008 | T | On the guaranteed error correction capability of LDPC codes
+ieee:4797702 | 2008 | T | Girth of the Tanner graph and error correction capability of LDPC codes
+ieee:4773764 | 2008 | T | Improved augmented belief propagation decoding based on oscillation
+ieee:4137875 | 2007 | T | Construction of Irregular LDPC Codes by Quasi-Cyclic Extension
+ieee:4212747 | 2007 | T | A Stopping Criterion for Low-Density Parity-Check Codes
+ieee:4137902 | 2007 | T | Results on the Improved Decoding Algorithm for Low-Density Parity-Check Codes Over the Binary Erasure Channel
+ieee:4454752 | 2007 | T | Short Protograph-Based LDPC Codes
+ieee:4196284 | 2007 | T | Weighted IS Method of Estimating FER of LDPC Codes in High SNR Region
+ieee:4212883 | 2007 | T | Low Complexity LDPC Decoding Techniques with Adaptive Selection of Edges
+ieee:4469460 | 2007 | T | Lowering the Error Floor of LDPC Codes by a Two-stage Hybrid Decoding Algorithm
+ieee:4298987 | 2007 | T | Low-Latency Decoding of EG LDPC Codes
+ieee:4288787 | 2007 | T | An Efficient Analysis of Finite-Length LDPC Codes
+ieee:4728627 | 2007 | T | Improving BER Performance of LDPC Codes based on Intermediate Decoding Results
+ieee:4313074 | 2007 | T | Evaluation of the Low Frame Error Rate Performance of LDPC Codes Using Importance Sampling
+ieee:4313083 | 2007 | T | Performance of Iterative Algebraic Decoding of Codes Defined on Graphs: An Initial Investigation
+ieee:4373428 | 2007 | T | Turbo Decoding on the Binary Erasure Channel: Finite-Length Analysis and Turbo Stopping Sets
+ieee:4410966 | 2007 | T | Error Floor Estimation of Long LDPC Codes on Partial Response Channels
+ieee:1625785 | 2006 | T | Improvement of Burst Error Correction Using a Look-Up Table with Low Density Parity Check Coding for Compressed Ultraspectral Sounder Data
+ieee:1668096 | 2006 | T | Low-density parity-check codes for 40-gb/s optical transmission systems
+ieee:1683079 | 2006 | T | Modified Belief Propagation Decoding Algorithm for Low-Density Parity Check Code Based on Oscillation
+ieee:5755868 | 2006 | T | Improved Sum-Min Decoding for Irregular LDPC Codes
+ieee:4261736 | 2006 | T | Turbo Equalization as a Postprocessor for Partial-Response Channels
+ieee:4024285 | 2006 | T | An IS Simulation Technique for Very Low BER Performance Evaluation of LDPC Codes
+ieee:5755911 | 2006 | T | Designing a Self-orthogonal Quasi-cyclic Code with Extended Minimum Hamming Distance
+ieee:4036189 | 2006 | T | Pseudo-Codewords in LDPC Convolutional Codes
+ieee:1430473 | 2005 | T | Short-block LDPC codes for a low-frequency power-line communications system
+ieee:1412054 | 2005 | T | Improved bit-flipping decoding of low-density parity-check codes
+ieee:7078274 | 2005 | T | Bit-flipping post-processing for forced convergence decoding of LDPC codes
+ieee:1493353 | 2005 | T | On importance sampling for iteratively decoded linear block codes
+ieee:1651870 | 2005 | T | A performance improvement and error floor avoidance technique for belief propagation decoding of LDPC codes
+ieee:1365513 | 2004 | T | Estimating LDPC codeword error rates via importance sampling
+ieee:1306428 | 2004 | T | On general linear block code decoding using the sum-product iterative decoder
+ieee:1228134 | 2003 | T | Importance sampling for loop-free decoding trees with application to low-density parity-check codes
+ieee:1023501 | 2002 | T | Improved bit flipping decoding of low-density parity check codes
+ieee:1040519 | 2002 | T | Application of Gaussian approximation to iterative decoding with finite blocklengths
+ieee:965569 | 2001 | T | A new schedule for decoding low-density parity-check codes
+ieee:953537 | 2001 | T | Decoding low-density parity-check codes with probabilistic schedule
+ieee:11316506 | 2026 | - | Adaptation of Error Correction Procedures to the Time-Bin Quantum Key Distribution Protocol Implementation
+ieee:11544951 | 2026 | - | Attention-Aware Deep Joint Source-Channel Coding for Robust Power Grid Inspection Image Transmission
+ieee:11441637 | 2026 | - | Optimizing Coding Strategies for BB84-Based Quantum Key Distribution
+arxiv:2601.08824v3 | 2026 | - | Breaking the Orthogonality Barrier in Quantum LDPC Codes
+arxiv:2603.24082v1 | 2026 | - | Unanticipated Adversarial Robustness of Semantic Communication
+arxiv:2604.04277v1 | 2026 | - | Would Learning Help? Adaptive CRC-QC-LDPC Selection for Integrity in 5G-NR V2X
+arxiv:2604.07995v1 | 2026 | - | Belief Propagation Convergence Prediction for Bivariate Bicycle Quantum Error Correction Codes
+arxiv:2604.15025v2 | 2026 | - | Hidden Quantum Advantage near the Decoding Threshold of Decoded Quantum Interferometry
+arxiv:2604.18714v1 | 2026 | - | Efficient Routing of Quantum LDPC Codes on Programmable 2D Toric Architectures
+arxiv:2604.20838v2 | 2026 | - | High-Girth Regular Quantum LDPC Codes from Affine-Coset Structures
+arxiv:2604.27817v1 | 2026 | - | High-Girth Regular Quantum LDPC Codes from Square-Base Hypergraph Products via CPM Lifts
+arxiv:2605.14170v1 | 2026 | - | Multiple-Bases Belief Propagation List Decoding for Quantum LDPC Codes
+arxiv:2605.23894v1 | 2026 | - | A Two-Branch Finite-Field Construction for Regular CSS LDPC Bases
+ieee:11440984 | 2025 | - | Non-binary LDPC Code-Based Post-Processing Protocol for QKD
+ieee:11006877 | 2025 | - | A Blindness Property of the Min-Sum Decoding for the Toric Code
+ieee:11195509 | 2025 | - | Enhanced Min-Sum Decoding of Quantum Codes with Iteration Dynamics Memory
+ieee:10731847 | 2025 | - | B+-Tree-Quantization-Based Shared Secret Key Extraction Scheme From Atmospheric Optical Wireless Channel
+ieee:11322151 | 2025 | - | Real-time Transmission and Remote Intelligent Diagnosis of Oscillation Wave Detection Data for Dry-Type Reactors Based on 5G+MEC
+ieee:11028379 | 2025 | - | Joint Design of Error Correction and Error Detection using CRC-aided Polar Code for Ultra-Reliable Space Communications and Navigation with Applications to GNSS L1C
+ieee:11277709 | 2025 | - | Lightweight Error Correction Scheme for Quantum Key Distribution in IoT
+ieee:10841936 | 2025 | - | Generalized Quantum Data-Syndrome Codes and Belief Propagation Decoding for Phenomenological Noise
+arxiv:2501.05021v1 | 2025 | - | Enhanced Min-Sum Decoding of Quantum Codes Using Previous Iteration Dynamics
+arxiv:2501.11009v2 | 2025 | - | Efficient Reconciliation of Continuous Variable Quantum Key Distribution with Multiplicatively Repeated Non-Binary LDPC Codes
+arxiv:2504.01728v1 | 2025 | - | Linear Time Iterative Decoders for Hypergraph-Product and Lifted-Product Codes
+arxiv:2507.00591v1 | 2025 | - | Construction of LDPC convolutional codes with large girth from Latin squares
+arxiv:2508.04769v1 | 2025 | - | Power and Limitations of Linear Programming Decoder for Quantum LDPC Codes
+arxiv:2508.19698v1 | 2025 | - | Synthetic Image Detection via Spectral Gaps of QC-RBIM Nishimori Bethe-Hessian Operators
+arxiv:2509.25580v2 | 2025 | - | Neural-Model-Augmented Hybrid NMS-OSD Decoders for Near-ML in Short Block Codes
+arxiv:2510.01019v1 | 2025 | - | Layered Normalized Min-Sum Decoding with Bit Flipping for FDPC Codes
+arxiv:2510.08695v1 | 2025 | - | Degeneracy Cutting: A Local and Efficient Post-Processing for Belief Propagation Decoding of Quantum Low-Density Parity-Check Codes
+arxiv:2510.21030v2 | 2025 | - | Overlapped-repetition Shor codes achieving fourfold asymptotic rate
+arxiv:2511.02951v1 | 2025 | - | List Decoding and New Bicycle Code Constructions for Quantum LDPC Codes
+arxiv:2512.19834v1 | 2025 | - | Towards a point-to-point CV-QKD system: Implementation challenges and perspectives
+ieee:10601825 | 2024 | - | Quantum Annealing with Post-processing of Maximum Likelihood for LDPC Decoding
+ieee:10636513 | 2024 | - | Blind Reconciliation with Protograph LDPC Code Extension for FSO-Based Satellite QKD Systems
+ieee:10681681 | 2024 | - | A Construction of Algebraic Geometric LDPC Codes*
+ieee:10591758 | 2024 | - | The BP-LCOSD Algorithm for Toric Codes
+arxiv:2403.00192v1 | 2024 | - | Block-MDS QC-LDPC Codes for Information Reconciliation in Key Distribution
+arxiv:2403.18901v1 | 2024 | - | Toward Low-latency Iterative Decoding of QLDPC Codes Under Circuit-Level Noise
+arxiv:2406.02666v2 | 2024 | - | Entangling four logical qubits beyond break-even in a nonlocal code
+arxiv:2407.16258v1 | 2024 | - | Telecommand Rejection Probability for CCSDS-compliant LDPC-Coded Transmissions with Tail Sequence
+arxiv:2409.01440v2 | 2024 | - | An almost-linear time decoding algorithm for quantum LDPC codes under circuit-level noise
+arxiv:2410.11111v2 | 2024 | - | A Combinatorial Approach to Avoiding Weak Keys in the BIKE Cryptosystem
+arxiv:2412.08596v1 | 2024 | - | Quantum-enhanced belief propagation for LDPC decoding
+ieee:10211941 | 2023 | - | A Rate Compatible LDPC Scheme in the Quantum Key Distribution System
+ieee:10356284 | 2023 | - | Low-Complexity Decoding Algorithm Utilizing Degeneracy for Quantum LDPC Codes
+ieee:10207471 | 2023 | - | Multi-dimensional reconciliation encoder with quasi-cyclic LDPC codes on FPGA
+ieee:10460604 | 2023 | - | Performance of PSA-EKF Phase Noise Compensation in 3GPP Phase Noise Models for Mobile Backhaul Links
+ieee:10273477 | 2023 | - | Layered Decoding of Quantum LDPC Codes
+ieee:10368530 | 2023 | - | Information-Theoretic Security in BB84 QKD
+arxiv:2307.06575v3 | 2023 | - | Deep learning based enhancement of ordered statistics decoding of short LDPC codes
+arxiv:2307.14532v2 | 2023 | - | Absorbing Sets in Quantum LDPC Codes
+arxiv:2310.07129v2 | 2023 | - | The impact when neural min-sum variant meets ordered statistics decoding of LDPC codes
+arxiv:2310.07194v2 | 2023 | - | Boosting Learning for LDPC Codes to Improve the Error-Floor Performance
+arxiv:2310.15000v3 | 2023 | - | Check-Agnosia based Post-Processor for Message-Passing Decoding of Quantum LDPC Codes
+arxiv:2311.01328v2 | 2023 | - | Analog information decoding of bosonic quantum LDPC codes
+ieee:9965902 | 2022 | - | Stabilizer Inactivation for Message-Passing Decoding of Quantum LDPC Codes
+ieee:9846351 | 2022 | - | EMS Decoding Algorithm that Introduced Shuffled Strategy and Improved Variable Node Update
+arxiv:2204.09940v1 | 2022 | - | On Quantum-Assisted LDPC Decoding Augmented with Classical Post-Processing
+arxiv:2205.06125v3 | 2022 | - | Stabilizer Inactivation for Message-Passing Decoding of Quantum LDPC Codes
+arxiv:2205.10142v2 | 2022 | - | Data post-processing for the one-way heterodyne protocol under composable finite-size security
+arxiv:2207.01860v1 | 2022 | - | High-throughput decoder of quasi-cyclic LDPC codes with limited precision for continuous-variable quantum key distribution systems
+arxiv:2208.05795v1 | 2022 | - | An Modified Cole's Importance Sampling Method For Low Error Floor QC-LDPC Codes Construction
+arxiv:2212.03214v2 | 2022 | - | Generalized Belief Propagation Algorithms for Decoding of Surface Codes
+arxiv:2212.06985v3 | 2022 | - | Local Probabilistic Decoding of a Quantum Code
+ieee:9613593 | 2021 | - | Concatenated RS-LDPC Coding for Water-to-Air Visible Light Communication Through Wavy Water Surface
+ieee:9316234 | 2021 | - | An Improved Reliability-Based Decoding Algorithm for NB-LDPC Codes
+ieee:9149895 | 2021 | - | A Study on AM–FM Combined Detection for Magnetic Recording Using STO Reading
+ieee:9123984 | 2021 | - | Nonorthogonal Multiple Access With Orthogonal Time–Frequency Space Signal Transmission
+ieee:9435567 | 2021 | - | Secret key extraction in direct reconciliation CV-QKD systems
+ieee:9509989 | 2021 | - | Blind Joint Nonlinear Equalizer for mmWave Communications
+ieee:9225723 | 2021 | - | Performance Improvement of Dual STO Reading With AM–FM Combined Detection for 3-D Magnetic Recording
+ieee:9518154 | 2021 | - | Trapping Set Analysis of Finite-Length Quantum LDPC Codes
+ieee:9360622 | 2021 | - | Efficient Post-Processing for Physical-Layer Secure Key Distribution in Fiber
+arxiv:2104.11377v1 | 2021 | - | Rate compatible reconciliation for continuous-variable quantum key distribution using Raptor-like LDPC codes
+arxiv:2106.15526v1 | 2021 | - | Generalizing Syndrome Decoding problem to the totally Non-negative Grassmannian
+ieee:8713483 | 2020 | - | Packet Layer Erasure Coding in Interplanetary Links: The LTP Erasure Coding Link Service Adapter
+ieee:9057665 | 2020 | - | High-Speed Post-Processing in Continuous-Variable Quantum Key Distribution Based on FPGA Implementation
+arxiv:2001.07979v1 | 2020 | - | 100Mbps Reconciliation for Quantum Key Distribution Using a Single Graphics Processing Unit
+arxiv:2002.02696v1 | 2020 | - | Protograph-Based Decoding of LDPC Codes with Hamming Weight Amplifiers
+arxiv:2004.09084v1 | 2020 | - | High-throughput GPU layered decoder of multi-edge type low density parity check codes in continuous-variable quantum key distribution systems
+arxiv:2005.07016v2 | 2020 | - | Decoding Across the Quantum LDPC Code Landscape
+arxiv:2011.14753v3 | 2020 | - | Topologically Driven Methods for Construction Of Multi-Edge Type (Multigraph with nodes puncturing) Quasi-Cyclic Low-density Parity-check Codes for Wireless Channel, WDM Long-Haul and Archival Holographic Memory
+arxiv:2012.15297v2 | 2020 | - | Trapping Sets of Quantum LDPC Codes
+ieee:8626761 | 2019 | - | Performance Evaluation of LDPC Coding and Iterative Decoding System for 3-D Magnetic Recording With Dot Position Fluctuation
+ieee:9041818 | 2019 | - | LDPC Coded OFDM OW Communication System with Coherent Optical Receiver and RF Synchronous Demodulation under Turbulent Condition
+ieee:8466851 | 2019 | - | A Combinatorial Methodology for Optimizing Non-Binary Graph-Based Codes: Theoretical Analysis and Applications in Data Storage
+ieee:8929954 | 2019 | - | Efficient Partial Retransmission ARQ Strategy with Verification-based Decoding for Nonbinary Block Codes
+ieee:8891217 | 2019 | - | Performance Analysis of Finite Length Non-Binary Raptor Codes under Ordered Statistics Decoder
+ieee:8989120 | 2019 | - | A New Importance Sampling Algorithm for Fast Simulation of Linear Block Codes over BSCs
+arxiv:1902.05263v1 | 2019 | - | Multi-Matrix Post-Processing for Quantum Key Distribution
+arxiv:1903.10107v1 | 2019 | - | High Throughput and Low Cost LDPC Reconciliation for Quantum Key Distribution
+arxiv:1904.02703v3 | 2019 | - | Degenerate Quantum LDPC Codes With Good Finite Length Performance
+arxiv:1909.12496v1 | 2019 | - | Novel Reconciliation Protocol Based on Spinal Code for Continuous-variable Quantum Key Distribution
+arxiv:1912.05182v1 | 2019 | - | A Code-specific Conservative Model for the Failure Rate of Bit-flipping Decoding of LDPC Codes with Cryptographic Applications
+ieee:8538227 | 2018 | - | Modified EMS Decoding Algorithm Combined with Feedback Theory
+ieee:8437843 | 2018 | - | The Decoding Failure Probability of MDPC Codes
+arxiv:1801.04668v1 | 2018 | - | The decoding failure probability of MDPC codes
+arxiv:1803.08141v1 | 2018 | - | Efficient Search of QC-LDPC Codes with Girths 6 and 8 and Free of Elementary Trapping Sets with Small Size
+arxiv:1805.05046v1 | 2018 | - | Improved Reconciliation With Polar Codes In Quantum Key Distribution
+arxiv:1808.05258v1 | 2018 | - | Edge Coloring Technique to Remove Small Elementary Trapping Sets from Tanner Graph of QC-LDPC Codes with Column Weight 4
+arxiv:1810.05841v2 | 2018 | - | Error estimation at the information reconciliation stage of quantum key distribution
+ieee:7997179 | 2017 | - | Noncoherent analog network coding using LDPC-coded FSK
+arxiv:1702.07740v2 | 2017 | - | Key Reconciliation with Low-Density Parity-Check Codes for Long-Distance Quantum Cryptography
+arxiv:1711.01783v2 | 2017 | - | High speed error correction for continuous-variable quantum key distribution with multi-edge type LDPC code
+ieee:7553518 | 2016 | - | A General Non-Binary LDPC Code Optimization Framework Suitable for Dense Flash Memory and Magnetic Storage
+ieee:7543876 | 2016 | - | On the error detection capability of combined LDPC and CRC codes for space telecommand transmissions
+ieee:7393818 | 2016 | - | Performance Analysis of Raptor Codes Under Maximum Likelihood Decoding
+ieee:7726710 | 2016 | - | Adaptive granular HARQ LDPC-based coding for secrecy enhancement in wiretap channels
+ieee:7541791 | 2016 | - | The weight consistency matrix framework for general non-binary LDPC code optimization: Applications in flash memories
+arxiv:1604.05256v1 | 2016 | - | Check-hybrid GLDPC Codes: Systematic Elimination of Trapping Sets and Guaranteed Error Correction Capability
+ieee:7073625 | 2015 | - | Multiple-Votes Parallel Symbol-Flipping Decoding Algorithm for Non-Binary LDPC Codes
+ieee:7255148 | 2015 | - | Enhancing secrecy of the Gaussian wiretap channel using rate compatible LDPC codes with error amplification
+ieee:7509882 | 2015 | - | Table of contents
+arxiv:1503.08913v1 | 2015 | - | Decoding LDPC codes via Noisy Gradient Descent Bit-Flipping with Re-Decoding
+arxiv:1505.06423v1 | 2015 | - | Simple rate-adaptive LDPC coding for quantum key distribution
+arxiv:1510.04954v1 | 2015 | - | New Characterization and Efficient Exhaustive Search Algorithm for Elementary Trapping Sets of Variable-Regular LDPC Codes
+arxiv:1511.00133v3 | 2015 | - | Some problems of Graph Based Codes for Belief Propagation decoding
+ieee:6784391 | 2014 | - | Low-Complexity Encoding of Quasi-Cyclic Codes Based on Galois Fourier Transform
+ieee:6814118 | 2014 | - | Hybrid analog-digital coding scheme based on parallel concatenation of linear random projections and LDGM codes
+ieee:6947684 | 2014 | - | Table of contents
+ieee:6588632 | 2013 | - | Pilot-Symbol Assisted and Code-Aided Phase Error Estimation for High-Order QAM Transmission
+ieee:6637246 | 2013 | - | Performance enhancement of optical QPSK systems with coherent reception for high speed links
+arxiv:1303.1760v3 | 2013 | - | Family of Finite Geometry Low-Density Parity-Check Codes for Quantum Key Expansion
+arxiv:1308.3772v1 | 2013 | - | Joint Phase Noise Estimation and Data Detection in Coded MIMO Systems
+arxiv:1308.6003v1 | 2013 | - | Improving Sparse Associative Memories by Escaping from Bogus Fixed Points
+ieee:6325204 | 2012 | - | Importance sampling for performance estimation of LDPC codes over Rayleigh fading channels
+ieee:6325207 | 2012 | - | NB-LDPC: Absorbing set and importance sampling
+ieee:6388229 | 2012 | - | Improved dual adaptive importance sampling method for LDPC codes
+ieee:6705899 | 2012 | - | Turbo differential decoding failure for a coherent phase slip channel
+ieee:6418955 | 2012 | - | APCCAS 2012 technical program
+arxiv:1202.1348v2 | 2012 | - | Selecting Two-Bit Bit Flipping Algorithms for Collective Error Correction
+arxiv:1205.5729v2 | 2012 | - | Blind Reconciliation
+arxiv:1210.6267v1 | 2012 | - | Phase Noise Estimation for Uncoded/Coded SISO and MIMO Systems
+ieee:5701753 | 2011 | - | Efficient Stopping Criterion for Hybrid Weighted Symbol-Flipping Decoding of Nonbinary LDPC Codes
+ieee:5730554 | 2011 | - | Some Results on MAP Decoding of Non-Binary LDPC Codes Over the BEC
+ieee:5981314 | 2011 | - | High order M-QAM transceiver for gigabit radio microwave transmission: FPGA test chipset and ASIC design
+arxiv:1107.2867v1 | 2011 | - | A Two Stage Selective Averaging LDPC Decoding
+ieee:5476350 | 2010 | - | Channel coding and carrier recovery for adaptive modulation microwave radio links
+ieee:5545659 | 2010 | - | Trapping Sets of Fountain Codes
+ieee:5592686 | 2010 | - | Stopping sets for physical-layer security
+ieee:5706906 | 2010 | - | On bit error rate performance of polar codes in finite regime
+ieee:5513589 | 2010 | - | EXIT chart approximations using the role model approach
+arxiv:1001.3421v2 | 2010 | - | Multilevel Decoders Surpassing Belief Propagation on the Binary Symmetric Channel
+arxiv:1005.0052v3 | 2010 | - | On the Joint Decoding of LDPC Codes and Finite-State Channels via Linear Programming
+arxiv:1006.0659v1 | 2010 | - | EXIT Chart Approximations using the Role Model Approach
+arxiv:1008.4177v2 | 2010 | - | LDPC Codes from Latin Squares Free of Small Trapping Sets
+ieee:5431553 | 2009 | - | A study on quick simulation for estimation of low FER of LDPC codes
+ieee:5054826 | 2009 | - | On unequal error protection with low density parity check codes in scalable video coding
+ieee:5167366 | 2009 | - | An optimal bit allocation framework for error resilient Scalable Video Coding
+ieee:5380034 | 2009 | - | M-ary hyper phase-shift keying with Reed Solomon encoding and soft decision reliability information
+ieee:4716279 | 2008 | - | Reduced complexity and improved performance decoding algorithm for nonbinary LDPC codes over GF(q)
+ieee:4737395 | 2008 | - | A stopping criterion for nonbinary LDPC codes over GF(q)
+ieee:4595126 | 2008 | - | Conditional entropy of non-binary LDPC codes over the BEC
+ieee:4797676 | 2008 | - | Matching graph connectivity of LDPC codes to high-order modulation by bit interleaving
+ieee:4520050 | 2008 | - | Fast Simulation for the Performance Evaluation of LDPC Codes using Fast Flat Histogram Method
+ieee:4620277 | 2008 | - | Low-Complexity LDPC Codes with Near-Optimum Performance over the BEC
+ieee:4450790 | 2008 | - | Generalized LDPC codes and generalized stopping sets
+ieee:4471932 | 2008 | - | Fast performance estimation of block codes
+arxiv:0710.5230v2 | 2007 | - | Generalized reliability-based syndrome decoding for LDPC codes
+ieee:4151108 | 2006 | - | SAT02-3: Performance Analysis of LDPC-Coded PSK Signal Transmission over Non-Linear Satellite Channel in the Presence of Multiple Interferences
+ieee:4119247 | 2006 | - | On Decoding Failure Probabilities for Linear Block Codes on the Binary Erasure Channel
+ieee:1673096 | 2006 | - | A non-resampling sequential monte carlo detector for coded OFDM systems based on periodic termination of differential phase trellis
+ieee:1577840 | 2005 | - | An improved decoding algorithm for low-density parity-check codes over the binary erasure channel
+ieee:1435660 | 2005 | - | Importance sampling for tanner trees
+ieee:1388740 | 2005 | - | Evaluation of the very low BER of FEC codes using dual adaptive importance sampling
+ieee:1523541 | 2005 | - | Finite-length analysis of turbo decoding on the binary erasure channel
+ieee:1405305 | 2004 | - | Upper bounds on the rate of LDPC codes for Gilbert-Elliott channels
+ieee:7079986 | 2004 | - | A Bayesian method for iterative joint detection and decoding in the presence of phase noise
+ieee:1017759 | 2002 | - | Perpendicular and longitudinal recording: a signal-processing and coding perspective
