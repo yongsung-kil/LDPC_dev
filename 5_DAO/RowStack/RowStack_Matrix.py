@@ -105,11 +105,15 @@ def ceil_to_csw_step(value: int) -> int:
 
 
 def new_row_csw_threshold(err_per_iter, csw_per_iter, prev_threshold: Optional[int],
-                          max_iter: int) -> Optional[tuple]:
+                          max_iter: int, initial_csw: int) -> Optional[tuple]:
     """새 row의 CSW 문턱과 그 출처 iteration (설계 4.3 ㉰).
 
     prev_threshold가 None이면(앞 row가 문턱 -1인 첫 row) 상한은 MAX_CSW, 아니면 prev_threshold - STEP_CSW.
-    iteration j(1부터)는 j <= min(돈 iteration 수, max_iter - 1)이고 올림한 CSW가 [MIN_CSW, 상한] 안이면 쓸 수 있다.
+    iteration j(1부터)를 쓸 수 있는 조건은 세 가지다.
+      ㉠ j <= min(돈 iteration 수, max_iter - 1) (row k가 50 iteration 안에 쓰인다)
+      ㉡ 올림한 CSW T_j가 [MIN_CSW, 상한] 안이다 (앞 row보다 엄격히 작다)
+      ㉢ T_j에 처음 닿는 것이 j다. 초기 CSW(iteration 1이 row를 고를 때 보는 syndrome 무게)와 iteration 1..j-1의 CSW가
+         모두 T_j보다 크다. 그래야 row k가 정확히 j+1부터 이어받고 그 앞의 궤적이 prefix와 같다
     최소 잔여 에러가 처음 나오는 iteration i*가 쓸 수 있으면 그것, 아니면 쓸 수 있는 iteration 가운데
     잔여 에러가 가장 작은(같으면 이른) 것, 없으면 None.
     """
@@ -123,7 +127,9 @@ def new_row_csw_threshold(err_per_iter, csw_per_iter, prev_threshold: Optional[i
 
     def usable(iteration: int) -> bool:
         rounded = _ceil_to_step(csw[iteration - 1])
-        return MIN_CSW <= rounded <= upper
+        if not MIN_CSW <= rounded <= upper:
+            return False
+        return int(initial_csw) > rounded and bool(np.all(csw[:iteration - 1] > rounded))
 
     best_iteration = int(np.argmin(err[:count])) + 1
     if best_iteration <= last_usable and usable(best_iteration):
@@ -135,8 +141,11 @@ def new_row_csw_threshold(err_per_iter, csw_per_iter, prev_threshold: Optional[i
     return _ceil_to_step(csw[chosen - 1]), chosen
 
 
-def takeover_iteration(csw_per_iter, threshold: int) -> Optional[int]:
-    """문턱 이하의 CSW가 처음 나오는 iteration j의 다음 iteration (j + 1). 없으면 None."""
+def takeover_iteration(csw_per_iter, threshold: int, initial_csw: int) -> Optional[int]:
+    """row가 이어받는 첫 iteration. 초기 CSW가 문턱 이하이면 1, 아니면 문턱 이하의 CSW가 처음 나오는 iteration j의
+    다음 iteration (j + 1). 없으면 None."""
+    if int(initial_csw) <= int(threshold):
+        return 1
     hits = np.flatnonzero(np.asarray(csw_per_iter) <= int(threshold))
     if len(hits) == 0:
         return None

@@ -4,7 +4,7 @@ import os
 import time
 from typing import Optional
 
-HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "takeover_iteration", "best_rank",
+HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "source_iteration", "takeover_iteration", "best_rank",
                    "min_err", "min_err_iteration", "csw_at_min_err", "success", "success_iteration",
                    "replaced", "elapsed_sec", "note"]          # kind: gen, mut, pool
 SUMMARY_COLUMNS = ["seed", "result", "num_rows", "final_min_err", "matrix_file", "elapsed_sec", "fail_reason"]

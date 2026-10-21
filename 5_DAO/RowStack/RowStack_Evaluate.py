@@ -10,6 +10,7 @@ import numpy as np
 
 import RowStack_Config  # noqa: F401  (sys.path 등록)
 from RowStack_Matrix import MatrixTemplate, build_base_llr_matrix
+from src import channel as chan
 from src.decoder import BaseDecoder
 from src.sim import decode_frame_seeds
 
@@ -23,18 +24,20 @@ class CandidateResult:
     csw_at_min_err: int           # i*가 끝난 시점의 CSW
     err_per_iter: np.ndarray      # int64, 돈 iteration 수만큼
     csw_per_iter: np.ndarray
+    initial_csw: int = 0          # iteration 1이 row를 고를 때 보는 CSW (받은 프레임의 syndrome 무게)
 
 
-def result_from_decode(decode: dict) -> CandidateResult:
+def result_from_decode(decode: dict, initial_csw: int = 0) -> CandidateResult:
     """decode_frame_seeds(seed 1개, log={"bit_err", "csw"})의 반환을 요약한다."""
     err = np.asarray(decode["log_err_sum"], np.int64)
     csw = np.asarray(decode["log_csw_sum"], np.int64)
     success = bool(decode["success"][0])
     success_iteration = int(decode["decode_success_iteration"][0]) if success else 0
     if len(err) == 0:
-        return CandidateResult(success, success_iteration, 0, 0, 0, err, csw)
+        return CandidateResult(success, success_iteration, 0, 0, 0, err, csw, int(initial_csw))
     best = int(np.argmin(err)) + 1
-    return CandidateResult(success, success_iteration, int(err[best - 1]), best, int(csw[best - 1]), err, csw)
+    return CandidateResult(success, success_iteration, int(err[best - 1]), best, int(csw[best - 1]), err, csw,
+                           int(initial_csw))
 
 
 def candidate_sort_key(result: CandidateResult) -> tuple:
@@ -53,10 +56,20 @@ class UncorDecoder:
         self.channel_type = channel_type
         self.point = point
         self.channel_extra = dict(channel_extra)
+        self._initial_csw_by_seed = {}
+
+    def initial_csw(self, seed: int) -> int:
+        """받은 프레임의 syndrome 무게 (매트릭스와 무관하게 seed마다 하나). seed마다 한 번만 계산한다."""
+        seed = int(seed)
+        if seed not in self._initial_csw_by_seed:
+            frame = chan.channel_output_from_frame_seeds(self.code, self.channel_type, self.point, [seed],
+                                                         mode=self.template.mode, **self.channel_extra)
+            self._initial_csw_by_seed[seed] = int(self.code.syndrome(frame["hd"]).sum())
+        return self._initial_csw_by_seed[seed]
 
     def evaluate(self, rows: list, seed: int) -> CandidateResult:
         llr_matrix = build_base_llr_matrix(self.template, rows, name=f"stacked_{len(rows)}")
         decoder = BaseDecoder(self.code, llr_matrix=llr_matrix)
         decode = decode_frame_seeds(self.code, decoder, self.channel_type, self.point, [int(seed)],
                                     frames_per_batch=1, log={"bit_err", "csw"}, **self.channel_extra)
-        return result_from_decode(decode)
+        return result_from_decode(decode, self.initial_csw(seed))

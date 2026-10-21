@@ -6,7 +6,9 @@
 """
 import os
 import shutil
+import sys
 import time
+import traceback
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
@@ -29,6 +31,7 @@ KIND_CODE = {"gen": 1, "mut": 2}
 COLLECTED_UNCORS_DIR_NAME = "collected_uncors"
 PER_UNCOR_DIR_NAME = "per_uncor"
 NO_THRESHOLD_NOTE = "no reachable CSW threshold"
+NO_IMPROVEMENT_NOTE = "no improving candidate"
 MAX_ROWS_NOTE = "max rows reached"
 
 
@@ -117,30 +120,42 @@ class RowStackSession:
         last_rows, last_result, fail_reason = [], None, MAX_ROWS_NOTE
         for attempt in range(1, config.MAX_MATRIX_ATTEMPTS_PER_UNCOR + 1):
             rows, prefix_result = [], None
-            stopped_early = False
+            early_reason = None
             for stage in range(1, config.MAX_ROWS + 1):
                 started = time.perf_counter()
                 if stage == 1:
-                    threshold, takeover = -1, None
+                    threshold, source_iteration, takeover = -1, None, None
                 else:
                     prev_threshold = None if rows[-1].csw == -1 else rows[-1].csw
                     found_threshold = new_row_csw_threshold(prefix_result.err_per_iter, prefix_result.csw_per_iter,
-                                                            prev_threshold, config.MAX_ITERATION_OF_STACKED_GROUP)
+                                                            prev_threshold, config.MAX_ITERATION_OF_STACKED_GROUP,
+                                                            prefix_result.initial_csw)
                     if found_threshold is None:
                         self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen",
                                       "elapsed_sec": time.perf_counter() - started, "note": NO_THRESHOLD_NOTE})
                         self._log(f"seed {seed} attempt {attempt} stage {stage}: {NO_THRESHOLD_NOTE}")
-                        stopped_early = True
+                        early_reason = NO_THRESHOLD_NOTE
                         break
                     threshold, source_iteration = found_threshold
-                    takeover = takeover_iteration(prefix_result.csw_per_iter, threshold)
+                    takeover = takeover_iteration(prefix_result.csw_per_iter, threshold, prefix_result.initial_csw)
 
                 rank, payload = self._evaluate_block(rows, threshold, uncor_idx, attempt, stage, "gen", seed,
                                                      config.CANDIDATES_PER_RANK_PER_STAGE)
+                best_result = payload["result"]
+                if prefix_result is not None and candidate_sort_key(best_result) > candidate_sort_key(prefix_result):
+                    # 새 row를 붙인 최고 후보가 prefix 단독보다 나쁘면 고정하지 않는다 (prefix 단독이 더 나은 매트릭스다)
+                    self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
+                                  "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
+                                  **self._history_fields(best_result), "elapsed_sec": time.perf_counter() - started,
+                                  "note": NO_IMPROVEMENT_NOTE})
+                    self._log(f"seed {seed} attempt {attempt} stage {stage} gen: T={threshold} best min_err={best_result.min_err} "
+                              f"is worse than prefix {prefix_result.min_err}: {NO_IMPROVEMENT_NOTE}")
+                    early_reason = NO_IMPROVEMENT_NOTE
+                    break
                 rows.append(StackedRow(payload["values"], threshold))
-                prefix_result = payload["result"]
+                prefix_result = best_result
                 self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
-                              "takeover_iteration": takeover, "best_rank": rank,
+                              "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
                               **self._history_fields(prefix_result), "elapsed_sec": time.perf_counter() - started})
                 self._log(f"seed {seed} attempt {attempt} stage {stage} gen: T={threshold} min_err={prefix_result.min_err} "
                           f"at it {prefix_result.min_err_iteration} (csw {prefix_result.csw_at_min_err}) "
@@ -159,7 +174,7 @@ class RowStackSession:
                         rows[-1] = StackedRow(payload_m["values"], threshold)
                         prefix_result = mutant_result
                     self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "mut", "threshold": threshold,
-                                  "takeover_iteration": takeover, "best_rank": rank_m,
+                                  "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank_m,
                                   **self._history_fields(mutant_result), "replaced": replaced,
                                   "elapsed_sec": time.perf_counter() - started})
                     self._log(f"seed {seed} attempt {attempt} stage {stage} mut: min_err={mutant_result.min_err} "
@@ -167,7 +182,7 @@ class RowStackSession:
                     if prefix_result.success:
                         return SearchOutcome("success", rows, prefix_result, "")
             last_rows, last_result = rows, prefix_result
-            fail_reason = NO_THRESHOLD_NOTE if stopped_early else MAX_ROWS_NOTE
+            fail_reason = early_reason if early_reason is not None else MAX_ROWS_NOTE
         return SearchOutcome("fail", last_rows, last_result, fail_reason)
 
     # ----- 찾은 매트릭스 먼저 시험 -----
@@ -308,9 +323,20 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
     return session_dir
 
 
+def run_or_abort(fn: Callable, comm):
+    """fn()을 돌린다. 어떤 예외든(SystemExit 포함) traceback을 stderr에 찍고 comm.Abort(1)로 모든 rank를 멈춘다.
+    한 rank만 죽으면 나머지가 다음 집단 통신에서 영원히 기다리므로, 예외는 전체 중단으로 바꾼다."""
+    try:
+        return fn()
+    except BaseException:
+        traceback.print_exc()
+        sys.stderr.flush()
+        comm.Abort(1)
+
+
 def main() -> None:
     from mpi4py import MPI
-    run(CONFIG, MpiParallel(MPI.COMM_WORLD))
+    run_or_abort(lambda: run(CONFIG, MpiParallel(MPI.COMM_WORLD)), MPI.COMM_WORLD)
 
 
 if __name__ == "__main__":
