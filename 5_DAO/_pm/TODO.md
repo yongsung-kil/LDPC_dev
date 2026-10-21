@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-10-21 18:05:22
+> Claude 마지막 확인: 2026-10-22 00:14:18
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -13,7 +13,8 @@
   - [x] 요구 정리, 설계 문서, 시간 측정 (2026-10-21 18:05. 후보 row 하나의 시험이 2.8초, 측정 기록: `2_LDPC_base/_test/20261021_단일프레임_복호시간/`)
   - [x] 판정요청 2건 답 (2026-10-21 18:22. 문턱은 prefix가 최소 잔여 에러에 닿은 시점의 CSW를 8의 배수로 올린 값, n은 한 사이클 안의 작은 반복이고 큰 반복은 매트릭스 단위 재시도로 별도 설정. 추가 요구: 새 uncor는 먼저 찾은 매트릭스들로 복호해 보고 모두 실패할 때만 새로 찾음)
   - [x] 구현 계획 작성 (2026-10-21, `구현계획_261021.md`. Task 7개, 검사 32건 계획. 설계와 다른 점 3건은 계획 문서 머리에 기록)
-  - [ ] 구현: 2_LDPC_base에 seed 채널 함수와 seed 목록 복호 함수 추가 → `5_DAO/RowStack/` 도구 → 단일 프로세스 검사 → mpiexec 1개와 2개 확인
+  - [x] 구현 (2026-10-22 00:14. 2_LDPC_base에 `channel_output_from_frame_seeds`, `decode_frame_seeds` 추가(검사 9건), `5_DAO/RowStack/` 모듈 7개(검사 44건), mpiexec rank 1개와 2개 확인(기록 `5_DAO/_test/20261021_RowStack/smoke_mpi.md`), 저장 매트릭스 DAO Is_LLR_Valid 통과. 커밋 0e07c5a..2d72c8a와 이 커밋)
+  - [ ] 최종 리뷰 (Opus 서브에이전트, 구현 계획의 Review Focus 기준)
   - [ ] 사용자 환경 MPI 실행 확인
 
 - [ ] 집단 통신 타임아웃 메시지에 도착하지 않은 rank를 적고, ECC를 돌린 rank의 result가 없으면 멈춤

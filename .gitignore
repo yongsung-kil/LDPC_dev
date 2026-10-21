@@ -40,6 +40,7 @@ ideas/**/logs/*.log
 result_*.txt
 Ref_C_result_*.txt
 Sim_Output/
+5_DAO/Output_RowStack/
 
 # TV output files
 TV_*/

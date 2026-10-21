@@ -10,6 +10,14 @@ DAO(Decoder Auto Optimizer, LLR matrix 자동 최적화기)를 발전시키는 �
   `reference/`에만 보존한다
 - ㉱ 작업 관리: `_pm/TODO.md`
 
+## RowStack: uncor 하나씩 row를 쌓아 고치는 LLR matrix 탐색기
+
+- ㉮ 무엇: 기존 매트릭스로 고쳐지지 않는 uncor를 모은 뒤, uncor마다 그룹 1개 50 iteration 매트릭스를 row 하나씩
+  쌓아 고치는 매트릭스를 찾는 MPI 도구. 모든 rank가 같은 uncor 하나로 서로 다른 후보 row를 시험하고 root가
+  iteration 중 최소 잔여 에러로 고른다. 디코더는 `2_LDPC_base/src`의 Python 디코더를 import해 쓴다
+- ㉯ 위치: `RowStack/` (실행 `RowStack/run_RowStack_mpi.bat`, 설정 `RowStack/RowStack_Config.py`). `SRC/`의 DAO와는 별개의 프로그램이다
+- ㉰ 상세: `RowStack/README.md`. 설계와 결정 기록은 `_pm/tasks/20261021_uncor별_row누적_탐색/`
+
 아래는 원형의 사용 설명서다.
 
 ---
