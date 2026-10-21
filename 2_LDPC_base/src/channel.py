@@ -147,3 +147,32 @@ CHANNEL_MODES = {
     "fixed_error": ("HD",),
     "strong_error": ("2SD",),
 }
+
+
+
+def channel_output_from_frame_seeds(code, channel_type, point, frame_seeds, mode="HD", **extra):
+    """seed 목록으로 프레임 배치를 만든다 (5_DAO RowStack이 uncor를 seed로 재현할 때 쓴다).
+
+    seed마다 numpy.random.default_rng(int(seed))를 만들어 message 생성, encode, 채널 함수를
+    프레임 1개로 부르고 배치로 쌓는다. 그래서 같은 seed와 같은 채널 설정이면 배치 크기와
+    무관하게 같은 프레임이 나온다. 반환은 CHANNELS 출력과 같은 dict {"mode", "hd", "sd", "cc"}이고
+    hd는 (len(frame_seeds), N_b, z)다. sd와 cc는 채널이 None을 주면 None이다.
+    extra는 채널 함수의 추가 인자다 (strong_error: scr, ser).
+    """
+    from . import encoder   # run.py의 channel_fn과 같은 순서 (message 생성 → encode → 채널)
+    channel_fn = CHANNELS[channel_type]
+    outputs = []
+    for seed in frame_seeds:
+        random_generator = np.random.default_rng(int(seed))
+        msg = encoder.generate_message(code, 1, random_generator)
+        cw = encoder.encode(msg, code)
+        outputs.append(channel_fn(code, cw, point, random_generator, mode=mode, **extra))
+    if not outputs:
+        return {"mode": mode, "hd": np.zeros((0, code.N_b, code.z), np.uint8), "sd": None, "cc": None}
+
+    def stack(key):
+        if outputs[0][key] is None:
+            return None
+        return np.concatenate([out[key] for out in outputs], axis=0)
+
+    return {"mode": outputs[0]["mode"], "hd": stack("hd"), "sd": stack("sd"), "cc": stack("cc")}
