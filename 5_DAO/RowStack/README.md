@@ -41,6 +41,7 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 | `MAX_MATRIX_ATTEMPTS_PER_UNCOR` | 1 | 큰 반복 (row 상한까지 실패하면 row 1부터 새 난수로 다시 시작하는 횟수) |
 | `TRY_FOUND_MATRICES_FIRST` | True | 새 uncor를 먼저 찾은 매트릭스들로 복호해 보는지 |
 | `RANDOM_SEED` | 0 | 후보 생성 난수의 뿌리 (같은 설정과 값이면 결과가 같다) |
+| `SAVE_TESTED_MATRICES` | True | 시험한 후보 매트릭스를 `tested_matrices/rank_N/`에 DAO 형식 파일로 남긴다 (후보 수만큼 파일이 생기므로 많으면 끈다) |
 | `OUTPUT_ROOT` | 5_DAO/Output_RowStack | 세션 폴더가 생기는 곳 |
 
 ## 동작 규칙
@@ -67,7 +68,8 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 Output_RowStack/{YYYYMMDD_HHMMSS}/
 ├── result.txt                   # root의 중요 결과만: 설정 머리글, uncor 모은 수, uncor마다 한 줄(SUCCESS, REUSED, FAIL), 마지막 집계
 ├── log.txt                      # root의 상세 로그: 머리글, uncor마다 구분선과 stage별 최고 후보, 결과 줄
-├── rank_logs/rank_{N}.txt       # rank마다 자기 후보 하나하나의 결과 (min_err, iteration, CSW, 성공 여부, 시간)
+├── rank_logs/rank_{N}.txt       # rank마다 자기 후보 하나하나의 결과 (min_err, iteration, CSW, 성공 여부, 시간, 매트릭스 파일 이름)
+├── tested_matrices/rank_{N}/LLR_MATRIX_{모드}_seed{seed}_attempt{a}_stage{s}_{gen|mut}{번호}.txt   # 그 후보로 시험한 매트릭스 (SAVE_TESTED_MATRICES)
 ├── config_used.py               # 실행에 쓴 RowStack_Config.py 사본
 ├── collected_uncors/            # uncor_seeds.txt (한 줄에 seed 하나), info.json (채널 설정, 모은 수, 돌린 프레임 수), 기존 매트릭스 사본
 ├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, source_iteration, takeover_iteration, best_rank,

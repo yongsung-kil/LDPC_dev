@@ -50,6 +50,7 @@ class RowStackConfig:
     MAX_MATRIX_ATTEMPTS_PER_UNCOR: int = 1                 # 큰 반복 (R_max까지 실패하면 row 1부터 다시 시작하는 횟수)
     TRY_FOUND_MATRICES_FIRST: bool = True                  # 새 uncor를 먼저 찾은 매트릭스들로 복호해 보는지
     RANDOM_SEED: int = 0                                   # 후보 생성 난수의 뿌리
+    SAVE_TESTED_MATRICES: bool = True                      # 시험한 후보 매트릭스를 tested_matrices/rank_N/에 파일로 남기는지
     OUTPUT_ROOT: str = DEFAULT_OUTPUT_ROOT
 
     def channel_extra(self) -> dict:

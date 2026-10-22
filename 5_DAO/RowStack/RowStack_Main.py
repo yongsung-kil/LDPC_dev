@@ -57,9 +57,11 @@ class RowStackSession:
 
     def __init__(self, config: RowStackConfig, parallel, evaluate_fn: Callable, template: MatrixTemplate,
                  session_dir: Optional[str], logger: Optional[RootLogger],
-                 result_logger: Optional[FileLogger] = None, rank_logger: Optional[FileLogger] = None):
+                 result_logger: Optional[FileLogger] = None, rank_logger: Optional[FileLogger] = None,
+                 tested_matrix_dir: Optional[str] = None):
         """logger는 root의 상세 로그(log.txt), result_logger는 root의 중요 결과(result.txt),
-        rank_logger는 이 rank의 후보별 상세(rank_logs/rank_N.txt)다. 없으면 그 기록은 생략한다."""
+        rank_logger는 이 rank의 후보별 상세(rank_logs/rank_N.txt), tested_matrix_dir는 이 rank가 시험한 후보 매트릭스
+        파일을 두는 폴더(tested_matrices/rank_N)다. 없으면 그 기록은 생략한다."""
         self.config = config
         self.parallel = parallel
         self.evaluate = evaluate_fn
@@ -68,6 +70,9 @@ class RowStackSession:
         self.logger = logger
         self.result_logger = result_logger
         self.rank_logger = rank_logger
+        self.tested_matrix_dir = tested_matrix_dir
+        if tested_matrix_dir:
+            os.makedirs(tested_matrix_dir, exist_ok=True)
         self.is_root = parallel.rank == 0
         self.history = None
         if self.is_root and session_dir:
@@ -119,13 +124,19 @@ class RowStackSession:
             else:
                 values = mutate_row_values(base_values, self.template, rng, self.config.MUTATION_NUM_ELEMENTS,
                                            self.config.MUTATION_RANGE)
-            result = self.evaluate(prefix + [StackedRow(values, threshold)], seed)
+            rows = prefix + [StackedRow(values, threshold)]
+            result = self.evaluate(rows, seed)
             key = candidate_sort_key(result)
             if local_best is None or key < local_best[0]:
                 local_best = (key, {"values": values, "result": result})
+            file_note = ""
+            if self.tested_matrix_dir:
+                file_name = f"LLR_MATRIX_{self.template.mode}_seed{seed}_attempt{attempt}_stage{stage}_{kind}{index}.txt"
+                save_stacked_matrix(self.template, rows, os.path.join(self.tested_matrix_dir, file_name))
+                file_note = f" file={file_name}"
             self._rank_log(f"seed {seed} attempt {attempt} stage {stage} {kind} #{index}: min_err={result.min_err} "
                            f"at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}) success={result.success} "
-                           f"threshold={threshold} ({time.perf_counter() - started:.1f}s)")
+                           f"threshold={threshold} ({time.perf_counter() - started:.1f}s){file_note}")
         return self.best_over_ranks(local_best)
 
     @staticmethod
@@ -350,8 +361,11 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
         return session_dir
 
     evaluator = UncorDecoder(code, template, config.CHANNEL_TYPE, config.CHANNEL_POINT, config.channel_extra())
+    tested_matrix_dir = None
+    if config.SAVE_TESTED_MATRICES:
+        tested_matrix_dir = os.path.join(session_dir, "tested_matrices", f"rank_{parallel.rank}")
     session = RowStackSession(config, parallel, evaluator.evaluate, template, session_dir if is_root else None, logger,
-                              result_logger=result_logger, rank_logger=rank_logger)
+                              result_logger=result_logger, rank_logger=rank_logger, tested_matrix_dir=tested_matrix_dir)
     summary = CsvAppender(os.path.join(session_dir, "summary.csv"), SUMMARY_COLUMNS) if is_root else None
     found = []
     counts = {"success": 0, "reused": 0, "fail": 0}
