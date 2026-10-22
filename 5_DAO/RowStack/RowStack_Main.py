@@ -94,12 +94,18 @@ class RowStackSession:
         if self.rank_logger is not None:
             self.rank_logger.line(text)
 
-    def _rank_log_group_header(self, seed: int, attempt: int, stage: int, threshold: int) -> None:
-        """seed, attempt, stage가 바뀔 때 한 번만 빈 줄과 머리줄을 쓴다. 후보 줄은 gen #n, mut #n으로 시작한다."""
+    def _rank_log_group_header(self, seed: int, attempt: int, stage: int, threshold: int,
+                               prefix: list, prefix_result, prefix_origin: Optional[str]) -> None:
+        """seed, attempt, stage가 바뀔 때 한 번만 머리줄과 지금 고정된 row들(prefix)의 출처와 성능을 쓴다.
+        후보 줄은 gen #n, mut #n으로 시작한다."""
         if self.rank_logger is None or self._rank_log_group == (seed, attempt, stage):
             return
         self._rank_log_group = (seed, attempt, stage)
         self.rank_logger.raw(f"----- seed {seed} attempt {attempt} stage {stage} (threshold {threshold}) -----")
+        if prefix_result is None:
+            self.rank_logger.raw("prefix: (none)")
+        else:
+            self.rank_logger.raw(f"prefix: rows={len(prefix)} from {prefix_origin} {self._describe(prefix_result)}")
 
     def candidate_rng(self, uncor_idx: int, attempt: int, stage: int, kind: str) -> np.random.Generator:
         return np.random.default_rng([self.config.RANDOM_SEED, self.parallel.rank, uncor_idx, attempt, stage,
@@ -121,11 +127,12 @@ class RowStackSession:
             self.history.append(row)
 
     def _evaluate_block(self, prefix: list, threshold: int, uncor_idx: int, attempt: int, stage: int, kind: str,
-                        seed: int, count: int, base_values=None):
-        """rank마다 후보 count개를 만들어 시험하고 전체 최고 (rank, payload)를 돌려준다. payload는 values와 result."""
+                        seed: int, count: int, base_values=None, prefix_result=None, prefix_origin=None):
+        """rank마다 후보 count개를 만들어 시험하고 전체 최고 (rank, payload)를 돌려준다. payload는 values, result, index.
+        prefix_result와 prefix_origin은 rank 로그 머리줄에 적는 지금 고정된 row들의 성능과 출처다."""
         rng = self.candidate_rng(uncor_idx, attempt, stage, kind)
         local_best = None
-        self._rank_log_group_header(seed, attempt, stage, threshold)
+        self._rank_log_group_header(seed, attempt, stage, threshold, prefix, prefix_result, prefix_origin)
         for index in range(1, count + 1):
             started = time.perf_counter()
             if kind == "gen":
@@ -174,7 +181,7 @@ class RowStackSession:
         config = self.config
         last_rows, last_result, fail_reason = [], None, MAX_ROWS_NOTE
         for attempt in range(1, config.MAX_MATRIX_ATTEMPTS_PER_UNCOR + 1):
-            rows, prefix_result = [], None
+            rows, prefix_result, prefix_origin = [], None, None
             early_reason = None
             for stage in range(1, config.MAX_ROWS + 1):
                 started = time.perf_counter()
@@ -195,7 +202,8 @@ class RowStackSession:
                     takeover = takeover_iteration(prefix_result.csw_per_iter, threshold, prefix_result.initial_csw)
 
                 rank, payload = self._evaluate_block(rows, threshold, uncor_idx, attempt, stage, "gen", seed,
-                                                     config.CANDIDATES_PER_RANK_PER_STAGE)
+                                                     config.CANDIDATES_PER_RANK_PER_STAGE,
+                                                     prefix_result=prefix_result, prefix_origin=prefix_origin)
                 best_result = payload["result"]
                 chosen = f"best=rank{rank} #{payload['index']}"
                 if prefix_result is not None and candidate_sort_key(best_result) > candidate_sort_key(prefix_result):
@@ -211,6 +219,7 @@ class RowStackSession:
                     break
                 rows.append(StackedRow(payload["values"], threshold))
                 prefix_result = best_result
+                prefix_origin = f"stage {stage} gen rank{rank} #{payload['index']}"
                 self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
                               "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
                               "best_index": payload["index"], **self._history_fields(prefix_result),
@@ -230,6 +239,7 @@ class RowStackSession:
                     if replaced:
                         rows[-1] = StackedRow(payload_m["values"], threshold)
                         prefix_result = mutant_result
+                        prefix_origin = f"stage {stage} mut rank{rank_m} #{payload_m['index']}"
                     self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "mut", "threshold": threshold,
                                   "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank_m,
                                   "best_index": payload_m["index"], **self._history_fields(mutant_result),
