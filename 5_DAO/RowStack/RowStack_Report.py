@@ -5,7 +5,7 @@ import time
 from typing import Optional
 
 HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "source_iteration", "takeover_iteration", "best_rank",
-                   "min_err", "min_err_iteration", "csw_at_min_err", "success", "success_iteration",
+                   "min_err", "min_err_iteration", "csw_at_min_err", "corrected", "corrected_iteration",
                    "replaced", "elapsed_sec", "note"]          # kind: gen, mut, pool
 SUMMARY_COLUMNS = ["seed", "result", "num_rows", "final_min_err", "matrix_file", "elapsed_sec", "fail_reason"]
 FOUND_COLUMNS = ["matrix_file", "origin_seed", "num_fixed", "fixed_seeds"]   # fixed_seeds는 공백으로 이은 seed

@@ -145,15 +145,15 @@ class RowStackSession:
                 save_stacked_matrix(self.template, rows, os.path.join(self.tested_matrix_dir, file_name))
                 file_note = f" file={file_name}"
             self._rank_log(f"{kind} #{index}: min_err={result.min_err} at iteration {result.min_err_iteration} "
-                           f"(csw {result.csw_at_min_err}) success={result.success} "
+                           f"(csw {result.csw_at_min_err}) corrected={result.success} "
                            f"({time.perf_counter() - started:.1f}s){file_note}")
         return self.best_over_ranks(local_best)
 
     @staticmethod
     def _history_fields(result: CandidateResult) -> dict:
         return {"min_err": result.min_err, "min_err_iteration": result.min_err_iteration,
-                "csw_at_min_err": result.csw_at_min_err, "success": result.success,
-                "success_iteration": result.success_iteration}
+                "csw_at_min_err": result.csw_at_min_err, "corrected": result.success,
+                "corrected_iteration": result.success_iteration}
 
     # ----- 탐색 -----
     def search_matrix_for_uncor(self, uncor_idx: int, seed: int) -> SearchOutcome:
@@ -200,7 +200,7 @@ class RowStackSession:
                               **self._history_fields(prefix_result), "elapsed_sec": time.perf_counter() - started})
                 self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} min_err={prefix_result.min_err} "
                           f"at iteration {prefix_result.min_err_iteration} (csw {prefix_result.csw_at_min_err}) "
-                          f"success={prefix_result.success} rank={rank}")
+                          f"corrected={prefix_result.success} rank={rank}")
                 if prefix_result.success:
                     return SearchOutcome("success", rows, prefix_result, "")
 
@@ -219,7 +219,7 @@ class RowStackSession:
                                   **self._history_fields(mutant_result), "replaced": replaced,
                                   "elapsed_sec": time.perf_counter() - started})
                     self._log(f"seed {seed} attempt {attempt} stage {stage} mut: min_err={mutant_result.min_err} "
-                              f"replaced={replaced} success={mutant_result.success} rank={rank_m}")
+                              f"replaced={replaced} corrected={mutant_result.success} rank={rank_m}")
                     if prefix_result.success:
                         return SearchOutcome("success", rows, prefix_result, "")
             last_rows, last_result = rows, prefix_result
@@ -253,14 +253,14 @@ class RowStackSession:
             index = self.try_found_matrices(found, seed)
             if index is not None:
                 found[index].fixed_seeds.append(seed)
-                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "success": True,
+                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "corrected": True,
                               "elapsed_sec": time.perf_counter() - started, "note": f"reused {found[index].matrix_file}"})
                 elapsed = time.perf_counter() - started
                 self._result(f"seed {seed}: REUSED {found[index].matrix_file} (fixes {len(found[index].fixed_seeds)} seeds) "
                              f"({elapsed:.1f}s)")
                 return {"seed": seed, "result": "reused", "num_rows": len(found[index].rows), "final_min_err": 0,
                         "matrix_file": found[index].matrix_file, "elapsed_sec": elapsed, "fail_reason": ""}
-            self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "success": False,
+            self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "corrected": False,
                           "elapsed_sec": time.perf_counter() - started, "note": f"no found matrix fixes ({len(found)} tried)"})
             self._log(f"seed {seed}: none of {len(found)} found matrices fixes it")
 
@@ -277,7 +277,7 @@ class RowStackSession:
         final_min_err = outcome.final.min_err if outcome.final is not None else None
         elapsed = time.perf_counter() - started
         if outcome.result == "success":
-            self._result(f"seed {seed}: SUCCESS rows={len(outcome.rows)} success_it={outcome.final.success_iteration} "
+            self._result(f"seed {seed}: SUCCESS rows={len(outcome.rows)} corrected at iteration {outcome.final.success_iteration} "
                          f"file={matrix_file} ({elapsed:.1f}s)")
         else:
             self._result(f"seed {seed}: FAIL rows={len(outcome.rows)} min_err={final_min_err} reason={outcome.fail_reason} "
