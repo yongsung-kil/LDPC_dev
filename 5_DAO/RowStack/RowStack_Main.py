@@ -99,7 +99,6 @@ class RowStackSession:
         if self.rank_logger is None or self._rank_log_group == (seed, attempt, stage):
             return
         self._rank_log_group = (seed, attempt, stage)
-        self.rank_logger.raw("")
         self.rank_logger.raw(f"----- seed {seed} attempt {attempt} stage {stage} (threshold {threshold}) -----")
 
     def candidate_rng(self, uncor_idx: int, attempt: int, stage: int, kind: str) -> np.random.Generator:
@@ -150,6 +149,8 @@ class RowStackSession:
             raise RuntimeError(f"{kind} block evaluated no candidate (count={count}); check the config")
         rank, payload = best
         self._rank_log(f"=> {kind} best over ranks: rank{rank} #{payload['index']} ({self._describe(payload['result'])})")
+        if self.rank_logger is not None:
+            self.rank_logger.raw("")   # 블록 사이 빈 줄
         return best
 
     @staticmethod
