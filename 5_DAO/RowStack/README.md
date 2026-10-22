@@ -72,8 +72,9 @@ Output_RowStack/{YYYYMMDD_HHMMSS}/
 ├── tested_matrices/rank_{N}/LLR_MATRIX_{모드}_seed{seed}_attempt{a}_stage{s}_{gen|mut}{번호}.txt   # 그 후보로 시험한 매트릭스 (SAVE_TESTED_MATRICES)
 ├── config_used.py               # 실행에 쓴 RowStack_Config.py 사본
 ├── collected_uncors/            # uncor_seeds.txt (한 줄에 seed 하나), info.json (채널 설정, 모은 수, 돌린 프레임 수), 기존 매트릭스 사본
-├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, source_iteration, takeover_iteration, best_rank,
-│                                #   min_err, min_err_iteration, csw_at_min_err, corrected(uncor가 고쳐졌는지), corrected_iteration, replaced, elapsed_sec, note
+├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, source_iteration, takeover_iteration,
+│                                #   best_rank와 best_index(뽑힌 후보를 낸 rank와 후보 번호), min_err, min_err_iteration, csw_at_min_err,
+│                                #   decoding(success: 그 후보로 uncor가 고쳐짐, fail: 못 고침), corrected_iteration, replaced, elapsed_sec, note
 ├── per_uncor/seed_{seed}/LLR_MATRIX_{모드}_uncor_{seed}.txt   # 성공이면 고치는 매트릭스, 실패면 마지막 stage의 매트릭스
 ├── summary.csv                  # seed, result(success/reused/fail), num_rows, final_min_err, matrix_file, elapsed_sec, fail_reason
 └── found_matrices.csv           # matrix_file, origin_seed, num_fixed, fixed_seeds

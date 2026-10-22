@@ -4,9 +4,10 @@ import os
 import time
 from typing import Optional
 
-HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "source_iteration", "takeover_iteration", "best_rank",
-                   "min_err", "min_err_iteration", "csw_at_min_err", "corrected", "corrected_iteration",
-                   "replaced", "elapsed_sec", "note"]          # kind: gen, mut, pool
+HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "source_iteration", "takeover_iteration",
+                   "best_rank", "best_index", "min_err", "min_err_iteration", "csw_at_min_err", "decoding",
+                   "corrected_iteration", "replaced", "elapsed_sec", "note"]
+# kind: gen, mut, pool. best_rank와 best_index: 뽑힌 후보를 낸 rank와 그 rank 안의 후보 번호. decoding: success 또는 fail
 SUMMARY_COLUMNS = ["seed", "result", "num_rows", "final_min_err", "matrix_file", "elapsed_sec", "fail_reason"]
 FOUND_COLUMNS = ["matrix_file", "origin_seed", "num_fixed", "fixed_seeds"]   # fixed_seeds는 공백으로 이은 seed
 

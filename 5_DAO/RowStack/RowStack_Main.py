@@ -138,21 +138,33 @@ class RowStackSession:
             result = self.evaluate(rows, seed)
             key = candidate_sort_key(result)
             if local_best is None or key < local_best[0]:
-                local_best = (key, {"values": values, "result": result})
+                local_best = (key, {"values": values, "result": result, "index": index})
             file_note = ""
             if self.tested_matrix_dir:
                 file_name = f"LLR_MATRIX_{self.template.mode}_seed{seed}_attempt{attempt}_stage{stage}_{kind}{index}.txt"
                 save_stacked_matrix(self.template, rows, os.path.join(self.tested_matrix_dir, file_name))
                 file_note = f" file={file_name}"
-            self._rank_log(f"{kind} #{index}: min_err={result.min_err} at iteration {result.min_err_iteration} "
-                           f"(csw {result.csw_at_min_err}) corrected={result.success} "
-                           f"({time.perf_counter() - started:.1f}s){file_note}")
-        return self.best_over_ranks(local_best)
+            self._rank_log(f"{kind} #{index}: {self._describe(result)} ({time.perf_counter() - started:.1f}s){file_note}")
+        best = self.best_over_ranks(local_best)
+        if best is not None:
+            rank, payload = best
+            self._rank_log(f"=> {kind} best over ranks: rank{rank} #{payload['index']} ({self._describe(payload['result'])})")
+        return best
 
     @staticmethod
-    def _history_fields(result: CandidateResult) -> dict:
+    def _decoding_word(result: CandidateResult) -> str:
+        return "success" if result.success else "fail"
+
+    @classmethod
+    def _describe(cls, result: CandidateResult) -> str:
+        """후보 결과 한 토막: min_err, 그 iteration과 CSW, 복호 성공 여부."""
+        return (f"min_err={result.min_err} at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}) "
+                f"decoding={cls._decoding_word(result)}")
+
+    @classmethod
+    def _history_fields(cls, result: CandidateResult) -> dict:
         return {"min_err": result.min_err, "min_err_iteration": result.min_err_iteration,
-                "csw_at_min_err": result.csw_at_min_err, "corrected": result.success,
+                "csw_at_min_err": result.csw_at_min_err, "decoding": cls._decoding_word(result),
                 "corrected_iteration": result.success_iteration}
 
     # ----- 탐색 -----
@@ -183,24 +195,26 @@ class RowStackSession:
                 rank, payload = self._evaluate_block(rows, threshold, uncor_idx, attempt, stage, "gen", seed,
                                                      config.CANDIDATES_PER_RANK_PER_STAGE)
                 best_result = payload["result"]
+                chosen = f"best=rank{rank} #{payload['index']}"
                 if prefix_result is not None and candidate_sort_key(best_result) > candidate_sort_key(prefix_result):
                     # 새 row를 붙인 최고 후보가 prefix 단독보다 나쁘면 고정하지 않는다 (prefix 단독이 더 나은 매트릭스다)
                     self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
                                   "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
-                                  **self._history_fields(best_result), "elapsed_sec": time.perf_counter() - started,
-                                  "note": NO_IMPROVEMENT_NOTE})
-                    self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} best min_err={best_result.min_err} "
-                              f"is worse than prefix {prefix_result.min_err}: {NO_IMPROVEMENT_NOTE}")
+                                  "best_index": payload["index"], **self._history_fields(best_result),
+                                  "elapsed_sec": time.perf_counter() - started, "note": NO_IMPROVEMENT_NOTE})
+                    self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} {chosen} "
+                              f"{self._describe(best_result)} is worse than prefix min_err={prefix_result.min_err}: "
+                              f"{NO_IMPROVEMENT_NOTE}")
                     early_reason = NO_IMPROVEMENT_NOTE
                     break
                 rows.append(StackedRow(payload["values"], threshold))
                 prefix_result = best_result
                 self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
                               "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
-                              **self._history_fields(prefix_result), "elapsed_sec": time.perf_counter() - started})
-                self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} min_err={prefix_result.min_err} "
-                          f"at iteration {prefix_result.min_err_iteration} (csw {prefix_result.csw_at_min_err}) "
-                          f"corrected={prefix_result.success} rank={rank}")
+                              "best_index": payload["index"], **self._history_fields(prefix_result),
+                              "elapsed_sec": time.perf_counter() - started})
+                self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} {chosen} "
+                          f"{self._describe(prefix_result)}")
                 if prefix_result.success:
                     return SearchOutcome("success", rows, prefix_result, "")
 
@@ -216,10 +230,10 @@ class RowStackSession:
                         prefix_result = mutant_result
                     self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "mut", "threshold": threshold,
                                   "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank_m,
-                                  **self._history_fields(mutant_result), "replaced": replaced,
-                                  "elapsed_sec": time.perf_counter() - started})
-                    self._log(f"seed {seed} attempt {attempt} stage {stage} mut: min_err={mutant_result.min_err} "
-                              f"replaced={replaced} corrected={mutant_result.success} rank={rank_m}")
+                                  "best_index": payload_m["index"], **self._history_fields(mutant_result),
+                                  "replaced": replaced, "elapsed_sec": time.perf_counter() - started})
+                    self._log(f"seed {seed} attempt {attempt} stage {stage} mut: threshold={threshold} "
+                              f"best=rank{rank_m} #{payload_m['index']} {self._describe(mutant_result)} replaced={replaced}")
                     if prefix_result.success:
                         return SearchOutcome("success", rows, prefix_result, "")
             last_rows, last_result = rows, prefix_result
@@ -253,14 +267,14 @@ class RowStackSession:
             index = self.try_found_matrices(found, seed)
             if index is not None:
                 found[index].fixed_seeds.append(seed)
-                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "corrected": True,
+                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "success",
                               "elapsed_sec": time.perf_counter() - started, "note": f"reused {found[index].matrix_file}"})
                 elapsed = time.perf_counter() - started
                 self._result(f"seed {seed}: REUSED {found[index].matrix_file} (fixes {len(found[index].fixed_seeds)} seeds) "
                              f"({elapsed:.1f}s)")
                 return {"seed": seed, "result": "reused", "num_rows": len(found[index].rows), "final_min_err": 0,
                         "matrix_file": found[index].matrix_file, "elapsed_sec": elapsed, "fail_reason": ""}
-            self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "corrected": False,
+            self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "fail",
                           "elapsed_sec": time.perf_counter() - started, "note": f"no found matrix fixes ({len(found)} tried)"})
             self._log(f"seed {seed}: none of {len(found)} found matrices fixes it")
 
