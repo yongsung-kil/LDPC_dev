@@ -316,7 +316,7 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
     run_started = time.perf_counter()
     logger = RootLogger(os.path.join(session_dir, "log.txt")) if is_root else None
     result_logger = FileLogger(os.path.join(session_dir, "result.txt")) if is_root else None
-    rank_logger = FileLogger(os.path.join(session_dir, "rank_logs", f"rank_{parallel.rank}.txt"))
+    rank_logger = FileLogger(os.path.join(session_dir, "rank_logs", f"rank_{parallel.rank}.txt"), timestamp_at_end=True)
 
     def log(text):
         if logger is not None:

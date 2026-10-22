@@ -88,11 +88,12 @@ def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, 
 
 
 class FileLogger:
-    """파일(path가 있을 때)에 한 줄씩 쓴다. line은 시각을 앞에 붙이고 raw는 글자 그대로 쓴다."""
+    """파일(path가 있을 때)에 한 줄씩 쓴다. line은 시각을 붙이고(기본은 앞, timestamp_at_end면 뒤) raw는 글자 그대로 쓴다."""
 
-    def __init__(self, path: Optional[str], to_stdout: bool = False):
+    def __init__(self, path: Optional[str], to_stdout: bool = False, timestamp_at_end: bool = False):
         self.path = path
         self.to_stdout = to_stdout
+        self.timestamp_at_end = timestamp_at_end
         if path:
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 
@@ -104,7 +105,8 @@ class FileLogger:
                 f.write(text + "\n")
 
     def line(self, text: str) -> None:
-        self._write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {text}")
+        stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        self._write(f"{text}  {stamp}" if self.timestamp_at_end else f"{stamp}  {text}")
 
     def raw(self, text: str) -> None:
         self._write(text)
