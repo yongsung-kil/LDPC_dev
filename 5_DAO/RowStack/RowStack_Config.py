@@ -38,7 +38,7 @@ class RowStackConfig:
     STRONG_SCR: float = 0.94                               # strong_error일 때만 쓴다
     STRONG_SER: float = 0.23
     NUM_UNCORS_TO_COLLECT: int = 100                       # 모을 uncor 수 K
-    COLLECT_MAX_FRAMES: int = 1_000_000                    # 모으기에서 돌릴 프레임 상한 (rank 전체 합)
+    COLLECT_MAX_FRAMES: int = 1000000                    # 모으기에서 돌릴 프레임 상한 (rank 전체 합)
     COLLECT_FRAMES_PER_BATCH: int = 64
     UNCOR_SEED_DIR: Optional[str] = None                   # collected_uncors 폴더 경로. 주면 모으기를 건너뛰고 읽는다
     MAX_ITERATION_OF_STACKED_GROUP: int = 50               # 쌓는 그룹의 iteration 수
