@@ -146,9 +146,10 @@ class RowStackSession:
                 file_note = f" file={file_name}"
             self._rank_log(f"{kind} #{index}: {self._describe(result)} ({time.perf_counter() - started:.1f}s){file_note}")
         best = self.best_over_ranks(local_best)
-        if best is not None:
-            rank, payload = best
-            self._rank_log(f"=> {kind} best over ranks: rank{rank} #{payload['index']} ({self._describe(payload['result'])})")
+        if best is None:
+            raise RuntimeError(f"{kind} block evaluated no candidate (count={count}); check the config")
+        rank, payload = best
+        self._rank_log(f"=> {kind} best over ranks: rank{rank} #{payload['index']} ({self._describe(payload['result'])})")
         return best
 
     @staticmethod
