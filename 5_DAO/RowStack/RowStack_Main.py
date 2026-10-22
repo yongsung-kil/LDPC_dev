@@ -73,6 +73,7 @@ class RowStackSession:
         self.tested_matrix_dir = tested_matrix_dir
         if tested_matrix_dir:
             os.makedirs(tested_matrix_dir, exist_ok=True)
+        self._rank_log_group = None   # rank 로그에 머리줄을 쓴 (seed, attempt, stage)
         self.is_root = parallel.rank == 0
         self.history = None
         if self.is_root and session_dir:
@@ -92,6 +93,14 @@ class RowStackSession:
     def _rank_log(self, text: str) -> None:
         if self.rank_logger is not None:
             self.rank_logger.line(text)
+
+    def _rank_log_group_header(self, seed: int, attempt: int, stage: int, threshold: int) -> None:
+        """seed, attempt, stage가 바뀔 때 한 번만 빈 줄과 머리줄을 쓴다. 후보 줄은 gen #n, mut #n으로 시작한다."""
+        if self.rank_logger is None or self._rank_log_group == (seed, attempt, stage):
+            return
+        self._rank_log_group = (seed, attempt, stage)
+        self.rank_logger.raw("")
+        self.rank_logger.raw(f"----- seed {seed} attempt {attempt} stage {stage} (threshold {threshold}) -----")
 
     def candidate_rng(self, uncor_idx: int, attempt: int, stage: int, kind: str) -> np.random.Generator:
         return np.random.default_rng([self.config.RANDOM_SEED, self.parallel.rank, uncor_idx, attempt, stage,
@@ -117,6 +126,7 @@ class RowStackSession:
         """rank마다 후보 count개를 만들어 시험하고 전체 최고 (rank, payload)를 돌려준다. payload는 values와 result."""
         rng = self.candidate_rng(uncor_idx, attempt, stage, kind)
         local_best = None
+        self._rank_log_group_header(seed, attempt, stage, threshold)
         for index in range(1, count + 1):
             started = time.perf_counter()
             if kind == "gen":
@@ -134,9 +144,9 @@ class RowStackSession:
                 file_name = f"LLR_MATRIX_{self.template.mode}_seed{seed}_attempt{attempt}_stage{stage}_{kind}{index}.txt"
                 save_stacked_matrix(self.template, rows, os.path.join(self.tested_matrix_dir, file_name))
                 file_note = f" file={file_name}"
-            self._rank_log(f"seed {seed} attempt {attempt} stage {stage} {kind} #{index}: min_err={result.min_err} "
-                           f"at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}) success={result.success} "
-                           f"threshold={threshold} ({time.perf_counter() - started:.1f}s){file_note}")
+            self._rank_log(f"{kind} #{index}: min_err={result.min_err} at iteration {result.min_err_iteration} "
+                           f"(csw {result.csw_at_min_err}) success={result.success} "
+                           f"({time.perf_counter() - started:.1f}s){file_note}")
         return self.best_over_ranks(local_best)
 
     @staticmethod
