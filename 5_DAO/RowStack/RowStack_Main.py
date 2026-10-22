@@ -123,9 +123,9 @@ class RowStackSession:
             key = candidate_sort_key(result)
             if local_best is None or key < local_best[0]:
                 local_best = (key, {"values": values, "result": result})
-            self._rank_log(f"seed {seed} a{attempt} s{stage} {kind} #{index}: min_err={result.min_err} it={result.min_err_iteration} "
-                           f"csw={result.csw_at_min_err} success={result.success} T={threshold} "
-                           f"({time.perf_counter() - started:.1f}s)")
+            self._rank_log(f"seed {seed} attempt {attempt} stage {stage} {kind} #{index}: min_err={result.min_err} "
+                           f"at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}) success={result.success} "
+                           f"threshold={threshold} ({time.perf_counter() - started:.1f}s)")
         return self.best_over_ranks(local_best)
 
     @staticmethod
@@ -168,7 +168,7 @@ class RowStackSession:
                                   "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
                                   **self._history_fields(best_result), "elapsed_sec": time.perf_counter() - started,
                                   "note": NO_IMPROVEMENT_NOTE})
-                    self._log(f"seed {seed} attempt {attempt} stage {stage} gen: T={threshold} best min_err={best_result.min_err} "
+                    self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} best min_err={best_result.min_err} "
                               f"is worse than prefix {prefix_result.min_err}: {NO_IMPROVEMENT_NOTE}")
                     early_reason = NO_IMPROVEMENT_NOTE
                     break
@@ -177,8 +177,8 @@ class RowStackSession:
                 self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen", "threshold": threshold,
                               "source_iteration": source_iteration, "takeover_iteration": takeover, "best_rank": rank,
                               **self._history_fields(prefix_result), "elapsed_sec": time.perf_counter() - started})
-                self._log(f"seed {seed} attempt {attempt} stage {stage} gen: T={threshold} min_err={prefix_result.min_err} "
-                          f"at it {prefix_result.min_err_iteration} (csw {prefix_result.csw_at_min_err}) "
+                self._log(f"seed {seed} attempt {attempt} stage {stage} gen: threshold={threshold} min_err={prefix_result.min_err} "
+                          f"at iteration {prefix_result.min_err_iteration} (csw {prefix_result.csw_at_min_err}) "
                           f"success={prefix_result.success} rank={rank}")
                 if prefix_result.success:
                     return SearchOutcome("success", rows, prefix_result, "")
