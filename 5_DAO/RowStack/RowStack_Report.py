@@ -46,17 +46,72 @@ def write_found_matrices(path: str, found: list) -> None:
                              " ".join(str(seed) for seed in item.fixed_seeds)])
 
 
-class RootLogger:
-    """시각을 앞에 붙여 stdout과 파일(path가 있을 때)에 한 줄씩 쓴다."""
+SEPARATOR_HEAVY = "=" * 72
+SEPARATOR_LIGHT = "-" * 72
 
-    def __init__(self, path: Optional[str]):
+
+def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, uncor_source: str) -> str:
+    """로그 맨 위에 두는 설정 머리글. 설정 이름은 RowStack_Config의 이름 그대로 적는다."""
+    channel = f"{config.CHANNEL_TYPE}, point {config.CHANNEL_POINT}"
+    if config.CHANNEL_TYPE == "strong_error":
+        channel += f", SCR {config.STRONG_SCR}, SER {config.STRONG_SER}"
+    rows = [
+        ("[input]", None),
+        ("H_MATRIX_FILE", config.H_MATRIX_FILE),
+        ("INITIAL_LLR_MATRIX_FILE", f"{config.INITIAL_LLR_MATRIX_FILE} ({mode})"),
+        ("CHANNEL_TYPE / CHANNEL_POINT", channel),
+        ("[uncor collection]", None),
+        ("NUM_UNCORS_TO_COLLECT", config.NUM_UNCORS_TO_COLLECT),
+        ("COLLECT_MAX_FRAMES", f"{config.COLLECT_MAX_FRAMES} (batch {config.COLLECT_FRAMES_PER_BATCH})"),
+        ("UNCOR_SEED_DIR", uncor_source),
+        ("[search]", None),
+        ("MAX_ITERATION_OF_STACKED_GROUP", config.MAX_ITERATION_OF_STACKED_GROUP),
+        ("CANDIDATES_PER_RANK_PER_STAGE", config.CANDIDATES_PER_RANK_PER_STAGE),
+        ("MAX_ROWS", config.MAX_ROWS),
+        ("MUTANTS_PER_RANK_PER_FIXED_ROW", f"{config.MUTANTS_PER_RANK_PER_FIXED_ROW} "
+                                           f"(elements {config.MUTATION_NUM_ELEMENTS}, range ±{config.MUTATION_RANGE})"),
+        ("MAX_MATRIX_ATTEMPTS_PER_UNCOR", config.MAX_MATRIX_ATTEMPTS_PER_UNCOR),
+        ("TRY_FOUND_MATRICES_FIRST", config.TRY_FOUND_MATRICES_FIRST),
+        ("RANDOM_SEED", config.RANDOM_SEED),
+        ("[run]", None),
+        ("ranks", num_ranks),
+        ("session_dir", session_dir),
+    ]
+    lines = [SEPARATOR_HEAVY, f"RowStack  {time.strftime('%Y-%m-%d %H:%M:%S')}", SEPARATOR_HEAVY]
+    for name, value in rows:
+        if value is None:
+            lines.append(name)
+        else:
+            lines.append(f"  {name:<32}: {value}")
+    lines.append(SEPARATOR_LIGHT)
+    return "\n".join(lines)
+
+
+class FileLogger:
+    """파일(path가 있을 때)에 한 줄씩 쓴다. line은 시각을 앞에 붙이고 raw는 글자 그대로 쓴다."""
+
+    def __init__(self, path: Optional[str], to_stdout: bool = False):
         self.path = path
+        self.to_stdout = to_stdout
         if path:
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 
-    def line(self, text: str) -> None:
-        line = f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {text}"
-        print(line, flush=True)
+    def _write(self, text: str) -> None:
+        if self.to_stdout:
+            print(text, flush=True)
         if self.path:
             with open(self.path, "a", encoding="utf-8") as f:
-                f.write(line + "\n")
+                f.write(text + "\n")
+
+    def line(self, text: str) -> None:
+        self._write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}  {text}")
+
+    def raw(self, text: str) -> None:
+        self._write(text)
+
+
+class RootLogger(FileLogger):
+    """root의 로그: stdout과 파일(path가 있을 때)에 함께 쓴다."""
+
+    def __init__(self, path: Optional[str]):
+        super().__init__(path, to_stdout=True)

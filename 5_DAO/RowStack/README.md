@@ -65,7 +65,9 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 
 ```
 Output_RowStack/{YYYYMMDD_HHMMSS}/
-├── log.txt                      # root 로그
+├── result.txt                   # root의 중요 결과만: 설정 머리글, uncor 모은 수, uncor마다 한 줄(SUCCESS, REUSED, FAIL), 마지막 집계
+├── log.txt                      # root의 상세 로그: 머리글, uncor마다 구분선과 stage별 최고 후보, 결과 줄
+├── rank_logs/rank_{N}.txt       # rank마다 자기 후보 하나하나의 결과 (min_err, iteration, CSW, 성공 여부, 시간)
 ├── config_used.py               # 실행에 쓴 RowStack_Config.py 사본
 ├── collected_uncors/            # uncor_seeds.txt (한 줄에 seed 하나), info.json (채널 설정, 모은 수, 돌린 프레임 수), 기존 매트릭스 사본
 ├── history.csv                  # seed, attempt, stage, kind(gen/mut/pool), threshold, source_iteration, takeover_iteration, best_rank,
