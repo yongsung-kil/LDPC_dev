@@ -323,11 +323,11 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
     return session_dir
 
 
-def run_or_abort(fn: Callable, comm):
-    """fn()을 돌린다. 어떤 예외든(SystemExit 포함) traceback을 stderr에 찍고 comm.Abort(1)로 모든 rank를 멈춘다.
-    한 rank만 죽으면 나머지가 다음 집단 통신에서 영원히 기다리므로, 예외는 전체 중단으로 바꾼다."""
+def run_or_abort(config: RowStackConfig, parallel, comm, run_fn: Callable = run):
+    """run_fn(config, parallel)을 돌린다. 어떤 예외든(SystemExit 포함) traceback을 stderr에 찍고 comm.Abort(1)로
+    모든 rank를 멈춘다. 한 rank만 죽으면 나머지가 다음 집단 통신에서 영원히 기다리므로, 예외는 전체 중단으로 바꾼다."""
     try:
-        return fn()
+        return run_fn(config, parallel)
     except BaseException:
         traceback.print_exc()
         sys.stderr.flush()
@@ -336,7 +336,8 @@ def run_or_abort(fn: Callable, comm):
 
 def main() -> None:
     from mpi4py import MPI
-    run_or_abort(lambda: run(CONFIG, MpiParallel(MPI.COMM_WORLD)), MPI.COMM_WORLD)
+    comm = MPI.COMM_WORLD
+    run_or_abort(CONFIG, MpiParallel(comm), comm)
 
 
 if __name__ == "__main__":
