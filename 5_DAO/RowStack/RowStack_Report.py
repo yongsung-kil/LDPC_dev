@@ -4,10 +4,12 @@ import os
 import time
 from typing import Optional
 
-HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "threshold", "source_iteration", "takeover_iteration",
-                   "best_rank", "best_index", "min_err", "min_err_iteration", "csw_at_min_err", "decoding",
-                   "corrected_iteration", "replaced", "elapsed_sec", "note"]
-# kind: gen, mut, pool. best_rank와 best_index: 뽑힌 후보를 낸 rank와 그 rank 안의 후보 번호. decoding: success 또는 fail
+HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "candidate", "block", "threshold", "takeover_iteration",
+                   "iterations", "parent_min_err", "num_improved", "best_rank", "best_index", "min_err",
+                   "min_err_iteration", "csw_at_min_err", "decoding", "corrected_iteration", "elapsed_sec", "note"]
+# 블록 하나가 한 줄. kind: gen, mut, pool. candidate: 매트릭스 후보 번호(0부터), block: 반복 번호(1부터).
+# iterations: 복호 예산. parent_min_err: 부모의 최소 잔여 에러. num_improved: 모든 rank에서 개선된 변형 수.
+# best_rank와 best_index: 개선된 변형 가운데 최고를 낸 rank와 그 rank 안의 후보 번호. decoding: success 또는 fail
 SUMMARY_COLUMNS = ["seed", "result", "num_rows", "final_min_err", "matrix_file", "elapsed_sec", "fail_reason"]
 FOUND_COLUMNS = ["matrix_file", "origin_seed", "num_fixed", "fixed_seeds"]   # fixed_seeds는 공백으로 이은 seed
 
@@ -66,11 +68,17 @@ def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, 
         ("COLLECT_MAX_FRAMES", f"{config.COLLECT_MAX_FRAMES} (batch {config.COLLECT_FRAMES_PER_BATCH})"),
         ("UNCOR_SEED_DIR", uncor_source),
         ("[search]", None),
-        ("MAX_ITERATION_OF_STACKED_GROUP", config.MAX_ITERATION_OF_STACKED_GROUP),
-        ("CANDIDATES_PER_RANK_PER_STAGE", config.CANDIDATES_PER_RANK_PER_STAGE),
         ("MAX_ROWS", config.MAX_ROWS),
-        ("MUTANTS_PER_RANK_PER_FIXED_ROW", f"{config.MUTANTS_PER_RANK_PER_FIXED_ROW} "
-                                           f"(elements {config.MUTATION_NUM_ELEMENTS}, range ±{config.MUTATION_RANGE})"),
+        ("NUM_MATRICES_TO_KEEP", config.NUM_MATRICES_TO_KEEP),
+        ("CANDIDATES_PER_RANK_PER_BLOCK", config.CANDIDATES_PER_RANK_PER_BLOCK),
+        ("MAX_GEN_BLOCKS_PER_ROW", config.MAX_GEN_BLOCKS_PER_ROW),
+        ("MUTANTS_PER_RANK_PER_BLOCK", f"{config.MUTANTS_PER_RANK_PER_BLOCK} "
+                                       f"(elements {config.MUTATION_NUM_ELEMENTS}, range ±{config.MUTATION_RANGE})"),
+        ("MAX_MUT_BLOCKS_PER_ROW", config.MAX_MUT_BLOCKS_PER_ROW),
+        ("INIT_DECODING_ITERATION", config.INIT_DECODING_ITERATION),
+        ("STEP_ITERATION_PER_ROW", config.STEP_ITERATION_PER_ROW),
+        ("MAX_DECODING_ITERATION", config.MAX_DECODING_ITERATION),
+        ("CSW_MARGIN_ABOVE_MIN", config.CSW_MARGIN_ABOVE_MIN),
         ("MAX_MATRIX_ATTEMPTS_PER_UNCOR", config.MAX_MATRIX_ATTEMPTS_PER_UNCOR),
         ("TRY_FOUND_MATRICES_FIRST", config.TRY_FOUND_MATRICES_FIRST),
         ("RANDOM_SEED", config.RANDOM_SEED),
