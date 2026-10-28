@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-10-22 00:14:18
+> Claude 마지막 확인: 2026-10-28 18:22:57
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -15,7 +15,9 @@
   - [x] 구현 계획 작성 (2026-10-21, `구현계획_261021.md`. Task 7개, 검사 32건 계획. 설계와 다른 점 3건은 계획 문서 머리에 기록)
   - [x] 구현 (2026-10-22 00:14. 2_LDPC_base에 `channel_output_from_frame_seeds`, `decode_frame_seeds` 추가(검사 9건), `5_DAO/RowStack/` 모듈 7개(검사 44건), mpiexec rank 1개와 2개 확인(기록 `5_DAO/_test/20261021_RowStack/smoke_mpi.md`), 저장 매트릭스 DAO Is_LLR_Valid 통과. 커밋 0e07c5a..2d72c8a와 이 커밋)
   - [x] 최종 리뷰와 수리 (2026-10-22 00:28, Opus 서브에이전트. Critical 0, Important 2, Minor 8. Important 2건 수리: 문턱 규칙에 '처음 닿는 iteration' 조건 추가(초기 CSW 포함, 실제 치수 실행에서 새 row가 i*+1 대신 iteration 7에 이어받던 결함), 최고 후보가 prefix보다 나쁘면 고정하지 않고 `no improving candidate`로 끝냄, rank 예외 시 MPI Abort. 검사 58건 통과. 커밋 60f43ae. Minor 6건은 보류: 찾은 매트릭스 시험의 첫 성공 뒤 중단, strong 값 대조, config_used.py 사본 방식, 같은 초 세션 폴더, 안 쓰는 함수 2개, README 링크)
-  - [ ] 사용자 결정: 최고 후보가 prefix보다 나쁜 stage에서 고정하지 않고 끝내는 규칙(설계 4.4 ㉲)을 둘지 (리뷰 권고대로 넣음. 되돌리기 쉬움)
+  - [x] 로그 정리 (2026-10-22: 설정 머리글, result.txt와 log.txt와 rank_logs 분리, 시험한 매트릭스 파일 저장, 약어 풀어 쓰기, decoding=success/fail, 뽑힌 후보의 rank와 번호)
+  - [ ] 탐색 규칙 2판 구현 (2026-10-28 18:22 사용자 설명 확인. 상세: `20261028_탐색규칙_2판.md`. 개선된 변형만 남기는 상위 t개 탐색, gen과 mut 블록의 k회 반복, row마다 늘어나는 iteration 예산, 최소 CSW + margin 문턱, 매트릭스 전체 변이, 복호 성공 뒤 변이로 iteration 줄이기)
+    - 1판의 '나쁘면 고정하지 않음' 결정거리는 2판의 '개선 있을 때만 붙임'으로 흡수됨
   - [ ] 사용자 환경 MPI 실행 확인
 
 - [ ] 집단 통신 타임아웃 메시지에 도착하지 않은 rank를 적고, ECC를 돌린 rank의 result가 없으면 멈춤
