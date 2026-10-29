@@ -5,6 +5,11 @@
 모든 rank가 같은 제어 흐름을 돌고, 선별은 root가 gather로 모아 bcast한다. 파일은 root만 쓴다 (rank 로그와 시험한
 매트릭스 파일은 rank마다 자기 것만 쓴다). 평가기(evaluate(rows, seed, max_iter), empty_result(seed))와 병렬 통신은
 주입받으므로 rank 1개 가짜 평가기로 검사한다.
+
+로그 구역 (log.txt와 rank_logs/rank_N.txt 공통):
+  ======  uncor i/N  seed s  배너
+  --- stage s/S ... ---  stage(또는 블록) 머리줄
+  블록 줄, 살아남은 후보 목록, >> seed s: 결과 줄
 """
 import os
 import shutil
@@ -21,9 +26,9 @@ from RowStack_Config import CONFIG, RowStackConfig
 from RowStack_Evaluate import CandidateResult, UncorDecoder, candidate_sort_key, is_improvement
 from RowStack_Matrix import (MatrixTemplate, StackedRow, generate_random_row_values, mutate_matrix_values,
                              new_row_csw_threshold, save_stacked_matrix)
-from RowStack_Parallel import MpiParallel, SerialParallel, round_robin_share
-from RowStack_Report import (HISTORY_COLUMNS, SEPARATOR_LIGHT, SUMMARY_COLUMNS, CsvAppender, FileLogger, RootLogger,
-                             format_settings_header, write_found_matrices)
+from RowStack_Parallel import MpiParallel, round_robin_share
+from RowStack_Report import (HISTORY_COLUMNS, SEPARATOR_HEAVY, SEPARATOR_LIGHT, SUMMARY_COLUMNS, CsvAppender,
+                             FileLogger, RootLogger, format_settings_header, write_found_matrices)
 from RowStack_Uncor import failing_seeds, read_uncor_files, uncor_info_from_config, uncor_info_mismatch, write_uncor_files
 from src import channel as chan
 from src.decoder import BaseDecoder
@@ -52,7 +57,7 @@ class MatrixCandidate:
     """매트릭스 후보: 지금까지 고정된 row들과 그 성능, 어디서 왔는지."""
     rows: list
     result: CandidateResult
-    origin: str                     # 예: "stage 2 gen c0 b1 rank0 #15", 빈 매트릭스는 RECEIVED_FRAME_ORIGIN
+    origin: str                     # 예: "stage 2 gen candidate 0 block 1 rank0 #15", 빈 매트릭스는 RECEIVED_FRAME_ORIGIN
 
     def key(self) -> tuple:
         return candidate_sort_key(self.result)
@@ -66,17 +71,32 @@ class SearchOutcome:
     fail_reason: str                # "", MAX_ROWS_NOTE, NO_THRESHOLD_NOTE, NO_IMPROVEMENT_NOTE
 
 
+def describe_result(result: CandidateResult) -> str:
+    """후보 결과 한 토막: min_err, 그 iteration과 CSW, 복호 성공 여부 (성공이면 고친 iteration도)."""
+    text = (f"min_err {result.min_err} at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}), "
+            f"decoding {'success' if result.success else 'fail'}")
+    if result.success:
+        text += f", corrected at iteration {result.success_iteration}"
+    return text
+
+
+def describe_candidate(candidate: MatrixCandidate) -> str:
+    if not candidate.rows:
+        return f"{RECEIVED_FRAME_ORIGIN} min_err {candidate.result.min_err} (csw {candidate.result.initial_csw})"
+    return f"rows {len(candidate.rows)} from {candidate.origin}: {describe_result(candidate.result)}"
+
+
 class RowStackSession:
     """uncor 하나를 다루는 흐름. root만 history.csv와 로그를 쓴다."""
 
     def __init__(self, config: RowStackConfig, parallel, evaluator, template: MatrixTemplate,
                  session_dir: Optional[str], logger: Optional[RootLogger],
                  result_logger: Optional[FileLogger] = None, rank_logger: Optional[FileLogger] = None,
-                 tested_matrix_dir: Optional[str] = None):
+                 tested_matrix_dir: Optional[str] = None, total_uncors: int = 1):
         """evaluator는 evaluate(rows, seed, max_iter)와 empty_result(seed)를 가진 객체다.
         logger는 root의 상세 로그(log.txt), result_logger는 root의 중요 결과(result.txt),
         rank_logger는 이 rank의 후보별 상세(rank_logs/rank_N.txt), tested_matrix_dir는 이 rank가 시험한 후보 매트릭스
-        파일을 두는 폴더(tested_matrices/rank_N)다. 없으면 그 기록은 생략한다."""
+        파일을 두는 폴더(tested_matrices/rank_N)다. 없으면 그 기록은 생략한다. total_uncors는 진행도 표시용이다."""
         self.config = config
         self.parallel = parallel
         self.evaluator = evaluator
@@ -86,6 +106,8 @@ class RowStackSession:
         self.result_logger = result_logger
         self.rank_logger = rank_logger
         self.tested_matrix_dir = tested_matrix_dir
+        self.total_uncors = total_uncors
+        self.started = time.perf_counter()
         if tested_matrix_dir:
             os.makedirs(tested_matrix_dir, exist_ok=True)
         self.is_root = parallel.rank == 0
@@ -94,46 +116,33 @@ class RowStackSession:
             self.history = CsvAppender(os.path.join(session_dir, "history.csv"), HISTORY_COLUMNS)
 
     # ----- 기록 -----
-    def _log(self, text: str) -> None:
+    def _log(self, text: str, raw: bool = False) -> None:
         if self.is_root and self.logger is not None:
-            self.logger.line(text)
+            (self.logger.raw if raw else self.logger.line)(text)
 
-    def _result(self, text: str) -> None:
-        """중요 결과: 상세 로그와 결과 로그 둘 다에 쓴다 (root만)."""
-        self._log(text)
+    def _result(self, text: str, raw: bool = False) -> None:
         if self.is_root and self.result_logger is not None:
-            self.result_logger.line(text)
+            (self.result_logger.raw if raw else self.result_logger.line)(text)
 
-    def _rank_log(self, text: str) -> None:
+    def _rank_log(self, text: str, raw: bool = False) -> None:
         if self.rank_logger is not None:
-            self.rank_logger.line(text)
-
-    def _rank_raw(self, text: str) -> None:
-        if self.rank_logger is not None:
-            self.rank_logger.raw(text)
+            (self.rank_logger.raw if raw else self.rank_logger.line)(text)
 
     def _record(self, row: dict) -> None:
         if self.history is not None:
             self.history.append(row)
 
-    @staticmethod
-    def _decoding_word(result: CandidateResult) -> str:
-        return "success" if result.success else "fail"
+    def _elapsed_minutes(self) -> float:
+        return (time.perf_counter() - self.started) / 60
 
-    @classmethod
-    def _describe(cls, result: CandidateResult) -> str:
-        """후보 결과 한 토막: min_err, 그 iteration과 CSW, 복호 성공 여부 (성공이면 고친 iteration도)."""
-        text = (f"min_err={result.min_err} at iteration {result.min_err_iteration} (csw {result.csw_at_min_err}) "
-                f"decoding={cls._decoding_word(result)}")
-        if result.success:
-            text += f" corrected at iteration {result.success_iteration}"
-        return text
-
-    @classmethod
-    def _describe_candidate(cls, candidate: MatrixCandidate) -> str:
-        if not candidate.rows:
-            return f"{RECEIVED_FRAME_ORIGIN} {cls._describe(candidate.result)}"
-        return f"rows={len(candidate.rows)} from {candidate.origin} {cls._describe(candidate.result)}"
+    def begin_uncor(self, uncor_idx: int, seed: int) -> None:
+        """uncor 배너를 log.txt와 rank 로그에 쓴다."""
+        frame = self.evaluator.empty_result(seed)
+        banner = f"uncor {uncor_idx + 1}/{self.total_uncors}  seed {seed}   received frame: {frame.min_err} error bits, csw {frame.initial_csw}"
+        for write in (self._log, self._rank_log):
+            write(SEPARATOR_HEAVY, raw=True)
+            write(banner, raw=True)
+            write(SEPARATOR_HEAVY, raw=True)
 
     # ----- 공용 -----
     def candidate_rng(self, uncor_idx: int, attempt: int, stage: int, kind: str, candidate_idx: int,
@@ -145,18 +154,19 @@ class RowStackSession:
         return self.config.iteration_budget(num_rows)
 
     # ----- 블록 -----
-    def _run_block(self, parent: MatrixCandidate, candidate_idx: int, kind: str, threshold: int,
+    def _run_block(self, parent: MatrixCandidate, candidate_idx: int, num_candidates: int, kind: str, threshold: int,
                    takeover: Optional[int], budget: int, uncor_idx: int, attempt: int, stage: int, seed: int,
-                   block: int, keep: int) -> list:
+                   block: int, max_blocks: int, keep: int) -> list:
         """rank마다 후보를 만들어 시험하고, 부모보다 나아진 변형을 모든 rank에서 모아 순위 상위 keep개를 돌려준다
         (MatrixCandidate 목록, 없으면 빈 목록). history.csv에 블록 한 줄을 적는다."""
         started = time.perf_counter()
         config = self.config
         count = config.CANDIDATES_PER_RANK_PER_BLOCK if kind == "gen" else config.MUTANTS_PER_RANK_PER_BLOCK
         rng = self.candidate_rng(uncor_idx, attempt, stage, kind, candidate_idx, block)
-        self._rank_raw(f"----- seed {seed} attempt {attempt} stage {stage} {kind} candidate {candidate_idx} block {block} "
-                       f"(threshold {threshold}, iterations {budget}) -----")
-        self._rank_raw(f"parent: {self._describe_candidate(parent)}")
+        position = f"{kind} candidate {candidate_idx}/{num_candidates} block {block}/{max_blocks}"
+        self._rank_log(f"--- seed {seed} attempt {attempt} stage {stage}/{config.MAX_ROWS}  {position}  "
+                       f"(threshold {threshold}, iterations {budget}) ---", raw=True)
+        self._rank_log(f"parent: {describe_candidate(parent)}", raw=True)
         local = []   # (순위 키, 후보 번호, rows, result)
         for index in range(1, count + 1):
             candidate_started = time.perf_counter()
@@ -171,10 +181,10 @@ class RowStackSession:
                 file_name = (f"LLR_MATRIX_{self.template.mode}_seed{seed}_attempt{attempt}_stage{stage}"
                              f"_c{candidate_idx}_b{block}_{kind}{index}.txt")
                 save_stacked_matrix(self.template, rows, os.path.join(self.tested_matrix_dir, file_name), max_iter=budget)
-                file_note = f" file={file_name}"
+                file_note = f"  file={file_name}"
             improved = is_improvement(result, parent.result)
-            self._rank_log(f"{kind} #{index}: {self._describe(result)}{' improved' if improved else ''} "
-                           f"({time.perf_counter() - candidate_started:.1f}s){file_note}")
+            self._rank_log(f"{kind} #{index}: {describe_result(result)}{'  improved' if improved else ''}"
+                           f"   ({time.perf_counter() - candidate_started:.1f}s){file_note}")
             if improved:
                 local.append((candidate_sort_key(result), index, rows, result))
         local.sort(key=lambda item: (item[0], item[1]))
@@ -185,41 +195,43 @@ class RowStackSession:
         if self.is_root:
             merged = sorted((item for _, part in gathered for item in part), key=lambda item: (item[0], item[1], item[2]))
             chosen = [MatrixCandidate(rows, result,
-                                      f"stage {stage} {kind} c{candidate_idx} b{block} rank{rank} #{index}")
+                                      f"stage {stage} {kind} candidate {candidate_idx} block {block} rank{rank} #{index}")
                       for key, rank, index, rows, result in merged[:keep]]
-            decision = (chosen, sum(count for count, _ in gathered),
+            decision = (chosen, sum(count_ for count_, _ in gathered),
                         [(rank, index) for key, rank, index, rows, result in merged[:1]])
         chosen, num_improved, best_ids = self.parallel.bcast_from_root(decision)
         elapsed = time.perf_counter() - started
+        total_tried = count * self.parallel.size
 
         row = {"seed": seed, "attempt": attempt, "stage": stage, "kind": kind, "candidate": candidate_idx, "block": block,
                "threshold": threshold, "takeover_iteration": takeover, "iterations": budget,
                "parent_min_err": parent.result.min_err, "num_improved": num_improved, "elapsed_sec": elapsed}
-        head = (f"seed {seed} attempt {attempt} stage {stage} {kind} candidate {candidate_idx} block {block}: "
-                f"threshold={threshold} iterations={budget} improved={num_improved}")
+        head = (f"{kind:<3}  candidate {candidate_idx}/{num_candidates}  block {block}/{max_blocks}  "
+                f"threshold {str(threshold):<5} improved {num_improved}/{total_tried}")
         if chosen:
             best = chosen[0]
             best_rank, best_index = best_ids[0]
             row.update({"best_rank": best_rank, "best_index": best_index, "min_err": best.result.min_err,
                         "min_err_iteration": best.result.min_err_iteration, "csw_at_min_err": best.result.csw_at_min_err,
-                        "decoding": self._decoding_word(best.result), "corrected_iteration": best.result.success_iteration})
-            self._log(f"{head} best=rank{best_rank} #{best_index} {self._describe(best.result)}")
-            self._rank_log(f"=> {kind} improved over ranks: {num_improved}, best rank{best_rank} #{best_index} "
-                           f"({self._describe(best.result)})")
+                        "decoding": "success" if best.result.success else "fail",
+                        "corrected_iteration": best.result.success_iteration})
+            self._log(f"{head}   best rank{best_rank} #{best_index}: {describe_result(best.result)}   {elapsed:.1f}s")
+            self._rank_log(f"=> this rank: {len(local)} of {count} improved | all ranks: {num_improved} improved, "
+                           f"best rank{best_rank} #{best_index}: {describe_result(best.result)}")
         else:
-            self._log(f"{head} (parent min_err={parent.result.min_err})")
-            self._rank_log(f"=> {kind} no improvement over ranks (parent min_err={parent.result.min_err})")
-        self._rank_raw("")
+            self._log(f"{head}   parent min_err {parent.result.min_err} kept   {elapsed:.1f}s")
+            self._rank_log(f"=> this rank: 0 of {count} improved | all ranks: 0 improved (parent kept)")
+        self._rank_log("", raw=True)
         self._record(row)
         return chosen
 
-    def _run_blocks(self, parent: MatrixCandidate, candidate_idx: int, kind: str, threshold: int,
-                    takeover: Optional[int], budget: int, uncor_idx: int, attempt: int, stage: int, seed: int,
-                    max_blocks: int, keep: int) -> list:
+    def _run_blocks(self, parent: MatrixCandidate, candidate_idx: int, num_candidates: int, kind: str,
+                    threshold: int, takeover: Optional[int], budget: int, uncor_idx: int, attempt: int, stage: int,
+                    seed: int, max_blocks: int, keep: int) -> list:
         """개선된 변형이 나올 때까지 블록을 최대 max_blocks번 돈다."""
         for block in range(1, max_blocks + 1):
-            chosen = self._run_block(parent, candidate_idx, kind, threshold, takeover, budget, uncor_idx, attempt, stage,
-                                     seed, block, keep)
+            chosen = self._run_block(parent, candidate_idx, num_candidates, kind, threshold, takeover, budget, uncor_idx,
+                                     attempt, stage, seed, block, max_blocks, keep)
             if chosen:
                 return chosen
         return []
@@ -232,9 +244,12 @@ class RowStackSession:
         for attempt in range(1, config.MAX_MATRIX_ATTEMPTS_PER_UNCOR + 1):
             candidates = [MatrixCandidate([], self.evaluator.empty_result(seed), RECEIVED_FRAME_ORIGIN)]
             early_reason = None
+            attempt_label = f"attempt {attempt}/{config.MAX_MATRIX_ATTEMPTS_PER_UNCOR}  " if config.MAX_MATRIX_ATTEMPTS_PER_UNCOR > 1 else ""
             for stage in range(1, config.MAX_ROWS + 1):
                 budget = self.iteration_budget(stage)
+                self._log(f"--- {attempt_label}stage {stage}/{config.MAX_ROWS}  (row {stage}, iterations {budget}) ---", raw=True)
                 pool, threshold_failures = [], 0
+                num_candidates = len(candidates)
                 for candidate_idx, parent in enumerate(candidates):
                     if stage == 1:
                         threshold, takeover = -1, None
@@ -244,34 +259,37 @@ class RowStackSession:
                                                       parent.result.initial_csw, config.CSW_MARGIN_ABOVE_MIN, budget)
                         if found is None:
                             threshold_failures += 1
+                            min_csw = int(np.min(parent.result.csw_per_iter)) if len(parent.result.csw_per_iter) else None
                             self._record({"seed": seed, "attempt": attempt, "stage": stage, "kind": "gen",
                                           "candidate": candidate_idx, "block": 0, "iterations": budget,
                                           "parent_min_err": parent.result.min_err, "note": NO_THRESHOLD_NOTE})
-                            self._log(f"seed {seed} attempt {attempt} stage {stage} gen candidate {candidate_idx}: "
-                                      f"{NO_THRESHOLD_NOTE} (parent {self._describe_candidate(parent)})")
-                            self._rank_raw(f"(seed {seed} attempt {attempt} stage {stage} candidate {candidate_idx}: "
-                                           f"{NO_THRESHOLD_NOTE})")
+                            self._log(f"gen  candidate {candidate_idx}/{num_candidates}  {NO_THRESHOLD_NOTE} "
+                                      f"(parent min_err {parent.result.min_err}, min csw {min_csw}, "
+                                      f"previous threshold {parent.rows[-1].csw})")
+                            self._rank_log(f"(stage {stage} candidate {candidate_idx}: {NO_THRESHOLD_NOTE})", raw=True)
+                            self._rank_log("", raw=True)
                             continue
                         threshold, takeover = found
-                    pool.extend(self._run_blocks(parent, candidate_idx, "gen", threshold, takeover, budget, uncor_idx,
-                                                 attempt, stage, seed, config.MAX_GEN_BLOCKS_PER_ROW, keep))
+                    pool.extend(self._run_blocks(parent, candidate_idx, num_candidates, "gen", threshold, takeover, budget,
+                                                 uncor_idx, attempt, stage, seed, config.MAX_GEN_BLOCKS_PER_ROW, keep))
                 if not pool:
                     early_reason = NO_THRESHOLD_NOTE if threshold_failures == len(candidates) else NO_IMPROVEMENT_NOTE
-                    self._log(f"seed {seed} attempt {attempt} stage {stage}: {early_reason}")
+                    self._log(f"stage {stage}: {early_reason}, attempt {attempt} ends")
                     break
                 candidates = sorted(pool, key=lambda candidate: candidate.key())[:keep]
 
                 if config.MUTANTS_PER_RANK_PER_BLOCK > 0:
+                    num_candidates = len(candidates)
                     for candidate_idx, candidate in enumerate(candidates):
-                        improved = self._run_blocks(candidate, candidate_idx, "mut", candidate.rows[-1].csw, None,
-                                                    self.iteration_budget(len(candidate.rows)), uncor_idx, attempt,
+                        improved = self._run_blocks(candidate, candidate_idx, num_candidates, "mut", candidate.rows[-1].csw,
+                                                    None, self.iteration_budget(len(candidate.rows)), uncor_idx, attempt,
                                                     stage, seed, config.MAX_MUT_BLOCKS_PER_ROW, 1)
                         if improved:
                             candidates[candidate_idx] = improved[0]
 
-                self._log(f"seed {seed} attempt {attempt} stage {stage} survivors: {len(candidates)}")
+                self._log(f"survivors {len(candidates)} (kept for next round)")
                 for candidate_idx, candidate in enumerate(candidates):
-                    self._log(f"  [{candidate_idx}] {self._describe_candidate(candidate)}")
+                    self._log(f"  [{candidate_idx}] {describe_candidate(candidate)}", raw=True)
                 successes = [candidate for candidate in candidates if candidate.result.success]
                 if successes:
                     best = min(successes, key=lambda candidate: candidate.key())
@@ -307,23 +325,33 @@ class RowStackSession:
     def _matrix_relative_path(self, seed: int) -> str:
         return os.path.join(PER_UNCOR_DIR_NAME, f"seed_{seed}", f"LLR_MATRIX_{self.template.mode}_uncor_{seed}.txt")
 
+    def _finish_uncor(self, uncor_idx: int, seed: int, verdict: str, detail: str, elapsed: float) -> None:
+        progress = f"progress {uncor_idx + 1}/{self.total_uncors} uncors, {self._elapsed_minutes():.1f} min"
+        self._log(f">> seed {seed}: {verdict}  {detail}   ({elapsed:.0f}s)   {progress}")
+        self._result(f"[{uncor_idx + 1}/{self.total_uncors}] seed {seed}: {verdict:<8} {detail}   "
+                     f"({elapsed:.0f}s, elapsed {self._elapsed_minutes():.1f} min)")
+
     def run_one_uncor(self, uncor_idx: int, seed: int, found: list) -> dict:
         """summary.csv 한 줄 dict. 성공이면 매트릭스를 저장하고 found에 더하며, 재사용이면 그 항목의 fixed_seeds에 더한다."""
         started = time.perf_counter()
-        if self.config.TRY_FOUND_MATRICES_FIRST and found:
-            index = self.try_found_matrices(found, seed)
-            if index is not None:
-                found[index].fixed_seeds.append(seed)
-                elapsed = time.perf_counter() - started
-                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "success",
-                              "elapsed_sec": elapsed, "note": f"reused {found[index].matrix_file}"})
-                self._result(f"seed {seed}: REUSED {found[index].matrix_file} (fixes {len(found[index].fixed_seeds)} seeds) "
-                             f"({elapsed:.1f}s)")
-                return {"seed": seed, "result": "reused", "num_rows": len(found[index].rows), "final_min_err": 0,
-                        "matrix_file": found[index].matrix_file, "elapsed_sec": elapsed, "fail_reason": ""}
-            self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "fail",
-                          "elapsed_sec": time.perf_counter() - started, "note": f"no found matrix fixes ({len(found)} tried)"})
-            self._log(f"seed {seed}: none of {len(found)} found matrices fixes it")
+        if self.config.TRY_FOUND_MATRICES_FIRST:
+            if not found:
+                self._log("[pool] no found matrix yet", raw=True)
+            else:
+                index = self.try_found_matrices(found, seed)
+                if index is not None:
+                    found[index].fixed_seeds.append(seed)
+                    elapsed = time.perf_counter() - started
+                    self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "success",
+                                  "elapsed_sec": elapsed, "note": f"reused {found[index].matrix_file}"})
+                    self._log(f"[pool] tried {len(found)} found matrices: {found[index].matrix_file} fixes it", raw=True)
+                    self._finish_uncor(uncor_idx, seed, "REUSED",
+                                       f"{found[index].matrix_file} (fixes {len(found[index].fixed_seeds)} seeds)", elapsed)
+                    return {"seed": seed, "result": "reused", "num_rows": len(found[index].rows), "final_min_err": 0,
+                            "matrix_file": found[index].matrix_file, "elapsed_sec": elapsed, "fail_reason": ""}
+                self._record({"seed": seed, "attempt": 0, "stage": 0, "kind": "pool", "decoding": "fail",
+                              "elapsed_sec": time.perf_counter() - started, "note": f"no found matrix fixes ({len(found)} tried)"})
+                self._log(f"[pool] tried {len(found)} found matrices: none fixes it", raw=True)
 
         outcome = self.search_matrix_for_uncor(uncor_idx, seed)
         matrix_file = ""
@@ -338,11 +366,12 @@ class RowStackSession:
         final_min_err = outcome.final.min_err if outcome.final is not None else None
         elapsed = time.perf_counter() - started
         if outcome.result == "success":
-            self._result(f"seed {seed}: SUCCESS rows={len(outcome.rows)} corrected at iteration {outcome.final.success_iteration} "
-                         f"(iterations {self.iteration_budget(len(outcome.rows))}) file={matrix_file} ({elapsed:.1f}s)")
+            self._finish_uncor(uncor_idx, seed, "SUCCESS",
+                               f"rows {len(outcome.rows)}  corrected at iteration {outcome.final.success_iteration} "
+                               f"(iterations {self.iteration_budget(len(outcome.rows))})  file {matrix_file}", elapsed)
         else:
-            self._result(f"seed {seed}: FAIL rows={len(outcome.rows)} min_err={final_min_err} reason={outcome.fail_reason} "
-                         f"({elapsed:.1f}s)")
+            self._finish_uncor(uncor_idx, seed, "FAIL",
+                               f"rows {len(outcome.rows)}  min_err {final_min_err}  {outcome.fail_reason}", elapsed)
         return {"seed": seed, "result": outcome.result, "num_rows": len(outcome.rows), "final_min_err": final_min_err,
                 "matrix_file": matrix_file, "elapsed_sec": elapsed, "fail_reason": outcome.fail_reason}
 
@@ -386,17 +415,17 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
     session_dir = parallel.bcast_from_root(session_dir)
     run_started = time.perf_counter()
     logger = RootLogger(os.path.join(session_dir, "log.txt")) if is_root else None
-    result_logger = FileLogger(os.path.join(session_dir, "result.txt")) if is_root else None
+    result_logger = FileLogger(os.path.join(session_dir, "result.txt"), timestamp_at_end=True) if is_root else None
     rank_logger = FileLogger(os.path.join(session_dir, "rank_logs", f"rank_{parallel.rank}.txt"), timestamp_at_end=True)
 
-    def log(text):
+    def log(text, raw=False):
         if logger is not None:
-            logger.line(text)
+            (logger.raw if raw else logger.line)(text)
 
-    def result(text):
-        log(text)
+    def result(text, raw=False):
+        log(text, raw)
         if result_logger is not None:
-            result_logger.line(text)
+            (result_logger.raw if raw else result_logger.line)(text)
 
     code = QCCode.load(config.h_matrix_path())
     initial = LLRMatrix.load(config.initial_llr_matrix_path())
@@ -419,42 +448,40 @@ def run(config: RowStackConfig, parallel) -> Optional[str]:
             result(f"uncor seed 파일의 설정이 다릅니다: {mismatch}")
             raise SystemExit(f"uncor seed 파일의 설정이 다릅니다: {mismatch}")
         frames_decoded = int(file_info.get("frames_decoded", 0))
-        result(f"uncor seeds loaded from {config.UNCOR_SEED_DIR}: {len(seeds)}")
+        result(f"collect: {len(seeds)} uncors loaded from {config.UNCOR_SEED_DIR}")
     else:
         decoder = BaseDecoder(code, llr_matrix=initial)
         seeds, frames_decoded = collect_uncors(config, parallel, code, decoder, logger)
-        result(f"collected {len(seeds)} uncors from {frames_decoded} frames ({time.perf_counter() - run_started:.0f}s)")
+        result(f"collect: {len(seeds)} uncors from {frames_decoded} frames ({time.perf_counter() - run_started:.0f}s)")
     if is_root:
         write_uncor_files(os.path.join(session_dir, COLLECTED_UNCORS_DIR_NAME), seeds, info,
                           config.initial_llr_matrix_path(), frames_decoded)
     if not seeds:
         result("no uncor collected")
         return session_dir
+    result(SEPARATOR_LIGHT, raw=True)
 
     evaluator = UncorDecoder(code, template, config.CHANNEL_TYPE, config.CHANNEL_POINT, config.channel_extra())
     tested_matrix_dir = None
     if config.SAVE_TESTED_MATRICES:
         tested_matrix_dir = os.path.join(session_dir, "tested_matrices", f"rank_{parallel.rank}")
     session = RowStackSession(config, parallel, evaluator, template, session_dir if is_root else None, logger,
-                              result_logger=result_logger, rank_logger=rank_logger, tested_matrix_dir=tested_matrix_dir)
+                              result_logger=result_logger, rank_logger=rank_logger, tested_matrix_dir=tested_matrix_dir,
+                              total_uncors=len(seeds))
     summary = CsvAppender(os.path.join(session_dir, "summary.csv"), SUMMARY_COLUMNS) if is_root else None
     found = []
     counts = {"success": 0, "reused": 0, "fail": 0}
     for uncor_idx, seed in enumerate(seeds):
-        if logger is not None:
-            logger.raw(SEPARATOR_LIGHT)
-        initial_csw, initial_err = evaluator.frame_stats(seed)
-        log(f"uncor {uncor_idx + 1}/{len(seeds)} seed {seed} (received frame: {initial_err} error bits, csw {initial_csw})")
+        session.begin_uncor(uncor_idx, seed)
         row = session.run_one_uncor(uncor_idx, seed, found)
         counts[row["result"]] += 1
         if is_root:
             summary.append(row)
             write_found_matrices(os.path.join(session_dir, "found_matrices.csv"), found)
-    if logger is not None:
-        logger.raw(SEPARATOR_LIGHT)
+    result(SEPARATOR_LIGHT, raw=True)
     total_minutes = (time.perf_counter() - run_started) / 60
-    result(f"done: {len(seeds)} uncors (success {counts['success']}, reused {counts['reused']}, fail {counts['fail']}), "
-           f"{len(found)} matrices found, {total_minutes:.1f} min")
+    result(f"done: {len(seeds)} uncors | success {counts['success']} | reused {counts['reused']} | fail {counts['fail']} | "
+           f"matrices found {len(found)} | {total_minutes:.1f} min")
     return session_dir
 
 

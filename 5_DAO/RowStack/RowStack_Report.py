@@ -122,7 +122,7 @@ class FileLogger:
 
 
 class RootLogger(FileLogger):
-    """root의 로그: stdout과 파일(path가 있을 때)에 함께 쓴다."""
+    """root의 로그: stdout과 파일(path가 있을 때)에 함께 쓴다. 시각은 줄 끝에 붙여 들여쓰기와 열이 맞게 한다."""
 
     def __init__(self, path: Optional[str]):
-        super().__init__(path, to_stdout=True)
+        super().__init__(path, to_stdout=True, timestamp_at_end=True)
