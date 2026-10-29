@@ -51,6 +51,25 @@ def write_found_matrices(path: str, found: list) -> None:
 
 SEPARATOR_HEAVY = "=" * 72
 SEPARATOR_LIGHT = "-" * 72
+SECTION_HEAVY = "=" * 20          # DAO의 Write_Log_Separator와 같은 꼴: ==== [제목 @ 시각] ====
+SECTION_LIGHT = "-" * 10
+
+
+def clock() -> str:
+    """구역 머리줄과 블록 줄에 붙이는 시각 (날짜는 설정 머리글에 있다)."""
+    return time.strftime("%H:%M:%S")
+
+
+def section_line(title: str, heavy: bool = True, with_time: bool = True) -> str:
+    """구역 머리줄. heavy는 ====, 아니면 ----. with_time이면 제목 뒤에 @ 시각."""
+    mark = SECTION_HEAVY if heavy else SECTION_LIGHT
+    stamp = f" @ {clock()}" if with_time else ""
+    return f"{mark} [{title}{stamp}] {mark}"
+
+
+def kv(label: str, value, width: int = 15) -> str:
+    """'  이름 : 값' 꼴의 항목 줄."""
+    return f"  {label:<{width}}: {value}"
 
 
 def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, uncor_source: str) -> str:
