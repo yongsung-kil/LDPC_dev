@@ -34,12 +34,12 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 | `COLLECT_MAX_FRAMES` | 1000000 | 모으기에서 돌릴 프레임 상한 (rank 전체 합) |
 | `COLLECT_FRAMES_PER_BATCH` | 64 | 모으기 배치 크기 |
 | `UNCOR_SEED_DIR` | None | 지난 실행의 `collected_uncors/` 폴더를 주면 모으기를 건너뛴다 (채널 설정이 다르면 멈춤) |
-| `MAX_ROWS` | 6 | row 수 상한 (stage 수 상한) |
-| `NUM_MATRICES_TO_KEEP` | 3 | t. round마다 들고 가는 매트릭스 후보 수 (gen과 mut 공통) |
-| `CANDIDATES_PER_RANK_PER_BLOCK` | 20 | n. gen 블록에서 rank마다 만드는 후보 row 수 |
-| `MAX_GEN_BLOCKS_PER_ROW` | 3 | k_gen. 개선이 없을 때 gen 블록을 다시 도는 상한 (매트릭스 후보마다 최소 n, 최대 k_gen × n회) |
-| `MUTANTS_PER_RANK_PER_BLOCK` | 10 | m. mut 블록에서 rank마다 만드는 변이 수 (0이면 변이 없음) |
-| `MAX_MUT_BLOCKS_PER_ROW` | 2 | k_mut. 개선이 없을 때 mut 블록을 다시 도는 상한 |
+| `MAX_ROWS` | 6 | row 수 상한 (로그의 `Row r/R`에서 R) |
+| `NUM_PARENTS_TO_KEEP` | 3 | t. row마다 다음 row의 부모(parent)로 남기는 매트릭스 수 (gen과 mut 공통) |
+| `CANDIDATES_PER_RANK_PER_ROUND` | 20 | n. gen round에서 rank마다 시험하는 새 row 후보 수 |
+| `MAX_GEN_ROUNDS_PER_ROW` | 3 | k_gen. 개선이 없을 때 같은 부모에 gen round를 다시 도는 상한 (부모마다 최소 n, 최대 k_gen × n회) |
+| `MUTANTS_PER_RANK_PER_ROUND` | 10 | m. mut round에서 rank마다 시험하는 변이 후보 수 (0이면 변이 없음) |
+| `MAX_MUT_ROUNDS_PER_ROW` | 2 | k_mut. 개선이 없을 때 같은 부모에 mut round를 다시 도는 상한 |
 | `MUTATION_NUM_ELEMENTS`, `MUTATION_RANGE` | 3, 5 | 변이에서 바꾸는 CH/TH 자리 수(매트릭스 전체에서 고름)와 폭 |
 | `INIT_DECODING_ITERATION` | 30 | 첫 row의 복호 iteration 수 |
 | `STEP_ITERATION_PER_ROW` | 5 | row가 하나 붙을 때마다 더하는 iteration 수 |
@@ -53,42 +53,53 @@ HD/2SD/3SD가 복호 모드다. 의존 패키지는 numpy, mpi4py (MS-MPI).
 
 ## 동작 규칙 (탐색 규칙 2판)
 
-- ㉮ **round**: stage마다 gen round(row 추가)와 mut round(변이)가 차례로 온다. 들고 가는 매트릭스 후보는 처음에 빈 매트릭스
-  하나이고, 빈 매트릭스의 성능은 받은 프레임 자체(에러 bit 수, 초기 CSW)다
-- ㉯ **블록과 반복**: 후보 하나에 대해 rank마다 후보 row n개(gen) 또는 변이 m개(mut)를 시험하는 것이 블록 하나다. 블록이 끝나면
-  root가 rank마다 보낸 "개선된 변형"(부모보다 BER이 실제로 작아진 것. 같으면 개선이 아님)을 모은다. 하나도 없으면 같은 블록을
-  다시 돌고, 상한(k_gen, k_mut)까지 없으면 그 후보의 이번 round는 끝이다. 복호 성공이 나와도 블록은 n개를 다 돈다
-- ㉰ **선별**: gen round가 끝나면 모든 후보의 개선된 변형을 한데 모아 순위 상위 t개를 고른다 (어느 부모에서 왔는지는 상관없다).
-  순위는 복호 성공이 먼저(성공끼리는 고친 iteration이 빠른 쪽), 실패끼리는 최소 잔여 에러 bit 수, 같으면 그때 CSW, 같으면 그
-  iteration이 빠른 쪽이다. 개선된 변형이 하나도 없으면 이 시도는 `no improving candidate`로 끝난다
-- ㉱ **변이**: 살아남은 후보마다 매트릭스 전체의 CH, TH에서 자리를 골라 변이한 뒤, 개선된 변형 가운데 최고 1개로 바꾼다.
-  개선이 없으면 변이 전 상태 그대로 다음 stage로 간다. CSW 문턱과 iteration은 그대로다
-- ㉲ **성공**: mut round 뒤 살아남은 후보에 복호 성공이 있으면 고친 iteration이 가장 빠른 것을 저장하고 이 uncor를 끝낸다
+로그와 설정에서 쓰는 자리 이름은 네 가지다 (같은 설명이 log.txt와 rank 로그의 머리글 아래 `[legend]`에 있다):
+
+- ㉮ **Row r/R**: r번째 row를 붙이는 단계. R은 `MAX_ROWS`
+- ㉯ **parent p/P**: 직전 row까지 확정된 매트릭스(부모) P개 가운데 p번째. row 1의 부모는 받은 프레임 하나이고 그 성능은
+  프레임 자체(에러 bit 수, 초기 CSW)다. P는 `NUM_PARENTS_TO_KEEP` 이하
+- ㉰ **round k/K**: 같은 부모에 대해 rank마다 후보 n개(gen) 또는 m개(mut)를 시험하는 묶음. 개선이 없으면 같은 부모에 round를
+  다시 돌고, K번(`MAX_GEN_ROUNDS_PER_ROW`, `MAX_MUT_ROUNDS_PER_ROW`)까지 없으면 그 부모는 이번 row에서 끝이다
+- ㉱ **gen #i, mut #i**: 한 rank가 round 안에서 i번째로 시험한 후보. gen은 부모에 새 row 하나를 붙인 것, mut은 부모의 CH, TH
+  값 몇 개를 바꾼 것이다. 로그의 `rank1 #3`은 rank 1이 3번째로 시험한 후보다
+
+규칙:
+
+- ㉮ **row 단계의 흐름**: row마다 모든 부모에 gen round를 돌려 남길 것을 고르고(`kept`), 남긴 것마다 mut round를 돈다.
+  남긴 것이 다음 row의 부모가 된다
+- ㉯ **개선**: round가 끝나면 root가 rank마다 보낸 "개선된 후보"(부모보다 BER이 실제로 작아진 것. 같으면 개선이 아님)를
+  모은다. 복호 성공이 나와도 round는 n개를 다 돈다
+- ㉰ **선별(kept)**: 모든 부모의 gen round가 끝나면 개선된 후보를 한데 모아 순위 상위 t개를 남긴다 (어느 부모에서 왔는지는
+  상관없다). 순위는 복호 성공이 먼저(성공끼리는 고친 iteration이 빠른 쪽), 실패끼리는 최소 잔여 에러 bit 수, 같으면 그때 CSW,
+  같으면 그 iteration이 빠른 쪽이다. 개선된 후보가 하나도 없으면 이 시도는 `no improving candidate`로 끝난다
+- ㉱ **변이(mut)**: 남긴 매트릭스마다 매트릭스 전체의 CH, TH에서 자리를 골라 변이한 뒤, 개선된 후보 가운데 최고 1개로 바꾼다.
+  개선이 없으면 변이 전 상태 그대로 다음 row의 부모가 된다. CSW 문턱과 iteration은 그대로다
+- ㉲ **성공**: mut round 뒤 남은 매트릭스에 복호 성공이 있으면 고친 iteration이 가장 빠른 것을 저장하고 이 uncor를 끝낸다
 - ㉳ **iteration 예산**: row가 r개인 매트릭스는 `min(MAX_DECODING_ITERATION, INIT_DECODING_ITERATION + (r - 1) × STEP_ITERATION_PER_ROW)`
   iteration으로 복호한다
 - ㉴ **새 row의 문턱**: 첫 row는 -1 (CSW가 어느 문턱에도 들지 않을 때 쓰는 row). 그 뒤 row의 문턱은 부모 궤적의 최소 CSW에
   `CSW_MARGIN_ABOVE_MIN`을 더해 8의 배수로 올린 값이고, 앞 row 문턱보다 8 이상 작게(크면 내림), 초기 CSW보다 작게 둔다.
   새 row는 궤적에서 CSW가 처음 문턱 이하가 되는 iteration의 다음부터 이어받으며 그 iteration이 새 예산 안이어야 한다.
-  그런 문턱이 없는 후보는 row를 더 붙일 수 없어 끝난다 (`no reachable CSW threshold`)
+  그런 문턱이 없는 부모는 row를 더 붙일 수 없어 끝난다 (`no reachable CSW threshold`)
 - ㉵ **찾은 매트릭스 먼저 시험**: 고친 uncor 수가 많은 매트릭스부터 rank마다 나눠 시험하고, 여럿이 고치면 고친 수가 많은 쪽에
   적는다. 실패한 uncor의 매트릭스는 목록에 넣지 않는다
-- ㉶ rank 사이 동점은 rank 번호, 그 다음 후보 번호가 작은 쪽이 앞선다. 단일 프로세스로 돌리면 블록마다 n개(또는 m개)만 시험한다
+- ㉶ rank 사이 동점은 rank 번호, 그 다음 후보 번호가 작은 쪽이 앞선다. 단일 프로세스로 돌리면 round마다 n개(또는 m개)만 시험한다
 
 ## 출력 폴더
 
 ```
 Output_RowStack/{YYYYMMDD_HHMMSS}/
 ├── result.txt                   # root의 중요 결과만: 설정 머리글, uncor 모은 수, uncor마다 한 줄(SUCCESS, REUSED, FAIL), 마지막 집계
-├── log.txt                      # root의 상세 로그: 머리글, uncor마다 구분선, 블록마다 한 줄, round마다 살아남은 후보 목록, 결과 줄
-├── rank_logs/rank_{N}.txt       # rank마다 블록 머리줄(부모 성능 포함), 후보 하나하나의 결과, 블록의 전체 결과
-├── tested_matrices/rank_{N}/LLR_MATRIX_{모드}_seed{seed}_attempt{a}_stage{s}_c{후보}_b{블록}_{gen|mut}{번호}.txt   # 그 후보로 시험한 매트릭스 (SAVE_TESTED_MATRICES)
+├── log.txt                      # root의 상세 로그: 머리글과 자리 표기 설명, uncor마다 구분선, row마다 머리줄, round마다 한 줄, 남긴 매트릭스(kept) 목록, 결과 구역
+├── rank_logs/rank_{N}.txt       # rank마다 round 머리줄(부모 성능 포함), 후보 하나하나의 결과, round의 전체 결과
+├── tested_matrices/rank_{N}/LLR_MATRIX_{모드}_seed{seed}_attempt{a}_row{r}_parent{p}_round{k}_{gen|mut}{i}.txt   # 그 후보로 시험한 매트릭스 (SAVE_TESTED_MATRICES)
 ├── config_used.py               # 실행에 쓴 RowStack_Config.py 사본
 ├── collected_uncors/            # uncor_seeds.txt (한 줄에 seed 하나), info.json (채널 설정, 모은 수, 돌린 프레임 수), 기존 매트릭스 사본
-├── history.csv                  # 블록마다 한 줄: seed, attempt, stage, kind(gen/mut/pool), candidate(후보 번호), block(반복 번호),
-│                                #   threshold, takeover_iteration, iterations(예산), parent_min_err, num_improved(개선된 변형 수),
-│                                #   best_rank, best_index(최고를 낸 rank와 후보 번호), min_err, min_err_iteration, csw_at_min_err,
+├── history.csv                  # round마다 한 줄: seed, attempt, row, kind(gen/mut/pool), parent(부모 번호), round(반복 번호),
+│                                #   threshold, takeover_iteration, iterations(예산), parent_min_err, num_improved(개선된 후보 수),
+│                                #   best_rank, best_candidate(최고를 낸 rank와 후보 번호), min_err, min_err_iteration, csw_at_min_err,
 │                                #   decoding(success/fail), corrected_iteration, elapsed_sec, note
-├── per_uncor/seed_{seed}/LLR_MATRIX_{모드}_uncor_{seed}.txt   # 성공이면 고치는 매트릭스, 실패면 마지막 round에서 순위가 가장 앞선 것
+├── per_uncor/seed_{seed}/LLR_MATRIX_{모드}_uncor_{seed}.txt   # 성공이면 고치는 매트릭스, 실패면 마지막에 남은 매트릭스 가운데 순위가 가장 앞선 것
 ├── summary.csv                  # seed, result(success/reused/fail), num_rows, final_min_err, matrix_file, elapsed_sec, fail_reason
 └── found_matrices.csv           # matrix_file, origin_seed, num_fixed, fixed_seeds
 ```
@@ -106,8 +117,8 @@ seed는 `numpy.random.default_rng(seed)`로 프레임을 다시 만드는 정수
 | `RowStack_Evaluate.py` | 후보 평가 결과 `CandidateResult`, 순위 키, 개선 판정, `UncorDecoder` (디코더 호출 한 곳, 빈 매트릭스 성능) |
 | `RowStack_Parallel.py` | `SerialParallel`, `MpiParallel`, round robin 나누기 |
 | `RowStack_Uncor.py` | uncor seed 파일과 info.json, 설정 대조, 실패 seed 추리기 |
-| `RowStack_Report.py` | history, summary, found_matrices csv, 설정 머리글, 로그 |
-| `RowStack_Main.py` | MPI 흐름 (`run`, `RowStackSession`의 블록과 round, `collect_uncors`) |
+| `RowStack_Report.py` | history, summary, found_matrices csv, 설정 머리글, 자리 표기 설명, 로그 |
+| `RowStack_Main.py` | MPI 흐름 (`run`, `RowStackSession`의 round와 선별, `collect_uncors`) |
 
 ## 검사
 

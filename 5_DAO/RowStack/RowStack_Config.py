@@ -44,12 +44,12 @@ class RowStackConfig:
     COLLECT_FRAMES_PER_BATCH: int = 64
     UNCOR_SEED_DIR: Optional[str] = None                   # 지난 실행의 collected_uncors 폴더. 주면 모으기를 건너뛰고 읽는다
     # 탐색 (탐색 규칙 2판)
-    MAX_ROWS: int = 6                                      # row 수 상한 (stage 수 상한)
-    NUM_MATRICES_TO_KEEP: int = 3                          # t. round마다 들고 가는 매트릭스 후보 수 (gen과 mut 공통)
-    CANDIDATES_PER_RANK_PER_BLOCK: int = 20                # n. gen 블록에서 코어마다 만드는 후보 row 수
-    MAX_GEN_BLOCKS_PER_ROW: int = 3                        # k_gen. 개선이 없을 때 gen 블록을 다시 도는 상한
-    MUTANTS_PER_RANK_PER_BLOCK: int = 10                   # m. mut 블록에서 코어마다 만드는 변이 수 (0이면 변이 없음)
-    MAX_MUT_BLOCKS_PER_ROW: int = 2                        # k_mut. 개선이 없을 때 mut 블록을 다시 도는 상한
+    MAX_ROWS: int = 6                                      # row 수 상한 (로그의 Row r/R에서 R)
+    NUM_PARENTS_TO_KEEP: int = 3                           # t. row마다 다음 row의 부모(parent)로 남기는 매트릭스 수 (gen과 mut 공통)
+    CANDIDATES_PER_RANK_PER_ROUND: int = 20                # n. gen round에서 rank마다 시험하는 새 row 후보 수
+    MAX_GEN_ROUNDS_PER_ROW: int = 3                        # k_gen. 개선이 없을 때 같은 부모에 gen round를 다시 도는 상한
+    MUTANTS_PER_RANK_PER_ROUND: int = 10                   # m. mut round에서 rank마다 시험하는 변이 후보 수 (0이면 변이 없음)
+    MAX_MUT_ROUNDS_PER_ROW: int = 2                        # k_mut. 개선이 없을 때 같은 부모에 mut round를 다시 도는 상한
     MUTATION_NUM_ELEMENTS: int = 3                         # 변이에서 바꾸는 CH/TH 자리 수 (매트릭스 전체에서 고름)
     MUTATION_RANGE: int = 5                                # 변이 폭 (±)
     INIT_DECODING_ITERATION: int = 30                      # 첫 row의 복호 iteration 수
@@ -88,12 +88,12 @@ class RowStackConfig:
         if not self.CHANNEL_POINT > 0:
             raise ValueError(f"CHANNEL_POINT={self.CHANNEL_POINT!r}: 0보다 커야 함")
         at_least_one = ("NUM_UNCORS_TO_COLLECT", "COLLECT_MAX_FRAMES", "COLLECT_FRAMES_PER_BATCH", "MAX_ROWS",
-                        "NUM_MATRICES_TO_KEEP", "CANDIDATES_PER_RANK_PER_BLOCK", "MAX_GEN_BLOCKS_PER_ROW",
-                        "MAX_MUT_BLOCKS_PER_ROW", "MUTATION_NUM_ELEMENTS", "MUTATION_RANGE",
+                        "NUM_PARENTS_TO_KEEP", "CANDIDATES_PER_RANK_PER_ROUND", "MAX_GEN_ROUNDS_PER_ROW",
+                        "MAX_MUT_ROUNDS_PER_ROW", "MUTATION_NUM_ELEMENTS", "MUTATION_RANGE",
                         "INIT_DECODING_ITERATION", "MAX_DECODING_ITERATION", "MAX_MATRIX_ATTEMPTS_PER_UNCOR")
         for name in at_least_one:
             self._require_int(name, minimum=1)
-        for name in ("MUTANTS_PER_RANK_PER_BLOCK", "STEP_ITERATION_PER_ROW", "CSW_MARGIN_ABOVE_MIN"):
+        for name in ("MUTANTS_PER_RANK_PER_ROUND", "STEP_ITERATION_PER_ROW", "CSW_MARGIN_ABOVE_MIN"):
             self._require_int(name, minimum=0)
         if self.INIT_DECODING_ITERATION > self.MAX_DECODING_ITERATION:
             raise ValueError(f"INIT_DECODING_ITERATION={self.INIT_DECODING_ITERATION}은 "

@@ -1,6 +1,6 @@
 # TODO — 5_DAO (Project 5: Decoder Auto Optimizer)
 
-> Claude 마지막 확인: 2026-10-28 18:22:57
+> Claude 마지막 확인: 2026-10-30 14:23:03
 
 > 목표: SSS에서 반입한 DAO 원형(`reference/`)을 기반으로 새 구조로 발전시킨다.
 
@@ -18,6 +18,7 @@
   - [x] 로그 정리 (2026-10-22: 설정 머리글, result.txt와 log.txt와 rank_logs 분리, 시험한 매트릭스 파일 저장, 약어 풀어 쓰기, decoding=success/fail, 뽑힌 후보의 rank와 번호)
   - [x] 탐색 규칙 2판 구현 (2026-10-28 18:37 완료, 커밋 318d80d. 검사 59건 통과, mpiexec rank 2개 토이와 실제 치수 실행 확인. README 반영) (2026-10-28 18:22 사용자 설명 확인. 상세: `20261028_탐색규칙_2판.md`. 개선된 변형만 남기는 상위 t개 탐색, gen과 mut 블록의 k회 반복, row마다 늘어나는 iteration 예산, 최소 CSW + margin 문턱, 매트릭스 전체 변이, 복호 성공 뒤 변이로 iteration 줄이기)
     - 1판의 '나쁘면 고정하지 않음' 결정거리는 2판의 '개선 있을 때만 붙임'으로 흡수됨
+  - [x] 로그 자리 이름 정리 (2026-10-30 14:23, 사용자 지적: Stage, candidate, block이 안 읽힘. Stage→`Row r/R`, 부모 자리 candidate→`parent p/P`(1부터), block→`round k/K`, rank가 시험한 후보는 `gen #i`, `mut #i` 그대로. 설정 이름도 같이: NUM_PARENTS_TO_KEEP, CANDIDATES_PER_RANK_PER_ROUND, MAX_GEN_ROUNDS_PER_ROW, MUTANTS_PER_RANK_PER_ROUND, MAX_MUT_ROUNDS_PER_ROW. history.csv 열(row, parent, round, best_candidate)과 tested_matrices 파일 이름도 바꿈. log.txt와 rank 로그 머리에 `[legend]`. 확인 실행 `Output_RowStack/20261030_141839/`)
   - [ ] 사용자 환경 MPI 실행 확인
 
 - [ ] 집단 통신 타임아웃 메시지에 도착하지 않은 rank를 적고, ECC를 돌린 rank의 result가 없으면 멈춤

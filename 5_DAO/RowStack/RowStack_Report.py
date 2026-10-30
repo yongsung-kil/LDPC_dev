@@ -4,12 +4,13 @@ import os
 import time
 from typing import Optional
 
-HISTORY_COLUMNS = ["seed", "attempt", "stage", "kind", "candidate", "block", "threshold", "takeover_iteration",
-                   "iterations", "parent_min_err", "num_improved", "best_rank", "best_index", "min_err",
+HISTORY_COLUMNS = ["seed", "attempt", "row", "kind", "parent", "round", "threshold", "takeover_iteration",
+                   "iterations", "parent_min_err", "num_improved", "best_rank", "best_candidate", "min_err",
                    "min_err_iteration", "csw_at_min_err", "decoding", "corrected_iteration", "elapsed_sec", "note"]
-# 블록 하나가 한 줄. kind: gen, mut, pool. candidate: 매트릭스 후보 번호(0부터), block: 반복 번호(1부터).
-# iterations: 복호 예산. parent_min_err: 부모의 최소 잔여 에러. num_improved: 모든 rank에서 개선된 변형 수.
-# best_rank와 best_index: 개선된 변형 가운데 최고를 낸 rank와 그 rank 안의 후보 번호. decoding: success 또는 fail
+# round 하나가 한 줄. kind: gen, mut, pool. row: 붙이는 row 번호(1부터), parent: 부모 매트릭스 번호(1부터),
+# round: 같은 부모에 대한 반복 번호(1부터). iterations: 복호 예산. parent_min_err: 부모의 최소 잔여 에러.
+# num_improved: 모든 rank에서 부모보다 나아진 후보 수. best_rank와 best_candidate: 그 가운데 최고를 낸 rank와
+# 그 rank 안의 후보 번호. decoding: success 또는 fail
 SUMMARY_COLUMNS = ["seed", "result", "num_rows", "final_min_err", "matrix_file", "elapsed_sec", "fail_reason"]
 FOUND_COLUMNS = ["matrix_file", "origin_seed", "num_fixed", "fixed_seeds"]   # fixed_seeds는 공백으로 이은 seed
 
@@ -56,7 +57,7 @@ SECTION_LIGHT = "-" * 10
 
 
 def clock() -> str:
-    """구역 머리줄과 블록 줄에 붙이는 시각 (날짜는 설정 머리글에 있다)."""
+    """구역 머리줄과 round 줄에 붙이는 시각 (날짜는 설정 머리글에 있다)."""
     return time.strftime("%H:%M:%S")
 
 
@@ -88,12 +89,12 @@ def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, 
         ("UNCOR_SEED_DIR", uncor_source),
         ("[search]", None),
         ("MAX_ROWS", config.MAX_ROWS),
-        ("NUM_MATRICES_TO_KEEP", config.NUM_MATRICES_TO_KEEP),
-        ("CANDIDATES_PER_RANK_PER_BLOCK", config.CANDIDATES_PER_RANK_PER_BLOCK),
-        ("MAX_GEN_BLOCKS_PER_ROW", config.MAX_GEN_BLOCKS_PER_ROW),
-        ("MUTANTS_PER_RANK_PER_BLOCK", f"{config.MUTANTS_PER_RANK_PER_BLOCK} "
+        ("NUM_PARENTS_TO_KEEP", config.NUM_PARENTS_TO_KEEP),
+        ("CANDIDATES_PER_RANK_PER_ROUND", config.CANDIDATES_PER_RANK_PER_ROUND),
+        ("MAX_GEN_ROUNDS_PER_ROW", config.MAX_GEN_ROUNDS_PER_ROW),
+        ("MUTANTS_PER_RANK_PER_ROUND", f"{config.MUTANTS_PER_RANK_PER_ROUND} "
                                        f"(elements {config.MUTATION_NUM_ELEMENTS}, range ±{config.MUTATION_RANGE})"),
-        ("MAX_MUT_BLOCKS_PER_ROW", config.MAX_MUT_BLOCKS_PER_ROW),
+        ("MAX_MUT_ROUNDS_PER_ROW", config.MAX_MUT_ROUNDS_PER_ROW),
         ("INIT_DECODING_ITERATION", config.INIT_DECODING_ITERATION),
         ("STEP_ITERATION_PER_ROW", config.STEP_ITERATION_PER_ROW),
         ("MAX_DECODING_ITERATION", config.MAX_DECODING_ITERATION),
@@ -112,6 +113,24 @@ def format_settings_header(config, session_dir: str, mode: str, num_ranks: int, 
         else:
             lines.append(f"  {name:<32}: {value}")
     lines.append(SEPARATOR_LIGHT)
+    return "\n".join(lines)
+
+
+def format_legend() -> str:
+    """로그의 자리 표기가 뜻하는 것. log.txt와 rank 로그의 설정 머리글 다음에 둔다."""
+    lines = [
+        "[legend]",
+        "  Row r/R         : building the r-th row of the matrix (R = MAX_ROWS)",
+        "  parent p/P      : p-th of the P matrices kept from the previous row (P <= NUM_PARENTS_TO_KEEP);",
+        "                    at row 1 the only parent is the received frame itself (no row yet)",
+        "  round k/K       : one set of candidates per rank on that parent; repeated up to K times while none improves on it",
+        "  gen / mut       : gen appends one new random row to the parent, mut changes a few CH/TH values anywhere in the parent",
+        "  gen #i, mut #i  : i-th candidate a rank tests in the round (CANDIDATES_PER_RANK_PER_ROUND, MUTANTS_PER_RANK_PER_ROUND)",
+        "  rank1 #3        : the candidate that rank 1 tested as its 3rd",
+        "  improved        : better than the parent (decoding success first, then smaller min_err; equal is not an improvement)",
+        "  kept            : matrices kept after a row (best NUM_PARENTS_TO_KEEP of all improved candidates); parents of the next row",
+        SEPARATOR_LIGHT,
+    ]
     return "\n".join(lines)
 
 
