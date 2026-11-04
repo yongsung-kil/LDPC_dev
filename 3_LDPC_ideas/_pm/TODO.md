@@ -1,8 +1,8 @@
-# TODO — 3_LDPC_ideas (Project 3)
+# TODO: 3_LDPC_ideas (논문 아이디어 적용)
 
 > Claude 마지막 확인: 2026-11-04 16:31:26
 
-> 이 파일은 Project 3 전용 작업만 관리한다.
+> 이 파일은 3_LDPC_ideas(논문 아이디어 적용) 전용 작업만 관리한다.
 
 ---
 

@@ -1,4 +1,4 @@
-# DONE: 완료 이력 (3_LDPC_ideas, Project 3)
+# DONE: 완료 이력 (3_LDPC_ideas, 논문 아이디어 적용)
 
 ### 2026-11-04 아이디어 보고서 양식 개편과 대시보드 생성
 아이디어 README 7편을 새 양식(요약 다섯 항목, 개조식 bullet, 개선 빨강과 열화 파랑)으로 다시 쓰고, render.py가 README에서 카드형 대시보드 index.html을 만들게 함
