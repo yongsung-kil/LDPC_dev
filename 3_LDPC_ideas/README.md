@@ -1,7 +1,7 @@
 # 논문 아이디어 적용
 
 > 논문 아이디어를 `2_LDPC_base` 시뮬레이터에 하나씩 적용해 보고, 결과를 아이디어별
-> 보고서와 현황표로 남기는 프로젝트. 한눈에 보는 화면은 [대시보드](index.html)
+> 보고서와 현황표로 남기는 프로젝트. 한눈에 보는 화면은 [대시보드](docs/index.html)
 > (`python render.py`가 아이디어별 README에서 만든다).
 
 ---
@@ -16,7 +16,7 @@
 | 4. 구현 | `2_LDPC_base/src`의 BaseDecoder를 상속해 논문이 바꾸는 함수만 재정의함 (복사 금지) | decoder.py, run.py, config.json | 새논문적용규칙.md 2절, 4절, 7절 |
 | 5. py 스크리닝 | 기준선(base_run)과 같은 조건으로 on/off 비교하고 중간 지표를 모음 | `Sim_Output/` (git 무시) | 새논문적용규칙.md 5절 (평가 계획) |
 | 6. 보고 | 아이디어 README에 요약, 평가 계획, 결과, 결론을 쓰고 실험로그에 환경과 인사이트를 남김 | README.md, [실험로그.md](%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.md) | 새논문적용규칙.md 6절, [보고서작성규칙.md](%EB%B3%B4%EA%B3%A0%EC%84%9C%EC%9E%91%EC%84%B1%EA%B7%9C%EC%B9%99.md) |
-| 7. 판정 | 현황표 상태를 갱신하고 `python render.py`로 html과 대시보드를 다시 만듦 | README.html, index.html | 이 문서의 현황표 |
+| 7. 판정 | 현황표 상태를 갱신하고 `python render.py`로 html과 대시보드를 다시 만듦 | README.html, docs/index.html | 이 문서의 현황표 |
 | 8. 반영 | 유효 판정이 나고 사용자가 지시하면 C++(1_LDPC_revised)에 반영하고 ADR을 씀 | ADR | `0_LDPC_original/docs/adr/` |
 
 - ㉮ 흐름은 1에서 8로 간다. 5에서 실패하면 7에서 실패로 기록하고 끝난다 (폐기 사유는
@@ -82,7 +82,7 @@
 - ㉳ 문서에는 날짜를 적지 않는다 (시점 기록은 git 이력과 `_pm/`이 담당하고,
   실험 시점 기록이 필요하면 [실험로그.md](%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.md)에 둔다)
 - ㉴ 문서는 md가 정본이고, md를 고치면 `python render.py`로 형제 html과 대시보드
-  [index.html](index.html)을 다시 만들어 함께 커밋한다 (html은 열람용. README 작성
+  [docs/index.html](docs/index.html)을 다시 만들어 함께 커밋한다 (html은 열람용. README 작성
   규칙은 [새논문적용규칙.md](%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.md) 6절과
   [보고서작성규칙.md](%EB%B3%B4%EA%B3%A0%EC%84%9C%EC%9E%91%EC%84%B1%EA%B7%9C%EC%B9%99.md)).
   render.py는 만든 html의 상대 링크가 가리키는 파일이 있는지 검사해 깨진 링크를 보고한다

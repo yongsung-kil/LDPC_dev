@@ -11,10 +11,10 @@
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md (제외: _pm/, _template/, Sim_Output/,
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
-    - 대시보드 index.html: 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
+    - 대시보드 docs/index.html: 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
       출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의 "적용 분석
       메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 그 README.html로 간다
-      (README 형식은 보고서작성규칙.md 16절)
+      (README 형식은 보고서작성규칙.md 16절). 링크는 docs/ 기준 상대 경로다
     - 렌더 뒤 html 안의 상대 링크가 가리키는 파일과 앵커가 있는지 검사해 없는 것을 보고한다
 
 규격: HTML 작성 가이드 (정적 파일, 상대 링크만, 외부 자원 없음, :root css 변수와
@@ -22,7 +22,7 @@
 
 필요 패키지: markdown (pip install markdown)
 """
-import posixpath
+import os
 import re
 import sys
 from html import escape
@@ -36,7 +36,8 @@ IDEAS_DIR = Path(__file__).resolve().parent
 EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 IDEA_FOLDER_PATTERN = re.compile(r"^\d{3}_")
 
-DASHBOARD_NAME = "index.html"
+DASHBOARD_DIR = IDEAS_DIR / "docs"
+DASHBOARD_PATH = DASHBOARD_DIR / "index.html"
 DASHBOARD_TITLE = "논문 아이디어 적용 대시보드"
 PAPER_ARCHIVE_URL = "https://yongsung-kil.github.io/ECC_papers/"
 
@@ -400,12 +401,17 @@ def collect_render_targets():
     return primary + extra
 
 
+def relative_href(from_dir, target_path):
+    """폴더 from_dir에서 target_path로 가는 상대 링크 (슬래시 구분, 퍼센트 인코딩)."""
+    rel = Path(os.path.relpath(target_path, from_dir)).as_posix()
+    return quote(rel)
+
+
 def dashboard_href_from(md_path):
     """문서 폴더에서 대시보드로 가는 상대 경로. 3_LDPC_ideas 밖의 문서면 None."""
     if not md_path.is_relative_to(IDEAS_DIR):
         return None
-    depth = len(md_path.relative_to(IDEAS_DIR).parts) - 1
-    return "../" * depth + DASHBOARD_NAME
+    return relative_href(md_path.parent, DASHBOARD_PATH)
 
 
 def render_file(md_path, rendered_md_paths):
@@ -554,17 +560,16 @@ def parse_idea_readme(md_path, rendered_md_paths):
     if memo:
         memo_text, href = memo
         path, fragment = split_href(href)
-        if path.endswith(".md") and resolve_link_target(folder, path) in rendered_md_paths:
-            path = path[:-3] + ".html"
-        # README 폴더 기준 경로를 대시보드(3_LDPC_ideas/) 기준으로 옮긴다
-        rel_folder = folder.relative_to(IDEAS_DIR).as_posix()
-        memo_href = posixpath.normpath(posixpath.join(rel_folder, unquote(path)))
-        memo_href = quote(memo_href) + fragment
+        target = resolve_link_target(folder, path)
+        if path.endswith(".md") and target in rendered_md_paths:
+            target = target.with_suffix(".html")
+        # README 폴더 기준 경로를 대시보드 폴더(docs/) 기준으로 옮긴다
+        memo_href = relative_href(DASHBOARD_DIR, target) + fragment
 
     return {
         "number": number,
         "title": title,
-        "href": quote(folder.relative_to(IDEAS_DIR).as_posix()) + "/README.html",
+        "href": relative_href(DASHBOARD_DIR, folder / "README.html"),
         "source": source,
         "badge": badge,
         "note": note,
@@ -632,19 +637,22 @@ def build_stats(ideas):
     return "\n".join(tiles)
 
 
-def anchor_href(file_name, heading_text):
-    """render.py가 만든 html 안의 제목으로 가는 링크 (제목 id는 slugify_unicode 규칙)."""
-    return quote(file_name) + "#" + quote(slugify_unicode(heading_text, "-"))
+def site_href(file_name, heading_text=None):
+    """대시보드 폴더에서 3_LDPC_ideas/ 안의 html로 가는 링크 (제목 id는 slugify_unicode 규칙)."""
+    href = relative_href(DASHBOARD_DIR, IDEAS_DIR / file_name)
+    if heading_text:
+        href += "#" + quote(slugify_unicode(heading_text, "-"))
+    return href
 
 
 def build_site_nav():
     links = [
-        ("동작 흐름", anchor_href("README.html", "동작 흐름")),
+        ("동작 흐름", site_href("README.html", "동작 흐름")),
         ("논문 분석 아카이브", PAPER_ARCHIVE_URL),
-        ("아이디어 현황표", anchor_href("README.html", "아이디어 현황표")),
-        ("실험 로그", quote("실험로그.html")),
-        ("새 논문 적용 규칙", quote("새논문적용규칙.html")),
-        ("보고서 작성 규칙", quote("보고서작성규칙.html")),
+        ("아이디어 현황표", site_href("README.html", "아이디어 현황표")),
+        ("실험 로그", site_href("실험로그.html")),
+        ("새 논문 적용 규칙", site_href("새논문적용규칙.html")),
+        ("보고서 작성 규칙", site_href("보고서작성규칙.html")),
     ]
     return "\n".join('<li><a href="{}">{}</a></li>'.format(href, escape(text)) for text, href in links)
 
@@ -662,9 +670,9 @@ def render_dashboard(rendered_md_paths):
         stats=build_stats(ideas),
         cards="\n".join(build_card(idea) for idea in ideas),
     )
-    html_path = IDEAS_DIR / DASHBOARD_NAME
-    html_path.write_text(page, encoding="utf-8")
-    return html_path, ideas
+    DASHBOARD_DIR.mkdir(exist_ok=True)
+    DASHBOARD_PATH.write_text(page, encoding="utf-8")
+    return DASHBOARD_PATH, ideas
 
 
 # ----------------------------------------------------------------------------
