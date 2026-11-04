@@ -90,7 +90,7 @@
 | C++ 디코더 로직 (revised 포함) | `0_LDPC_original/CLAUDE.md` (상수, 스위치, 실수 포인트) + `0_LDPC_original/docs/architecture.md` |
 | 1_LDPC_revised 속도 최적화 | `1_LDPC_revised/README.md` + `1_LDPC_revised/docs/speed_opt/checklist.md` |
 | 2_LDPC_base | `2_LDPC_base/README.md` (확정 결정 기록 절 포함) |
-| 논문 아이디어 추가 (3_LDPC_ideas) | `3_LDPC_ideas/새논문적용규칙.md` + `3_LDPC_ideas/README.md` |
+| 논문 아이디어 추가 (3_LDPC_ideas) | `3_LDPC_ideas/새논문적용규칙.md` + `3_LDPC_ideas/보고서작성규칙.md` + `3_LDPC_ideas/README.md` |
 | 논문 이식성 판정 | `0_LDPC_original/docs/paper_screening_profile.md` |
 | H-matrix 설계 (4_H_matrix_tool) | `4_H_matrix_tool/README.md` |
 | DAO (5_DAO) | `5_DAO/README.md` + `5_DAO/DAO_spec.md` |

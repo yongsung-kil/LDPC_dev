@@ -4,30 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>004 upgdbf: 전역 최대 탐색 비트 플리핑 (UP-GDBF)</title>
-</head>
-<body>
-<div id="ldpcDocRoot">
+<!-- render.py가 README.md에서 만든 파일. md가 정본이므로 이 파일을 손으로 고치지 않는다 -->
 <style>
-#ldpcDocRoot {
+:root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --row: #fbfcfd;
     --text: #24292f;
     --muted: #57606a;
     --border: #d0d7de;
-    --surface: #f6f8fa;
     --accent: #0969da;
+    --ok: #1a7f37;
+    --warn: #bc4c00;
+    --better: #d1242f;
+    --worse: #0550ae;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --row: #11161d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --border: #30363d;
+        --accent: #4493f8;
+        --ok: #3fb950;
+        --warn: #f0883e;
+        --better: #ff7b72;
+        --worse: #79c0ff;
+    }
+}
+body { margin: 0; background: var(--bg); color: var(--text); }
+
+#ldpcDocRoot {
     margin: 0 auto;
-    padding: 32px 24px 80px;
+    padding: 24px 24px 80px;
     max-width: 880px;
     color: var(--text);
-    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", sans-serif;
+    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
     font-size: 16px;
     line-height: 1.7;
-    background: #ffffff;
 }
 #ldpcDocRoot *, #ldpcDocRoot *::before, #ldpcDocRoot *::after { box-sizing: border-box; }
+#ldpcDocRoot .doc-nav { font-size: 0.9em; color: var(--muted); }
+#ldpcDocRoot .doc-nav a { margin-right: 12px; }
 #ldpcDocRoot h1, #ldpcDocRoot h2, #ldpcDocRoot h3, #ldpcDocRoot h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
 #ldpcDocRoot h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
 #ldpcDocRoot h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
 #ldpcDocRoot h3 { font-size: 1.15em; }
+#ldpcDocRoot h4 { font-size: 1.0em; }
 #ldpcDocRoot a { color: var(--accent); text-decoration: none; }
 #ldpcDocRoot a:hover { text-decoration: underline; }
 #ldpcDocRoot p, #ldpcDocRoot ul, #ldpcDocRoot ol { margin: 0.6em 0; }
@@ -52,7 +77,7 @@
     white-space: nowrap;
 }
 #ldpcDocRoot th { background: var(--surface); }
-#ldpcDocRoot tr:nth-child(even) td { background: #fbfcfd; }
+#ldpcDocRoot tr:nth-child(even) td { background: var(--row); }
 #ldpcDocRoot code {
     font-family: Consolas, "D2Coding", monospace;
     font-size: 0.9em;
@@ -69,46 +94,91 @@
 }
 #ldpcDocRoot pre code { background: none; padding: 0; }
 #ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
-#ldpcDocRoot .key { color: #d1242f; font-weight: 600; }
+#ldpcDocRoot .better { color: var(--better); font-weight: 600; }
+#ldpcDocRoot .worse { color: var(--worse); font-weight: 600; }
 </style>
-<h1>004 upgdbf: 전역 최대 탐색 비트 플리핑 (UP-GDBF)</h1>
-<p>출처: ieee:9902993 | 상태: 스크리닝 완료 (판정: 무의미, dv 균일 부호 한정 재평가 단서)</p>
-<h2>📌 요약</h2>
+</head>
+<body>
+<div id="ldpcDocRoot">
+<nav class="doc-nav"><a href="../index.html">대시보드로</a></nav>
+<h1 id="004-upgdbf-전역-최대-탐색-비트-플리핑-up-gdbf">004 upgdbf: 전역 최대 탐색 비트 플리핑 (UP-GDBF)</h1>
+<p>출처: ieee:9902993 (IEEE OJCAS 2022) | 상태: 실패 (dv 혼합 H-matrix에서 전역 최대 비교가 비호환. dv 균일 부호 채택 시 재평가)</p>
+<h2 id="요약">📌 요약</h2>
 <ul>
-<li><strong>논문이 제안하는 것</strong>:<ul>
-<li>NAND용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환 저밀도 패리티 검사) 부호를 <strong>경판정 비트 플리핑(BF, Bit Flipping)</strong> 만으로 높은 오류 수까지 복호하는 <strong>UP-GDBF</strong>(Unified Penalty Gradient Descent Bit Flipping):<ul>
-<li>비트마다 <strong>에너지</strong>(그 비트가 틀렸다는 증거 점수)를 계산: 채널 초기값과 어긋나면 +1, 그 비트에 연결된 위반 검사 수만큼 +, 직전 iteration에 플립되지 않았으면 +1, 난수로 +0 또는 +1</li>
-<li>iteration마다 <strong>에너지가 전역 최대인 비트만 모두 플립</strong> (두 pass 구조: 최대 탐색 pass, 플리핑 pass)</li>
-<li>난수를 플립 허가 조건(하드 제약)이 아니라 <strong>에너지 가산항(소프트 제약)으로 통합</strong>한 것이 핵심 변경. 초기 t_active iteration 동안은 난수를 꺼서 결정적으로 돎</li>
+<li><strong>논문 아이디어</strong>:<ul>
+<li>NAND용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환 저밀도
+  패리티 검사) 부호를 <strong>경판정 비트 플리핑(BF, Bit Flipping)만으로</strong> 높은 오류
+  수까지 복호하는 <strong>UP-GDBF</strong>(Unified Penalty Gradient Descent Bit Flipping)</li>
+<li>비트마다 <strong>에너지</strong>(그 비트가 틀렸다는 증거 점수)를 계산:<ul>
+<li>채널 초기값과 어긋나면 +1</li>
+<li>그 비트에 연결된 위반 검사 수만큼 +</li>
+<li>직전 iteration에 플립되지 않았으면 +1</li>
+<li>난수로 +0 또는 +1</li>
 </ul>
 </li>
-<li>추가 하드웨어 기법 <strong>energy-based backtracking</strong>: 플리핑 pass가 플립이 있는 column block(순환 치환 단위 z개 비트 묶음)만 접근해 cycle을 42% 넘게 절감</li>
+<li>iteration마다 <strong>에너지가 전역 최대인 비트만 모두 플립</strong> (두 pass 구조: 최대
+  탐색 pass, 플리핑 pass)</li>
+<li>난수를 플립 허가 조건(하드 제약)이 아니라 <strong>에너지 가산항(소프트 제약)으로
+  통합</strong>한 것이 핵심 변경. 초기 t_active iteration 동안은 난수를 꺼서 결정적으로 돎</li>
+<li>추가 하드웨어 기법 <strong>energy-based backtracking</strong>: 플리핑 pass가 플립이 있는
+  column block(순환 치환 단위 z개 비트 묶음)만 접근해 cycle을 42% 넘게 절감</li>
 </ul>
 </li>
-<li><strong>왜 효과가 있다고 보는지</strong>:<ul>
-<li>전역 최대 비교는 "가장 틀렸을 법한 비트"부터 고치므로 비트별 문턱 판정보다 과교정이 적음</li>
-<li>난수의 소프트 제약화는 최대보다 1 낮은 비트에게도 플립 기회를 주어 flip miss(그 iteration에서 플립되지 못한 에러 비트)를 줄임</li>
+<li><strong>제안 이유</strong>:<ul>
+<li>전역 최대 비교는 "가장 틀렸을 법한 비트"부터 고치므로 비트별 문턱 판정보다
+  과교정이 적음</li>
+<li>난수의 소프트 제약화는 최대보다 1 낮은 비트에게도 플립 기회를 주어 flip
+  miss(그 iteration에서 플립되지 못한 에러 비트)를 줄임</li>
 <li>직전 플립 비트의 에너지를 상대적으로 1 낮춰 연속 재플립 진동을 억제함 (momentum)</li>
 </ul>
 </li>
-<li><strong>개선점</strong>:<ul>
-<li>논문 보고는 <strong>EBC(Error Bit Count, 프레임당 고정 에러 수) 138까지 경판정 BF 단독 복호</strong></li>
-<li>재현되면 평가 영역(프레임당 에러 0-150bit)의 대부분을 1bit 연산으로 끝내 min-sum(검사식 최솟값 기반 연판정 복호) 가동이 줄어듦 (가장 큰 전력 지렛대 후보)</li>
+<li><strong>성공시 효과</strong>:<ul>
+<li>논문 보고는 <strong>EBC(Error Bit Count, 프레임당 고정 에러 수) 138까지 경판정 BF
+  단독 복호</strong></li>
+<li>재현되면 평가 영역(프레임당 에러 0-150bit)의 대부분을 1bit 연산으로 끝내
+  min-sum(검사식 최솟값 기반 연판정 복호) 가동이 줄어듦 (가장 큰 전력 지렛대 후보)</li>
 </ul>
 </li>
-<li><strong>확인 방법</strong>:<ul>
-<li>EBC별 BF 단독 FER(Frame Error Rate, 프레임 오류율)로 견딤 한계 추정</li>
-<li>flip miss, 과교정, dv(변수 노드 차수)별 플립 분포, 플립 block 수, min-sum 대비 연산 수 대리 지표 (상세는 아래 확인할 지표 표)</li>
+<li><strong>개선 확인방법</strong>:<ul>
+<li>EBC별 BF 단독 FER(Frame Error Rate, 프레임 오류율)로 복호 가능 상한 추정</li>
+<li>flip miss, 과교정, dv(변수 노드 차수)별 플립 분포, 플립 block 수, min-sum 대비
+  연산 수 대리 지표 (상세는 아래 평가 계획 표)</li>
+</ul>
+</li>
+<li><strong>실험 결과</strong>:<ul>
+<li><strong>판정: 실패</strong> (평가 대상 파라미터 기준). BF 단독 복호 가능 상한이
+  <span class="worse">EBC 40</span>으로 목표 영역(0-150bit)의 1/4 수준 (논문 보고
+  138의 1/3 아래)</li>
+<li>원인은 dv 혼합 {2, 3, 4, 11} 구조와 전역 최대 비교의 비호환: EBC 120 이상에서
+  <span class="worse">dv=2, 3 column의 플립이 0회</span> (전역 최대 에너지를 dv=11
+  column이 독점)</li>
+<li>연산 수 대리 지표(1bit:3bit = 1:3)는 전 포인트에서 min-sum 단독 대비
+  <span class="worse">1.6-14배 손해</span></li>
+<li>논문 내부 주장(난수 소프트 제약화, momentum, backtracking 절감 47%)은 모두
+  <span class="better">방향 재현</span>. 기법 자체는 건전하고 실패는 부호 구조 차이 때문</li>
+<li>재평가 조건: dv 균일(또는 준균일) H-matrix를 쓰는 설계</li>
 </ul>
 </li>
 </ul>
-<h2>📄 출처 상세</h2>
+<h2 id="출처-상세">📄 출처 상세</h2>
 <ul>
-<li><strong>논문</strong>: UP-GDBF: A 19.3 Gbps Error Floor Free 4KB LDPC Decoder for NAND Flash Applications, IEEE OJCAS 2022 (아카이브 ID ieee:9902993)</li>
-<li><strong>논문 환경</strong>: N=36864, z=256, <strong>dv 균일 5</strong>인 QC-LDPC, 고정 EBC 채널, 최대 iteration 100</li>
-<li><strong>적용 설계 메모</strong>: <code>../_pm/tasks/전력감축_논문정독/메모_ieee9902993_UPGDBF.md</code> (논문 상세, C++ 적용 갈래)</li>
+<li><strong>논문</strong>:<ul>
+<li>"UP-GDBF: A 19.3 Gbps Error Floor Free 4KB LDPC Decoder for NAND Flash
+  Applications" (IEEE OJCAS 2022)</li>
+<li>아카이브 ID ieee:9902993</li>
 </ul>
-<h2>📊 확인할 지표</h2>
+</li>
+<li><strong>논문 환경</strong>:<ul>
+<li>N=36864, z=256, <strong>dv 균일 5</strong>인 QC-LDPC, 고정 EBC 채널, 최대 iteration 100</li>
+</ul>
+</li>
+<li><strong>적용 분석 메모</strong>:<ul>
+<li><a href="../_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee9902993_UPGDBF.html">메모_ieee9902993_UPGDBF.md</a>
+  (논문 상세, C++ 적용 갈래)</li>
+</ul>
+</li>
+</ul>
+<h2 id="평가-계획">📊 평가 계획</h2>
 <table>
 <thead>
 <tr>
@@ -120,7 +190,7 @@
 <tbody>
 <tr>
 <td>FER, avg_iter</td>
-<td>EBC별 BF 단독 성능과 수렴 속도. FER가 0(측정 300프레임 한계 내)인 EBC 상한이 <strong>견딤 한계</strong> (논문 138 대응값)</td>
+<td>EBC별 BF 단독 성능과 수렴 속도. FER가 0(측정 300프레임 한계 내)인 EBC 상한이 <strong>복호 가능 상한</strong> (논문 138 대응값)</td>
 <td>항상 수집</td>
 </tr>
 <tr>
@@ -155,8 +225,8 @@
 </tr>
 </tbody>
 </table>
-<h2>🔬 py 스크리닝 실험</h2>
-<h3>바꾼 것</h3>
+<h2 id="py-스크리닝-실험">🔬 py 스크리닝 실험</h2>
+<h3 id="바꾼-것">바꾼 것</h3>
 <table>
 <thead>
 <tr>
@@ -187,7 +257,7 @@
 </tr>
 </tbody>
 </table>
-<h3>실험 환경</h3>
+<h3 id="실험-환경">실험 환경</h3>
 <table>
 <thead>
 <tr>
@@ -210,7 +280,7 @@
 </tr>
 </tbody>
 </table>
-<h3>준비된 실험 (config 슬롯)</h3>
+<h3 id="준비된-실험-config-슬롯">준비된 실험 (config 슬롯)</h3>
 <table>
 <thead>
 <tr>
@@ -235,12 +305,13 @@
 </tr>
 </tbody>
 </table>
-<h3>결과</h3>
-<h4>결과 1. EBC별 BF 단독 FER (최대 iteration 100, 포인트당 300프레임)</h4>
+<h3 id="결과">결과</h3>
+<h4 id="결과-1-ebc별-bf-단독-fer-최대-iteration-100-포인트당-300프레임">결과 1. EBC별 BF 단독 FER (최대 iteration 100, 포인트당 300프레임)</h4>
 <blockquote>
 <ul>
 <li><strong>조건</strong>: 전 비교군 같은 에러 패턴, t0/t2/t4는 t_active 값</li>
-<li><strong>핵심</strong>: <span class="key">견딤 한계 EBC 40 (논문 138의 1/3 아래)</span>. min-sum 기준선은 같은 격자 전체에서 FER 0 (평균 1.2-3.5 iteration)</li>
+<li><strong>핵심</strong>: <span class="worse">복호 가능 상한 EBC 40 (논문 138의 1/3 아래)</span>.
+  min-sum 기준선은 같은 격자 전체에서 FER 0 (평균 1.2-3.5 iteration)</li>
 </ul>
 </blockquote>
 <table>
@@ -271,8 +342,8 @@
 <td>40</td>
 <td>0 (1.7)</td>
 <td>6.67e-3</td>
-<td><strong>0</strong></td>
-<td><strong>0</strong></td>
+<td><span class="better">0</span></td>
+<td><span class="better">0</span></td>
 <td>3.33e-3</td>
 <td>4.00e-2</td>
 <td>3.23e-1</td>
@@ -301,7 +372,7 @@
 <td>100</td>
 <td>0 (2.5)</td>
 <td>8.83e-1</td>
-<td>9.03e-1</td>
+<td><span class="worse">9.03e-1</span></td>
 <td>8.87e-1</td>
 <td>9.50e-1</td>
 <td>9.90e-1</td>
@@ -311,7 +382,7 @@
 <td>120</td>
 <td>0 (2.7)</td>
 <td>9.97e-1</td>
-<td>1.00e+0</td>
+<td><span class="worse">1.00e+0</span></td>
 <td>9.97e-1</td>
 <td>9.97e-1</td>
 <td>1.00e+0</td>
@@ -339,11 +410,12 @@
 </tr>
 </tbody>
 </table>
-<h4>결과 2. upgdbf_t2 중간 지표 (EBC별)</h4>
+<h4 id="결과-2-upgdbf_t2-중간-지표-ebc별">결과 2. upgdbf_t2 중간 지표 (EBC별)</h4>
 <blockquote>
 <ul>
 <li><strong>조건</strong>: 결과 1과 같은 실행에서 수집, iteration당 평균</li>
-<li><strong>핵심</strong>: miscorrection 전 포인트 0 (오수렴 없음). 과교정률은 최대 6.3%로 낮고, 실패는 과교정이 아니라 <strong>플립 정체</strong>(flip miss 증가) 때문</li>
+<li><strong>핵심</strong>: miscorrection 전 포인트 0 (오수렴 없음). 과교정률은 최대 6.3%로 낮고,
+  실패는 과교정이 아니라 <strong>플립 정체</strong>(flip miss 증가) 때문</li>
 </ul>
 </blockquote>
 <table>
@@ -401,18 +473,20 @@
 <tr>
 <td>140</td>
 <td>100</td>
-<td>100.5</td>
+<td><span class="worse">100.5</span></td>
 <td>0.0%</td>
 <td>3.3</td>
 <td>0</td>
 </tr>
 </tbody>
 </table>
-<h4>결과 3. dv별 플립 수와 실패 프레임 잔여 에러 (upgdbf_t2)</h4>
+<h4 id="결과-3-dv별-플립-수와-실패-프레임-잔여-에러-upgdbf_t2">결과 3. dv별 플립 수와 실패 프레임 잔여 에러 (upgdbf_t2)</h4>
 <blockquote>
 <ul>
-<li><strong>조건</strong>: 포인트 전체 합 (300프레임). 플립 수는 전 iteration 합, 잔여 에러는 실패 프레임의 종료 시점 합</li>
-<li><strong>핵심</strong>: <span class="key">EBC 120 이상에서 dv=2, 3 column의 플립이 0회</span>. 전역 최대 에너지를 dv=11 column이 독점해 저차수 에러가 교정 불능 (실패 원인)</li>
+<li><strong>조건</strong>: 포인트 전체 합 (300프레임). 플립 수는 전 iteration 합, 잔여 에러는 실패
+  프레임의 종료 시점 합</li>
+<li><strong>핵심</strong>: <span class="worse">EBC 120 이상에서 dv=2, 3 column의 플립이 0회</span>.
+  전역 최대 에너지를 dv=11 column이 독점해 저차수 에러가 교정 불능 (실패 원인)</li>
 </ul>
 </blockquote>
 <table>
@@ -454,8 +528,8 @@
 </tr>
 <tr>
 <td>140</td>
-<td>0</td>
-<td>0</td>
+<td><span class="worse">0</span></td>
+<td><span class="worse">0</span></td>
 <td>970</td>
 <td>105957</td>
 <td>4130</td>
@@ -465,11 +539,12 @@
 </tr>
 </tbody>
 </table>
-<h4>결과 4. BF 최대 iteration 민감도 (upgdbf_t2, 40 대 100)</h4>
+<h4 id="결과-4-bf-최대-iteration-민감도-upgdbf_t2-40-대-100">결과 4. BF 최대 iteration 민감도 (upgdbf_t2, 40 대 100)</h4>
 <blockquote>
 <ul>
 <li><strong>조건</strong>: 같은 에러 패턴, 최대 iteration만 변경</li>
-<li><strong>핵심</strong>: 40에서 100으로 올리면 EBC 60-80이 개선되나 EBC 100 이상은 FER 1.0 그대로 (느린 수렴이 아니라 정체이므로 iteration 추가는 한계 돌파 수단이 아님)</li>
+<li><strong>핵심</strong>: 40에서 100으로 올리면 EBC 60-80이 개선되나 EBC 100 이상은 FER 1.0
+  그대로 (느린 수렴이 아니라 정체이므로 iteration 추가는 한계 돌파 수단이 아님)</li>
 </ul>
 </blockquote>
 <table>
@@ -497,16 +572,19 @@
 <td>0</td>
 <td>6.33e-2</td>
 <td>4.87e-1</td>
-<td>9.03e-1</td>
-<td>1.00e+0</td>
+<td><span class="worse">9.03e-1</span></td>
+<td><span class="worse">1.00e+0</span></td>
 </tr>
 </tbody>
 </table>
-<h4>결과 5. 연산 수 대리 지표 (프레임당, 1bit BF 가중 1, 3bit min-sum 가중 3)</h4>
+<h4 id="결과-5-연산-수-대리-지표-프레임당-1bit-bf-가중-1-3bit-min-sum-가중-3">결과 5. 연산 수 대리 지표 (프레임당, 1bit BF 가중 1, 3bit min-sum 가중 3)</h4>
 <blockquote>
 <ul>
-<li><strong>조건</strong>: 혼성 비용 = BF avg_iter x 1 + FER x (min-sum avg_iter x 3). 기준선 = min-sum avg_iter x 3. upgdbf_t2 기준</li>
-<li><strong>핵심</strong>: <span class="key">전 포인트에서 기준선 역전 없음 (1.6-14배 손해)</span>. min-sum이 이 영역에서 1.2-3.5 iteration으로 수렴해 1bit 이득이 iteration 수 증가를 못 이김</li>
+<li><strong>조건</strong>: 혼성 비용 = BF avg_iter x 1 + FER x (min-sum avg_iter x 3). 기준선 =
+  min-sum avg_iter x 3. upgdbf_t2 기준</li>
+<li><strong>핵심</strong>: <span class="worse">전 포인트에서 기준선 역전 없음 (1.6-14배 손해)</span>.
+  min-sum이 이 영역에서 1.2-3.5 iteration으로 수렴해 1bit 이득이 iteration 수 증가를
+  못 이김</li>
 </ul>
 </blockquote>
 <table>
@@ -523,7 +601,7 @@
 <td>20</td>
 <td>5.7</td>
 <td>3.6</td>
-<td>1.6배 손해</td>
+<td><span class="worse">1.6배 손해</span></td>
 </tr>
 <tr>
 <td>40</td>
@@ -547,7 +625,7 @@
 <td>100</td>
 <td>103.6</td>
 <td>7.5</td>
-<td>13.8배 손해</td>
+<td><span class="worse">13.8배 손해</span></td>
 </tr>
 <tr>
 <td>150</td>
@@ -557,30 +635,64 @@
 </tr>
 </tbody>
 </table>
-<h4>지표별 해석</h4>
+<h4 id="지표별-해석">지표별 해석</h4>
 <ol>
-<li><strong>견딤 한계</strong>: FER 0(300프레임) 상한이 EBC 40, FER 50% 교차가 EBC 80 부근. 논문 138, 그리고 min-sum의 한계(별도 실험에서 E=370에 FER 7.15e-5)와 비교해 커버 영역이 크게 좁음</li>
-<li><strong>실패 원인 (dv 쏠림)</strong>: 에너지 상한이 dv+3이라 dv=11 column(42개 block)이 전역 최대를 독점함. EBC가 높을수록 dv=2, 3 에러가 플립 기회를 얻지 못해 정체 (결과 3). 논문 부호는 dv 균일 5라 이 문제가 없음</li>
-<li><strong>진단판(dvnorm)의 역쏠림</strong>: 에너지에서 자기 dv를 빼면(위반-만족 기준) 반대로 dv=2 플립이 폭주해 (EBC 60에서 dv2 플립 844500회, 과교정률 14%) 더 나쁨. 단순 차수 보정으로는 해결되지 않고 dv별 가중 설계가 따로 필요함</li>
-<li><strong>논문 내부 주장은 방향 재현</strong>: 난수 소프트 제약화 이득 (upgdbf가 pgdbf보다 EBC 60 FER 2.2배 낮음, flip miss 28.2 대 29.6), momentum 이득 (no_flip_penalty 대비 EBC 60 FER 4.8배 낮음), t_active 초반 난수 차단 이득 (EBC 40에서 t0만 실패 발생). 기법 자체는 건전하고 이식 실패는 부호 구조 차이 때문</li>
-<li><strong>backtracking 대리 지표</strong>: 플립 발생 block 수 평균 3.1-4.2개라 플리핑 pass cycle이 145에서 6-7로 줄어, iteration당 cycle 290 대비 약 47% 절감 (논문 42% 이상과 부합). 다만 BF 자체를 채택하지 않으면 쓸 곳이 없음</li>
+<li><strong>복호 가능 상한</strong>:<ul>
+<li>FER 0(300프레임) 상한이 EBC 40, FER 50% 교차가 EBC 80 부근</li>
+<li>논문 138, 그리고 min-sum의 한계(별도 실험에서 E=370에 FER 7.15e-5)와 비교해
+  <span class="worse">커버 영역이 크게 좁음</span></li>
+</ul>
+</li>
+<li><strong>실패 원인 (dv 쏠림)</strong>:<ul>
+<li>에너지 상한이 dv+3이라 dv=11 column(42개 block)이 전역 최대를 독점함</li>
+<li>EBC가 높을수록 dv=2, 3 에러가 플립 기회를 얻지 못해 정체 (결과 3)</li>
+<li>논문 부호는 dv 균일 5라 이 문제가 없음</li>
+</ul>
+</li>
+<li><strong>진단판(dvnorm)은 반대 방향으로 쏠림</strong>:<ul>
+<li>에너지에서 자기 dv를 빼면(위반-만족 기준) 반대로 dv=2 플립이 폭주함 (EBC
+  60에서 dv2 플립 844500회, 과교정률 14%)</li>
+<li>단순 차수 보정으로는 해결되지 않고 dv별 가중 설계가 따로 필요함</li>
+</ul>
+</li>
+<li><strong>논문 내부 주장은 방향 재현</strong> (<span class="better">기법 자체는 건전함</span>):<ul>
+<li>난수 소프트 제약화 이득: upgdbf가 pgdbf보다 EBC 60 FER 2.2배 낮음 (flip miss
+  28.2 대 29.6)</li>
+<li>momentum 이득: no_flip_penalty 대비 EBC 60 FER 4.8배 낮음</li>
+<li>t_active 초반 난수 차단 이득: EBC 40에서 t0만 실패 발생</li>
+<li>이식 실패는 부호 구조 차이 때문</li>
+</ul>
+</li>
+<li><strong>backtracking 대리 지표</strong>:<ul>
+<li>플립 발생 block 수 평균 3.1-4.2개라 플리핑 pass cycle이 145에서 6-7로 줄어,
+  iteration당 cycle 290 대비 약 47% 절감 (<span class="better">논문 42% 이상과
+  부합</span>)</li>
+<li>다만 BF 자체를 채택하지 않으면 쓸 곳이 없음</li>
+</ul>
+</li>
 <li><strong>error floor</strong>: 측정 FER 범위(3.3e-3 분해능)에서 floor 징후와 miscorrection 없음</li>
 </ol>
-<h2>✅ 결론</h2>
+<h2 id="결론">✅ 결론</h2>
 <ul>
-<li><strong>판정: 무의미</strong> (평가 대상 파라미터 기준)</li>
+<li><strong>판정: 실패</strong> (평가 대상 파라미터 기준)</li>
 <li><strong>근거</strong>:<ol>
-<li>BF 단독 견딤 한계가 EBC 40으로 목표 영역(0-150bit)의 1/4 수준 (논문 보고 138의 1/3 아래)</li>
-<li>원인이 dv 혼합 {2, 3, 4, 11} 구조와 전역 최대 비교의 비호환이라는 구조 문제 (결과 3). iteration 추가(결과 4)나 단순 차수 보정(dvnorm)으로 해소되지 않음</li>
-<li>min-sum 기준선이 같은 영역에서 평균 1.2-3.5 iteration, FER 0이라 연산 수 대리 지표도 전 포인트 역전 없음 (결과 5). 1bit 가중을 더 낮게 봐도 승부처가 EBC 60 이하로 좁고, 그 영역은 min-sum이 가장 빠른 구간</li>
+<li>BF 단독 복호 가능 상한이 EBC 40으로 목표 영역(0-150bit)의 1/4 수준 (논문
+   보고 138의 1/3 아래)</li>
+<li>원인이 dv 혼합 {2, 3, 4, 11} 구조와 전역 최대 비교의 비호환이라는 구조 문제
+   (결과 3). iteration 추가(결과 4)나 단순 차수 보정(dvnorm)으로 해소되지 않음</li>
+<li>min-sum 기준선이 같은 영역에서 평균 1.2-3.5 iteration, FER 0이라 연산 수
+   대리 지표도 전 포인트 역전 없음 (결과 5). 1bit 가중을 더 낮게 봐도 승부처가
+   EBC 60 이하로 좁고, 그 영역은 min-sum이 가장 빠른 구간</li>
 </ol>
 </li>
-<li><strong>조건부 단서</strong>: 논문 내부 주장(소프트 제약화, momentum, backtracking 절감)은 모두 방향 재현됨. dv 균일(또는 준균일) H-matrix를 쓰는 설계라면 재평가 가치가 있음</li>
+<li><strong>조건부 단서</strong>: 논문 내부 주장(소프트 제약화, momentum, backtracking 절감)은 모두
+  방향 재현됨. dv 균일(또는 준균일) H-matrix를 쓰는 설계라면 재평가 가치가 있음</li>
 </ul>
-<h2>⏭ 후속</h2>
+<h2 id="후속">⏭ 후속</h2>
 <ul>
-<li>반영 보류 (위 판정). 아이디어 현황표 등록과 실험로그 기록은 검수 후 진행</li>
-<li>재평가 조건: dv 균일 부호 채택 시, 또는 dv별 에너지 가중(스케일링) 설계를 추가 아이디어로 분리할 때</li>
+<li>반영 보류 (위 판정)</li>
+<li>재평가 조건: dv 균일 부호 채택 시, 또는 dv별 에너지 가중(스케일링) 설계를 추가
+  아이디어로 분리할 때</li>
 </ul>
 </div>
 </body>

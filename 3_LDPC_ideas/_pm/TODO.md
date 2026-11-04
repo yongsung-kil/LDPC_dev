@@ -1,6 +1,6 @@
 # TODO — 3_LDPC_ideas (Project 3)
 
-> Claude 마지막 확인: 2026-10-19 16:34:55
+> Claude 마지막 확인: 2026-11-04 16:31:26
 
 > 이 파일은 Project 3 전용 작업만 관리한다.
 

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메모: ieee:5671820 저전력 비트 반전 (ATBF, ES-ATBF)</title>
+<!-- render.py가 메모_ieee5671820_저전력BF.md에서 만든 파일. md가 정본이므로 이 파일을 손으로 고치지 않는다 -->
+<style>
+:root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --row: #fbfcfd;
+    --text: #24292f;
+    --muted: #57606a;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --ok: #1a7f37;
+    --warn: #bc4c00;
+    --better: #d1242f;
+    --worse: #0550ae;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --row: #11161d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --border: #30363d;
+        --accent: #4493f8;
+        --ok: #3fb950;
+        --warn: #f0883e;
+        --better: #ff7b72;
+        --worse: #79c0ff;
+    }
+}
+body { margin: 0; background: var(--bg); color: var(--text); }
+
+#ldpcDocRoot {
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+    max-width: 880px;
+    color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+}
+#ldpcDocRoot *, #ldpcDocRoot *::before, #ldpcDocRoot *::after { box-sizing: border-box; }
+#ldpcDocRoot .doc-nav { font-size: 0.9em; color: var(--muted); }
+#ldpcDocRoot .doc-nav a { margin-right: 12px; }
+#ldpcDocRoot h1, #ldpcDocRoot h2, #ldpcDocRoot h3, #ldpcDocRoot h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
+#ldpcDocRoot h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
+#ldpcDocRoot h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+#ldpcDocRoot h3 { font-size: 1.15em; }
+#ldpcDocRoot h4 { font-size: 1.0em; }
+#ldpcDocRoot a { color: var(--accent); text-decoration: none; }
+#ldpcDocRoot a:hover { text-decoration: underline; }
+#ldpcDocRoot p, #ldpcDocRoot ul, #ldpcDocRoot ol { margin: 0.6em 0; }
+#ldpcDocRoot li { margin: 0.25em 0; }
+#ldpcDocRoot blockquote {
+    margin: 0.8em 0;
+    padding: 0.4em 1em;
+    border-left: 4px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+}
+#ldpcDocRoot table {
+    border-collapse: collapse;
+    margin: 1em 0;
+    display: block;
+    overflow-x: auto;
+}
+#ldpcDocRoot th, #ldpcDocRoot td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+#ldpcDocRoot th { background: var(--surface); }
+#ldpcDocRoot tr:nth-child(even) td { background: var(--row); }
+#ldpcDocRoot code {
+    font-family: Consolas, "D2Coding", monospace;
+    font-size: 0.9em;
+    background: var(--surface);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+#ldpcDocRoot pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+}
+#ldpcDocRoot pre code { background: none; padding: 0; }
+#ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+#ldpcDocRoot .better { color: var(--better); font-weight: 600; }
+#ldpcDocRoot .worse { color: var(--worse); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="ldpcDocRoot">
+<nav class="doc-nav"><a href="../../../index.html">대시보드로</a></nav>
+<h1 id="메모-ieee5671820-저전력-비트-반전-atbf-es-atbf">메모: ieee:5671820 저전력 비트 반전 (ATBF, ES-ATBF)</h1>
+<ul>
+<li>대상: "Low latency low power bit flipping algorithms for LDPC decoding" (2010, PIMRC, Toshiba Research Europe)</li>
+<li>전문: <code>../LDPC_Paper_Analysis/data/pdfs/ieee/2010/09/ieee_5671820.txt</code></li>
+</ul>
+<h2 id="쉬운-설명-현-디코더에-어떻게-넣나">쉬운 설명: 현 디코더에 어떻게 넣나</h2>
+<p>논문의 제안을 한 줄로 줄이면 "비트마다 반전 문턱값을 따로 두고 매 iteration(반복 회차) 0 쪽으로 조이며, 조임이 끝난 비트는 재우고, 잠든 비트가 처음 나타나는 순간 BF(Bit Flipping, 비트 반전) 단계를 끝낸다"이다. 현 디코더에서 바꿀 자리는 세 곳이다.</p>
+<ul>
+<li>㉮ <strong>비트별 임계 λ 배열 (반전 판정 교체)</strong></li>
+<li>㉠ 지금 C++: <code>VN_Cal_HD</code>가 비트마다 채널 LLR(Log Likelihood Ratio, 로그 우도비)과 검사 메시지를 더한 sum_t의 부호로 반전을 정한다. BF 구간은 iteration 0에서 <code>Select_BF</code>가 신드롬 무게(위반된 패리티 검사 수)를 보고 켜며, 켜진 동안은 메시지 크기를 1bit로 포화시킨 같은 판정이다</li>
+<li>㉡ 바꾸는 내용: 비트 수만큼의 임계값 배열 λ(초기값 λ0, 음수)를 두고, 판정을 "반전 증거 점수 ∆k가 자기 λk보다 작으면 반전, 아니면 λk에 θ(0-1 사이 상수)를 곱해 0 쪽으로 조임"으로 바꾼다</li>
+<li>㉢ ∆k = (현재 판정이 채널 읽기와 일치하면 +W_dv, 불일치하면 -W_dv) + (dv - 2 x 불만족 검사 수). W_dv는 dv(변수 노드 차수)별 채널 LLR 크기다. 재료가 채널 일치 여부와 신드롬뿐이라 지금 sum_t 계산이 쓰는 정보 그대로다</li>
+<li>㉣ py 쪽: <code>2_LDPC_base/src/decoder.py</code>의 BaseDecoder에서 이 판정부는 <code>_vn_decide</code>인데, λ 배열을 iteration 사이에 유지해야 해서 함수 하나 교체로는 안 되고 <code>decoder_main</code>을 재정의해 min-sum(최소합 메시지 전달 복호) 앞에 BF 단계를 붙인다</li>
+<li>㉯ <strong>휴면 스킵 (전력 감축)</strong></li>
+<li>㉠ 조여진 λk가 기준값 φ1 이상이 되면 그 비트는 더 반전될 가망이 작다. 휴면으로 표시하고 다음 iteration부터 ∆k 계산과 판정을 건너뛴다</li>
+<li>㉡ C++로는 <code>VN_Cal_HD</code>의 column 처리에 휴면 마스크를 두고 휴면 열의 VNU(Variable Node Unit, 변수 노드 처리기) 갱신을 생략하는 일이다. 파이프라인이 z=256 비트 열 블록 단위로 돌므로 실제로 쉬는 단위는 블록이고, 블록 안 전 비트가 휴면일 때만 건너뛴다</li>
+<li>㉢ 그래서 전력 대리 지표를 두 개로 잰다: 처리한 비트 수(비트 단위 이상치)와 전부 휴면인 블록 비율(블록 단위 실제치)</li>
+<li>㉰ <strong>전이 검출 탈출 (조기 전환)</strong></li>
+<li>㉠ 지금 구조: 성공 쪽 조기 종료는 <code>Check_End_Iter</code>의 Partial CRC(부분 순환 중복 검사)가 맡고, BF 실패 탈출은 고정 4회 창이 맡는다</li>
+<li>㉡ 논문: 어느 비트든 λk가 φ1에 처음 도달하는 순간을 "복호가 더 진전되지 않는다"는 신호로 보고 그 자리에서 복호를 끝낸다 (블록 전체 합산 없이 비트 하나의 신호만 쓴다)</li>
+<li>㉢ 우리 구조에서는 복호 전체의 종료가 아니라 min-sum 전환 신호로 쓴다. 가망 없는 프레임이 4회 창을 다 채우지 않고 1-2회 만에 min-sum으로 넘어가면 지연과 에너지가 함께 준다</li>
+</ul>
+<h2 id="1-논문이-푸는-문제">1. 논문이 푸는 문제</h2>
+<p>multi-Gb/s급 고속 LDPC(Low Density Parity Check, 저밀도 패리티 검사) 복호에서 메시지 전달 방식(BP, Belief Propagation, 신뢰 전파)은 메시지 양 때문에 한계가 있고, 대안인 BF(Bit Flipping, 비트 반전) 계열도 두 가지 병목이 남는다.</p>
+<ul>
+<li>㉮ 기존 BF 대표격인 GDBF(Gradient Descent Bit Flipping, 경사 하강 비트 반전)의 single-step 판은 매 iteration마다 블록 길이 N 전체에서 최솟값을 찾는 전역 min 연산이 필요해, ASIC(Application Specific Integrated Circuit, 주문형 반도체) 임계 경로 지연의 주범이 된다</li>
+<li>㉯ multi-step GDBF는 여러 비트를 한 번에 반전해 수렴은 빠르지만, 목적 함수 평가와 single-step 모드로의 전환 제어가 추가로 붙어 복잡하다</li>
+<li>㉰ 복호 불능 프레임이 최대 iteration까지 도는 낭비(시간, 에너지)와, 수렴이 끝난 비트 처리기가 계속 도는 낭비(전력)가 있다</li>
+</ul>
+<p>논문은 전역 min 없이 비트별 적응 임계값으로 반전을 결정하는 ATBF(Adaptive Threshold Bit Flipping, 적응 임계값 비트 반전), 비트 처리기 휴면(quiescent)으로 전력을 줄이는 방법, 임계값 전이 검출로 조기 종료하는 ES-ATBF(Early Stopping ATBF)를 제안한다.</p>
+<h2 id="2-기법-상세">2. 기법 상세</h2>
+<h3 id="21-바탕-gdbf-반전-함수">2.1 바탕: GDBF 반전 함수</h3>
+<p>수신 soft 값 y, 경판정 x ∈ {+1, -1}^N에 대해 비트 k의 반전 함수는 다음과 같다 (논문 식 (4)).</p>
+<pre><code>∆k(GD) = xk·yk + Σ_{i∈M(k)} Π_{j∈N(i)} xj
+</code></pre>
+<ul>
+<li>㉮ 첫 항 xk·yk는 현재 판정과 채널 수신값의 상관 (일치하면 +|yk|, 불일치하면 -|yk|)</li>
+<li>㉯ 둘째 항은 비트 k가 걸린 검사들의 양극(bipolar) 신드롬 합 (만족 검사 수에서 불만족 검사 수를 뺀 값)</li>
+<li>㉰ ∆k가 작을수록 그 비트가 틀렸다는 증거가 강하다. single-step GDBF는 argmin 비트 하나를 반전한다 (전역 min 필요)</li>
+</ul>
+<h3 id="22-atbf-algorithm-2">2.2 ATBF (Algorithm 2)</h3>
+<p>비트마다 음수 임계값 λk를 두고, 상수 스케일 인자 θ ∈ [0, 1]로 λk를 조여 간다.</p>
+<pre><code>1) 초기화: λk = λ0 (모든 k),  xj = sign(yj)
+2) 모든 검사 만족이면 x 출력, 종료
+3) k = 1 .. N 각각에 대해:
+     ∆k(GD) &lt; λk 이면 xk 반전
+     아니면 λk = θ·λk            (0 쪽으로 조임)
+4) 최대 iteration 도달이면 x 출력, 종료. 아니면 2)로
+</code></pre>
+<ul>
+<li>㉮ 전역 min이 없고 비트별 비교만 있어 지연이 짧다</li>
+<li>㉯ 초기(λk가 매우 음수)에는 ∆k &lt; λk인 비트가 여럿이라 다중 반전, λk가 조여지면 소수 반전으로 자연 전환된다 (multi-step과 single-step 전환 제어가 내장됨)</li>
+<li>㉰ 실험 파라미터: λ0 = -10, θ = 0.25</li>
+<li>㉱ 하드웨어 구현은 θ = 2^d (d는 음의 정수)로 두어 λk 갱신을 시프트 연산으로 처리한다</li>
+</ul>
+<h3 id="23-전력-감축-휴면quiescent-판정">2.3 전력 감축: 휴면(quiescent) 판정</h3>
+<p>λk가 0에 가까워지면 그 비트가 다시 반전될 확률이 작아져 λk 스케일링만 반복된다. 반전 임계 φ1을 두고 λk ≥ φ1이 되면 그 비트 처리기를 휴면 상태로 돌려 이후 연산을 멈춘다.</p>
+<ul>
+<li>㉮ φ1의 최적값은 SNR(Signal to Noise Ratio, 신호 대 잡음비), 부호 특성, 변조에 의존해 해석적으로 구하기 어렵다고 보고, 통계적으로 정한다</li>
+<li>㉯ 최대 iteration을 100으로 두고 1000블록 이상에서 비트별 λk의 수렴 평균을 재고, SNR별 전체 평균 λ̄_SNR에 최소제곱 다항식을 맞춘다 (논문 식 (6), a는 dB 단위 SNR)</li>
+</ul>
+<pre><code>φ_SNR = -0.005a^4 + 0.089a^3 - 0.666a^2 + 2.258a - 2.897
+</code></pre>
+<ul>
+<li>㉰ φ1은 φ_SNR을 θ 시프트로 도달 가능한 값으로 양자화해 얻는다 (논문 식 (7a)-(7c), 원문 확인 필요)</li>
+</ul>
+<pre><code>z  = -log2(φ_SNR / λ0)
+z' = -(z + mod(z, d))
+φ1 = λ0 · 2^z'
+</code></pre>
+<h3 id="24-es-atbf-algorithm-3">2.4 ES-ATBF (Algorithm 3)</h3>
+<p>논문 Fig 2 관찰: 처음 13회 iteration 동안 λk = φ1에 도달한 비트가 0개이다가, 13-15회 사이에 대다수 비트가 한꺼번에 φ1에 도달하는 계단형 전이가 나타난다. 이 전이 시점 이후로는 복호가 더 진전되지 않으므로, "어떤 k라도 λk ≥ φ1이면 종료"라는 비트 국소(bit-local) 조건을 종료 판으로 쓴다 (0개에서 다수로의 전이에 대한 edge 검출). 블록 전체 합산이나 min 연산 없이 구현된다.</p>
+<h2 id="3-보고된-이득">3. 보고된 이득</h2>
+<p>측정 조건: PEGReg504x1008 부호 (regular (3,6), rate 1/2, N=1008), BPSK(Binary Phase Shift Keying, 이진 위상 변조), AWGN(Additive White Gaussian Noise, 가산성 백색 가우스 잡음) 채널, 최대 100 iteration, λ0 = -10, θ = 0.25.</p>
+<ul>
+<li>㉮ BER(Bit Error Rate, 비트 오류율): ATBF는 single-step GDBF 대비 0.25dB 이내, multi-step GDBF 대비 0.5dB 이내의 손실. WBF(Weighted Bit Flipping, 가중 비트 반전)와 MWBF(Modified WBF)보다는 곡선상 우위 (Fig 4)</li>
+<li>㉯ ES-ATBF는 ATBF 대비 거의 손실 없음 (Fig 4)</li>
+<li>㉰ iteration: ES-ATBF는 최대 11회 사용, 100회 허용 대비 89% 감소 (Fig 5). 이 89%는 최대 허용치 대비이고 평균 iteration 대비 수치는 본문에 없다</li>
+<li>㉱ 전력: 휴면 방법으로 3dB에서 ATBF 대비 76% 절감 추정, SNR이 오르면 감소하여 5dB 초과에서 0% (Fig 3). 이 수치는 회로 실측이 아니라 Fig 2의 휴면 비트 수 곡선과 Fig 5의 평균 iteration을 조합한 추정이다</li>
+<li>㉲ 연산량 참고치: Gallager Algorithm B는 iteration당 5E - m 연산 (E는 H의 비영 원소 수), WBF는 iteration당 실수 덧셈 2·K_BF·E (K_BF는 구현 상수, 통상 3 미만)</li>
+</ul>
+<h2 id="4-hbfhd-적용-방법">4. HBF/HD 적용 방법</h2>
+<h3 id="41-현재-구조-요점-0_ldpc_originalsrcdecodercpp">4.1 현재 구조 요점 (0_LDPC_original/src/decoder.cpp)</h3>
+<ul>
+<li>㉮ <code>Select_BF()</code> (2082행): iteration 0에서 HD(Hard Decision, 경판정) 모드이고 신드롬 무게 syn_weight &lt; <code>syn_th_BF0</code> (common.h의 <code>SW_TH_BF0_512B_TLC_OFF</code> = 680)이면 <code>flag_BF_on</code>을 켠다. 미진입이면 mn과 MN에 <code>ITER_MAX_HBF</code>(4)를 더해 iteration 인덱스를 건너뛴다</li>
+<li>㉯ HBF(Hybrid Bit Flipping) 구간 (4056-4079행): <code>flag_BF_on</code>이고 iter ≤ <code>ITER_MAX_HBF</code>이고 v_deg &gt; DV_5인 열은 VN(Variable Node, 변수 노드) 출력 edge 크기를 <code>EDGE_MAG_7</code>(4bit LLR 빌드는 <code>EDGE_MAG_8</code>)로 포화시킨다. 즉 이 HBF는 반전 횟수 세기형 BF가 아니라 메시지 크기를 1bit(부호만)로 포화시킨 min-sum(최소합)이다</li>
+<li>㉰ 실패 시 iteration 5부터 3bit 정밀도 min-sum으로 전환한다. 조기 종료는 PCRC(Partial CRC, 부분 순환 중복 검사, termination point 4개)의 <code>Check_End_Iter</code>(1951행)가, 발산 중단은 <code>Jump_Iter</code>(4954행, diverse_th 기준)가 이미 담당한다</li>
+</ul>
+<h3 id="42-k의-hd-치환">4.2 ∆k의 HD 치환</h3>
+<p>ATBF의 ∆k(GD)는 HD 환경에서 soft 값 없이 계산된다.</p>
+<pre><code>∆k = (현재 판정이 채널 HD 읽기와 같으면 +W_dv, 다르면 -W_dv) + (dv - 2·u_k)
+</code></pre>
+<ul>
+<li>㉮ W_dv는 dv(변수 노드 차수)별 채널 LLR(Log Likelihood Ratio, 로그 우도비) 크기, u_k는 비트 k가 걸린 불만족 검사 수</li>
+<li>㉯ 신드롬과 채널 일치 여부만으로 계산되므로 edge 메시지 교환 없이 구해지고, HBF 구간의 sum_t(채널 LLR + 포화 edge 합)와 같은 정보 구조다. ATBF 반전 규칙은 "sum_t 고정 판정"을 "비트별 λk 판정"으로 바꾸는 꼴로 들어간다</li>
+</ul>
+<h3 id="43-넣는-지점-세-가지">4.3 넣는 지점 세 가지</h3>
+<ul>
+<li>㉮ <strong>휴면(전력)</strong>: BF 구간의 VN 판정부에 λk 상태 배열(N개)과 φ1 비교를 추가하고, λk ≥ φ1인 열의 VNU/CNU 갱신을 건너뛴다. 전력 대리 지표는 처리한 열 수. 단 QC(Quasi-Cyclic, 준순환) 파이프라인은 z=256 열 블록 단위로 처리하므로 실제 스킵 단위는 블록이고, 블록 안 전 비트가 휴면일 때만 건너뛸 수 있다</li>
+<li>㉯ <strong>BF 탈출 적응화(ES-ATBF 전이 검출)</strong>: 현재는 BF 실패 탈출이 고정 4회다. 어떤 λk가 φ1에 도달하는 순간 min-sum으로 전환하면, 가망 없는 프레임은 1-2회 만에 탈출하고 진행 중인 프레임은 더 돌 수 있다. <code>ITER_MAX_HBF</code> 상향과 묶어서 설계한다. 단 mn/MN 오프셋, MN_size 배열(7583행 등 다수), TV 출력이 <code>ITER_MAX_HBF</code> 상수에 묶여 있어 BF 구간 가변화는 영향 범위가 크다 (Decision 등급)</li>
+<li>㉰ <strong>φ1 산정의 SNR 치환</strong>: SNR 다항식 (6) 대신 같은 통계 절차(구간별 λ̄ 수렴값 평균, 다항식 또는 구간표 적합)를 다음 입력으로 재유도한다</li>
+<li>㉠ iteration 0 신드롬 무게 syn_weight 구간. <code>Select_BF()</code>가 이미 계산하는 값이라 하드웨어 추가 비용이 없고, raw 에러 수와 단조 관계라 SNR 대용이 된다</li>
+<li>㉡ 프레임당 raw 에러 수 구간 (스크리닝 전용, genie 기준). 하드웨어 정당화는 ㉠으로 한다</li>
+</ul>
+<h2 id="5-예상-이득과-위험">5. 예상 이득과 위험</h2>
+<h3 id="51-예상-이득">5.1 예상 이득</h3>
+<ul>
+<li>㉮ 적용 영역 적합성: 프레임당 에러 0-150bit는 약 37000bit의 0.4% 이하라서, BF 구간 비트 처리의 대부분이 이미 맞는 비트에 쓰인다. 비트별 휴면은 이 낭비를 정면으로 줄이는 구조라 저에러 전력 목표와 맞는다</li>
+<li>㉯ 실패 프레임의 BF 낭비 제거: 현재 BF 진입 후 실패 프레임은 4회를 다 쓰고 전환한다. 전이 검출 탈출로 1-2회 만에 전환하면 지연과 에너지가 함께 준다</li>
+<li>㉰ FER(Frame Error Rate, 프레임 오류율) 방어: 논문의 0.25-0.5dB 손실은 BF 단독 복호 기준이고, 이 코드에는 min-sum 폴백이 있으므로 손실은 최종 FER가 아니라 BF 단계 성공률 하락으로 나타난다</li>
+</ul>
+<h3 id="52-위험">5.2 위험</h3>
+<ul>
+<li>㉮ 4회 고정 BF 창에서는 λk 스케일링이 최대 4번이라 휴면 전이가 일어나기 전에 구간이 끝날 수 있다 (논문 전이는 13-15회). θ를 크게 (예: 2^-1) 하거나 λ0 크기를 줄이는 재설계가 필요하고, 창 연장은 구조 변경이다</li>
+<li>㉯ z=256 블록 단위 스킵이라 비트별 76% 주장이 블록 단위에서 희석된다. 에러가 희박하면 대부분 블록이 조기에 전 비트 휴면이 될 수 있으나 측정으로 확인해야 한다</li>
+<li>㉰ ES 조기 종료나 휴면이 성공 직전 프레임을 끊으면 BF 성공률이 떨어지고, 그만큼 min-sum 가동이 늘어 에너지가 오히려 증가할 수 있다. 허용 판단 기준은 "BF 구간 절감분 &gt; 폴백 증가분"이다</li>
+<li>㉱ 간극 요약: 논문은 N=1008 regular (3,6), AWGN, 최대 100회 BF 단독이고, 이쪽은 N 약 37000 QC, raw 에러 수 기반, 4회 BF와 min-sum 혼성이다. 76%와 89%라는 수치는 그대로 이전되지 않으며 메커니즘(비트별 휴면, 전이 검출)만 가져온다</li>
+<li>㉲ 0.5dB 판정: 150bit 영역에서 최종 FER는 폴백이 받치므로 0.5dB 손실 자체는 치명적이지 않다. 다만 BF 성공률 하락 폭이 크면 전력 목표가 무너지므로, 허용 여부는 dB가 아니라 5.2㉰의 에너지 수지로 판단한다</li>
+</ul>
+<h3 id="53-검증-포인트">5.3 검증 포인트</h3>
+<ul>
+<li>㉮ 에러 수 축에서도 λ = φ1 도달이 계단형 전이로 나타나는지 (논문 Fig 2 재현)</li>
+<li>㉯ 블록(z lane) 단위 전부 휴면 비율의 iteration별 곡선</li>
+<li>㉰ ES 트리거 시점과 실제 수렴 시점의 분포 비교 (조기 종료 오판율)</li>
+</ul>
+<h2 id="6-실험-설계-초안">6. 실험 설계 초안</h2>
+<h3 id="61-구현-구조">6.1 구현 구조</h3>
+<ul>
+<li>㉮ BF 계열은 교체용 함수 6개에 맞지 않으므로 <code>decoder_main</code> 전체를 재정의한다 (새논문적용규칙 2절 3항). <code>_init_state</code>, <code>_check_errors</code> 등 엔진 부품은 부모 것을 호출해 재사용한다 (2_LDPC_base/src/decoder.py 249, 433, 475행)</li>
+<li>㉯ 구현 사다리 4단: GDBF(HD, 고정 임계) 기준 구현, ATBF, ATBF + 휴면 집계, ES-ATBF</li>
+<li>㉰ 본체에 1bit HBF 대응 Python 구현이 없으므로 기준선은 둘로 삼는다</li>
+<li>㉠ GDBF 자체 구현 (BF 계열 안에서의 상대 비교)</li>
+<li>㉡ BaseDecoder(HD min-sum) (폴백 포함 최종 FER와 연산량 비교)</li>
+</ul>
+<h3 id="62-조건">6.2 조건</h3>
+<ul>
+<li>㉮ 평가 대상 파라미터 (코드 길이 약 37000bit, QC)</li>
+<li>㉯ 프레임당 raw 에러 0-150bit 스윕 (예: 10bit 간격), base_run과 같은 seed와 프레임 수</li>
+<li>㉰ 파라미터 격자: λ0 ∈ {-4, -8, -16}, θ ∈ {2^-1, 2^-2}, BF 창 ∈ {4, 8, 16회} (창 4회는 현 구조 그대로, 연장분은 구조 변경 수지 판단용)</li>
+</ul>
+<h3 id="63-지표-계획-표">6.3 지표 계획 표</h3>
+<table>
+<thead>
+<tr>
+<th>지표</th>
+<th>무엇을 판별하나</th>
+<th>수집 방법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BF 단계 성공률 (에러 수 구간별)</td>
+<td>ATBF가 GDBF 대비 성능을 유지하는지, 휴면과 ES로 성공률이 깎이는지</td>
+<td>아이디어 자체 수집</td>
+</tr>
+<tr>
+<td>최종 FER (BF 실패분을 BaseDecoder로 재복호해 합산)</td>
+<td>min-sum 폴백 전제에서 FER 유지 여부</td>
+<td>자체 수집 + base_run 조합</td>
+</tr>
+<tr>
+<td>평균 iteration (성공, 실패 분리)</td>
+<td>ES 전이 검출의 탈출 단축 효과</td>
+<td>자체 수집</td>
+</tr>
+<tr>
+<td>iteration별 활성 비트 수 합 (λk &lt; φ1)</td>
+<td>전력 대리 지표 (논문 Fig 3 대응)</td>
+<td>자체 수집</td>
+</tr>
+<tr>
+<td>z 블록 단위 전부 휴면 비율</td>
+<td>하드웨어에서 실제로 건너뛸 수 있는 양</td>
+<td>자체 수집</td>
+</tr>
+<tr>
+<td>λ̄ 궤적과 λ = φ1 도달 수 곡선 (논문 Fig 1, 2 대응)</td>
+<td>계단형 전이가 에러 수 조건에서 재현되는지, φ1 구간표 적합 근거</td>
+<td>자체 수집</td>
+</tr>
+<tr>
+<td>ES 트리거 iteration 분포와 트리거 무시 시 수렴 여부</td>
+<td>조기 종료가 성공할 프레임을 끊는 비율</td>
+<td>자체 수집 (트리거 후에도 계속 돌려 기록)</td>
+</tr>
+<tr>
+<td>플립 수 (iteration별)</td>
+<td>다중 반전에서 단일 반전으로의 자연 전환 확인</td>
+<td>자체 수집</td>
+</tr>
+</tbody>
+</table>
+<h3 id="64-판정-기준">6.4 판정 기준</h3>
+<ul>
+<li>㉮ 최종 FER(폴백 합산)가 min-sum 단독과 같다</li>
+<li>㉯ 활성 비트 수 합으로 잰 BF 구간 절감분이 폴백 증가분(min-sum 가동 프레임 증가 x min-sum 연산량)보다 크다</li>
+<li>㉰ φ1을 syn_weight 구간표로 바꿔도 ㉮㉯가 유지된다</li>
+</ul>
+<h2 id="7-미해결-질문">7. 미해결 질문</h2>
+<ul>
+<li>㉮ 식 (7b) <code>z' = -(z + mod(z, d))</code>의 정확한 꼴과 mod의 부호 규약 (PDF 추출이 깨졌을 수 있음, 원문 확인 필요)</li>
+<li>㉯ Fig 2의 전이가 13-15회에 나타나는 까닭. λk가 매 회 스케일되면 θ = 0.25, λ0 = -10으로는 수 회 안에 φ1 부근에 도달할 것으로 보인다. 반전이 잦은 비트는 λk가 유지되는 효과, 조기 수렴 프레임의 집계 방식이 설명 후보인데 본문에 명시가 없다 (원문 Fig 1, 2 확인 필요)</li>
+<li>㉰ 휴면 비트가 신드롬 계산(검사 노드 연산)에는 계속 참여하는지, 76% 추정이 어떤 연산 범위를 포함하는지 (본문은 "no further operations are undertaken"뿐, 원문 확인 필요)</li>
+<li>㉱ 반전된 비트의 λk 재초기화 여부 (Algorithm 2 텍스트상 유지로 읽히나 명시 없음)</li>
+<li>㉲ ES-ATBF의 "거의 손실 없음"이 낮은 BER 영역 (10^-6 이하)까지 유지되는지 (Fig 4 곡선 해상도 한계)</li>
+<li>㉳ HD 입력에서 yk 크기를 dv별 채널 LLR로 주는 4.2절 치환이 논문의 soft yk 전제와 성능상 등가인지 (스크리닝으로 확인)</li>
+</ul>
+<h2 id="8-등록-권고">8. 등록 권고</h2>
+<p><strong>중.</strong> 비트별 휴면과 전이 검출 탈출은 저에러 영역 전력 목표에 정면으로 맞고, ∆k가 신드롬 기반이라 HD 환경 이식도 쉽다. 다만 핵심 수치(76%, 89%)가 최대 100회 BF 단독 전제의 추정치여서 4회 창과 z=256 블록 단위라는 이쪽 구조에서 얼마가 남는지는 py 스크리닝(6절)으로 확인한 뒤에 등록 가치를 올릴 만하다.</p>
+</div>
+</body>
+</html>

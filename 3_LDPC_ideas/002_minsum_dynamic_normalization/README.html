@@ -4,30 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>002 minsum_dynamic_normalization: min1/min2 격차 기반 동적 정규화</title>
-</head>
-<body>
-<div id="ldpcDocRoot">
+<!-- render.py가 README.md에서 만든 파일. md가 정본이므로 이 파일을 손으로 고치지 않는다 -->
 <style>
-#ldpcDocRoot {
+:root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --row: #fbfcfd;
     --text: #24292f;
     --muted: #57606a;
     --border: #d0d7de;
-    --surface: #f6f8fa;
     --accent: #0969da;
+    --ok: #1a7f37;
+    --warn: #bc4c00;
+    --better: #d1242f;
+    --worse: #0550ae;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --row: #11161d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --border: #30363d;
+        --accent: #4493f8;
+        --ok: #3fb950;
+        --warn: #f0883e;
+        --better: #ff7b72;
+        --worse: #79c0ff;
+    }
+}
+body { margin: 0; background: var(--bg); color: var(--text); }
+
+#ldpcDocRoot {
     margin: 0 auto;
-    padding: 32px 24px 80px;
+    padding: 24px 24px 80px;
     max-width: 880px;
     color: var(--text);
-    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", sans-serif;
+    font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
     font-size: 16px;
     line-height: 1.7;
-    background: #ffffff;
 }
 #ldpcDocRoot *, #ldpcDocRoot *::before, #ldpcDocRoot *::after { box-sizing: border-box; }
+#ldpcDocRoot .doc-nav { font-size: 0.9em; color: var(--muted); }
+#ldpcDocRoot .doc-nav a { margin-right: 12px; }
 #ldpcDocRoot h1, #ldpcDocRoot h2, #ldpcDocRoot h3, #ldpcDocRoot h4 { line-height: 1.3; margin: 1.6em 0 0.6em; }
 #ldpcDocRoot h1 { font-size: 1.9em; border-bottom: 2px solid var(--border); padding-bottom: 0.3em; }
 #ldpcDocRoot h2 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
 #ldpcDocRoot h3 { font-size: 1.15em; }
+#ldpcDocRoot h4 { font-size: 1.0em; }
 #ldpcDocRoot a { color: var(--accent); text-decoration: none; }
 #ldpcDocRoot a:hover { text-decoration: underline; }
 #ldpcDocRoot p, #ldpcDocRoot ul, #ldpcDocRoot ol { margin: 0.6em 0; }
@@ -52,7 +77,7 @@
     white-space: nowrap;
 }
 #ldpcDocRoot th { background: var(--surface); }
-#ldpcDocRoot tr:nth-child(even) td { background: #fbfcfd; }
+#ldpcDocRoot tr:nth-child(even) td { background: var(--row); }
 #ldpcDocRoot code {
     font-family: Consolas, "D2Coding", monospace;
     font-size: 0.9em;
@@ -69,46 +94,99 @@
 }
 #ldpcDocRoot pre code { background: none; padding: 0; }
 #ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+#ldpcDocRoot .better { color: var(--better); font-weight: 600; }
+#ldpcDocRoot .worse { color: var(--worse); font-weight: 600; }
 </style>
-<h1>002 minsum_dynamic_normalization: min1/min2 격차 기반 동적 정규화</h1>
-<p>출처: ieee:6865103 | 상태: 조건부 유효 (평가 대상 파라미터로 최종 판정 대기)</p>
-<h2>📌 요약</h2>
+</head>
+<body>
+<div id="ldpcDocRoot">
+<nav class="doc-nav"><a href="../index.html">대시보드로</a></nav>
+<h1 id="002-minsum_dynamic_normalization-min1min2-격차-기반-동적-정규화">002 minsum_dynamic_normalization: min1/min2 격차 기반 동적 정규화</h1>
+<p>출처: ieee:6865103 (IEEE 2014) | 상태: 조건부 유효 (평가 대상 파라미터로 최종 판정 대기)</p>
+<h2 id="요약">📌 요약</h2>
 <ul>
-<li><strong>논문이 제안하는 것</strong>: min-sum LDPC 디코더의 검사 노드(CNU, Check Node
-  Unit)는 각 검사식에 들어온 메시지 크기의 최솟값(min1)과 둘째 최솟값(min2)을
-  골라 정규화 계수(알파, 1 이하의 곱셈 계수)를 곱해 되돌려 준다. 논문은 이
-  계수를 고정하지 않고 <strong>min2 - min1 격차</strong>로 매번 고르자고 제안한다: 격차가
-  크면(min1이 확실히 가장 작음, 신뢰 높음) 높은 계수로 감쇠를 줄이고, 격차가
-  작으면(min1과 min2가 비슷, 신뢰 낮음) 낮은 계수로 감쇠를 키운다. 여기에
-  min1과 min2에 서로 다른 상한(P &lt; Q)을 두는 이중 상한(001_minsum_dual_clip과
-  같은 구조)을 결합한다</li>
-<li><strong>왜 효과가 있다고 보는지</strong>: 정규화 계수 하나를 고정하면 모든 검사식이 같은
-  감쇠를 받는다. 실제로는 min1이 min2와 확실히 구분되는 검사식의 메시지가 더
-  믿을 만하므로, 신뢰에 비례해 감쇠를 조절하면 잘못된 확신의 전파는 억제하고
-  올바른 정보의 전달력은 유지할 수 있다. 논문은 이 조합으로 비트 폭을 한 단계
-  줄이면서(7비트를 6비트로) 성능 저하 없음을 보였다</li>
-<li><strong>성공하면 무엇이 바뀌는지</strong>: 저비트폭 환경에서 무보정 대비 FER(Frame Error
-  Rate, 프레임 오류율) 개선, 또는 같은 FER를 더 좁은 비트 폭으로 달성.
-  구현 비용은 C++ 기준 C2V 재구성부에 비교 1회와 곱셈 1회 수준</li>
-<li><strong>무엇으로 확인하는지</strong>: on/off FER 비교에 더해, 동적 선택이 실제로
-  갈리는지(알파 high 선택율)와 고정 계수 대조군 대비 이득이 있는지를 본다
-  (아래 지표 계획 표)</li>
+<li><strong>논문 아이디어</strong>:<ul>
+<li>min-sum LDPC 디코더의 검사 노드(CNU, Check Node Unit)는 <strong>검사식에 들어온
+  메시지 크기의 최솟값(min1)</strong>과 <strong>둘째 최솟값(min2)</strong>을 골라, <strong>정규화
+  계수 α</strong>(0 ≤ α ≤ 1의 곱셈 계수)를 곱해 되돌려 줌</li>
+<li>논문은 <strong>α를 고정하지 않고 min2 - min1 격차로 매번 선택</strong>:<ul>
+<li>격차가 크면:<ul>
+<li>min1이 확실히 가장 작음, 신뢰 높음</li>
+<li>높은 계수로 감쇠를 줄임</li>
 </ul>
-<p>논문의 셋째 기법(저장하는 min2 값의 비균일 압축, Min2 Compressor/Expander)은
-저장 비트 절감용 하드웨어 기법이고 논문 스스로 FER 중립을 목표로 설계했으므로
-py 스크리닝 범위에서 제외한다 (저장 비용이 쟁점이 되면 후보 4번
-ieee:11476755가 구현 참고용).</p>
-<h2>📄 출처 상세</h2>
+</li>
+<li>격차가 작으면:<ul>
+<li>min1과 min2가 비슷, 신뢰 낮음</li>
+<li>낮은 계수로 감쇠를 키움</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>추가로 min1과 min2에 서로 다른 상한(P &lt; Q)을 두는 <strong>이중 상한</strong>
+  (001_minsum_dual_clip과 같은 구조)을 결합함</li>
+</ul>
+</li>
+<li><strong>제안 이유</strong>:<ul>
+<li>정규화 계수 하나를 고정하면 모든 검사식이 같은 감쇠를 받음</li>
+<li>실제로는 <strong>min1이 min2와 확실히 구분되는 검사식</strong>의 메시지가 더 믿을 만함</li>
+<li><strong>신뢰에 비례해 감쇠를 조절</strong>하면, 잘못된 확신의 전파는 억제하고 올바른
+  정보의 전달력은 유지할 수 있음</li>
+<li>논문은 이 조합으로 <strong>비트 폭을 한 단계 줄이면서</strong>(7비트를 6비트로) 성능
+  저하 없음을 보임</li>
+</ul>
+</li>
+<li><strong>성공시 효과</strong>:<ul>
+<li>저비트폭 환경에서 무보정 대비 <strong>FER</strong>(Frame Error Rate, 프레임 오류율) 개선</li>
+<li>또는 같은 FER를 <strong>더 좁은 비트 폭</strong>으로 달성</li>
+<li>구현 비용은 C++ 기준 C2V 재구성부에 비교 1회와 곱셈 1회 수준</li>
+</ul>
+</li>
+<li><strong>개선 확인방법</strong>:<ul>
+<li>on/off FER 비교</li>
+<li><strong>α_high 선택율</strong> (전체 C2V 메시지 중 격차가 임계를 넘어 α_high가 적용된
+  비율. 0이나 1에 붙으면 고정 계수와 같아지므로, 중간 값이어야 동적 선택이
+  실제로 작동하는 것)</li>
+<li>고정 계수 대조군 대비 이득 여부 (상세는 아래 평가 계획 표)</li>
+</ul>
+</li>
+<li><strong>실험 결과</strong>:<ul>
+<li><strong>판정: 조건부 유효</strong>. 001과 같은 조건(채널 LLR 크기 대비 edge 상한에 여유가
+  있을 때만 이득)에서, 이득 조건에서는 <span class="better">001을 넘어섬</span></li>
+<li>이득 조건(균일 ch=8, edge 상한 15)에서 <strong>클리핑+동적 정규화 결합</strong>이 E=300
+  FER <span class="better">5.21e-02로 전 조합 최량</span> (클리핑만 1.00, 고정
+  정규화만 1.00, 동적만 4.53e-01)</li>
+<li>여유가 없는 환경(LLR_MATRIX_HD_1, 비율 복원)에서는 <span class="worse">모든
+  보정이 악화</span></li>
+<li>격차 임계 <strong>T는 튜닝 필수</strong>: T가 edge 레벨 간격보다 작으면 무보정으로, 너무
+  크면 고정 정규화로 퇴화함 (가이드: T = edge 레벨 간격, α low 0.75, high 1.0)</li>
+<li>평가 대상 파라미터로 최종 판정 대기. 사전 지표는 001과 같은 dv별
+  <code>ch / (edge상한 × dv)</code> 비율</li>
+</ul>
+</li>
+</ul>
+<p>참고) 논문의 셋째 기법(저장하는 min2 값의 비균일 압축, Min2
+Compressor/Expander)은 저장 비트 절감용 하드웨어 기법이고 논문 스스로 FER
+중립을 목표로 설계했으므로 py 스크리닝 범위에서 제외함 (저장 비용이 쟁점이
+되면 후보 4번 ieee:11476755가 구현 참고용).</p>
+<h2 id="출처-상세">📄 출처 상세</h2>
 <ul>
-<li>논문: A Low-complexity LDPC Decoder for NAND Flash Applications, IEEE 2014
-  (아카이브 ID ieee:6865103)</li>
-<li>핵심 아이디어: min1/min2 격차 기반 동적 정규화 계수 + min1/min2 이중 상한 +
-  저장 min2 비균일 압축. rate 0.896, 길이 18624bit 부호로 게이트 수 13.36%
-  절감, FER 저하 없음을 시연</li>
-<li>001과의 관계: 이중 상한 부분은 001(ieee:9496601)과 같은 구조라서, 이 실험의
-  신규 요소는 동적 정규화이고 이중 상한은 결합 슬롯으로만 둔다</li>
+<li><strong>논문</strong>:<ul>
+<li>"A Low-complexity LDPC Decoder for NAND Flash Applications" (IEEE 2014)</li>
+<li>아카이브 ID ieee:6865103</li>
 </ul>
-<h2>📊 지표 계획</h2>
+</li>
+<li><strong>핵심 아이디어</strong>:<ul>
+<li>min1/min2 격차 기반 동적 정규화 계수 + min1/min2 이중 상한 + 저장 min2 비균일 압축</li>
+<li>rate 0.896, 길이 18624bit 부호로 게이트 수 13.36% 절감, FER 저하 없음을 시연</li>
+</ul>
+</li>
+<li><strong>001과의 관계</strong>:<ul>
+<li>이중 상한 부분은 001(ieee:9496601)과 같은 구조</li>
+<li>이 실험의 신규 요소는 동적 정규화이고 이중 상한은 결합 슬롯으로만 둠</li>
+</ul>
+</li>
+</ul>
+<h2 id="평가-계획">📊 평가 계획</h2>
 <table>
 <thead>
 <tr>
@@ -125,16 +203,16 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 <tr>
 <td>무효과 조합의 수치 완전 일치</td>
-<td>구현 동등성 ((P=Q=edge 상한, 알파 100,100)이면 base_run과 같아야 한다)</td>
+<td>구현 동등성 ((P=Q=edge 상한, α 100,100)이면 base_run과 같아야 함)</td>
 <td>스캔에 무효과 조합 포함</td>
 </tr>
 <tr>
 <td>고정 정규화 대조군과의 FER 차이</td>
 <td>논문 Fig.5의 단계 비교 재현: 이득이 "정규화 자체"에서 오는지 "동적 선택"에서 오는지 분리</td>
-<td>스캔에 알파 low=high 조합 포함</td>
+<td>스캔에 α low=high 조합 포함</td>
 </tr>
 <tr>
-<td>알파 high 선택율</td>
+<td>α_high 선택율</td>
 <td>동적 선택이 실제로 갈리는지 (0 또는 1에 붙으면 고정 계수와 동일해 동적 구조가 무의미)</td>
 <td>자체 수집 (decoder stat_alpha_high)</td>
 </tr>
@@ -145,34 +223,79 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 <tr>
 <td>정규화 후 min1 클리핑 발생율</td>
-<td>정규화와 클리핑의 역할 분담 (정규화가 충분하면 클리핑 발생이 줄어야 한다)</td>
+<td>정규화와 클리핑의 역할 분담 (정규화가 충분하면 클리핑 발생이 줄어야 함)</td>
 <td>자체 수집 (decoder stat_clip_hit)</td>
 </tr>
 </tbody>
 </table>
-<h2>🔬 py 스크리닝 실험</h2>
-<h3>바꾼 것</h3>
-<ul>
-<li>디코더: decoder.py의 MinSumDynamicNormalizationDecoder, 재정의 함수:
-  <code>_c2v_reconstruct</code> (C++ 대응: C2V_Cal). 파라미터는 클래스 속성
-  CLIP_P, CLIP_Q, ALPHA_LOW, ALPHA_HIGH, GAP_THRESHOLD로 전달</li>
-<li>정규화 결과는 반올림해 정수로 유지한다 (비정수 C2V는 VNU 양자화의 균일
-  등가식 전제를 깨기 때문. decoder.py docstring 참조)</li>
-<li>설정: config.json은 base_run과 동일 조건 (seed 0, fixed_error [200, 300],
-  frames_per_batch 64), label만 변경</li>
-<li>조합 스캔은 scan.py로 실행. config 파일과 조합 목록을 인자로 받는다:
-  <code>python scan.py [config파일] [P,Q,알파low%,알파high%,격차T ...]</code></li>
-</ul>
-<h3>실험 환경 이름 (001과 동일)</h3>
-<ul>
-<li>㉮ <strong>LLR_MATRIX_HD_1 환경</strong>: LLR 파일 LLR_MATRIX_HD_1.txt (dv별 채널 LLR 크기
-  ch 5/10/13/28), edge 메시지 상한 7 (config.json)</li>
-<li>㉯ <strong>상한 여유 환경</strong>: 균일 ch=8, edge 상한 15. 채널 정보 대비 edge 상한에
-  여유가 있어 메시지 진폭이 크게 자랄 수 있는 조건 (config_headroom.json)</li>
-<li>㉰ <strong>비율 복원 환경</strong>: 균일 ch=16, edge 상한 15. ch와 edge 상한의 비율을
-  LLR_MATRIX_HD_1 환경과 비슷하게 되돌린 대조 조건 (config_balanced.json)</li>
-</ul>
-<h3>준비된 실험 (config 슬롯)</h3>
+<h2 id="py-스크리닝-실험">🔬 py 스크리닝 실험</h2>
+<h3 id="바꾼-것">바꾼 것</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>디코더</strong></td>
+<td>decoder.py의 MinSumDynamicNormalizationDecoder. 재정의 함수 <code>_c2v_reconstruct</code> (C++ 대응: C2V_Cal). 파라미터는 클래스 속성 CLIP_P, CLIP_Q, ALPHA_LOW, ALPHA_HIGH, GAP_THRESHOLD로 전달</td>
+</tr>
+<tr>
+<td><strong>정규화 결과</strong></td>
+<td>반올림해 정수로 유지 (비정수 C2V는 VNU 양자화의 균일 등가식 전제를 깨기 때문. decoder.py docstring 참조)</td>
+</tr>
+<tr>
+<td><strong>설정</strong></td>
+<td>config.json은 base_run과 동일 조건 (seed 0, fixed_error [200, 300], frames_per_batch 64), label만 변경</td>
+</tr>
+<tr>
+<td><strong>조합 스캔</strong></td>
+<td>scan.py로 실행. config 파일과 조합 목록을 인자로 받음: <code>python scan.py [config파일] [P,Q,αlow%,αhigh%,격차T ...]</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="실험-환경-이름-001과-동일">실험 환경 이름 (001과 동일)</h3>
+<table>
+<thead>
+<tr>
+<th>번호</th>
+<th>환경 이름</th>
+<th>config</th>
+<th>채널 LLR 크기 (ch)</th>
+<th>edge 상한</th>
+<th>조건 설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>LLR_MATRIX_HD_1 환경</strong></td>
+<td>config.json</td>
+<td>LLR 파일 LLR_MATRIX_HD_1.txt (dv별 5/10/13/28)</td>
+<td>7</td>
+<td>채널 LLR가 edge 상한보다 크거나 비슷해, edge 메시지가 자랄 여유가 없는 조건</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>상한 여유 환경</strong></td>
+<td>config_headroom.json</td>
+<td>균일 8</td>
+<td>15</td>
+<td>채널 정보 대비 edge 상한에 여유가 있어 메시지 진폭이 크게 자랄 수 있는 조건</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>비율 복원 환경</strong></td>
+<td>config_balanced.json</td>
+<td>균일 16</td>
+<td>15</td>
+<td>상한 여유 환경에서 ch만 8에서 16으로 올려 채널 LLR 크기를 edge 상한과 비슷하게 되돌린 대조 조건. ch 대 edge 상한 비율이 1번 환경처럼 1 근처가 되므로, 이득이 "상한의 여유"에서 오는지를 가림</td>
+</tr>
+</tbody>
+</table>
+<h3 id="준비된-실험-config-슬롯">준비된 실험 (config 슬롯)</h3>
 <table>
 <thead>
 <tr>
@@ -197,7 +320,7 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 <tr>
 <td>config_balanced.json</td>
-<td>비율 복원 환경 (건강한 기준선을 해치지 않는지)</td>
+<td>비율 복원 환경 (정상 기준선을 해치지 않는지)</td>
 <td>없음</td>
 <td><code>python scan.py config_balanced.json 15,15,100,100,1 15,15,75,75,1 15,15,75,100,1 15,15,50,100,1</code></td>
 </tr>
@@ -209,9 +332,20 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 </tbody>
 </table>
-<h3>결과 (FER)</h3>
-<p>조합 표기: (P, Q, 알파low%, 알파high%, 격차T). 선택율 = 알파 high 선택율.</p>
-<p>LLR_MATRIX_HD_1 환경 (edge 레벨 {7,5,3,1}, 레벨 간격 2):</p>
+<h3 id="결과-fer">결과 (FER)</h3>
+<blockquote>
+<ul>
+<li><strong>조합 표기</strong>: (P, Q, αlow%, αhigh%, 격차T)</li>
+<li><strong>선택율</strong>: α_high 선택율</li>
+</ul>
+</blockquote>
+<h4 id="결과-1-llr_matrix_hd_1-환경">결과 1. LLR_MATRIX_HD_1 환경</h4>
+<blockquote>
+<ul>
+<li><strong>조건</strong>: edge 레벨 {7,5,3,1}, 레벨 간격 2</li>
+<li><strong>핵심</strong>: 여유가 없는 환경에서는 <span class="worse">모든 보정 조합이 악화</span></li>
+</ul>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -232,10 +366,10 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 <tr>
 <td>(7,7,75,75,1) 고정 정규화</td>
-<td>1.00e+00</td>
+<td><span class="worse">1.00e+00</span></td>
 <td>1.00e+00</td>
 <td>-</td>
-<td>붕괴</td>
+<td><span class="worse">전 프레임 실패 (FER 1.0)</span></td>
 </tr>
 <tr>
 <td>(7,7,75,100,1)</td>
@@ -274,7 +408,14 @@ ieee:11476755가 구현 참고용).</p>
 </tr>
 </tbody>
 </table>
-<p>상한 여유 환경 (균일 ch=8, edge 레벨 {15,11,7,3}, 레벨 간격 4):</p>
+<h4 id="결과-2-상한-여유-환경">결과 2. 상한 여유 환경</h4>
+<blockquote>
+<ul>
+<li><strong>조건</strong>: 균일 ch=8, edge 레벨 {15,11,7,3}, 레벨 간격 4</li>
+<li><strong>핵심</strong>: <span class="better">클리핑+동적 결합 (4,8,75,100,4)가 E=300 FER
+  5.21e-02로 전 조합 최량</span>. 단독 기법들은 전부 크게 뒤짐</li>
+</ul>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -291,35 +432,35 @@ ieee:11476755가 구현 참고용).</p>
 <td>1.00e+00</td>
 <td>1.00e+00</td>
 <td>0.992</td>
-<td>과확신 붕괴 기준선</td>
+<td>과확신으로 전 프레임 실패, 기준선</td>
 </tr>
 <tr>
 <td>(15,15,75,75,1) 고정 정규화</td>
-<td>0.00e+00</td>
+<td><span class="better">0.00e+00</span></td>
 <td>1.00e+00</td>
 <td>-</td>
-<td>E=200 완전 복구</td>
+<td><span class="better">E=200 완전 복구</span></td>
 </tr>
 <tr>
 <td>(15,15,75,100,1)</td>
 <td>1.00e+00</td>
 <td>1.00e+00</td>
 <td>0.992</td>
-<td>T&lt;레벨 간격, 무보정으로 퇴화</td>
+<td><span class="worse">T&lt;레벨 간격, 무보정으로 퇴화</span></td>
 </tr>
 <tr>
 <td>(15,15,75,100,3)</td>
 <td>1.00e+00</td>
 <td>1.00e+00</td>
 <td>0.992</td>
-<td>위와 동일 (격차가 4의 배수라 T=1~3 동일)</td>
+<td>위와 동일 (격차가 4의 배수라 T=1-3 동일)</td>
 </tr>
 <tr>
 <td>(15,15,75,100,4) 동적</td>
 <td>0.00e+00</td>
-<td><strong>4.53e-01</strong></td>
+<td><span class="better">4.53e-01</span></td>
 <td>0.321</td>
-<td>E=300에서 유일하게 절반 복구</td>
+<td><span class="better">E=300에서 유일하게 절반 복구</span></td>
 </tr>
 <tr>
 <td>(15,15,75,100,8)</td>
@@ -333,21 +474,21 @@ ieee:11476755가 구현 참고용).</p>
 <td>0.00e+00</td>
 <td>1.00e+00</td>
 <td>0.000</td>
-<td>선택율 0 → 고정 정규화와 동일</td>
+<td>선택율 0, 고정 정규화와 동일</td>
 </tr>
 <tr>
 <td>(15,15,50,100,4)</td>
 <td>0.00e+00</td>
 <td>6.88e-01</td>
 <td>0.304</td>
-<td>알파 low 과함</td>
+<td>α low 과함</td>
 </tr>
 <tr>
 <td>(15,15,85,100,4)</td>
 <td>1.00e+00</td>
 <td>1.00e+00</td>
 <td>0.983</td>
-<td>감쇠 부족, 포화 루프 못 벗어남</td>
+<td><span class="worse">감쇠 부족, 포화 실패 루프 못 벗어남</span></td>
 </tr>
 <tr>
 <td>(4,8,100,100,1) 클리핑만</td>
@@ -366,13 +507,19 @@ ieee:11476755가 구현 참고용).</p>
 <tr>
 <td><strong>(4,8,75,100,4) 클리핑+동적</strong></td>
 <td><strong>0.00e+00</strong></td>
-<td><strong>5.21e-02</strong></td>
+<td><span class="better">5.21e-02</span></td>
 <td>0.288</td>
-<td><strong>전 조합 최량</strong></td>
+<td><span class="better">전 조합 최량</span></td>
 </tr>
 </tbody>
 </table>
-<p>비율 복원 환경 (균일 ch=16, edge 레벨 {15,11,7,3}):</p>
+<h4 id="결과-3-비율-복원-환경">결과 3. 비율 복원 환경</h4>
+<blockquote>
+<ul>
+<li><strong>조건</strong>: 균일 ch=16, edge 레벨 {15,11,7,3}</li>
+<li><strong>핵심</strong>: 기준선이 정상(FER 0)인 환경에서는 <span class="worse">모든 보정이 손해</span></li>
+</ul>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -387,67 +534,84 @@ ieee:11476755가 구현 참고용).</p>
 <td>(15,15,100,100,1) 무보정</td>
 <td>0.00e+00</td>
 <td>1.17e-02</td>
-<td>건강한 기준선</td>
+<td>정상 기준선</td>
 </tr>
 <tr>
 <td>(15,15,75,75,1) 고정 정규화</td>
 <td>1.56e-02</td>
 <td>8.59e-02</td>
-<td>악화</td>
+<td><span class="worse">악화</span></td>
 </tr>
 <tr>
 <td>(15,15,75,100,4) 동적</td>
 <td>3.91e-03</td>
 <td>5.73e-02</td>
-<td>악화 (고정보다는 덜함)</td>
+<td><span class="worse">악화 (고정보다는 덜함)</span></td>
 </tr>
 <tr>
 <td>(4,8,75,100,4)</td>
 <td>1.00e+00</td>
 <td>1.00e+00</td>
-<td>클리핑 사망 (001과 일치)</td>
+<td><span class="worse">전 프레임 실패, 클리핑이 손해인 환경 (001과 일치)</span></td>
 </tr>
 </tbody>
 </table>
-<p>지표 계획 표의 중간 지표별 해석:</p>
-<ul>
+<h4 id="지표별-해석">지표별 해석</h4>
+<p>평가 계획 표의 항목 순.</p>
+<ol>
 <li><strong>무효과 조합 일치</strong>: (7,7,100,100)이 base_run과 E=200/300 모두 수치 완전
-  일치. 구현 동등성 검증 통과</li>
-<li><strong>고정 대조군과의 분리</strong>: 상한 여유 환경 E=300에서 고정 0.75는 1.00,
-  동적(T=4)은 4.53e-01. 이득의 원천이 "정규화 자체"가 아니라 "격차 기반
-  동적 선택"임이 분리 확인됨 (논문 Fig.5의 단계 개선 주장 방향 재현)</li>
-<li><strong>알파 high 선택율</strong>: T가 인접 레벨 격차 이하이면 선택율이 0.99로 쏠려
-  동적 구조가 무보정으로 퇴화한다. 원인은 본체(그리고 하드웨어)의
-  min2=RESET 승격 근사: min1이 교체될 때 min2를 실제 둘째 최솟값이 아니라
-  최대값(RESET)으로 올려 두므로 격차가 과대평가된다. T를 "두 레벨 이상
-  차이"로 잡아야(레벨 간격 4에서 T=4) 신호가 살아난다</li>
-<li><strong>선택율의 되먹임</strong>: 같은 T=4에서도 알파 low가 0.85면 선택율 0.983, 0.75면
-  0.321. 감쇠가 포화 분포 자체를 바꾸므로 선택율은 파라미터와 함께 움직인다.
-  0.85는 포화 붕괴 루프를 끊지 못해 무보정과 같은 결과가 된다 (문턱 거동)</li>
-<li><strong>수렴 속도</strong>: E=200 복구 조합의 avg_iter는 클리핑만 3.8, 클리핑+동적 4.3,
-  동적만 6.4, 고정만 6.4. 클리핑이 수렴을 주도하고 동적 정규화는 E=300의
-  실패 프레임을 추가로 살린다</li>
+   일치. 구현 동등성 검증 통과</li>
+<li><strong>고정 대조군과의 분리</strong>:<ul>
+<li>상한 여유 환경 E=300에서 고정 0.75는 1.00, 동적(T=4)은 4.53e-01</li>
+<li>이득의 원천이 "정규화 자체"가 아니라 <strong>"격차 기반 동적 선택"</strong>임이 분리
+  확인됨 (<span class="better">논문 Fig.5의 단계 개선 주장 방향 재현</span>)</li>
 </ul>
-<h2>✅ 결론</h2>
-<p><strong>조건부 유효</strong>. 001과 같은 조건 구조(채널 LLR 스케일 대비 edge 상한의 여유가
-있을 때만 이득)에, 이득 조건에서는 001을 넘어선다.</p>
+</li>
+<li><strong>α_high 선택율</strong>:<ul>
+<li>T가 인접 레벨 격차 이하이면 선택율이 0.99로 쏠려 <span class="worse">동적
+  구조가 무보정으로 퇴화함</span></li>
+<li>원인은 본체(그리고 하드웨어)의 <strong>min2=RESET 승격 근사</strong>: min1이 교체될 때
+  min2를 실제 둘째 최솟값이 아니라 최대값(RESET)으로 올려 두므로 격차가
+  과대평가됨</li>
+<li>T를 "두 레벨 이상 차이"로 잡아야(레벨 간격 4에서 T=4) 신호가 살아남</li>
+</ul>
+</li>
+<li><strong>선택율과 α low의 상호 영향</strong>:<ul>
+<li>같은 T=4에서도 α low가 0.85면 선택율 0.983, 0.75면 0.321</li>
+<li>감쇠가 포화 분포 자체를 바꾸므로 선택율은 파라미터와 함께 움직임</li>
+<li>0.85는 포화 실패 루프를 끊지 못해 무보정과 같은 결과가 됨 (문턱 효과)</li>
+</ul>
+</li>
+<li><strong>수렴 속도</strong>:<ul>
+<li>E=200 복구 조합의 avg_iter는 클리핑만 3.8, 클리핑+동적 4.3, 동적만 6.4,
+  고정만 6.4</li>
+<li>클리핑이 수렴을 주도하고 동적 정규화는 E=300의 실패 프레임을 추가로 살림</li>
+</ul>
+</li>
+</ol>
+<h2 id="결론">✅ 결론</h2>
 <ul>
-<li>㉮ 이득 조건(상한 여유 환경)에서 클리핑+동적 정규화 결합이 E=300 FER
-  5.21e-02로 전 조합 최량. 클리핑만(1.00), 고정 정규화만(1.00), 동적만
-  (4.53e-01)을 전부 큰 폭으로 이긴다. 논문의 결합 주장이 방향 그대로 재현됨</li>
-<li>㉯ 동적 선택의 격차 임계 T는 튜닝 필수: min2=RESET 승격 근사 때문에
-  T &lt; 레벨 간격이면 무보정으로, T가 너무 크면 고정 정규화로 퇴화한다.
-  가이드: T = edge 레벨 간격 (두 레벨 이상 차이일 때만 알파 high)</li>
-<li>㉰ 알파 가이드: low 0.75, high 1.0. low 0.85는 문턱을 못 넘고 0.5는 과함</li>
-<li>㉱ 여유가 없는 환경(LLR_MATRIX_HD_1, 비율 복원)에서는 001과 마찬가지로 손해.
-  판정 사전 지표도 001과 공유: 평가할 LLR set의 dv별 <code>ch / (edge상한 × dv)</code>
+<li><strong>판정: 조건부 유효</strong></li>
+<li><strong>근거</strong>: 001과 같은 조건 구조(채널 LLR 크기 대비 <strong>edge 상한의 여유</strong>가 있을
+  때만 이득)에, 이득 조건에서는 <span class="better">001을 넘어섬</span><ol>
+<li>이득 조건(상한 여유 환경)에서 <strong>클리핑+동적 정규화 결합</strong>이 E=300 FER
+   5.21e-02로 전 조합 최량. 클리핑만(1.00), 고정 정규화만(1.00), 동적만(4.53e-01)을
+   전부 큰 폭으로 이김. 논문의 결합 주장이 방향 그대로 재현됨</li>
+<li>동적 선택의 격차 임계 <strong>T는 튜닝 필수</strong>: min2=RESET 승격 근사 때문에
+   T &lt; 레벨 간격이면 무보정으로, T가 너무 크면 고정 정규화로 퇴화함.
+   가이드: <strong>T = edge 레벨 간격</strong> (두 레벨 이상 차이일 때만 α_high)</li>
+<li>α 가이드: <strong>low 0.75, high 1.0</strong>. low 0.85는 문턱을 못 넘고 0.5는 과함</li>
+<li>여유가 없는 환경(LLR_MATRIX_HD_1, 비율 복원)에서는 001과 마찬가지로 손해</li>
+</ol>
+</li>
+<li><strong>판정 사전 지표</strong>: 001과 공유. 평가할 LLR set의 dv별 <code>ch / (edge상한 × dv)</code>
   비율이 1에 가까우면 여지 없음</li>
 </ul>
-<h2>⏭ 후속</h2>
+<h2 id="후속">⏭ 후속</h2>
 <ul>
 <li>평가 대상 파라미터로 config_target.json 스캔을 돌려 최종 판정
-  (001과 같은 선행 조건. 판정 순서: 사전 지표 → 무효과 기준선 →
-  7,7,75,100,2 근방 스캔. 3-bit 레벨 {7,5,3,1}이면 레벨 간격 2라 T=2)</li>
+  (001과 같은 선행 조건. 판정 순서: 사전 지표, 무효과 기준선, 7,7,75,100,2 근방
+  스캔. 3-bit 레벨 {7,5,3,1}이면 레벨 간격 2라 T=2)</li>
 <li>유효 시 001 클리핑과의 결합이 기본형 (이 실험의 최량 조합)</li>
 </ul>
 </div>
