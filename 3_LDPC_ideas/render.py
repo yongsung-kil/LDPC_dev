@@ -11,10 +11,10 @@
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md (제외: _pm/, _template/, Sim_Output/,
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
-    - 대시보드 docs/index.html: 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
+    - 대시보드 (저장소 루트 docs/index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
       출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의 "적용 분석
       메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 그 README.html로 간다
-      (README 형식은 보고서작성규칙.md 16절). 링크는 docs/ 기준 상대 경로다
+      (README 형식은 보고서작성규칙.md 16절). 링크는 루트 docs/ 기준 상대 경로다
     - 렌더 뒤 html 안의 상대 링크가 가리키는 파일과 앵커가 있는지 검사해 없는 것을 보고한다
 
 규격: HTML 작성 가이드 (정적 파일, 상대 링크만, 외부 자원 없음, :root css 변수와
@@ -36,7 +36,7 @@ IDEAS_DIR = Path(__file__).resolve().parent
 EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 IDEA_FOLDER_PATTERN = re.compile(r"^\d{3}_")
 
-DASHBOARD_DIR = IDEAS_DIR / "docs"
+DASHBOARD_DIR = IDEAS_DIR.parent / "docs"      # 저장소 루트 docs/ (GitHub Pages 입구)
 DASHBOARD_PATH = DASHBOARD_DIR / "index.html"
 DASHBOARD_TITLE = "논문 아이디어 적용 대시보드"
 PAPER_ARCHIVE_URL = "https://yongsung-kil.github.io/ECC_papers/"
@@ -700,10 +700,11 @@ def check_links(html_paths):
 
 
 def shown_path(path):
-    try:
-        return str(path.relative_to(IDEAS_DIR))
-    except ValueError:
-        return str(path)
+    """출력용 경로: 3_LDPC_ideas/ 기준, 그 밖이면 저장소 루트 기준."""
+    for base in (IDEAS_DIR, IDEAS_DIR.parent):
+        if path.is_relative_to(base):
+            return str(path.relative_to(base))
+    return str(path)
 
 
 def main():
