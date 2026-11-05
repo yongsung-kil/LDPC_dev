@@ -168,7 +168,7 @@ DOC_STYLE = """
 DASH_STYLE = """
 #ldpcDashRoot {
     margin: 0 auto;
-    padding: 24px 24px 80px;
+    padding: 32px 32px 96px;
     max-width: 1180px;
     color: var(--text);
     font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
@@ -176,33 +176,60 @@ DASH_STYLE = """
     line-height: 1.7;
 }
 #ldpcDashRoot *, #ldpcDashRoot *::before, #ldpcDashRoot *::after { box-sizing: border-box; }
-#ldpcDashRoot a { color: var(--accent); text-decoration: none; }
+#ldpcDashRoot a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
 #ldpcDashRoot a:hover { text-decoration: underline; }
-#ldpcDashRoot h1 { font-size: 1.9em; line-height: 1.3; margin: 0.4em 0 0.3em; }
-#ldpcDashRoot .intro { margin: 0 0 0.8em; color: var(--muted); }
-#ldpcDashRoot .site-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 1.2em; padding: 0; list-style: none; }
-#ldpcDashRoot .site-nav li a {
+#ldpcDashRoot a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+#ldpcDashRoot strong { font-weight: 600; }
+#ldpcDashRoot h1 { font-size: 28px; line-height: 1.15; font-weight: 500; margin: 0 0 8px; }
+#ldpcDashRoot .intro { margin: 0 0 20px; color: var(--muted); }
+#ldpcDashRoot .site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    margin: 0 0 32px;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 20px;
+}
+#ldpcDashRoot .site-nav li a { color: var(--muted); }
+#ldpcDashRoot .site-nav li a:hover { color: var(--accent); }
+#ldpcDashRoot .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 40px;
+    margin: 0 0 32px;
+    padding: 0;
+    list-style: none;
+}
+#ldpcDashRoot .stats li { display: flex; flex-direction: column; gap: 4px; }
+#ldpcDashRoot .stats .label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 20px; color: var(--muted); }
+#ldpcDashRoot .stats .count {
+    font-family: Consolas, "D2Coding", monospace;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+#ldpcDashRoot .dot {
     display: inline-block;
-    padding: 4px 12px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 0.92em;
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--muted);
+    flex: none;
 }
-#ldpcDashRoot .site-nav li a:hover { border-color: var(--accent); text-decoration: none; }
-#ldpcDashRoot .stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 1.4em; padding: 0; list-style: none; }
-#ldpcDashRoot .stats li {
-    min-width: 110px;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-}
-#ldpcDashRoot .stats .label { display: block; font-size: 0.85em; color: var(--muted); }
-#ldpcDashRoot .stats .count { font-size: 1.4em; font-weight: 600; }
+#ldpcDashRoot .status-ok .dot, #ldpcDashRoot .status-done .dot { background: var(--ok); }
+#ldpcDashRoot .status-fail .dot { background: var(--worse); }
+#ldpcDashRoot .status-pending .dot { background: var(--warn); }
 #ldpcDashRoot .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    align-items: start;
     gap: 16px;
     margin: 0;
     padding: 0;
@@ -212,62 +239,64 @@ DASH_STYLE = """
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 16px 18px 14px;
+    padding: 20px;
     border: 1px solid var(--border);
-    border-left: 5px solid var(--accent);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--bg);
+    transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-#ldpcDashRoot .card:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12); border-color: var(--accent); }
-#ldpcDashRoot .card.status-ok { border-left-color: var(--ok); }
-#ldpcDashRoot .card.status-fail { border-left-color: var(--worse); }
-#ldpcDashRoot .card.status-pending { border-left-color: var(--accent); }
-#ldpcDashRoot .card.status-done { border-left-color: var(--ok); }
-#ldpcDashRoot .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+#ldpcDashRoot .card:hover { background: var(--surface); }
+#ldpcDashRoot .card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--muted);
+}
 #ldpcDashRoot .num {
     font-family: Consolas, "D2Coding", monospace;
-    font-size: 1.1em;
-    font-weight: 700;
-    color: var(--muted);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
-#ldpcDashRoot .badge {
-    padding: 1px 10px;
-    border-radius: 999px;
-    font-size: 0.82em;
-    font-weight: 600;
-    color: #ffffff;
-    background: var(--accent);
-}
-#ldpcDashRoot .status-ok .badge, #ldpcDashRoot .status-done .badge { background: var(--ok); }
-#ldpcDashRoot .status-fail .badge { background: var(--worse); }
-#ldpcDashRoot .card h2 { font-size: 1.12em; line-height: 1.4; margin: 0 0 4px; }
+#ldpcDashRoot .status { display: inline-flex; align-items: center; gap: 8px; }
+#ldpcDashRoot .card h2 { font-size: 17px; line-height: 1.4; font-weight: 600; margin: 0 0 4px; }
 #ldpcDashRoot .card h2 a { color: var(--text); }
+#ldpcDashRoot .card h2 a:hover { text-decoration: none; }
 #ldpcDashRoot .card h2 a::after { content: ""; position: absolute; inset: 0; }
-#ldpcDashRoot .card .source { margin: 0 0 6px; font-size: 0.88em; color: var(--muted); }
-#ldpcDashRoot .card .status-note { margin: 0 0 6px; font-size: 0.88em; color: var(--muted); }
+#ldpcDashRoot .card .source { margin: 0 0 4px; font-size: 13px; line-height: 20px; color: var(--muted); }
+#ldpcDashRoot .card .status-note { margin: 0 0 12px; font-size: 13px; line-height: 20px; color: var(--muted); }
 #ldpcDashRoot .card h3 {
-    margin: 10px 0 2px;
-    font-size: 0.85em;
-    font-weight: 600;
+    margin: 16px 0 4px;
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 500;
     color: var(--muted);
-    text-transform: none;
 }
-#ldpcDashRoot .card ul { margin: 0; padding-left: 1.2em; font-size: 0.93em; line-height: 1.55; }
-#ldpcDashRoot .card li { margin: 2px 0; }
-#ldpcDashRoot .card .links { position: relative; z-index: 1; margin: 12px 0 0; font-size: 0.88em; }
-#ldpcDashRoot .card .links a { margin-right: 12px; }
+#ldpcDashRoot .card ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 22px; list-style: disc; }
+#ldpcDashRoot .card li { margin: 4px 0; }
+#ldpcDashRoot .card .links {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 16px;
+    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 20px;
+}
 #ldpcDashRoot .card code {
     font-family: Consolas, "D2Coding", monospace;
-    font-size: 0.9em;
+    font-size: 13px;
     background: var(--surface);
-    padding: 0.1em 0.35em;
+    padding: 2px 6px;
     border-radius: 4px;
 }
 #ldpcDashRoot .better { color: var(--better); font-weight: 600; }
 #ldpcDashRoot .worse { color: var(--worse); font-weight: 600; }
 #ldpcDashRoot .empty { color: var(--muted); }
 @media (max-width: 600px) {
-    #ldpcDashRoot { padding: 16px 12px 60px; }
+    #ldpcDashRoot { padding: 16px 16px 64px; }
     #ldpcDashRoot .cards { grid-template-columns: 1fr; }
 }
 """
@@ -620,7 +649,8 @@ def bullet_list(sentences, empty_text):
 def build_card(idea):
     parts = [
         '<li class="card status-{}">'.format(idea["css"]),
-        '<div class="card-head"><span class="num">{}</span><span class="badge">{}</span></div>'.format(
+        '<div class="card-head"><span class="num">{}</span>'
+        '<span class="status"><span class="dot"></span>{}</span></div>'.format(
             escape(idea["number"]), escape(idea["badge"])),
         '<h2><a href="{}">{}</a></h2>'.format(idea["href"], convert_inline(idea["title"])),
     ]
@@ -648,8 +678,9 @@ def build_stats(ideas):
     ordered += sorted(word for word in counts if word not in ordered)
     tiles = ['<li><span class="label">전체</span><span class="count">{}</span></li>'.format(len(ideas))]
     for word in ordered:
-        tiles.append('<li><span class="label">{}</span><span class="count">{}</span></li>'.format(
-            escape(word), counts[word]))
+        tiles.append(
+            '<li class="status-{}"><span class="label"><span class="dot"></span>{}</span>'
+            '<span class="count">{}</span></li>'.format(status_class(word), escape(word), counts[word]))
     return "\n".join(tiles)
 
 
