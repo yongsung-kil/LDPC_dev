@@ -1,25 +1,24 @@
-"""md 문서를 저장소 루트 docs/ 아래 html로 변환하고, 아이디어 대시보드(docs/index.html)를 만드는 렌더러.
+"""md 문서를 같은 자리의 html로 변환하고, 아이디어 대시보드(저장소 루트 index.html)를 만드는 렌더러.
 
 사용법 (3_LDPC_ideas/ 기준, 다른 위치에서 실행해도 동작):
     python render.py                  # 폴더 안의 md 전체를 변환하고 index.html을 다시 만든다
     python render.py README.md        # 지정한 파일만 변환 (대시보드는 만들지 않는다)
 
 동작:
-    - 산출물은 전부 저장소 루트 docs/ 아래에 둔다 (GitHub Pages 입구). md의 저장소 기준 경로를
-      그대로 따라가므로 3_LDPC_ideas/001_x/README.md는 docs/3_LDPC_ideas/001_x/README.html이
-      된다 (md가 정본, html은 열람용 파생물). docs/ 폴더 하나만 복사해도 모든 링크가 이어진다
-    - 문서 안의 상대 링크는 html 위치 기준으로 다시 계산한다. 변환 대상 md를 가리키는 링크는
-      그 md의 html로, 그 밖의 파일을 가리키는 링크는 저장소의 그 파일로 간다
+    - 각 {이름}.md 옆에 {이름}.html을 만든다 (md가 정본, html은 열람용 파생물). GitHub Pages는
+      저장소 루트를 소스로 두어 어느 폴더의 html이든 그대로 서빙한다 (루트 .nojekyll이 밑줄로
+      시작하는 _pm/ 폴더를 공개에서 빠지지 않게 한다)
+    - 문서 안의 상대 링크 가운데 변환 대상 md를 가리키는 것은 그 md의 html로 바꾼다. 그 밖의
+      링크는 가리키는 파일 그대로 둔다
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md (제외: _pm/, _template/, Sim_Output/,
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
-    - 대시보드 (docs/index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
-      출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의 "적용 분석
-      메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 docs/ 안의 그 README.html로 간다
-      (README 형식은 보고서작성규칙.md 16절). 링크는 docs/ 기준 상대 경로다
-    - 일괄 변환 뒤 docs/ 안에 남은, 이번에 만들지 않은 html은 지운다 (이름이 바뀐 md의 묵은
-      산출물). docs/.nojekyll을 둔다 (Pages 소스가 /docs일 때 밑줄로 시작하는 _pm/ 폴더가
-      공개에서 빠지지 않게)
+    - 대시보드 (저장소 루트 index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의
+      머리줄(제목, 출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의
+      "적용 분석 메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 그 README.html로 간다
+      (README 형식은 보고서작성규칙.md 16절). 링크는 저장소 루트 기준 상대 경로다
+    - 일괄 변환 뒤 3_LDPC_ideas/ 안에 남은, 이번에 만들지 않은 render.py 산출 html은 지운다
+      (이름이 바뀌거나 변환 대상에서 빠진 md의 묵은 산출물)
     - 렌더 뒤 html 안의 상대 링크가 가리키는 파일과 앵커가 있는지 검사해 없는 것을 보고한다
 
 규격: HTML 작성 가이드 (정적 파일, 상대 링크만, 외부 자원 없음, :root css 변수와
@@ -42,9 +41,9 @@ REPO_ROOT = IDEAS_DIR.parent
 EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 IDEA_FOLDER_PATTERN = re.compile(r"^\d{3}_")
 
-SITE_DIR = REPO_ROOT / "docs"                  # 모든 html 산출물 자리 (GitHub Pages 입구)
-DASHBOARD_PATH = SITE_DIR / "index.html"
-NOJEKYLL_PATH = SITE_DIR / ".nojekyll"
+DASHBOARD_PATH = REPO_ROOT / "index.html"      # 저장소 루트 (GitHub Pages 소스가 루트이므로 입구)
+RENDER_MARK = "<!-- render.py가 "              # 산출 html의 표식. 묵은 산출물 정리 때 이것이 있는 파일만 지운다
+STALE_SCAN_SKIP = {"Sim_Output", "__pycache__"}
 DASHBOARD_TITLE = "논문 아이디어 적용 대시보드"
 PAPER_ARCHIVE_URL = "https://yongsung-kil.github.io/ECC_papers/"
 
@@ -363,15 +362,15 @@ def resolve_link_target(base_dir, href_path):
 
 
 def html_path_for(md_path):
-    """md의 html 산출 경로: docs/ 아래에 저장소 루트 기준 폴더 구조를 그대로 둔다."""
-    return (SITE_DIR / md_path.relative_to(REPO_ROOT)).with_suffix(".html")
+    """md의 html 산출 경로: 같은 폴더, 같은 이름."""
+    return md_path.with_suffix(".html")
 
 
 def rewrite_relative_links(html_body, md_path, rendered_md_paths):
     """본문의 상대 링크를 html 위치 기준으로 다시 쓴다.
 
-    변환 대상 md를 가리키는 링크는 그 md의 html(docs/ 안)로, 그 밖의 파일을 가리키는
-    링크는 저장소의 그 파일로 간다. 같은 문서 안의 앵커(#…)와 외부 주소는 그대로 둔다.
+    변환 대상 md를 가리키는 링크는 그 md의 html로 바꾸고, 그 밖의 파일을 가리키는 링크는
+    가리키는 파일 그대로 둔다. 같은 문서 안의 앵커(#…)와 외부 주소는 그대로 둔다.
     """
     html_dir = html_path_for(md_path).parent
 
@@ -432,7 +431,7 @@ def dashboard_href_from(md_path):
 
 
 def render_file(md_path, rendered_md_paths):
-    """md 파일 하나를 docs/ 아래 html로 변환하고 산출 경로를 돌려준다."""
+    """md 파일 하나를 형제 html로 변환하고 산출 경로를 돌려준다."""
     md_text = md_path.read_text(encoding="utf-8")
     body = convert_markdown(md_text)
     body = rewrite_relative_links(body, md_path, rendered_md_paths)
@@ -450,7 +449,6 @@ def render_file(md_path, rendered_md_paths):
         body=body,
     )
     html_path = html_path_for(md_path)
-    html_path.parent.mkdir(parents=True, exist_ok=True)
     html_path.write_text(page, encoding="utf-8")
     return html_path
 
@@ -581,13 +579,13 @@ def parse_idea_readme(md_path, rendered_md_paths):
         target = resolve_link_target(folder, path)
         if path.endswith(".md") and target in rendered_md_paths:
             target = html_path_for(target)
-        # README 폴더 기준 경로를 대시보드 폴더(docs/) 기준으로 옮긴다
-        memo_href = relative_href(SITE_DIR, target) + fragment
+        # README 폴더 기준 경로를 대시보드 자리(저장소 루트) 기준으로 옮긴다
+        memo_href = relative_href(REPO_ROOT, target) + fragment
 
     return {
         "number": number,
         "title": title,
-        "href": relative_href(SITE_DIR, html_path_for(md_path)),
+        "href": relative_href(REPO_ROOT, html_path_for(md_path)),
         "source": source,
         "badge": badge,
         "note": note,
@@ -657,7 +655,7 @@ def build_stats(ideas):
 
 def site_href(md_name, heading_text=None):
     """대시보드에서 3_LDPC_ideas/ 문서의 html로 가는 링크 (제목 id는 slugify_unicode 규칙)."""
-    href = relative_href(SITE_DIR, html_path_for(IDEAS_DIR / md_name))
+    href = relative_href(REPO_ROOT, html_path_for(IDEAS_DIR / md_name))
     if heading_text:
         href += "#" + quote(slugify_unicode(heading_text, "-"))
     return href
@@ -688,21 +686,28 @@ def render_dashboard(rendered_md_paths):
         stats=build_stats(ideas),
         cards="\n".join(build_card(idea) for idea in ideas),
     )
-    SITE_DIR.mkdir(parents=True, exist_ok=True)
     DASHBOARD_PATH.write_text(page, encoding="utf-8")
-    if not NOJEKYLL_PATH.exists():
-        NOJEKYLL_PATH.write_bytes(b"")
     return DASHBOARD_PATH, ideas
 
 
 def remove_stale_html(produced):
-    """docs/ 안의 html 가운데 이번 일괄 변환이 만들지 않은 것을 지운다 (이름이 바뀐 md의 묵은 산출물)."""
+    """3_LDPC_ideas/ 안의 render.py 산출 html 가운데 이번 일괄 변환이 만들지 않은 것을 지운다.
+
+    이름이 바뀌거나 변환 대상에서 빠진 md의 묵은 산출물이 대상이다. 표식(RENDER_MARK)이
+    없는 html은 render.py가 만든 것이 아니므로 건드리지 않는다.
+    """
     keep = set(produced)
     removed = []
-    for html_path in sorted(SITE_DIR.rglob("*.html")):
-        if html_path not in keep:
-            html_path.unlink()
-            removed.append(html_path)
+    for html_path in sorted(IDEAS_DIR.rglob("*.html")):
+        if html_path in keep:
+            continue
+        if any(part in STALE_SCAN_SKIP for part in html_path.relative_to(IDEAS_DIR).parts[:-1]):
+            continue
+        head = html_path.read_text(encoding="utf-8", errors="ignore")[:800]
+        if RENDER_MARK not in head:
+            continue
+        html_path.unlink()
+        removed.append(html_path)
     return removed
 
 

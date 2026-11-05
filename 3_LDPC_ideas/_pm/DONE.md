@@ -1,5 +1,14 @@
 # DONE: 완료 이력 (3_LDPC_ideas, 논문 아이디어 적용)
 
+### 2026-11-05 html을 md 옆으로 되돌리고 대시보드를 저장소 루트 index.html로 (GitHub Pages 소스는 루트)
+md와 html의 자리를 하나로 유지하기 위해 docs/ 모음 구조를 접고, Pages 소스를 저장소 루트로 두는 전제로 html은 md 옆, 대시보드는 루트 index.html에 둠
+- **배경**: 사용자 결정 (2026-11-05). docs/ 아래 모음 구조는 md와 html이 갈라져 관리 자리가 둘이 되고, 저장소 전체를 복사해 가므로 "docs 하나만 복사"의 이점이 쓰이지 않음. 다른 저장소의 Pages 소스를 루트 `/`로 두면 어느 폴더의 html이든 그대로 열림
+- **변경**:
+  - render.py: 산출 경로를 md 옆(`html_path_for`는 같은 이름 .html)으로, 대시보드를 `REPO_ROOT/index.html`로. 상대 링크 재계산과 링크 검사는 유지. 묵은 산출물 정리는 3_LDPC_ideas/ 안에서 표식(`<!-- render.py가 `)이 있는 html만 지움 (Sim_Output, __pycache__ 제외)
+  - docs/ 폴더 삭제 (index.html, .nojekyll, 보고서 html 16편). 루트 `.nojekyll`은 유지
+  - 루트 CLAUDE.md 저장소 구성 표의 docs/ 행을 index.html 행으로, README.md(머리말 링크, 동작 흐름 7단계, 폴더 규칙 ㉴), 새논문적용규칙.md 6절 ㉴, 보고서작성규칙.md 16절의 html 위치 설명 갱신
+- **파일**: 3_LDPC_ideas/render.py, 루트 index.html, 3_LDPC_ideas/README.md와 README.html, 00{1-7}_*/README.html, 실험로그.html, 두 규칙 html, _pm/tasks/전력감축_논문정독/메모_*.html(5편), 루트 CLAUDE.md, 새논문적용규칙.md, 보고서작성규칙.md
+
 ### 2026-11-05 보고서 html을 저장소 루트 docs/ 아래로 모아 뽑기 (GitHub Pages 카드 404 수리)
 render.py의 산출물을 전부 루트 docs/ 아래에 md와 같은 폴더 구조로 두어, docs/ 폴더 하나만 복사해도 대시보드와 카드 링크가 이어지게 함
 - **배경**: 대시보드 docs/index.html을 다른 저장소의 GitHub Pages로 열면 카드가 404였음. 카드 링크가 `../3_LDPC_ideas/…/README.html`로 docs 바깥을 가리켰고, Pages 소스가 `/docs`이면 docs 바깥은 서빙되지 않음
