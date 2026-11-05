@@ -106,10 +106,12 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h2 id="요약">📌 요약</h2>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
-<li>min-sum LDPC 디코더의 검사 노드(CNU, Check Node Unit)는 <strong>검사식에 들어온
-  메시지 크기의 최솟값(min1)</strong>과 <strong>둘째 최솟값(min2)</strong>을 골라, <strong>정규화
-  계수 α</strong>(0 ≤ α ≤ 1의 곱셈 계수)를 곱해 되돌려 줌</li>
-<li>논문은 <strong>α를 고정하지 않고 min2 - min1 격차로 매번 선택</strong>:<ul>
+<li>min-sum 정규화 계수 α를 고정하지 않고 <strong>min2 - min1 격차로 매번 고르고</strong>(격차가
+  크면 높게, 작으면 낮게), 001과 같은 이중 상한(P &lt; Q)을 결합함</li>
+<li>배경: 검사 노드(CNU, Check Node Unit)는 <strong>검사식에 들어온 메시지 크기의
+  최솟값(min1)</strong>과 <strong>둘째 최솟값(min2)</strong>을 골라, <strong>정규화 계수 α</strong>(0 ≤ α ≤ 1의
+  곱셈 계수)를 곱해 되돌려 줌</li>
+<li>격차로 고르는 까닭:<ul>
 <li>격차가 크면:<ul>
 <li>min1이 확실히 가장 작음, 신뢰 높음</li>
 <li>높은 계수로 감쇠를 줄임</li>
@@ -122,8 +124,6 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </li>
 </ul>
 </li>
-<li>추가로 min1과 min2에 서로 다른 상한(P &lt; Q)을 두는 <strong>이중 상한</strong>
-  (001_minsum_dual_clip과 같은 구조)을 결합함</li>
 </ul>
 </li>
 <li><strong>제안 이유</strong>:<ul>
@@ -150,8 +150,10 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </ul>
 </li>
 <li><strong>실험 결과</strong>:<ul>
-<li><strong>판정: 조건부 유효</strong>. 001과 같은 조건(채널 LLR 크기 대비 edge 상한에 여유가
-  있을 때만 이득)에서, 이득 조건에서는 <span class="better">001을 넘어섬</span></li>
+<li><strong>판정: 조건부 유효</strong>. 001과 같이 edge 상한에 여유가 있을 때만 이득이고, 그
+  조건에서 클리핑과 결합하면 E=300 FER(프레임 오류율) <span class="better">5.21e-02로
+  전 조합 최량</span>이라 001을 넘어섬 (여유가 없으면 <span class="worse">모든 보정이
+  악화</span>)</li>
 <li>이득 조건(균일 ch=8, edge 상한 15)에서 <strong>클리핑+동적 정규화 결합</strong>이 E=300
   FER <span class="better">5.21e-02로 전 조합 최량</span> (클리핑만 1.00, 고정
   정규화만 1.00, 동적만 4.53e-01)</li>

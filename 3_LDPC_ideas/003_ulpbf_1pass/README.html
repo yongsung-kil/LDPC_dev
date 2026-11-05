@@ -106,8 +106,9 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h2 id="요약">📌 요약</h2>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
-<li>에러가 아주 적은 프레임 전용의 <strong>가벼운 1단계 비트 플립 디코더</strong>(ULPBF,
-  Ultra-Low Power Bit-Flipping)</li>
+<li>에러가 아주 적은 프레임 전용의 <strong>1단계 비트 플립</strong>(ULPBF, Ultra-Low Power
+  Bit-Flipping): 처음 한 번 계산한 syndrome만 보고 문턱을 넘는 비트를 한꺼번에
+  뒤집고, 성공은 CRC로 판정함</li>
 <li>복호 시작 때 한 번 계산한 <strong>syndrome</strong>(패리티 검사 결과 벡터)만 읽어, 비트마다
   <strong>불만족 검사 합</strong>(그 비트가 걸린 패리티 검사 중 어긋난 것의 개수)을 구함</li>
 <li>불만족 검사 합이 <strong>dv</strong>(변수 노드 차수, 그 비트가 걸린 검사 개수)별 문턱 T[dv]
@@ -137,8 +138,9 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </ul>
 </li>
 <li><strong>실험 결과</strong>:<ul>
-<li><strong>판정: 조건부 유효</strong>. 1 pass + CRC 판정의 2단 구성은 <strong>에러 16bit 이하</strong> 영역
-  전용의 맨 앞 단으로 성립함</li>
+<li><strong>판정: 조건부 유효</strong>. 에러 16bit 이하 프레임 전용의 맨 앞 단으로 성립: 1단 단독
+  성공률 <span class="better">t=8에서 86.2%</span>, 그 프레임의 min-sum iteration
+  <span class="better">84-100% 생략</span>, 2단 구성 FER(프레임 오류율)는 비열화</li>
 <li>1단 단독 성공률(최선 문턱, CRC 판정)은 <span class="better">t=8에서 86.2%,
   t=16에서 46.6%</span> (50% 교차 t=15 부근). t ≥ 50은 0%</li>
 <li>t ≤ 8 프레임은 <span class="better">min-sum iteration의 84-100%가 생략됨</span>

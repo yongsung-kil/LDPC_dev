@@ -106,11 +106,11 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h2 id="요약">📌 요약</h2>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
-<li>BF(Bit Flipping, 비트 플리핑) 디코더를 여러 단계로 잇는 <strong>다단 구조</strong>에서, 단계를
-  바꾸는 시점을 고정 반복 횟수 대신 <strong>디코딩이 루프에 빠진 때</strong>로 정함 (루프: 같은
-  추정 벡터가 반복해서 다시 나타나는 상태)</li>
-<li>추가로 1단계 파라미터를 "1단계 단독 성공률 최대"가 아니라 <strong>"실패 프레임당 잔여
-  오류 수 ρ(로) 최소"</strong> 기준으로 다시 고름</li>
+<li>다단 BF(Bit Flipping, 비트 플리핑) 디코더의 단계 전환 시점을 고정 반복 횟수
+  대신 <strong>디코딩이 루프에 빠진 때로</strong> 정하고, 1단계 파라미터를 실패 프레임당
+  <strong>잔여 오류 수 ρ(로) 최소</strong> 기준으로 다시 고름</li>
+<li>루프: 같은 추정 벡터가 반복해서 다시 나타나는 상태</li>
+<li>ρ 기준은 "1단계 단독 성공률 최대" 기준을 대신함</li>
 </ul>
 </li>
 <li><strong>제안 이유</strong>:<ul>
@@ -133,9 +133,11 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </ul>
 </li>
 <li><strong>실험 결과</strong>:<ul>
-<li><strong>판정: 실패</strong> (논문의 두 제안 모두, 현 C++ HD 구조 기준)</li>
-<li>적응 전환: genie 전수 탐색이 <span class="worse">조기 전환을 한 프레임도 선택하지
-  않음</span>. 8회 창의 1단계 실패는 루프가 아니라 느린 수렴이라 감지할 진동 신호가 없음</li>
+<li><strong>판정: 실패</strong>. 두 제안 모두 현 C++ HD 구조에서 실패: 조기 전환은 genie 전수
+  탐색도 <span class="worse">한 프레임도 고르지 않았고</span>, ρ 재튜닝은 2단계
+  일량과 인과 경로가 없음. 파생 발견: 1bit 창 4에서 8로 고정 연장이 가중 반복
+  <span class="better">4.7-25.7% 절감</span></li>
+<li>적응 전환: 8회 창의 1단계 실패는 루프가 아니라 느린 수렴이라 감지할 진동 신호가 없음</li>
 <li>감지기 셋은 침묵(주기 2 진동, 플립 수 0)하거나 <span class="worse">오경보로
   손해</span>(syndrome weight 정체, 달성률 음수)</li>
 <li>ρ 재튜닝: 전환 시 CN 상태를 비우는 현 구조에서 1단계 잔여 오류는 2단계 일량과 무관함

@@ -106,12 +106,11 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h2 id="요약">📌 요약</h2>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
-<li>min-sum LDPC 디코더의 <strong>검사 노드 연산(CNU, Check Node Unit)</strong>은 검사식마다
-  들어온 메시지 크기 중 <strong>가장 작은 값(min1)</strong>과 <strong>둘째로 작은 값(min2)</strong>만 골라
-  돌려줌</li>
-<li>논문은 이 두 값을 <strong>서로 다른 상한으로 잘라내자고 제안</strong>: min1은 상한 P,
-  min2는 상한 Q (1 ≤ P ≤ Q)</li>
-<li>상한 하나(P=Q)보다 <strong>두 상한을 따로 두는 쪽이 낫다</strong>는 것이 핵심 주장</li>
+<li>min-sum 검사 노드가 돌려주는 가장 작은 값(min1)과 둘째로 작은 값(min2)을
+  <strong>서로 다른 상한 P ≤ Q로 잘라냄</strong> (상한 하나보다 둘을 따로 두는 쪽이 낫다는 주장)</li>
+<li>배경: min-sum LDPC 디코더의 <strong>검사 노드 연산(CNU, Check Node Unit)</strong>은
+  검사식마다 들어온 메시지 크기 중 min1과 min2만 골라 돌려줌. 논문은 min1에
+  상한 P, min2에 상한 Q (1 ≤ P ≤ Q)를 둠</li>
 </ul>
 </li>
 <li><strong>제안 이유</strong>:<ul>
@@ -135,8 +134,10 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </ul>
 </li>
 <li><strong>실험 결과</strong>:<ul>
-<li><strong>판정: 조건부 유효</strong>. 클리핑의 득실은 <strong>채널 LLR 크기 대비 edge 상한의
-  여유</strong>가 결정함</li>
+<li><strong>판정: 조건부 유효</strong>. 채널 LLR 크기 대비 edge 상한에 여유가 있을 때만 이득:
+  여유가 크면 무클립 FER(프레임 오류율) 1.0이 가이드값 (4,8)에서
+  <span class="better">FER 0</span>, 여유가 없으면 <span class="worse">모든
+  클리핑이 악화</span></li>
 <li>여유가 없는 환경(LLR_MATRIX_HD_1, dv별 ch 5/10/13/28, edge 상한 7)에서는
   <span class="worse">모든 클리핑이 악화</span> (E=200 FER 4.84e-01이 가장 약한
   클리핑 (5,7)에서도 5.16e-01)</li>

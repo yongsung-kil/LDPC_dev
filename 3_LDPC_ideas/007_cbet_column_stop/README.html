@@ -106,12 +106,13 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h2 id="요약">📌 요약</h2>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
-<li><strong>조기 종료</strong>: LDPC 복호가 수렴하면 최대 반복 횟수를 다 채우지 않고 멈추는 기능</li>
-<li>기존 조기 종료는 <strong>iteration</strong>(모든 column block을 한 바퀴 도는 반복 단위)이 끝날
+<li>LDPC 복호의 조기 종료 확인을 iteration 끝이 아니라 <strong>column block 하나를 처리할
+  때마다</strong> 하자는 제안 (CB-ET, column-based early termination). 판정 재료는
+  디코더가 이미 들고 있는 패리티 검사 상태라 추가 연산이 거의 없음</li>
+<li><strong>조기 종료</strong>: LDPC 복호가 수렴하면 최대 반복 횟수를 다 채우지 않고 멈추는 기능.
+  기존 조기 종료는 <strong>iteration</strong>(모든 column block을 한 바퀴 도는 반복 단위)이 끝날
   때만 수렴을 확인함</li>
-<li>논문은 <strong>column block</strong>(열 블록, 한 번에 처리하는 열 묶음)을 하나 처리할 때마다
-  확인하자고 제안함 (CB-ET, column-based early termination)</li>
-<li>판정 재료는 디코더가 이미 들고 있는 패리티 검사 상태라 추가 연산이 거의 없음</li>
+<li><strong>column block</strong>: 열 블록, 한 번에 처리하는 열 묶음</li>
 </ul>
 </li>
 <li><strong>제안 이유</strong>:<ul>
@@ -136,7 +137,9 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </ul>
 </li>
 <li><strong>실험 결과</strong>:<ul>
-<li><strong>판정: 실패</strong> (측정한 HD min-sum 영역 기준)</li>
+<li><strong>판정: 실패</strong>. 측정한 경판정(HD) min-sum 영역에서 기존 조기 종료(PCRC) 대비 순증
+  절감이 <span class="worse">전 구간 음수 (-7.2%에서 -14.0%)</span>: 판정 비트가 다
+  맞은 뒤에도 check sum weight가 늦게 0에 닿아 column 단위 확인이 이득을 내지 못함</li>
 <li>CB-ET의 iteration 경계 대비 절감은 0.1-5.4%, 기존 PCRC 모사는 6.8-12.8%. 그래서
   PCRC 대비 CB-ET 순증은 <span class="worse">전 구간 음수 (-7.2%에서 -14.0%)</span></li>
 <li>원인은 <strong>CSW</strong>(check sum weight, 패리티 검사 위반 수)의 지연: 이 코드베이스의

@@ -5,16 +5,19 @@
 ## 📌 요약
 
 - **논문 아이디어**:
-    - NAND용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환 저밀도
-      패리티 검사) 부호를 **경판정 비트 플리핑(BF, Bit Flipping)만으로** 높은 오류
-      수까지 복호하는 **UP-GDBF**(Unified Penalty Gradient Descent Bit Flipping)
-    - 비트마다 **에너지**(그 비트가 틀렸다는 증거 점수)를 계산:
+    - 경판정 비트 플리핑(BF, Bit Flipping)만으로 높은 오류 수까지 복호하는
+      **UP-GDBF**(Unified Penalty Gradient Descent Bit Flipping): 비트마다
+      에너지(틀렸다는 증거 점수)를 매겨 **전역 최대인 비트만 플립**하고, 난수를
+      에너지 가산항으로 통합함
+    - 대상은 NAND용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환
+      저밀도 패리티 검사) 부호
+    - 비트마다 **에너지**를 계산:
         - 채널 초기값과 어긋나면 +1
         - 그 비트에 연결된 위반 검사 수만큼 +
         - 직전 iteration에 플립되지 않았으면 +1
         - 난수로 +0 또는 +1
-    - iteration마다 **에너지가 전역 최대인 비트만 모두 플립** (두 pass 구조: 최대
-      탐색 pass, 플리핑 pass)
+    - iteration마다 전역 최대 에너지 비트를 모두 플립 (두 pass 구조: 최대 탐색 pass,
+      플리핑 pass)
     - 난수를 플립 허가 조건(하드 제약)이 아니라 **에너지 가산항(소프트 제약)으로
       통합**한 것이 핵심 변경. 초기 t_active iteration 동안은 난수를 꺼서 결정적으로 돎
     - 추가 하드웨어 기법 **energy-based backtracking**: 플리핑 pass가 플립이 있는
@@ -35,12 +38,11 @@
     - flip miss, 과교정, dv(변수 노드 차수)별 플립 분포, 플립 block 수, min-sum 대비
       연산 수 대리 지표 (상세는 아래 평가 계획 표)
 - **실험 결과**:
-    - **판정: 실패** (평가 대상 파라미터 기준). BF 단독 복호 가능 상한이
-      <span class="worse">EBC 40</span>으로 목표 영역(0-150bit)의 1/4 수준 (논문 보고
-      138의 1/3 아래)
-    - 원인은 dv 혼합 {2, 3, 4, 11} 구조와 전역 최대 비교의 비호환: EBC 120 이상에서
-      <span class="worse">dv=2, 3 column의 플립이 0회</span> (전역 최대 에너지를 dv=11
-      column이 독점)
+    - **판정: 실패**. 평가 대상 파라미터에서 BF 단독 복호 가능 상한이 프레임당 에러
+      <span class="worse">40bit(EBC 40)</span>으로 목표 영역(0-150bit)의 1/4 수준: dv
+      혼합 {2, 3, 4, 11} 구조에서 전역 최대 에너지를 dv=11 column이 독점함
+    - 논문 보고 EBC 138의 1/3 아래. 원인은 dv 혼합 구조와 전역 최대 비교의 비호환:
+      EBC 120 이상에서 <span class="worse">dv=2, 3 column의 플립이 0회</span>
     - 연산 수 대리 지표(1bit:3bit = 1:3)는 전 포인트에서 min-sum 단독 대비
       <span class="worse">1.6-14배 손해</span>
     - 논문 내부 주장(난수 소프트 제약화, momentum, backtracking 절감 47%)은 모두

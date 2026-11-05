@@ -14,7 +14,8 @@
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
     - 대시보드 (저장소 루트 index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의
-      머리줄(제목, 출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의
+      머리줄(제목, 출처, 판정)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목의 첫 bullet
+      (아이디어 한 줄, 결과 한 줄. 결과 줄은 `**판정: …**.` 머리를 뺀 나머지), 출처 상세의
       "적용 분석 메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 그 README.html로 간다
       (README 형식은 보고서작성규칙.md 16절). 링크는 저장소 루트 기준 상대 경로다
     - 일괄 변환 뒤 3_LDPC_ideas/ 안에 남은, 이번에 만들지 않은 render.py 산출 html은 지운다
@@ -55,6 +56,7 @@ SOURCE_HEADING = "출처 상세"
 FEATURE_LABEL = "논문 아이디어"
 RESULT_LABEL = "실험 결과"
 MEMO_LABEL = "적용 분석 메모"
+RESULT_VERDICT_PREFIX = re.compile(r"^\*\*판정:[^*]*\*\*\.?\s*")   # 결과 첫 bullet의 판정 머리 (카드에서는 머리의 점과 낱말이 대신한다)
 
 MD_EXTENSIONS = ["extra", "toc"]
 MD_EXTENSION_CONFIGS = {"toc": {"slugify": slugify_unicode}}
@@ -265,17 +267,17 @@ DASH_STYLE = """
 #ldpcDashRoot .card h2 a { color: var(--text); }
 #ldpcDashRoot .card h2 a:hover { text-decoration: none; }
 #ldpcDashRoot .card h2 a::after { content: ""; position: absolute; inset: 0; }
-#ldpcDashRoot .card .source { margin: 0 0 4px; font-size: 13px; line-height: 20px; color: var(--muted); }
-#ldpcDashRoot .card .status-note { margin: 0 0 12px; font-size: 13px; line-height: 20px; color: var(--muted); }
-#ldpcDashRoot .card h3 {
-    margin: 16px 0 4px;
-    font-size: 13px;
-    line-height: 20px;
-    font-weight: 500;
-    color: var(--muted);
+#ldpcDashRoot .card .source { margin: 0; font-size: 13px; line-height: 20px; color: var(--muted); }
+#ldpcDashRoot .card .gist {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 12px;
+    margin: 12px 0 0;
+    font-size: 15px;
+    line-height: 22px;
 }
-#ldpcDashRoot .card ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 22px; list-style: disc; }
-#ldpcDashRoot .card li { margin: 4px 0; }
+#ldpcDashRoot .card .gist dt { font-size: 13px; line-height: 22px; color: var(--muted); }
+#ldpcDashRoot .card .gist dd { margin: 0; }
 #ldpcDashRoot .card .links {
     position: relative;
     z-index: 1;
@@ -597,7 +599,6 @@ def parse_idea_readme(md_path, rendered_md_paths):
             source, status = match.group(1), match.group(2)
             break
     badge = re.split(r"\s*\(", status, maxsplit=1)[0].strip() or "대기"
-    note = status[len(badge):].strip().strip("()").strip()
 
     summary = parse_summary_items(lines)
     memo = parse_memo_link(lines)
@@ -617,7 +618,6 @@ def parse_idea_readme(md_path, rendered_md_paths):
         "href": relative_href(REPO_ROOT, html_path_for(md_path)),
         "source": source,
         "badge": badge,
-        "note": note,
         "css": status_class(badge),
         "features": summary.get(FEATURE_LABEL, []),
         "results": summary.get(RESULT_LABEL, []),
@@ -640,10 +640,14 @@ def collect_ideas(rendered_md_paths):
 # 대시보드: html 조립
 # ----------------------------------------------------------------------------
 
-def bullet_list(sentences, empty_text):
+def gist_line(sentences, empty_text, drop_verdict_prefix=False):
+    """항목의 첫 1단계 bullet을 카드 한 줄(dd)로 만든다."""
     if not sentences:
-        return '<p class="empty">{}</p>'.format(escape(empty_text))
-    return "<ul>" + "".join("<li>{}</li>".format(convert_inline(s)) for s in sentences) + "</ul>"
+        return '<dd class="empty">{}</dd>'.format(escape(empty_text))
+    text = sentences[0]
+    if drop_verdict_prefix:
+        text = RESULT_VERDICT_PREFIX.sub("", text, count=1)
+    return "<dd>{}</dd>".format(convert_inline(text))
 
 
 def build_card(idea):
@@ -656,12 +660,10 @@ def build_card(idea):
     ]
     if idea["source"]:
         parts.append('<p class="source">출처: {}</p>'.format(escape(idea["source"])))
-    if idea["note"]:
-        parts.append('<p class="status-note">{}</p>'.format(convert_inline(idea["note"])))
-    parts.append("<h3>특징</h3>")
-    parts.append(bullet_list(idea["features"], "요약의 논문 아이디어 항목이 없음"))
-    parts.append("<h3>실험 결과</h3>")
-    parts.append(bullet_list(idea["results"], "요약의 실험 결과 항목이 없음"))
+    parts.append('<dl class="gist">')
+    parts.append("<dt>아이디어</dt>" + gist_line(idea["features"], "요약의 논문 아이디어 항목이 없음"))
+    parts.append("<dt>결과</dt>" + gist_line(idea["results"], "요약의 실험 결과 항목이 없음", drop_verdict_prefix=True))
+    parts.append("</dl>")
     links = ['<a href="{}">상세 보고서</a>'.format(idea["href"])]
     if idea["memo_href"]:
         links.append('<a href="{}">논문 분석 메모</a>'.format(idea["memo_href"]))

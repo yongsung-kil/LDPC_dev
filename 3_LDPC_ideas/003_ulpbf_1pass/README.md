@@ -5,8 +5,9 @@
 ## 📌 요약
 
 - **논문 아이디어**:
-    - 에러가 아주 적은 프레임 전용의 **가벼운 1단계 비트 플립 디코더**(ULPBF,
-      Ultra-Low Power Bit-Flipping)
+    - 에러가 아주 적은 프레임 전용의 **1단계 비트 플립**(ULPBF, Ultra-Low Power
+      Bit-Flipping): 처음 한 번 계산한 syndrome만 보고 문턱을 넘는 비트를 한꺼번에
+      뒤집고, 성공은 CRC로 판정함
     - 복호 시작 때 한 번 계산한 **syndrome**(패리티 검사 결과 벡터)만 읽어, 비트마다
       **불만족 검사 합**(그 비트가 걸린 패리티 검사 중 어긋난 것의 개수)을 구함
     - 불만족 검사 합이 **dv**(변수 노드 차수, 그 비트가 걸린 검사 개수)별 문턱 T[dv]
@@ -28,8 +29,9 @@
     - 실패 시 오플립 수, 2단 구성 FER(frame error rate, 프레임 오류율)의 비열화
     - CRC 거짓 통과 수, min-sum iteration 생략률 (상세는 아래 평가 계획 표)
 - **실험 결과**:
-    - **판정: 조건부 유효**. 1 pass + CRC 판정의 2단 구성은 **에러 16bit 이하** 영역
-      전용의 맨 앞 단으로 성립함
+    - **판정: 조건부 유효**. 에러 16bit 이하 프레임 전용의 맨 앞 단으로 성립: 1단 단독
+      성공률 <span class="better">t=8에서 86.2%</span>, 그 프레임의 min-sum iteration
+      <span class="better">84-100% 생략</span>, 2단 구성 FER(프레임 오류율)는 비열화
     - 1단 단독 성공률(최선 문턱, CRC 판정)은 <span class="better">t=8에서 86.2%,
       t=16에서 46.6%</span> (50% 교차 t=15 부근). t ≥ 50은 0%
     - t ≤ 8 프레임은 <span class="better">min-sum iteration의 84-100%가 생략됨</span>
