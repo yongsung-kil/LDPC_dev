@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>논문 아이디어 적용</title>
-<!-- render.py가 README.md에서 만든 파일. md가 정본이므로 이 파일을 손으로 고치지 않는다 -->
+<!-- render.py가 3_LDPC_ideas/README.md에서 만든 파일. md가 정본이므로 이 파일을 손으로 고치지 않는다 -->
 <style>
 :root {
     --bg: #ffffff;
@@ -100,11 +100,11 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </head>
 <body>
 <div id="ldpcDocRoot">
-<nav class="doc-nav"><a href="../docs/index.html">대시보드로</a></nav>
+<nav class="doc-nav"><a href="../index.html">대시보드로</a></nav>
 <h1 id="논문-아이디어-적용">논문 아이디어 적용</h1>
 <blockquote>
 <p>논문 아이디어를 <code>2_LDPC_base</code> 시뮬레이터에 하나씩 적용해 보고, 결과를 아이디어별
-보고서와 현황표로 남기는 프로젝트. 한눈에 보는 화면은 <a href="../docs/index.html">대시보드</a>
+보고서와 현황표로 남기는 프로젝트. 한눈에 보는 화면은 <a href="../index.html">대시보드</a>
 (<code>python render.py</code>가 아이디어별 README에서 만든다).</p>
 </blockquote>
 <hr />
@@ -158,7 +158,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <tr>
 <td>7. 판정</td>
 <td>현황표 상태를 갱신하고 <code>python render.py</code>로 html과 대시보드를 다시 만듦</td>
-<td>README.html, 루트 docs/index.html</td>
+<td>루트 <code>docs/</code> 아래 html (보고서 README.html과 대시보드 index.html)</td>
 <td>이 문서의 현황표</td>
 </tr>
 <tr>
@@ -291,9 +291,11 @@ body { margin: 0; background: var(--bg); color: var(--text); }
   <code>2_LDPC_base/Input/</code>을 쓴다 (config의 <code>../../2_LDPC_base/Input/...</code>)</li>
 <li>㉳ 문서에는 날짜를 적지 않는다 (시점 기록은 git 이력과 <code>_pm/</code>이 담당하고,
   실험 시점 기록이 필요하면 <a href="%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.html">실험로그.md</a>에 둔다)</li>
-<li>㉴ 문서는 md가 정본이고, md를 고치면 <code>python render.py</code>로 형제 html과 대시보드
-  루트 <a href="../docs/index.html">docs/index.html</a>을 다시 만들어 함께 커밋한다 (html은 열람용. README 작성
-  규칙은 <a href="%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새논문적용규칙.md</a> 6절과
+<li>㉴ 문서는 md가 정본이고, md를 고치면 <code>python render.py</code>로 저장소 루트 <code>docs/</code> 아래의
+  html(보고서, 메모, 대시보드 <a href="../index.html">docs/index.html</a>)을 다시 만들어 함께 커밋한다.
+  html은 열람용이고 md와 같은 폴더 구조로 <code>docs/</code> 안에 놓이므로 <code>docs/</code> 폴더 하나만
+  복사해도 링크가 이어진다 (README 작성 규칙은
+  <a href="%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새논문적용규칙.md</a> 6절과
   <a href="%EB%B3%B4%EA%B3%A0%EC%84%9C%EC%9E%91%EC%84%B1%EA%B7%9C%EC%B9%99.html">보고서작성규칙.md</a>).
   render.py는 만든 html의 상대 링크가 가리키는 파일이 있는지 검사해 깨진 링크를 보고한다</li>
 </ul>

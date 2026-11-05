@@ -147,12 +147,12 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h1>논문 아이디어 적용 대시보드</h1>
 <p class="intro">논문 아이디어를 2_LDPC_base 시뮬레이터에 하나씩 적용해 본 결과. 카드를 누르면 상세 보고서로 간다.</p>
 <ul class="site-nav">
-<li><a href="../3_LDPC_ideas/README.html#%EB%8F%99%EC%9E%91-%ED%9D%90%EB%A6%84">동작 흐름</a></li>
+<li><a href="3_LDPC_ideas/README.html#%EB%8F%99%EC%9E%91-%ED%9D%90%EB%A6%84">동작 흐름</a></li>
 <li><a href="https://yongsung-kil.github.io/ECC_papers/">논문 분석 아카이브</a></li>
-<li><a href="../3_LDPC_ideas/README.html#%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%ED%98%84%ED%99%A9%ED%91%9C">아이디어 현황표</a></li>
-<li><a href="../3_LDPC_ideas/%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.html">실험 로그</a></li>
-<li><a href="../3_LDPC_ideas/%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새 논문 적용 규칙</a></li>
-<li><a href="../3_LDPC_ideas/%EB%B3%B4%EA%B3%A0%EC%84%9C%EC%9E%91%EC%84%B1%EA%B7%9C%EC%B9%99.html">보고서 작성 규칙</a></li>
+<li><a href="3_LDPC_ideas/README.html#%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%ED%98%84%ED%99%A9%ED%91%9C">아이디어 현황표</a></li>
+<li><a href="3_LDPC_ideas/%EC%8B%A4%ED%97%98%EB%A1%9C%EA%B7%B8.html">실험 로그</a></li>
+<li><a href="3_LDPC_ideas/%EC%83%88%EB%85%BC%EB%AC%B8%EC%A0%81%EC%9A%A9%EA%B7%9C%EC%B9%99.html">새 논문 적용 규칙</a></li>
+<li><a href="3_LDPC_ideas/%EB%B3%B4%EA%B3%A0%EC%84%9C%EC%9E%91%EC%84%B1%EA%B7%9C%EC%B9%99.html">보고서 작성 규칙</a></li>
 </ul>
 <ul class="stats">
 <li><span class="label">전체</span><span class="count">7</span></li>
@@ -162,80 +162,80 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <ul class="cards">
 <li class="card status-ok">
 <div class="card-head"><span class="num">001</span><span class="badge">조건부 유효</span></div>
-<h2><a href="../3_LDPC_ideas/001_minsum_dual_clip/README.html">CNU min1/min2 이중 상한 클리핑</a></h2>
+<h2><a href="3_LDPC_ideas/001_minsum_dual_clip/README.html">CNU min1/min2 이중 상한 클리핑</a></h2>
 <p class="source">출처: ieee:9496601 (IEEE TCAD 2022)</p>
 <p class="status-note">평가 대상 파라미터로 최종 판정 대기</p>
 <h3>특징</h3>
 <ul><li>min-sum LDPC 디코더의 <strong>검사 노드 연산(CNU, Check Node Unit)</strong>은 검사식마다 들어온 메시지 크기 중 <strong>가장 작은 값(min1)</strong>과 <strong>둘째로 작은 값(min2)</strong>만 골라 돌려줌</li><li>논문은 이 두 값을 <strong>서로 다른 상한으로 잘라내자고 제안</strong>: min1은 상한 P, min2는 상한 Q (1 ≤ P ≤ Q)</li><li>상한 하나(P=Q)보다 <strong>두 상한을 따로 두는 쪽이 낫다</strong>는 것이 핵심 주장</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 조건부 유효</strong>. 클리핑의 득실은 <strong>채널 LLR 크기 대비 edge 상한의 여유</strong>가 결정함</li><li>여유가 없는 환경(LLR_MATRIX_HD_1, dv별 ch 5/10/13/28, edge 상한 7)에서는 <span class="worse">모든 클리핑이 악화</span> (E=200 FER 4.84e-01이 가장 약한 클리핑 (5,7)에서도 5.16e-01)</li><li>여유가 큰 환경(균일 ch=8, edge 상한 15)에서는 무클립이 전 프레임 실패(FER 1.0)하는데 논문 가이드값 (4,8)이 <span class="better">FER 0으로 완전 복구</span></li><li>같은 P에서 Q를 키우면 모든 환경에서 일관 개선 (<span class="better">이중 상한이 단일 상한보다 낫다는 논문 주장 재현</span>)</li><li>평가 대상 파라미터로 최종 판정 대기. 사전 지표는 dv별 <code>ch / (edge상한 × dv)</code> 비율 (1에 가까우면 클리핑 여지 없음)</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/001_minsum_dual_clip/README.html">상세 보고서</a></p>
+<p class="links"><a href="3_LDPC_ideas/001_minsum_dual_clip/README.html">상세 보고서</a></p>
 </li>
 <li class="card status-ok">
 <div class="card-head"><span class="num">002</span><span class="badge">조건부 유효</span></div>
-<h2><a href="../3_LDPC_ideas/002_minsum_dynamic_normalization/README.html">min1/min2 격차 기반 동적 정규화</a></h2>
+<h2><a href="3_LDPC_ideas/002_minsum_dynamic_normalization/README.html">min1/min2 격차 기반 동적 정규화</a></h2>
 <p class="source">출처: ieee:6865103 (IEEE 2014)</p>
 <p class="status-note">평가 대상 파라미터로 최종 판정 대기</p>
 <h3>특징</h3>
 <ul><li>min-sum LDPC 디코더의 검사 노드(CNU, Check Node Unit)는 <strong>검사식에 들어온 메시지 크기의 최솟값(min1)</strong>과 <strong>둘째 최솟값(min2)</strong>을 골라, <strong>정규화 계수 α</strong>(0 ≤ α ≤ 1의 곱셈 계수)를 곱해 되돌려 줌</li><li>논문은 <strong>α를 고정하지 않고 min2 - min1 격차로 매번 선택</strong>:</li><li>추가로 min1과 min2에 서로 다른 상한(P &lt; Q)을 두는 <strong>이중 상한</strong> (001_minsum_dual_clip과 같은 구조)을 결합함</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 조건부 유효</strong>. 001과 같은 조건(채널 LLR 크기 대비 edge 상한에 여유가 있을 때만 이득)에서, 이득 조건에서는 <span class="better">001을 넘어섬</span></li><li>이득 조건(균일 ch=8, edge 상한 15)에서 <strong>클리핑+동적 정규화 결합</strong>이 E=300 FER <span class="better">5.21e-02로 전 조합 최량</span> (클리핑만 1.00, 고정 정규화만 1.00, 동적만 4.53e-01)</li><li>여유가 없는 환경(LLR_MATRIX_HD_1, 비율 복원)에서는 <span class="worse">모든 보정이 악화</span></li><li>격차 임계 <strong>T는 튜닝 필수</strong>: T가 edge 레벨 간격보다 작으면 무보정으로, 너무 크면 고정 정규화로 퇴화함 (가이드: T = edge 레벨 간격, α low 0.75, high 1.0)</li><li>평가 대상 파라미터로 최종 판정 대기. 사전 지표는 001과 같은 dv별 <code>ch / (edge상한 × dv)</code> 비율</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/002_minsum_dynamic_normalization/README.html">상세 보고서</a></p>
+<p class="links"><a href="3_LDPC_ideas/002_minsum_dynamic_normalization/README.html">상세 보고서</a></p>
 </li>
 <li class="card status-ok">
 <div class="card-head"><span class="num">003</span><span class="badge">조건부 유효</span></div>
-<h2><a href="../3_LDPC_ideas/003_ulpbf_1pass/README.html">ULPBF 1 pass (초기 syndrome 일괄 플립 + CRC 판정)</a></h2>
+<h2><a href="3_LDPC_ideas/003_ulpbf_1pass/README.html">ULPBF 1 pass (초기 syndrome 일괄 플립 + CRC 판정)</a></h2>
 <p class="source">출처: ieee:11449331 (NVMSA 2025)</p>
 <p class="status-note">에러 16bit 이하 전용 1단, C++ 반영 검토 대기</p>
 <h3>특징</h3>
 <ul><li>에러가 아주 적은 프레임 전용의 <strong>가벼운 1단계 비트 플립 디코더</strong>(ULPBF, Ultra-Low Power Bit-Flipping)</li><li>복호 시작 때 한 번 계산한 <strong>syndrome</strong>(패리티 검사 결과 벡터)만 읽어, 비트마다 <strong>불만족 검사 합</strong>(그 비트가 걸린 패리티 검사 중 어긋난 것의 개수)을 구함</li><li>불만족 검사 합이 <strong>dv</strong>(변수 노드 차수, 그 비트가 걸린 검사 개수)별 문턱 T[dv] 이상이면 <strong>한꺼번에 뒤집음</strong> (pass 1회, 도중에 syndrome을 다시 계산하지 않음)</li><li>성공 확인은 syndrome 재계산 대신 <strong>CRC</strong>(cyclic redundancy check, 순환 중복 검사)로 함</li><li>실패하면 원본으로 되돌려 기존 min-sum 디코더를 돌림 (2단 구성)</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 조건부 유효</strong>. 1 pass + CRC 판정의 2단 구성은 <strong>에러 16bit 이하</strong> 영역 전용의 맨 앞 단으로 성립함</li><li>1단 단독 성공률(최선 문턱, CRC 판정)은 <span class="better">t=8에서 86.2%, t=16에서 46.6%</span> (50% 교차 t=15 부근). t ≥ 50은 0%</li><li>t ≤ 8 프레임은 <span class="better">min-sum iteration의 84-100%가 생략됨</span> (잔존비 0.000-0.155)</li><li>2단 구성 FER = min-sum 단독 FER (비열화), CRC 거짓 통과 0/55,000프레임</li><li>조건 1: 논문의 일률 문턱 T=dv-1은 이 비규칙 H-matrix에서 <span class="worse">t=8 성공률 1.7%로 동작하지 않음</span>. dv별 혼합 문턱(T=dv 기본, dv 11만 10)이 필수</li><li>조건 2: 이득은 저에러 프레임의 비율에 비례함 (평가 영역 전체의 대체물이 아님)</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/003_ulpbf_1pass/README.html">상세 보고서</a><a href="../3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee11449331_ULPBF.html">논문 분석 메모</a></p>
+<p class="links"><a href="3_LDPC_ideas/003_ulpbf_1pass/README.html">상세 보고서</a><a href="3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee11449331_ULPBF.html">논문 분석 메모</a></p>
 </li>
 <li class="card status-fail">
 <div class="card-head"><span class="num">004</span><span class="badge">실패</span></div>
-<h2><a href="../3_LDPC_ideas/004_upgdbf/README.html">전역 최대 탐색 비트 플리핑 (UP-GDBF)</a></h2>
+<h2><a href="3_LDPC_ideas/004_upgdbf/README.html">전역 최대 탐색 비트 플리핑 (UP-GDBF)</a></h2>
 <p class="source">출처: ieee:9902993 (IEEE OJCAS 2022)</p>
 <p class="status-note">dv 혼합 H-matrix에서 전역 최대 비교가 비호환. dv 균일 부호 채택 시 재평가</p>
 <h3>특징</h3>
 <ul><li>NAND용 4KB급 QC-LDPC(Quasi-Cyclic Low-Density Parity-Check, 준순환 저밀도 패리티 검사) 부호를 <strong>경판정 비트 플리핑(BF, Bit Flipping)만으로</strong> 높은 오류 수까지 복호하는 <strong>UP-GDBF</strong>(Unified Penalty Gradient Descent Bit Flipping)</li><li>비트마다 <strong>에너지</strong>(그 비트가 틀렸다는 증거 점수)를 계산:</li><li>iteration마다 <strong>에너지가 전역 최대인 비트만 모두 플립</strong> (두 pass 구조: 최대 탐색 pass, 플리핑 pass)</li><li>난수를 플립 허가 조건(하드 제약)이 아니라 <strong>에너지 가산항(소프트 제약)으로 통합</strong>한 것이 핵심 변경. 초기 t_active iteration 동안은 난수를 꺼서 결정적으로 돎</li><li>추가 하드웨어 기법 <strong>energy-based backtracking</strong>: 플리핑 pass가 플립이 있는 column block(순환 치환 단위 z개 비트 묶음)만 접근해 cycle을 42% 넘게 절감</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 실패</strong> (평가 대상 파라미터 기준). BF 단독 복호 가능 상한이 <span class="worse">EBC 40</span>으로 목표 영역(0-150bit)의 1/4 수준 (논문 보고 138의 1/3 아래)</li><li>원인은 dv 혼합 {2, 3, 4, 11} 구조와 전역 최대 비교의 비호환: EBC 120 이상에서 <span class="worse">dv=2, 3 column의 플립이 0회</span> (전역 최대 에너지를 dv=11 column이 독점)</li><li>연산 수 대리 지표(1bit:3bit = 1:3)는 전 포인트에서 min-sum 단독 대비 <span class="worse">1.6-14배 손해</span></li><li>논문 내부 주장(난수 소프트 제약화, momentum, backtracking 절감 47%)은 모두 <span class="better">방향 재현</span>. 기법 자체는 건전하고 실패는 부호 구조 차이 때문</li><li>재평가 조건: dv 균일(또는 준균일) H-matrix를 쓰는 설계</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/004_upgdbf/README.html">상세 보고서</a><a href="../3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee9902993_UPGDBF.html">논문 분석 메모</a></p>
+<p class="links"><a href="3_LDPC_ideas/004_upgdbf/README.html">상세 보고서</a><a href="3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee9902993_UPGDBF.html">논문 분석 메모</a></p>
 </li>
 <li class="card status-ok">
 <div class="card-head"><span class="num">005</span><span class="badge">조건부 유효</span></div>
-<h2><a href="../3_LDPC_ideas/005_atbf_quiescent/README.html">ATBF 비트별 임계 적응과 휴면</a></h2>
+<h2><a href="3_LDPC_ideas/005_atbf_quiescent/README.html">ATBF 비트별 임계 적응과 휴면</a></h2>
 <p class="source">출처: ieee:5671820 (PIMRC 2010)</p>
 <p class="status-note">BF 창 8회 연장 전제, 1bit 처리 단가가 min-sum의 약 1/4 이하일 때만 이득</p>
 <h3>특징</h3>
 <ul><li>BF(Bit Flipping, 비트 반전) 복호에서 비트마다 <strong>반전 임계값 λk를 따로 둠</strong>:</li><li><strong>휴면(quiescent)</strong>: 조여진 λk가 기준값 φ1에 도달한 비트는 처리기를 재워 이후 연산을 멈춤 (전력 감축)</li><li><strong>전이 검출 탈출(ES, Early Stopping)</strong>: 어느 비트든 λk가 φ1에 처음 도달하는 순간 복호를 끝냄 (지연과 에너지 감축)</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 조건부 유효</strong>. 적응 조임, 휴면, 전이 검출 탈출 셋 다 이 환경에서 동작하나, 이득은 하드웨어 전제가 붙음</li><li>적응 조임(ATBF): 고정 임계 대비 BF 단계 성공률 <span class="better">0에서 0.95로 (E=10)</span>, 전역 min 연산 없이 동작함</li><li>휴면: BF 구간 처리 비트 <span class="better">27-50% 절감</span>, 절감분이 폴백 증가분보다 큼. 합산 FER는 min-sum 단독과 같음</li><li>전이 검출 탈출: BF iteration <span class="better">최대 44% 단축</span>, 오판율 0.4% 이하</li><li>조건 1: BF 창을 4회에서 8회로 연장해야 휴면이 성공률과 양립함 (창 4에서는 휴면을 켜면 성공률 <span class="worse">0.953에서 0.340으로 하락</span>)</li><li>조건 2: 처리 비트 총량은 <span class="worse">min-sum 단독이 항상 적음</span> (BF+폴백이 2.1-3.5배). 1bit BF 처리 단가가 min-sum 단가의 약 1/4 이하일 때만 이득</li><li>논문 수치(전력 76%, iteration 89%)는 최대 100회 BF 단독 전제라 그대로 오지 않음. 이 구조의 실측 상한은 비트 50%, iteration 약 50%</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/005_atbf_quiescent/README.html">상세 보고서</a><a href="../3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee5671820_%EC%A0%80%EC%A0%84%EB%A0%A5BF.html">논문 분석 메모</a></p>
+<p class="links"><a href="3_LDPC_ideas/005_atbf_quiescent/README.html">상세 보고서</a><a href="3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee5671820_%EC%A0%80%EC%A0%84%EB%A0%A5BF.html">논문 분석 메모</a></p>
 </li>
 <li class="card status-fail">
 <div class="card-head"><span class="num">006</span><span class="badge">실패</span></div>
-<h2><a href="../3_LDPC_ideas/006_bf_stage_switch/README.html">BF 단계 적응 전환과 잔여 오류 기준 재튜닝</a></h2>
+<h2><a href="3_LDPC_ideas/006_bf_stage_switch/README.html">BF 단계 적응 전환과 잔여 오류 기준 재튜닝</a></h2>
 <p class="source">출처: ieee:8742682 (IEEE Communications Letters 2019)</p>
 <p class="status-note">적응 전환은 감지할 신호가 없고 ρ 재튜닝은 인과 경로가 없음. 파생 발견: 1bit 창 4에서 8로 고정 연장이 genie 상한 달성</p>
 <h3>특징</h3>
 <ul><li>BF(Bit Flipping, 비트 플리핑) 디코더를 여러 단계로 잇는 <strong>다단 구조</strong>에서, 단계를 바꾸는 시점을 고정 반복 횟수 대신 <strong>디코딩이 루프에 빠진 때</strong>로 정함 (루프: 같은 추정 벡터가 반복해서 다시 나타나는 상태)</li><li>추가로 1단계 파라미터를 "1단계 단독 성공률 최대"가 아니라 <strong>"실패 프레임당 잔여 오류 수 ρ(로) 최소"</strong> 기준으로 다시 고름</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 실패</strong> (논문의 두 제안 모두, 현 C++ HD 구조 기준)</li><li>적응 전환: genie 전수 탐색이 <span class="worse">조기 전환을 한 프레임도 선택하지 않음</span>. 8회 창의 1단계 실패는 루프가 아니라 느린 수렴이라 감지할 진동 신호가 없음</li><li>감지기 셋은 침묵(주기 2 진동, 플립 수 0)하거나 <span class="worse">오경보로 손해</span>(syndrome weight 정체, 달성률 음수)</li><li>ρ 재튜닝: 전환 시 CN 상태를 비우는 현 구조에서 1단계 잔여 오류는 2단계 일량과 무관함 (인과 경로 없음). 측정에서도 ρ 최소와 비용 최소의 방향이 일관되지 않음</li><li>파생 발견: 전환 상한을 4회에서 8회로 늘린 <strong>고정 정책이 genie 상한 전부를 달성</strong>함 (E 120-150에서 가중 반복 <span class="better">4.7-25.7% 절감</span>, FER 손실 0). 적응 기법이 아니라 <code>ITER_MAX_HBF</code> 상수 변경이며 결정거리로 이관</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/006_bf_stage_switch/README.html">상세 보고서</a><a href="../3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee8742682_%EB%8B%A4%EB%8B%A8BF.html">논문 분석 메모</a></p>
+<p class="links"><a href="3_LDPC_ideas/006_bf_stage_switch/README.html">상세 보고서</a><a href="3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee8742682_%EB%8B%A4%EB%8B%A8BF.html">논문 분석 메모</a></p>
 </li>
 <li class="card status-fail">
 <div class="card-head"><span class="num">007</span><span class="badge">실패</span></div>
-<h2><a href="../3_LDPC_ideas/007_cbet_column_stop/README.html">열 단위 조기 종료 CB-ET</a></h2>
+<h2><a href="3_LDPC_ideas/007_cbet_column_stop/README.html">열 단위 조기 종료 CB-ET</a></h2>
 <p class="source">출처: ieee:6865738 (2014 학회)</p>
 <p class="status-note">기존 PCRC 대비 순증 절감이 전 구간 음수, -7.2%에서 -14.0%</p>
 <h3>특징</h3>
 <ul><li><strong>조기 종료</strong>: LDPC 복호가 수렴하면 최대 반복 횟수를 다 채우지 않고 멈추는 기능</li><li>기존 조기 종료는 <strong>iteration</strong>(모든 column block을 한 바퀴 도는 반복 단위)이 끝날 때만 수렴을 확인함</li><li>논문은 <strong>column block</strong>(열 블록, 한 번에 처리하는 열 묶음)을 하나 처리할 때마다 확인하자고 제안함 (CB-ET, column-based early termination)</li><li>판정 재료는 디코더가 이미 들고 있는 패리티 검사 상태라 추가 연산이 거의 없음</li></ul>
 <h3>실험 결과</h3>
 <ul><li><strong>판정: 실패</strong> (측정한 HD min-sum 영역 기준)</li><li>CB-ET의 iteration 경계 대비 절감은 0.1-5.4%, 기존 PCRC 모사는 6.8-12.8%. 그래서 PCRC 대비 CB-ET 순증은 <span class="worse">전 구간 음수 (-7.2%에서 -14.0%)</span></li><li>원인은 <strong>CSW</strong>(check sum weight, 패리티 검사 위반 수)의 지연: 이 코드베이스의 check sum은 V2C extrinsic 부호 기반이라 판정 비트가 다 맞은 뒤에도 CSW가 늦게 0에 닿음 (genie 수렴 시점까지 CSW가 0에 닿지 않은 프레임 <span class="worse">71-96%</span>)</li><li>확인 주기를 column 단위로 좁혀도 이 지연을 뒤집지 못함</li><li>안전성은 확인됨: 거짓 정지(정보 비트에 에러가 남았는데 정지) <span class="better">15,000 프레임에서 0건</span>. 다만 이득이 없으면 추가할 이유가 없음</li><li>측정 범위 밖: C++의 BF 1-4회 구간은 py에 BF 모드가 없어 측정하지 않음 (BF 구간은 CSW 지연이 작을 수 있어 재측정 가치 남음)</li></ul>
-<p class="links"><a href="../3_LDPC_ideas/007_cbet_column_stop/README.html">상세 보고서</a><a href="../3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee6865738_CBET.html">논문 분석 메모</a></p>
+<p class="links"><a href="3_LDPC_ideas/007_cbet_column_stop/README.html">상세 보고서</a><a href="3_LDPC_ideas/_pm/tasks/%EC%A0%84%EB%A0%A5%EA%B0%90%EC%B6%95_%EB%85%BC%EB%AC%B8%EC%A0%95%EB%8F%85/%EB%A9%94%EB%AA%A8_ieee6865738_CBET.html">논문 분석 메모</a></p>
 </li>
 </ul>
 </div>

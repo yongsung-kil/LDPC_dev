@@ -16,7 +16,7 @@
 | `4_H_matrix_tool/` | Project 4: H-matrix 설계 툴 (PEG, lifting, 부호 선별) | `4_H_matrix_tool/_pm/TODO.md` |
 | `5_DAO/` | Project 5: DAO(Decoder Auto Optimizer, LLR matrix 자동 최적화기) 발전 (원형 스냅샷은 `reference/`) | `5_DAO/_pm/TODO.md` |
 | `_pm/` | 저장소 공통 작업 관리 | `_pm/TODO.md` |
-| `docs/` | GitHub Pages 입구. `3_LDPC_ideas/render.py`가 만드는 대시보드 index.html만 둔다 (손으로 고치지 않음). 루트 `.nojekyll`은 밑줄로 시작하는 폴더(`_pm/`)가 공개에서 빠지지 않게 하는 빈 파일 | (없음) |
+| `docs/` | GitHub Pages 입구. `3_LDPC_ideas/render.py`가 만드는 html 전부를 둔다 (대시보드 index.html과, md와 같은 폴더 구조의 보고서 html. 손으로 고치지 않음). 이 폴더 하나만 복사해도 링크가 이어진다. 루트와 `docs/`의 `.nojekyll`은 밑줄로 시작하는 폴더(`_pm/`)가 공개에서 빠지지 않게 하는 빈 파일 | (없음) |
 
 ---
 

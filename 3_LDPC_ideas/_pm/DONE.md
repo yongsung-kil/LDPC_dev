@@ -1,5 +1,14 @@
 # DONE: 완료 이력 (3_LDPC_ideas, 논문 아이디어 적용)
 
+### 2026-11-05 보고서 html을 저장소 루트 docs/ 아래로 모아 뽑기 (GitHub Pages 카드 404 수리)
+render.py의 산출물을 전부 루트 docs/ 아래에 md와 같은 폴더 구조로 두어, docs/ 폴더 하나만 복사해도 대시보드와 카드 링크가 이어지게 함
+- **배경**: 대시보드 docs/index.html을 다른 저장소의 GitHub Pages로 열면 카드가 404였음. 카드 링크가 `../3_LDPC_ideas/…/README.html`로 docs 바깥을 가리켰고, Pages 소스가 `/docs`이면 docs 바깥은 서빙되지 않음
+- **변경**:
+  - render.py: 산출 경로를 `docs/{md의 저장소 기준 경로}.html`로 통일(`html_path_for`). 본문의 상대 링크를 html 위치 기준으로 다시 계산(변환 대상 md는 그 html로, 그 밖의 파일은 저장소의 그 파일로). 대시보드 카드, 상단 링크, 메모 링크, "대시보드로" 링크 모두 docs/ 안에서 닫힘. docs/.nojekyll 생성, 이번에 만들지 않은 docs/ 안 html 정리, 저장소 밖 파일 인자 거부
+  - md 옆의 html 16편 삭제(html은 docs/에 한 벌만)
+  - 루트 CLAUDE.md docs/ 행, README.md(동작 흐름 7단계와 폴더 규칙 ㉴), 새논문적용규칙.md 6절 ㉴, 보고서작성규칙.md 16절의 html 위치 설명을 새 구조로
+- **파일**: 3_LDPC_ideas/render.py, docs/ (index.html, .nojekyll, 3_LDPC_ideas/ 아래 html 16편), 루트 CLAUDE.md, 3_LDPC_ideas/README.md, 새논문적용규칙.md, 보고서작성규칙.md
+
 ### 2026-11-04 아이디어 보고서 양식 개편과 대시보드 생성
 아이디어 README 7편을 새 양식(요약 다섯 항목, 개조식 bullet, 개선 빨강과 열화 파랑)으로 다시 쓰고, render.py가 README에서 카드형 대시보드 index.html을 만들게 함
 - **배경**: 사용자 첨삭 (2026-11-04). 논문별 요약을 한눈에 보는 상위 페이지가 없었고, 요약 항목 이름이 의문문형이었으며, "그림자 측정" 같은 비유어와 긴 줄글이 읽기 어려웠음. 실험 결과를 요약만 읽고도 알 수 있어야 한다는 요구

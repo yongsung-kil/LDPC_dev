@@ -1,20 +1,25 @@
-"""md 문서를 같은 자리의 html로 변환하고, 아이디어 대시보드(index.html)를 만드는 렌더러.
+"""md 문서를 저장소 루트 docs/ 아래 html로 변환하고, 아이디어 대시보드(docs/index.html)를 만드는 렌더러.
 
 사용법 (3_LDPC_ideas/ 기준, 다른 위치에서 실행해도 동작):
     python render.py                  # 폴더 안의 md 전체를 변환하고 index.html을 다시 만든다
     python render.py README.md        # 지정한 파일만 변환 (대시보드는 만들지 않는다)
 
 동작:
-    - 각 {이름}.md 옆에 {이름}.html을 만든다 (md가 정본, html은 열람용 파생물)
-    - 문서 안의 .md 링크는 그 md도 변환 대상일 때 .html 링크로 바꿔서 html끼리 이동이
-      이어지게 한다. 변환하지 않는 md를 가리키는 링크는 .md 그대로 둔다
+    - 산출물은 전부 저장소 루트 docs/ 아래에 둔다 (GitHub Pages 입구). md의 저장소 기준 경로를
+      그대로 따라가므로 3_LDPC_ideas/001_x/README.md는 docs/3_LDPC_ideas/001_x/README.html이
+      된다 (md가 정본, html은 열람용 파생물). docs/ 폴더 하나만 복사해도 모든 링크가 이어진다
+    - 문서 안의 상대 링크는 html 위치 기준으로 다시 계산한다. 변환 대상 md를 가리키는 링크는
+      그 md의 html로, 그 밖의 파일을 가리키는 링크는 저장소의 그 파일로 간다
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md (제외: _pm/, _template/, Sim_Output/,
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
-    - 대시보드 (저장소 루트 docs/index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
+    - 대시보드 (docs/index.html): 아이디어 폴더({번호3자리}_{이름}/)마다 README.md의 머리줄(제목,
       출처, 상태)과 📌 요약 절의 "논문 아이디어", "실험 결과" 항목, 출처 상세의 "적용 분석
-      메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 그 README.html로 간다
-      (README 형식은 보고서작성규칙.md 16절). 링크는 루트 docs/ 기준 상대 경로다
+      메모" 링크를 읽어 카드 하나를 만든다. 카드를 누르면 docs/ 안의 그 README.html로 간다
+      (README 형식은 보고서작성규칙.md 16절). 링크는 docs/ 기준 상대 경로다
+    - 일괄 변환 뒤 docs/ 안에 남은, 이번에 만들지 않은 html은 지운다 (이름이 바뀐 md의 묵은
+      산출물). docs/.nojekyll을 둔다 (Pages 소스가 /docs일 때 밑줄로 시작하는 _pm/ 폴더가
+      공개에서 빠지지 않게)
     - 렌더 뒤 html 안의 상대 링크가 가리키는 파일과 앵커가 있는지 검사해 없는 것을 보고한다
 
 규격: HTML 작성 가이드 (정적 파일, 상대 링크만, 외부 자원 없음, :root css 변수와
@@ -33,11 +38,13 @@ import markdown
 from markdown.extensions.toc import slugify_unicode
 
 IDEAS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = IDEAS_DIR.parent
 EXCLUDE_DIR_NAMES = {"_pm", "_template", "Sim_Output", "__pycache__"}
 IDEA_FOLDER_PATTERN = re.compile(r"^\d{3}_")
 
-DASHBOARD_DIR = IDEAS_DIR.parent / "docs"      # 저장소 루트 docs/ (GitHub Pages 입구)
-DASHBOARD_PATH = DASHBOARD_DIR / "index.html"
+SITE_DIR = REPO_ROOT / "docs"                  # 모든 html 산출물 자리 (GitHub Pages 입구)
+DASHBOARD_PATH = SITE_DIR / "index.html"
+NOJEKYLL_PATH = SITE_DIR / ".nojekyll"
 DASHBOARD_TITLE = "논문 아이디어 적용 대시보드"
 PAPER_ARCHIVE_URL = "https://yongsung-kil.github.io/ECC_papers/"
 
@@ -355,18 +362,28 @@ def resolve_link_target(base_dir, href_path):
     return (base_dir / unquote(href_path)).resolve()
 
 
-def redirect_md_links_to_html(html_body, base_dir, rendered_md_paths):
-    """본문의 .md 링크 중 변환 대상 md를 가리키는 것만 .html로 바꾼다."""
+def html_path_for(md_path):
+    """md의 html 산출 경로: docs/ 아래에 저장소 루트 기준 폴더 구조를 그대로 둔다."""
+    return (SITE_DIR / md_path.relative_to(REPO_ROOT)).with_suffix(".html")
+
+
+def rewrite_relative_links(html_body, md_path, rendered_md_paths):
+    """본문의 상대 링크를 html 위치 기준으로 다시 쓴다.
+
+    변환 대상 md를 가리키는 링크는 그 md의 html(docs/ 안)로, 그 밖의 파일을 가리키는
+    링크는 저장소의 그 파일로 간다. 같은 문서 안의 앵커(#…)와 외부 주소는 그대로 둔다.
+    """
+    html_dir = html_path_for(md_path).parent
+
     def replace(match):
         href = match.group(1)
-        if is_external(href):
+        if is_external(href) or href.startswith("#"):
             return match.group(0)
         path, fragment = split_href(href)
-        if not path.endswith(".md"):
-            return match.group(0)
-        if resolve_link_target(base_dir, path) not in rendered_md_paths:
-            return match.group(0)
-        return 'href="' + path[:-3] + ".html" + fragment + '"'
+        target = resolve_link_target(md_path.parent, path)
+        if path.endswith(".md") and target in rendered_md_paths:
+            target = html_path_for(target)
+        return 'href="' + relative_href(html_dir, target) + fragment + '"'
     return re.sub(r'href="([^"]+)"', replace, html_body)
 
 
@@ -408,31 +425,32 @@ def relative_href(from_dir, target_path):
 
 
 def dashboard_href_from(md_path):
-    """문서 폴더에서 대시보드로 가는 상대 경로. 3_LDPC_ideas 밖의 문서면 None."""
+    """문서의 html 위치에서 대시보드로 가는 상대 경로. 3_LDPC_ideas 밖의 문서면 None."""
     if not md_path.is_relative_to(IDEAS_DIR):
         return None
-    return relative_href(md_path.parent, DASHBOARD_PATH)
+    return relative_href(html_path_for(md_path).parent, DASHBOARD_PATH)
 
 
 def render_file(md_path, rendered_md_paths):
-    """md 파일 하나를 형제 html로 변환하고 산출 경로를 돌려준다."""
+    """md 파일 하나를 docs/ 아래 html로 변환하고 산출 경로를 돌려준다."""
     md_text = md_path.read_text(encoding="utf-8")
     body = convert_markdown(md_text)
-    body = redirect_md_links_to_html(body, md_path.parent, rendered_md_paths)
+    body = rewrite_relative_links(body, md_path, rendered_md_paths)
     dashboard_href = dashboard_href_from(md_path)
     nav = ""
     if dashboard_href:
         nav = '<nav class="doc-nav"><a href="{}">대시보드로</a></nav>\n'.format(dashboard_href)
     page = DOC_FRAME.format(
         title=escape(extract_title(md_text, md_path.stem)),
-        source=md_path.name,
+        source=md_path.relative_to(REPO_ROOT).as_posix(),
         theme=THEME_STYLE,
         style=DOC_STYLE,
         wrapper_id=DOC_WRAPPER_ID,
         nav=nav,
         body=body,
     )
-    html_path = md_path.with_suffix(".html")
+    html_path = html_path_for(md_path)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
     html_path.write_text(page, encoding="utf-8")
     return html_path
 
@@ -562,14 +580,14 @@ def parse_idea_readme(md_path, rendered_md_paths):
         path, fragment = split_href(href)
         target = resolve_link_target(folder, path)
         if path.endswith(".md") and target in rendered_md_paths:
-            target = target.with_suffix(".html")
+            target = html_path_for(target)
         # README 폴더 기준 경로를 대시보드 폴더(docs/) 기준으로 옮긴다
-        memo_href = relative_href(DASHBOARD_DIR, target) + fragment
+        memo_href = relative_href(SITE_DIR, target) + fragment
 
     return {
         "number": number,
         "title": title,
-        "href": relative_href(DASHBOARD_DIR, folder / "README.html"),
+        "href": relative_href(SITE_DIR, html_path_for(md_path)),
         "source": source,
         "badge": badge,
         "note": note,
@@ -637,9 +655,9 @@ def build_stats(ideas):
     return "\n".join(tiles)
 
 
-def site_href(file_name, heading_text=None):
-    """대시보드 폴더에서 3_LDPC_ideas/ 안의 html로 가는 링크 (제목 id는 slugify_unicode 규칙)."""
-    href = relative_href(DASHBOARD_DIR, IDEAS_DIR / file_name)
+def site_href(md_name, heading_text=None):
+    """대시보드에서 3_LDPC_ideas/ 문서의 html로 가는 링크 (제목 id는 slugify_unicode 규칙)."""
+    href = relative_href(SITE_DIR, html_path_for(IDEAS_DIR / md_name))
     if heading_text:
         href += "#" + quote(slugify_unicode(heading_text, "-"))
     return href
@@ -647,12 +665,12 @@ def site_href(file_name, heading_text=None):
 
 def build_site_nav():
     links = [
-        ("동작 흐름", site_href("README.html", "동작 흐름")),
+        ("동작 흐름", site_href("README.md", "동작 흐름")),
         ("논문 분석 아카이브", PAPER_ARCHIVE_URL),
-        ("아이디어 현황표", site_href("README.html", "아이디어 현황표")),
-        ("실험 로그", site_href("실험로그.html")),
-        ("새 논문 적용 규칙", site_href("새논문적용규칙.html")),
-        ("보고서 작성 규칙", site_href("보고서작성규칙.html")),
+        ("아이디어 현황표", site_href("README.md", "아이디어 현황표")),
+        ("실험 로그", site_href("실험로그.md")),
+        ("새 논문 적용 규칙", site_href("새논문적용규칙.md")),
+        ("보고서 작성 규칙", site_href("보고서작성규칙.md")),
     ]
     return "\n".join('<li><a href="{}">{}</a></li>'.format(href, escape(text)) for text, href in links)
 
@@ -670,9 +688,22 @@ def render_dashboard(rendered_md_paths):
         stats=build_stats(ideas),
         cards="\n".join(build_card(idea) for idea in ideas),
     )
-    DASHBOARD_DIR.mkdir(exist_ok=True)
+    SITE_DIR.mkdir(parents=True, exist_ok=True)
     DASHBOARD_PATH.write_text(page, encoding="utf-8")
+    if not NOJEKYLL_PATH.exists():
+        NOJEKYLL_PATH.write_bytes(b"")
     return DASHBOARD_PATH, ideas
+
+
+def remove_stale_html(produced):
+    """docs/ 안의 html 가운데 이번 일괄 변환이 만들지 않은 것을 지운다 (이름이 바뀐 md의 묵은 산출물)."""
+    keep = set(produced)
+    removed = []
+    for html_path in sorted(SITE_DIR.rglob("*.html")):
+        if html_path not in keep:
+            html_path.unlink()
+            removed.append(html_path)
+    return removed
 
 
 # ----------------------------------------------------------------------------
@@ -715,6 +746,9 @@ def main():
         missing = [str(p) for p in targets if not p.is_file()]
         if missing:
             sys.exit(f"파일 없음: {', '.join(missing)}")
+        outside = [str(p) for p in targets if not p.is_relative_to(REPO_ROOT)]
+        if outside:
+            sys.exit(f"저장소 밖의 파일은 변환하지 않음: {', '.join(outside)}")
         make_dashboard = False
     else:
         targets = batch_targets
@@ -736,6 +770,8 @@ def main():
                        if not idea[key]]
             if lacking:
                 print(f"  주의: {idea['number']} README 요약에 {', '.join(lacking)} 항목이 없음")
+        for stale_path in remove_stale_html(produced):
+            print(f"정리: {shown_path(stale_path)} (이번에 만들지 않은 html이라 지움)")
 
     broken = check_links(produced)
     for html_path, href, reason in broken:
