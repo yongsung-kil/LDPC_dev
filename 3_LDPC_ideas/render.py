@@ -186,20 +186,29 @@ DASH_STYLE = """
 #ldpcDashRoot a:hover { text-decoration: underline; }
 #ldpcDashRoot a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 #ldpcDashRoot strong { font-weight: 600; }
-#ldpcDashRoot h1 { font-size: 28px; line-height: 1.15; font-weight: 500; margin: 0 0 8px; }
-#ldpcDashRoot .intro { margin: 0 0 20px; color: var(--muted); }
+#ldpcDashRoot h1 { font-size: 28px; line-height: 1.15; font-weight: 500; margin: 0 0 16px; }
 #ldpcDashRoot .site-nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 20px;
+    gap: 8px;
     margin: 0 0 32px;
     padding: 0;
     list-style: none;
     font-size: 14px;
     line-height: 20px;
 }
-#ldpcDashRoot .site-nav li a { color: var(--muted); }
-#ldpcDashRoot .site-nav li a:hover { color: var(--accent); }
+#ldpcDashRoot .site-nav li a {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--surface);
+    transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+#ldpcDashRoot .site-nav li a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
 #ldpcDashRoot .stats {
     display: flex;
     flex-wrap: wrap;
@@ -332,7 +341,6 @@ DASH_FRAME = """<!doctype html>
 <body>
 <div id="{wrapper_id}">
 <h1>{title}</h1>
-<p class="intro">{intro}</p>
 <ul class="site-nav">
 {nav}
 </ul>
@@ -708,13 +716,11 @@ def build_site_nav():
 
 def render_dashboard(rendered_md_paths):
     ideas = collect_ideas(rendered_md_paths)
-    intro = "논문 아이디어를 2_LDPC_base 시뮬레이터에 하나씩 적용해 본 결과. 카드를 누르면 상세 보고서로 간다."
     page = DASH_FRAME.format(
         title=DASHBOARD_TITLE,
         theme=THEME_STYLE,
         style=DASH_STYLE,
         wrapper_id=DASH_WRAPPER_ID,
-        intro=escape(intro),
         nav=build_site_nav(),
         stats=build_stats(ideas),
         cards="\n".join(build_card(idea) for idea in ideas),
