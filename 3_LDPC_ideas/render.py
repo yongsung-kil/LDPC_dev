@@ -10,6 +10,10 @@
       시작하는 _pm/ 폴더를 공개에서 빠지지 않게 한다)
     - 문서 안의 상대 링크 가운데 변환 대상 md를 가리키는 것은 그 md의 html로 바꾼다. 그 밖의
       링크는 가리키는 파일 그대로 둔다
+    - 그림: 변환할 md의 폴더에 make_figures.py가 있으면 먼저 실행해 그 폴더의 figures/*.svg를
+      다시 만든다. md에서 문단 하나를 통째로 차지한 이미지(`![그림 1. 설명](figures/이름.svg)`)는
+      figure가 되고, 대체 글이 그림 아래 설명이 된다. svg는 내용을 페이지 안에 넣어 페이지의
+      색 변수와 어두운 모드를 따르게 한다 (그리는 도구는 figure_svg.py)
     - 일괄 변환 대상: 3_LDPC_ideas/ 아래 전체 md (제외: _pm/, _template/, Sim_Output/,
       __pycache__/). 변환 대상 문서가 링크로 가리키는 md(예: _pm/tasks/의 논문 분석 메모)는
       제외 폴더 안이라도 함께 변환한다 (한 단계만)
@@ -29,6 +33,7 @@
 """
 import os
 import re
+import subprocess
 import sys
 from html import escape
 from pathlib import Path
@@ -36,6 +41,8 @@ from urllib.parse import quote, unquote
 
 import markdown
 from markdown.extensions.toc import slugify_unicode
+
+import figure_svg
 
 IDEAS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = IDEAS_DIR.parent
@@ -50,6 +57,9 @@ PAPER_ARCHIVE_URL = "https://yongsung-kil.github.io/ECC_papers/"
 
 DOC_WRAPPER_ID = "ldpcDocRoot"
 DASH_WRAPPER_ID = "ldpcDashRoot"
+
+FIGURE_SCRIPT_NAME = "make_figures.py"         # 아이디어 폴더의 그림 생성 스크립트 (figures/*.svg를 만든다)
+STANDALONE_IMAGE = re.compile(r'<p><img alt="([^"]*)" src="([^"]+)"\s*/?></p>')   # 문단 하나를 통째로 차지한 이미지
 
 SUMMARY_HEADING = "요약"
 SOURCE_HEADING = "출처 상세"
@@ -85,6 +95,8 @@ THEME_STYLE = """
     --warn: #bc4c00;
     --better: #d1242f;
     --worse: #0550ae;
+    --mark-better: #d1242f;
+    --mark-worse: #0550ae;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -99,6 +111,8 @@ THEME_STYLE = """
         --warn: #f0883e;
         --better: #ff7b72;
         --worse: #79c0ff;
+        --mark-better: #f85149;
+        --mark-worse: #4493f8;
     }
 }
 body { margin: 0; background: var(--bg); color: var(--text); }
@@ -166,6 +180,27 @@ DOC_STYLE = """
 #ldpcDocRoot .better { color: var(--better); font-weight: 600; }
 #ldpcDocRoot .worse { color: var(--worse); font-weight: 600; }
 """
+
+# 그림이 든 문서에만 붙는 스타일. 그림 안의 규칙은 figure_svg.FIGURE_STYLE을 문서 래퍼 아래로 가둔 것
+FIGURE_PAGE_STYLE = """
+#ldpcDocRoot figure.doc-figure { margin: 1.4em 0; overflow-x: auto; }
+#ldpcDocRoot figure.doc-figure svg, #ldpcDocRoot figure.doc-figure img {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 760px;
+    min-width: 600px;
+    height: auto;
+}
+#ldpcDocRoot figure.doc-figure figcaption {
+    margin-top: 0.5em;
+    font-size: 0.9em;
+    line-height: 1.5;
+    color: var(--muted);
+    text-align: center;
+}
+""" + figure_svg.FIGURE_STYLE.replace(
+    "." + figure_svg.FIGURE_CLASS, "#" + DOC_WRAPPER_ID + " ." + figure_svg.FIGURE_CLASS)
 
 DASH_STYLE = """
 #ldpcDashRoot {
@@ -469,11 +504,42 @@ def dashboard_href_from(md_path):
     return relative_href(html_path_for(md_path).parent, DASHBOARD_PATH)
 
 
+def regenerate_figures(md_paths):
+    """변환할 md의 폴더에 그림 생성 스크립트가 있으면 실행해 figures/*.svg를 다시 만든다."""
+    folders = sorted({md_path.parent for md_path in md_paths
+                      if (md_path.parent / FIGURE_SCRIPT_NAME).is_file()})
+    for folder in folders:
+        subprocess.run([sys.executable, FIGURE_SCRIPT_NAME], cwd=folder, check=True)
+        print(f"그림: {shown_path(folder / FIGURE_SCRIPT_NAME)}")
+
+
+def embed_figures(html_body, md_path):
+    """문단 하나를 통째로 차지한 이미지를 figure로 바꾼다 (대체 글이 그림 아래 설명이 된다).
+
+    svg 파일은 내용을 페이지 안에 넣는다. 그림이 페이지의 색 변수를 읽어 어두운 모드를 함께
+    따르고, 막대와 점에 마우스를 올리면 값이 뜬다. svg 안의 style은 페이지 스타일
+    (FIGURE_PAGE_STYLE)이 대신하므로 뺀다. svg가 아닌 이미지는 img 그대로 둔다.
+    """
+    def replace(match):
+        caption, source = match.group(1), match.group(2)
+        target = resolve_link_target(md_path.parent, source)
+        if target.suffix == ".svg" and target.is_file():
+            picture = re.sub(r"<style>.*?</style>\s*", "", target.read_text(encoding="utf-8"),
+                             flags=re.DOTALL).strip()
+        else:
+            picture = match.group(0)[len("<p>"):-len("</p>")]
+        return '<figure class="doc-figure">\n{}\n<figcaption>{}</figcaption>\n</figure>'.format(
+            picture, caption)
+    return STANDALONE_IMAGE.sub(replace, html_body)
+
+
 def render_file(md_path, rendered_md_paths):
     """md 파일 하나를 형제 html로 변환하고 산출 경로를 돌려준다."""
     md_text = md_path.read_text(encoding="utf-8")
     body = convert_markdown(md_text)
     body = rewrite_relative_links(body, md_path, rendered_md_paths)
+    body = embed_figures(body, md_path)
+    has_figure = '<figure class="doc-figure">' in body
     dashboard_href = dashboard_href_from(md_path)
     nav = ""
     if dashboard_href:
@@ -482,7 +548,7 @@ def render_file(md_path, rendered_md_paths):
         title=escape(extract_title(md_text, md_path.stem)),
         source=md_path.relative_to(REPO_ROOT).as_posix(),
         theme=THEME_STYLE,
-        style=DOC_STYLE,
+        style=DOC_STYLE + (FIGURE_PAGE_STYLE if has_figure else ""),
         wrapper_id=DOC_WRAPPER_ID,
         nav=nav,
         body=body,
@@ -755,11 +821,11 @@ def remove_stale_html(produced):
 # ----------------------------------------------------------------------------
 
 def check_links(html_paths):
-    """만든 html의 상대 링크가 가리키는 파일과 앵커가 있는지 검사하고 깨진 것을 돌려준다."""
+    """만든 html의 상대 링크와 이미지 경로가 가리키는 파일과 앵커가 있는지 검사하고 깨진 것을 돌려준다."""
     broken = []
     for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8")
-        for href in re.findall(r'href="([^"]+)"', text):
+        for href in re.findall(r'(?:href|src)="([^"]+)"', text):
             if is_external(href):
                 continue
             path, fragment = split_href(href)
@@ -799,6 +865,7 @@ def main():
         make_dashboard = True
     rendered_md_paths = set(batch_targets) | set(targets)
 
+    regenerate_figures(targets)
     produced = []
     for md_path in targets:
         html_path = render_file(md_path, rendered_md_paths)

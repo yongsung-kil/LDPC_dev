@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 292" width="760" height="292" role="img" aria-label="검사식에 들어온 메시지 다섯 개 가운데 가장 작은 값 min1과 둘째로 작은 값 min2만 돌려준다. 기존 min-sum은 두 값을 그대로 돌려주고, 논문은 min1을 상한 P에서, min2를 상한 Q에서 잘라 돌려준다.">
+<style>
+.ldpc-fig { font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif; }
+.ldpc-fig .surface { fill: var(--bg, #ffffff); }
+.ldpc-fig text { fill: var(--text, #24292f); font-size: 13px; }
+.ldpc-fig text.muted { fill: var(--muted, #57606a); }
+.ldpc-fig text.small { font-size: 12px; }
+.ldpc-fig text.strong { font-weight: 600; }
+.ldpc-fig text.head { font-size: 14px; font-weight: 600; }
+.ldpc-fig .grid { stroke: var(--border, #d0d7de); stroke-width: 1; fill: none; }
+.ldpc-fig .reference { stroke: var(--text, #24292f); stroke-width: 1; fill: none; opacity: 0.6; }
+.ldpc-fig .mark-neutral { fill: var(--muted, #57606a); }
+.ldpc-fig .mark-faint { fill: var(--muted, #57606a); opacity: 0.4; }
+.ldpc-fig .mark-strong { fill: var(--text, #24292f); opacity: 0.82; }
+.ldpc-fig .mark-better { fill: var(--mark-better, #d1242f); }
+.ldpc-fig .mark-worse { fill: var(--mark-worse, #0550ae); }
+.ldpc-fig .mark-change { fill: var(--warn, #bc4c00); }
+.ldpc-fig .line-neutral, .ldpc-fig .line-better, .ldpc-fig .line-worse, .ldpc-fig .line-change {
+    fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+}
+.ldpc-fig .line-neutral { stroke: var(--muted, #57606a); }
+.ldpc-fig .line-better { stroke: var(--mark-better, #d1242f); }
+.ldpc-fig .line-worse { stroke: var(--mark-worse, #0550ae); }
+.ldpc-fig .line-change { stroke: var(--warn, #bc4c00); }
+.ldpc-fig .ring { stroke: var(--bg, #ffffff); stroke-width: 2; }
+.ldpc-fig .cut { fill: none; stroke: var(--muted, #57606a); stroke-width: 1; stroke-dasharray: 3 3; }
+.ldpc-fig .box { fill: var(--surface, #f6f8fa); stroke: var(--border, #d0d7de); stroke-width: 1; }
+.ldpc-fig .box-change { fill: var(--surface, #f6f8fa); stroke: var(--warn, #bc4c00); stroke-width: 2; }
+.ldpc-fig .arrow { stroke: var(--muted, #57606a); stroke-width: 1.5; fill: none; }
+.ldpc-fig .arrow-head { fill: var(--muted, #57606a); }
+.ldpc-fig .hit { fill: transparent; }
+</style>
+<rect x="0" y="0" width="760" height="292" class="surface"/>
+<text x="24" y="30" class="head">검사식에 들어온 메시지 크기</text>
+<text x="24" y="49" class="muted small">예시: 메시지 5개, 크기 상한 7</text>
+<path d="M34,232 v-150 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v150 z" class="mark-faint"/>
+<text x="47" y="71" class="small" text-anchor="middle">7</text>
+<path d="M74,232 v-84 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v84 z" class="mark-strong"/>
+<text x="87" y="137" class="small" text-anchor="middle">4</text>
+<text x="87" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="87" y="269" class="muted small" text-anchor="middle">가장 작은 값</text>
+<path d="M114,232 v-128 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v128 z" class="mark-faint"/>
+<text x="127" y="93" class="small" text-anchor="middle">6</text>
+<path d="M154,232 v-150 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v150 z" class="mark-faint"/>
+<text x="167" y="71" class="small" text-anchor="middle">7</text>
+<path d="M194,232 v-106 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v106 z" class="mark-strong"/>
+<text x="207" y="115" class="small" text-anchor="middle">5</text>
+<text x="207" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="207" y="269" class="muted small" text-anchor="middle">둘째로 작은 값</text>
+<line x1="24" y1="232" x2="232" y2="232" class="grid"/>
+<text x="278" y="132" class="muted small" text-anchor="middle">가장 작은</text><text x="278" y="148" class="muted small" text-anchor="middle">두 값만 돌려줌</text>
+<polyline points="250,162 297,162" class="arrow"/><polygon points="306,162 297,166.5 297,157.5" class="arrow-head"/>
+<text x="330" y="30" class="head">기존 min-sum</text>
+<text x="330" y="49" class="muted small">두 값을 그대로 돌려줌</text>
+<path d="M352,232 v-84 a4,4 0 0 1 4,-4 h32 a4,4 0 0 1 4,4 v84 z" class="mark-strong"/>
+<text x="372" y="137" class="small" text-anchor="middle">4</text>
+<text x="372" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="372" y="269" class="muted small" text-anchor="middle">4 그대로</text>
+<path d="M424,232 v-106 a4,4 0 0 1 4,-4 h32 a4,4 0 0 1 4,4 v106 z" class="mark-strong"/>
+<text x="444" y="115" class="small" text-anchor="middle">5</text>
+<text x="444" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="444" y="269" class="muted small" text-anchor="middle">5 그대로</text>
+<line x1="330" y1="232" x2="486" y2="232" class="grid"/>
+<line x1="512" y1="20" x2="512" y2="272" class="grid"/>
+<text x="538" y="30" class="head">논문: 이중 상한 클리핑</text>
+<text x="538" y="49" class="muted small">min1은 P, min2는 Q에서 잘라 돌려줌</text>
+<rect x="562.5" y="144" width="39" height="44" rx="4" class="cut"/>
+<path d="M562,232 v-44 a0,0 0 0 1 0,-0 h40 a0,0 0 0 1 0,0 v44 z" class="mark-strong"/>
+<text x="582" y="137" class="muted small" text-anchor="middle">4</text>
+<text x="582" y="170" class="muted small" text-anchor="middle">잘림</text>
+<line x1="554" y1="188" x2="610" y2="188" class="line-change"/>
+<text x="615" y="192.5" class="strong">P = 2</text>
+<text x="582" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="582" y="269" class="muted small" text-anchor="middle">4 → 2</text>
+<rect x="664.5" y="122" width="39" height="22" rx="4" class="cut"/>
+<path d="M664,232 v-88 a0,0 0 0 1 0,-0 h40 a0,0 0 0 1 0,0 v88 z" class="mark-strong"/>
+<text x="684" y="115" class="muted small" text-anchor="middle">5</text>
+<text x="684" y="137" class="muted small" text-anchor="middle">잘림</text>
+<line x1="656" y1="144" x2="712" y2="144" class="line-change"/>
+<text x="717" y="148.5" class="strong">Q = 4</text>
+<text x="684" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="684" y="269" class="muted small" text-anchor="middle">5 → 4</text>
+<line x1="538" y1="232" x2="736" y2="232" class="grid"/>
+</svg>

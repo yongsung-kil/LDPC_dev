@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 262" width="760" height="262" role="img" aria-label="채널 LLR이 변수 노드로 들어가고, 변수 노드와 검사 노드가 메시지를 주고받으며 최대 20회 반복한다. 논문이 바꾼 곳은 검사 노드가 찾은 min1, min2를 메시지로 재구성하기 직전의 이중 상한 클리핑 한 곳이다.">
+<style>
+.ldpc-fig { font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif; }
+.ldpc-fig .surface { fill: var(--bg, #ffffff); }
+.ldpc-fig text { fill: var(--text, #24292f); font-size: 13px; }
+.ldpc-fig text.muted { fill: var(--muted, #57606a); }
+.ldpc-fig text.small { font-size: 12px; }
+.ldpc-fig text.strong { font-weight: 600; }
+.ldpc-fig text.head { font-size: 14px; font-weight: 600; }
+.ldpc-fig .grid { stroke: var(--border, #d0d7de); stroke-width: 1; fill: none; }
+.ldpc-fig .reference { stroke: var(--text, #24292f); stroke-width: 1; fill: none; opacity: 0.6; }
+.ldpc-fig .mark-neutral { fill: var(--muted, #57606a); }
+.ldpc-fig .mark-faint { fill: var(--muted, #57606a); opacity: 0.4; }
+.ldpc-fig .mark-strong { fill: var(--text, #24292f); opacity: 0.82; }
+.ldpc-fig .mark-better { fill: var(--mark-better, #d1242f); }
+.ldpc-fig .mark-worse { fill: var(--mark-worse, #0550ae); }
+.ldpc-fig .mark-change { fill: var(--warn, #bc4c00); }
+.ldpc-fig .line-neutral, .ldpc-fig .line-better, .ldpc-fig .line-worse, .ldpc-fig .line-change {
+    fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+}
+.ldpc-fig .line-neutral { stroke: var(--muted, #57606a); }
+.ldpc-fig .line-better { stroke: var(--mark-better, #d1242f); }
+.ldpc-fig .line-worse { stroke: var(--mark-worse, #0550ae); }
+.ldpc-fig .line-change { stroke: var(--warn, #bc4c00); }
+.ldpc-fig .ring { stroke: var(--bg, #ffffff); stroke-width: 2; }
+.ldpc-fig .cut { fill: none; stroke: var(--muted, #57606a); stroke-width: 1; stroke-dasharray: 3 3; }
+.ldpc-fig .box { fill: var(--surface, #f6f8fa); stroke: var(--border, #d0d7de); stroke-width: 1; }
+.ldpc-fig .box-change { fill: var(--surface, #f6f8fa); stroke: var(--warn, #bc4c00); stroke-width: 2; }
+.ldpc-fig .arrow { stroke: var(--muted, #57606a); stroke-width: 1.5; fill: none; }
+.ldpc-fig .arrow-head { fill: var(--muted, #57606a); }
+.ldpc-fig .hit { fill: transparent; }
+</style>
+<rect x="0" y="0" width="760" height="262" class="surface"/>
+<rect x="20" y="34" width="124" height="58" rx="8" class="box"/><text x="82" y="58.5" class="strong" text-anchor="middle">채널 LLR</text><text x="82" y="76.5" class="muted small" text-anchor="middle">크기 ch</text>
+<rect x="204" y="34" width="168" height="58" rx="8" class="box"/><text x="288" y="58.5" class="strong" text-anchor="middle">변수 노드</text><text x="288" y="76.5" class="muted small" text-anchor="middle">합산과 비트 판정</text>
+<rect x="540" y="34" width="200" height="58" rx="8" class="box"/><text x="640" y="58.5" class="strong" text-anchor="middle">검사 노드</text><text x="640" y="76.5" class="muted small" text-anchor="middle">min1, min2 찾기</text>
+<rect x="540" y="162" width="200" height="58" rx="8" class="box-change"/><text x="640" y="186.5" class="strong" text-anchor="middle">이중 상한 클리핑</text><text x="640" y="204.5" class="muted small" text-anchor="middle">min1 ≤ P, min2 ≤ Q</text>
+<rect x="292" y="162" width="180" height="58" rx="8" class="box"/><text x="382" y="186.5" class="strong" text-anchor="middle">메시지 재구성</text><text x="382" y="204.5" class="muted small" text-anchor="middle">부호를 붙여 돌려줌</text>
+<rect x="20" y="162" width="124" height="58" rx="8" class="box"/><text x="82" y="186.5" class="strong" text-anchor="middle">복호 결과</text><text x="82" y="204.5" class="muted small" text-anchor="middle">판정 비트</text>
+<polyline points="144,63 195,63" class="arrow"/><polygon points="204,63 195,67.5 195,58.5" class="arrow-head"/>
+<polyline points="372,63 531,63" class="arrow"/><polygon points="540,63 531,67.5 531,58.5" class="arrow-head"/>
+<text x="456" y="53" class="muted small" text-anchor="middle">보내는 메시지 (V2C)</text>
+<polyline points="640,92 640,153" class="arrow"/><polygon points="640,162 635.5,153 644.5,153" class="arrow-head"/>
+<polyline points="540,191 481,191" class="arrow"/><polygon points="472,191 481,186.5 481,195.5" class="arrow-head"/>
+<polyline points="340,162 340,101" class="arrow"/><polygon points="340,92 344.5,101 335.5,101" class="arrow-head"/>
+<text x="350" y="131" class="muted small">돌려주는 메시지 (C2V)</text>
+<polyline points="236,92 236,191 153,191" class="arrow"/><polygon points="144,191 153,186.5 153,195.5" class="arrow-head"/>
+<text x="566" y="131" class="muted small" text-anchor="middle">최대 20회 반복</text>
+<rect x="586" y="233" width="10" height="10" rx="2" class="mark-change"/>
+<text x="602" y="242" class="small">논문이 바꾼 곳</text>
+</svg>

@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 290" width="760" height="290" role="img" aria-label="클리핑 없음은 dv=4 열의 오류가 iteration 5까지 1개 안팎으로 줄지만, (2,3) 클리핑은 iteration 5부터 약 79개에서 더 줄지 않는다.">
+<style>
+.ldpc-fig { font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif; }
+.ldpc-fig .surface { fill: var(--bg, #ffffff); }
+.ldpc-fig text { fill: var(--text, #24292f); font-size: 13px; }
+.ldpc-fig text.muted { fill: var(--muted, #57606a); }
+.ldpc-fig text.small { font-size: 12px; }
+.ldpc-fig text.strong { font-weight: 600; }
+.ldpc-fig text.head { font-size: 14px; font-weight: 600; }
+.ldpc-fig .grid { stroke: var(--border, #d0d7de); stroke-width: 1; fill: none; }
+.ldpc-fig .reference { stroke: var(--text, #24292f); stroke-width: 1; fill: none; opacity: 0.6; }
+.ldpc-fig .mark-neutral { fill: var(--muted, #57606a); }
+.ldpc-fig .mark-faint { fill: var(--muted, #57606a); opacity: 0.4; }
+.ldpc-fig .mark-strong { fill: var(--text, #24292f); opacity: 0.82; }
+.ldpc-fig .mark-better { fill: var(--mark-better, #d1242f); }
+.ldpc-fig .mark-worse { fill: var(--mark-worse, #0550ae); }
+.ldpc-fig .mark-change { fill: var(--warn, #bc4c00); }
+.ldpc-fig .line-neutral, .ldpc-fig .line-better, .ldpc-fig .line-worse, .ldpc-fig .line-change {
+    fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+}
+.ldpc-fig .line-neutral { stroke: var(--muted, #57606a); }
+.ldpc-fig .line-better { stroke: var(--mark-better, #d1242f); }
+.ldpc-fig .line-worse { stroke: var(--mark-worse, #0550ae); }
+.ldpc-fig .line-change { stroke: var(--warn, #bc4c00); }
+.ldpc-fig .ring { stroke: var(--bg, #ffffff); stroke-width: 2; }
+.ldpc-fig .cut { fill: none; stroke: var(--muted, #57606a); stroke-width: 1; stroke-dasharray: 3 3; }
+.ldpc-fig .box { fill: var(--surface, #f6f8fa); stroke: var(--border, #d0d7de); stroke-width: 1; }
+.ldpc-fig .box-change { fill: var(--surface, #f6f8fa); stroke: var(--warn, #bc4c00); stroke-width: 2; }
+.ldpc-fig .arrow { stroke: var(--muted, #57606a); stroke-width: 1.5; fill: none; }
+.ldpc-fig .arrow-head { fill: var(--muted, #57606a); }
+.ldpc-fig .hit { fill: transparent; }
+</style>
+<rect x="0" y="0" width="760" height="290" class="surface"/>
+<line x1="16" y1="16" x2="34" y2="16" class="line-worse"/><circle cx="25" cy="16" r="4" class="mark-worse"/><text x="40" y="20" class="small">(2,3) 클리핑</text><line x1="128.2" y1="16" x2="146.2" y2="16" class="line-neutral"/><circle cx="137.2" cy="16" r="4" class="mark-neutral"/><text x="152.2" y="20" class="small">클리핑 없음 (7,7)</text>
+<text x="16" y="46" class="muted small">dv=4 열의 비트 오류 수 (프레임당 평균)</text>
+<line x1="56" y1="238" x2="550" y2="238" class="grid"/>
+<text x="48" y="242" class="muted small" text-anchor="end">0</text>
+<line x1="56" y1="194.5" x2="550" y2="194.5" class="grid"/>
+<text x="48" y="198.5" class="muted small" text-anchor="end">50</text>
+<line x1="56" y1="151" x2="550" y2="151" class="grid"/>
+<text x="48" y="155" class="muted small" text-anchor="end">100</text>
+<line x1="56" y1="107.5" x2="550" y2="107.5" class="grid"/>
+<text x="48" y="111.5" class="muted small" text-anchor="end">150</text>
+<line x1="56" y1="64" x2="550" y2="64" class="grid"/>
+<text x="48" y="68" class="muted small" text-anchor="end">200</text>
+<text x="72" y="256" class="muted small" text-anchor="middle">1</text>
+<text x="169.3" y="256" class="muted small" text-anchor="middle">5</text>
+<text x="290.8" y="256" class="muted small" text-anchor="middle">10</text>
+<text x="412.4" y="256" class="muted small" text-anchor="middle">15</text>
+<text x="534" y="256" class="muted small" text-anchor="middle">20</text>
+<text x="303" y="278" class="muted small" text-anchor="middle">iteration (복호 반복 횟수)</text>
+<polyline points="72,84.7 96.3,117.6 120.6,161.1 144.9,168.2 169.3,168.9 193.6,169 217.9,169.1 242.2,169.1 266.5,169.1 290.8,169.1 315.2,169.1 339.5,169.1 363.8,169.1 388.1,169.1 412.4,169.1 436.7,169.1 461.1,169.1 485.4,169.1 509.7,169.1 534,169.1" class="line-worse"/>
+<circle cx="534" cy="169.1" r="5" class="mark-worse ring"/>
+<g><title>(2,3) 클리핑, 1: 176.2개</title><circle cx="72" cy="84.7" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 2.0: 138.3개</title><circle cx="96.3" cy="117.6" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 3.0: 88.3개</title><circle cx="120.6" cy="161.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 4.0: 80.2개</title><circle cx="144.9" cy="168.2" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 5: 79.4개</title><circle cx="169.3" cy="168.9" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 6.0: 79.3개</title><circle cx="193.6" cy="169" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 7.0: 79.2개</title><circle cx="217.9" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 8.0: 79.2개</title><circle cx="242.2" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 9.0: 79.2개</title><circle cx="266.5" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 10: 79.2개</title><circle cx="290.8" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 11.0: 79.2개</title><circle cx="315.2" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 12.0: 79.2개</title><circle cx="339.5" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 13.0: 79.2개</title><circle cx="363.8" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 14.0: 79.2개</title><circle cx="388.1" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 15: 79.2개</title><circle cx="412.4" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 16.0: 79.2개</title><circle cx="436.7" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 17.0: 79.2개</title><circle cx="461.1" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 18.0: 79.2개</title><circle cx="485.4" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 19.0: 79.2개</title><circle cx="509.7" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 20: 79.2개</title><circle cx="534" cy="169.1" r="9" class="hit"/></g>
+<text x="548" y="165.1" class="strong">79.2개에서 멈춤</text>
+<text x="548" y="182.1" class="muted small">더 줄지 않음 (전 프레임 실패)</text>
+<polyline points="72,74.7 96.3,196.4 120.6,229.3 144.9,235.8 169.3,237.1 193.6,237.2 217.9,237.3 242.2,237.3 266.5,237.3 290.8,237.3 315.2,237.3 339.5,237.3 363.8,237.3 388.1,237.3 412.4,237.3 436.7,237.3 461.1,237.3 485.4,237.3 509.7,237.3 534,237.3" class="line-neutral"/>
+<circle cx="534" cy="237.3" r="5" class="mark-neutral ring"/>
+<g><title>클리핑 없음 (7,7), 1: 187.7개</title><circle cx="72" cy="74.7" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 2.0: 47.8개</title><circle cx="96.3" cy="196.4" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 3.0: 10.0개</title><circle cx="120.6" cy="229.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 4.0: 2.6개</title><circle cx="144.9" cy="235.8" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 5: 1.0개</title><circle cx="169.3" cy="237.1" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 6.0: 0.9개</title><circle cx="193.6" cy="237.2" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 7.0: 0.8개</title><circle cx="217.9" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 8.0: 0.8개</title><circle cx="242.2" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 9.0: 0.8개</title><circle cx="266.5" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 10: 0.8개</title><circle cx="290.8" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 11.0: 0.8개</title><circle cx="315.2" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 12.0: 0.8개</title><circle cx="339.5" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 13.0: 0.8개</title><circle cx="363.8" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 14.0: 0.8개</title><circle cx="388.1" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 15: 0.8개</title><circle cx="412.4" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 16.0: 0.8개</title><circle cx="436.7" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 17.0: 0.8개</title><circle cx="461.1" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 18.0: 0.8개</title><circle cx="485.4" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 19.0: 0.8개</title><circle cx="509.7" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 20: 0.8개</title><circle cx="534" cy="237.3" r="9" class="hit"/></g>
+<text x="548" y="233" class="strong">0.8개까지 줄어듦</text>
+</svg>

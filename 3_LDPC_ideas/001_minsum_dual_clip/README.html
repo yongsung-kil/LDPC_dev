@@ -18,6 +18,8 @@
     --warn: #bc4c00;
     --better: #d1242f;
     --worse: #0550ae;
+    --mark-better: #d1242f;
+    --mark-worse: #0550ae;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -32,6 +34,8 @@
         --warn: #f0883e;
         --better: #ff7b72;
         --worse: #79c0ff;
+        --mark-better: #f85149;
+        --mark-worse: #4493f8;
     }
 }
 body { margin: 0; background: var(--bg); color: var(--text); }
@@ -96,6 +100,53 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 #ldpcDocRoot hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 #ldpcDocRoot .better { color: var(--better); font-weight: 600; }
 #ldpcDocRoot .worse { color: var(--worse); font-weight: 600; }
+
+#ldpcDocRoot figure.doc-figure { margin: 1.4em 0; overflow-x: auto; }
+#ldpcDocRoot figure.doc-figure svg, #ldpcDocRoot figure.doc-figure img {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 760px;
+    min-width: 600px;
+    height: auto;
+}
+#ldpcDocRoot figure.doc-figure figcaption {
+    margin-top: 0.5em;
+    font-size: 0.9em;
+    line-height: 1.5;
+    color: var(--muted);
+    text-align: center;
+}
+
+#ldpcDocRoot .ldpc-fig { font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif; }
+#ldpcDocRoot .ldpc-fig .surface { fill: var(--bg, #ffffff); }
+#ldpcDocRoot .ldpc-fig text { fill: var(--text, #24292f); font-size: 13px; }
+#ldpcDocRoot .ldpc-fig text.muted { fill: var(--muted, #57606a); }
+#ldpcDocRoot .ldpc-fig text.small { font-size: 12px; }
+#ldpcDocRoot .ldpc-fig text.strong { font-weight: 600; }
+#ldpcDocRoot .ldpc-fig text.head { font-size: 14px; font-weight: 600; }
+#ldpcDocRoot .ldpc-fig .grid { stroke: var(--border, #d0d7de); stroke-width: 1; fill: none; }
+#ldpcDocRoot .ldpc-fig .reference { stroke: var(--text, #24292f); stroke-width: 1; fill: none; opacity: 0.6; }
+#ldpcDocRoot .ldpc-fig .mark-neutral { fill: var(--muted, #57606a); }
+#ldpcDocRoot .ldpc-fig .mark-faint { fill: var(--muted, #57606a); opacity: 0.4; }
+#ldpcDocRoot .ldpc-fig .mark-strong { fill: var(--text, #24292f); opacity: 0.82; }
+#ldpcDocRoot .ldpc-fig .mark-better { fill: var(--mark-better, #d1242f); }
+#ldpcDocRoot .ldpc-fig .mark-worse { fill: var(--mark-worse, #0550ae); }
+#ldpcDocRoot .ldpc-fig .mark-change { fill: var(--warn, #bc4c00); }
+#ldpcDocRoot .ldpc-fig .line-neutral, #ldpcDocRoot .ldpc-fig .line-better, #ldpcDocRoot .ldpc-fig .line-worse, #ldpcDocRoot .ldpc-fig .line-change {
+    fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+}
+#ldpcDocRoot .ldpc-fig .line-neutral { stroke: var(--muted, #57606a); }
+#ldpcDocRoot .ldpc-fig .line-better { stroke: var(--mark-better, #d1242f); }
+#ldpcDocRoot .ldpc-fig .line-worse { stroke: var(--mark-worse, #0550ae); }
+#ldpcDocRoot .ldpc-fig .line-change { stroke: var(--warn, #bc4c00); }
+#ldpcDocRoot .ldpc-fig .ring { stroke: var(--bg, #ffffff); stroke-width: 2; }
+#ldpcDocRoot .ldpc-fig .cut { fill: none; stroke: var(--muted, #57606a); stroke-width: 1; stroke-dasharray: 3 3; }
+#ldpcDocRoot .ldpc-fig .box { fill: var(--surface, #f6f8fa); stroke: var(--border, #d0d7de); stroke-width: 1; }
+#ldpcDocRoot .ldpc-fig .box-change { fill: var(--surface, #f6f8fa); stroke: var(--warn, #bc4c00); stroke-width: 2; }
+#ldpcDocRoot .ldpc-fig .arrow { stroke: var(--muted, #57606a); stroke-width: 1.5; fill: none; }
+#ldpcDocRoot .ldpc-fig .arrow-head { fill: var(--muted, #57606a); }
+#ldpcDocRoot .ldpc-fig .hit { fill: transparent; }
 </style>
 </head>
 <body>
@@ -104,6 +155,62 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <h1 id="001-minsum_dual_clip-cnu-min1min2-이중-상한-클리핑">001 minsum_dual_clip: CNU min1/min2 이중 상한 클리핑</h1>
 <p>출처: ieee:9496601 (IEEE TCAD 2022) | 상태: 조건부 유효 (평가 대상 파라미터로 최종 판정 대기)</p>
 <h2 id="요약">📌 요약</h2>
+<figure class="doc-figure">
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 292" width="760" height="292" role="img" aria-label="검사식에 들어온 메시지 다섯 개 가운데 가장 작은 값 min1과 둘째로 작은 값 min2만 돌려준다. 기존 min-sum은 두 값을 그대로 돌려주고, 논문은 min1을 상한 P에서, min2를 상한 Q에서 잘라 돌려준다.">
+<rect x="0" y="0" width="760" height="292" class="surface"/>
+<text x="24" y="30" class="head">검사식에 들어온 메시지 크기</text>
+<text x="24" y="49" class="muted small">예시: 메시지 5개, 크기 상한 7</text>
+<path d="M34,232 v-150 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v150 z" class="mark-faint"/>
+<text x="47" y="71" class="small" text-anchor="middle">7</text>
+<path d="M74,232 v-84 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v84 z" class="mark-strong"/>
+<text x="87" y="137" class="small" text-anchor="middle">4</text>
+<text x="87" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="87" y="269" class="muted small" text-anchor="middle">가장 작은 값</text>
+<path d="M114,232 v-128 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v128 z" class="mark-faint"/>
+<text x="127" y="93" class="small" text-anchor="middle">6</text>
+<path d="M154,232 v-150 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v150 z" class="mark-faint"/>
+<text x="167" y="71" class="small" text-anchor="middle">7</text>
+<path d="M194,232 v-106 a4,4 0 0 1 4,-4 h18 a4,4 0 0 1 4,4 v106 z" class="mark-strong"/>
+<text x="207" y="115" class="small" text-anchor="middle">5</text>
+<text x="207" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="207" y="269" class="muted small" text-anchor="middle">둘째로 작은 값</text>
+<line x1="24" y1="232" x2="232" y2="232" class="grid"/>
+<text x="278" y="132" class="muted small" text-anchor="middle">가장 작은</text><text x="278" y="148" class="muted small" text-anchor="middle">두 값만 돌려줌</text>
+<polyline points="250,162 297,162" class="arrow"/><polygon points="306,162 297,166.5 297,157.5" class="arrow-head"/>
+<text x="330" y="30" class="head">기존 min-sum</text>
+<text x="330" y="49" class="muted small">두 값을 그대로 돌려줌</text>
+<path d="M352,232 v-84 a4,4 0 0 1 4,-4 h32 a4,4 0 0 1 4,4 v84 z" class="mark-strong"/>
+<text x="372" y="137" class="small" text-anchor="middle">4</text>
+<text x="372" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="372" y="269" class="muted small" text-anchor="middle">4 그대로</text>
+<path d="M424,232 v-106 a4,4 0 0 1 4,-4 h32 a4,4 0 0 1 4,4 v106 z" class="mark-strong"/>
+<text x="444" y="115" class="small" text-anchor="middle">5</text>
+<text x="444" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="444" y="269" class="muted small" text-anchor="middle">5 그대로</text>
+<line x1="330" y1="232" x2="486" y2="232" class="grid"/>
+<line x1="512" y1="20" x2="512" y2="272" class="grid"/>
+<text x="538" y="30" class="head">논문: 이중 상한 클리핑</text>
+<text x="538" y="49" class="muted small">min1은 P, min2는 Q에서 잘라 돌려줌</text>
+<rect x="562.5" y="144" width="39" height="44" rx="4" class="cut"/>
+<path d="M562,232 v-44 a0,0 0 0 1 0,-0 h40 a0,0 0 0 1 0,0 v44 z" class="mark-strong"/>
+<text x="582" y="137" class="muted small" text-anchor="middle">4</text>
+<text x="582" y="170" class="muted small" text-anchor="middle">잘림</text>
+<line x1="554" y1="188" x2="610" y2="188" class="line-change"/>
+<text x="615" y="192.5" class="strong">P = 2</text>
+<text x="582" y="251" class="strong" text-anchor="middle">min1</text>
+<text x="582" y="269" class="muted small" text-anchor="middle">4 → 2</text>
+<rect x="664.5" y="122" width="39" height="22" rx="4" class="cut"/>
+<path d="M664,232 v-88 a0,0 0 0 1 0,-0 h40 a0,0 0 0 1 0,0 v88 z" class="mark-strong"/>
+<text x="684" y="115" class="muted small" text-anchor="middle">5</text>
+<text x="684" y="137" class="muted small" text-anchor="middle">잘림</text>
+<line x1="656" y1="144" x2="712" y2="144" class="line-change"/>
+<text x="717" y="148.5" class="strong">Q = 4</text>
+<text x="684" y="251" class="strong" text-anchor="middle">min2</text>
+<text x="684" y="269" class="muted small" text-anchor="middle">5 → 4</text>
+<line x1="538" y1="232" x2="736" y2="232" class="grid"/>
+</svg>
+<figcaption>그림 1. 논문 아이디어: 검사 노드가 돌려주는 두 값 가운데 min1은 상한 P에서, min2는 상한 Q에서 잘라 돌려줌 (숫자는 설명용 예시)</figcaption>
+</figure>
 <ul>
 <li><strong>논문 아이디어</strong>:<ul>
 <li>min-sum 검사 노드가 돌려주는 가장 작은 값(min1)과 둘째로 작은 값(min2)을
@@ -133,6 +240,44 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <li>상세는 아래 평가 계획 표</li>
 </ul>
 </li>
+</ul>
+<figure class="doc-figure">
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 290" width="760" height="290" role="img" aria-label="클리핑을 강하게 할수록 상한 여유 환경의 FER은 1.0에서 0으로 내려가고, 비율 복원 환경의 FER은 0에서 1.0으로 올라간다.">
+<rect x="0" y="0" width="760" height="290" class="surface"/>
+<line x1="16" y1="16" x2="34" y2="16" class="line-better"/><circle cx="25" cy="16" r="4" class="mark-better"/><text x="40" y="20" class="small">상한 여유 (ch=8) 환경</text><line x1="179.6" y1="16" x2="197.6" y2="16" class="line-worse"/><circle cx="188.6" cy="16" r="4" class="mark-worse"/><text x="203.6" y="20" class="small">비율 복원 (ch=16) 환경</text>
+<text x="16" y="46" class="muted small">FER (프레임 오류율, 낮을수록 좋음)</text>
+<line x1="56" y1="238" x2="570" y2="238" class="grid"/>
+<text x="48" y="242" class="muted small" text-anchor="end">0</text>
+<line x1="56" y1="151" x2="570" y2="151" class="grid"/>
+<text x="48" y="155" class="muted small" text-anchor="end">0.5</text>
+<line x1="56" y1="64" x2="570" y2="64" class="grid"/>
+<text x="48" y="68" class="muted small" text-anchor="end">1.0</text>
+<text x="72" y="256" class="muted small" text-anchor="middle">무클립 (15,15)</text>
+<text x="313" y="256" class="muted small" text-anchor="middle">(8,11)</text>
+<text x="554" y="256" class="muted small" text-anchor="middle">논문 가이드 (4,8)</text>
+<text x="313" y="278" class="muted small" text-anchor="middle">클리핑 세기 (오른쪽일수록 상한 P, Q가 낮음)</text>
+<polyline points="72,64 313,126.5 554,238" class="line-better"/>
+<circle cx="72" cy="64" r="5" class="mark-better ring"/>
+<circle cx="313" cy="126.5" r="5" class="mark-better ring"/>
+<circle cx="554" cy="238" r="5" class="mark-better ring"/>
+<g><title>상한 여유 (ch=8) 환경, 무클립 (15,15): 1.0</title><circle cx="72" cy="64" r="9" class="hit"/></g>
+<g><title>상한 여유 (ch=8) 환경, (8,11): 0.641</title><circle cx="313" cy="126.5" r="9" class="hit"/></g>
+<g><title>상한 여유 (ch=8) 환경, 논문 가이드 (4,8): 0</title><circle cx="554" cy="238" r="9" class="hit"/></g>
+<text x="568" y="216" class="strong">FER 1.0 → 0</text>
+<text x="568" y="233" class="muted small">클리핑할수록 개선</text>
+<polyline points="72,238 313,194.5 554,64" class="line-worse"/>
+<circle cx="72" cy="238" r="5" class="mark-worse ring"/>
+<circle cx="313" cy="194.5" r="5" class="mark-worse ring"/>
+<circle cx="554" cy="64" r="5" class="mark-worse ring"/>
+<g><title>비율 복원 (ch=16) 환경, 무클립 (15,15): 0</title><circle cx="72" cy="238" r="9" class="hit"/></g>
+<g><title>비율 복원 (ch=16) 환경, (8,11): 0.25</title><circle cx="313" cy="194.5" r="9" class="hit"/></g>
+<g><title>비율 복원 (ch=16) 환경, 논문 가이드 (4,8): 1.0</title><circle cx="554" cy="64" r="9" class="hit"/></g>
+<text x="568" y="68.5" class="strong">FER 0 → 1.0</text>
+<text x="568" y="85.5" class="muted small">클리핑할수록 악화</text>
+</svg>
+<figcaption>그림 2. 핵심 결과: 채널 LLR 크기(ch)가 edge 상한 15보다 작아 여유가 있는 환경에서는 클리핑이 FER을 1.0에서 0으로 내리고, ch를 16으로 올려 여유를 없앤 환경에서는 같은 클리핑이 FER을 0에서 1.0으로 올림</figcaption>
+</figure>
+<ul>
 <li><strong>실험 결과</strong>:<ul>
 <li><strong>판정: 조건부 유효</strong>. 채널 LLR 크기 대비 edge 상한에 여유가 있을 때만 이득:
   여유가 크면 무클립 FER(프레임 오류율) 1.0이 가이드값 (4,8)에서
@@ -198,6 +343,29 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </table>
 <h2 id="py-스크리닝-실험">🔬 py 스크리닝 실험</h2>
 <h3 id="바꾼-것">바꾼 것</h3>
+<figure class="doc-figure">
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 262" width="760" height="262" role="img" aria-label="채널 LLR이 변수 노드로 들어가고, 변수 노드와 검사 노드가 메시지를 주고받으며 최대 20회 반복한다. 논문이 바꾼 곳은 검사 노드가 찾은 min1, min2를 메시지로 재구성하기 직전의 이중 상한 클리핑 한 곳이다.">
+<rect x="0" y="0" width="760" height="262" class="surface"/>
+<rect x="20" y="34" width="124" height="58" rx="8" class="box"/><text x="82" y="58.5" class="strong" text-anchor="middle">채널 LLR</text><text x="82" y="76.5" class="muted small" text-anchor="middle">크기 ch</text>
+<rect x="204" y="34" width="168" height="58" rx="8" class="box"/><text x="288" y="58.5" class="strong" text-anchor="middle">변수 노드</text><text x="288" y="76.5" class="muted small" text-anchor="middle">합산과 비트 판정</text>
+<rect x="540" y="34" width="200" height="58" rx="8" class="box"/><text x="640" y="58.5" class="strong" text-anchor="middle">검사 노드</text><text x="640" y="76.5" class="muted small" text-anchor="middle">min1, min2 찾기</text>
+<rect x="540" y="162" width="200" height="58" rx="8" class="box-change"/><text x="640" y="186.5" class="strong" text-anchor="middle">이중 상한 클리핑</text><text x="640" y="204.5" class="muted small" text-anchor="middle">min1 ≤ P, min2 ≤ Q</text>
+<rect x="292" y="162" width="180" height="58" rx="8" class="box"/><text x="382" y="186.5" class="strong" text-anchor="middle">메시지 재구성</text><text x="382" y="204.5" class="muted small" text-anchor="middle">부호를 붙여 돌려줌</text>
+<rect x="20" y="162" width="124" height="58" rx="8" class="box"/><text x="82" y="186.5" class="strong" text-anchor="middle">복호 결과</text><text x="82" y="204.5" class="muted small" text-anchor="middle">판정 비트</text>
+<polyline points="144,63 195,63" class="arrow"/><polygon points="204,63 195,67.5 195,58.5" class="arrow-head"/>
+<polyline points="372,63 531,63" class="arrow"/><polygon points="540,63 531,67.5 531,58.5" class="arrow-head"/>
+<text x="456" y="53" class="muted small" text-anchor="middle">보내는 메시지 (V2C)</text>
+<polyline points="640,92 640,153" class="arrow"/><polygon points="640,162 635.5,153 644.5,153" class="arrow-head"/>
+<polyline points="540,191 481,191" class="arrow"/><polygon points="472,191 481,186.5 481,195.5" class="arrow-head"/>
+<polyline points="340,162 340,101" class="arrow"/><polygon points="340,92 344.5,101 335.5,101" class="arrow-head"/>
+<text x="350" y="131" class="muted small">돌려주는 메시지 (C2V)</text>
+<polyline points="236,92 236,191 153,191" class="arrow"/><polygon points="144,191 153,186.5 153,195.5" class="arrow-head"/>
+<text x="566" y="131" class="muted small" text-anchor="middle">최대 20회 반복</text>
+<rect x="586" y="233" width="10" height="10" rx="2" class="mark-change"/>
+<text x="602" y="242" class="small">논문이 바꾼 곳</text>
+</svg>
+<figcaption>그림 3. 디코더 안에서 바뀐 자리: 검사 노드가 찾은 min1, min2를 메시지로 재구성하기 직전 한 곳 (V2C는 변수 노드가 검사 노드로 보내는 메시지, C2V는 검사 노드가 변수 노드로 돌려주는 메시지)</figcaption>
+</figure>
 <table>
 <thead>
 <tr>
@@ -314,6 +482,37 @@ body { margin: 0; background: var(--bg); color: var(--text); }
   <span class="worse">유효한 클리핑은 전부 악화</span></li>
 </ul>
 </blockquote>
+<figure class="doc-figure">
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 398" width="760" height="398" role="img" aria-label="LLR_MATRIX_HD_1 환경에서 클리핑을 건 모든 (P,Q)의 FER이 기준선 0.484보다 높다.">
+<rect x="0" y="0" width="760" height="398" class="surface"/>
+<rect x="157.6" y="8" width="10" height="10" rx="2" class="mark-neutral"/><text x="173.6" y="18" class="small">기준선과 같음 (클리핑 없음)</text><rect x="346.5" y="8" width="10" height="10" rx="2" class="mark-worse"/><text x="362.5" y="18" class="small">기준선보다 악화</text>
+<line x1="157.6" y1="62" x2="157.6" y2="348" class="grid"/>
+<text x="157.6" y="365" class="muted small" text-anchor="middle">0</text>
+<line x1="292.2" y1="62" x2="292.2" y2="348" class="grid"/>
+<text x="292.2" y="365" class="muted small" text-anchor="middle">0.25</text>
+<line x1="426.8" y1="62" x2="426.8" y2="348" class="grid"/>
+<text x="426.8" y="365" class="muted small" text-anchor="middle">0.5</text>
+<line x1="561.4" y1="62" x2="561.4" y2="348" class="grid"/>
+<text x="561.4" y="365" class="muted small" text-anchor="middle">0.75</text>
+<line x1="696" y1="62" x2="696" y2="348" class="grid"/>
+<text x="696" y="365" class="muted small" text-anchor="middle">1.0</text>
+<text x="426.8" y="386" class="muted small" text-anchor="middle">FER (프레임 오류율, 낮을수록 좋음)</text>
+<g><title>base_run: 0.484</title><rect x="0" y="62" width="760" height="26" class="hit"/><text x="147.6" y="79.5" class="strong" text-anchor="end">base_run</text><path d="M157.6,68 h256.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-256.6 z" class="mark-neutral"/><text x="425.2" y="79.5" class="small">0.484</text></g>
+<g><title>(7,7) 클리핑 무효과: 0.484</title><rect x="0" y="88" width="760" height="26" class="hit"/><text x="147.6" y="105.5" text-anchor="end">(7,7) 클리핑 무효과</text><path d="M157.6,94 h256.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-256.6 z" class="mark-neutral"/><text x="425.2" y="105.5" class="small">0.484</text></g>
+<g><title>(5,7): 0.516</title><rect x="0" y="114" width="760" height="26" class="hit"/><text x="147.6" y="131.5" text-anchor="end">(5,7)</text><path d="M157.6,120 h273.8 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-273.8 z" class="mark-worse"/><text x="442.4" y="131.5" class="small">0.516</text></g>
+<g><title>(5,5): 0.938</title><rect x="0" y="140" width="760" height="26" class="hit"/><text x="147.6" y="157.5" text-anchor="end">(5,5)</text><path d="M157.6,146 h501.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-501.1 z" class="mark-worse"/><text x="669.6" y="157.5" class="small">0.938</text></g>
+<g><title>(3,7): 0.859</title><rect x="0" y="166" width="760" height="26" class="hit"/><text x="147.6" y="183.5" text-anchor="end">(3,7)</text><path d="M157.6,172 h458.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-458.5 z" class="mark-worse"/><text x="627.1" y="183.5" class="small">0.859</text></g>
+<g><title>(3,5): 0.938</title><rect x="0" y="192" width="760" height="26" class="hit"/><text x="147.6" y="209.5" text-anchor="end">(3,5)</text><path d="M157.6,198 h501.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-501.1 z" class="mark-worse"/><text x="669.6" y="209.5" class="small">0.938</text></g>
+<g><title>(3,3): 1.000</title><rect x="0" y="218" width="760" height="26" class="hit"/><text x="147.6" y="235.5" text-anchor="end">(3,3)</text><path d="M157.6,224 h534.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-534.4 z" class="mark-worse"/><text x="703" y="235.5" class="small">1.000</text></g>
+<g><title>(2,5): 0.969</title><rect x="0" y="244" width="760" height="26" class="hit"/><text x="147.6" y="261.5" text-anchor="end">(2,5)</text><path d="M157.6,250 h517.7 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-517.7 z" class="mark-worse"/><text x="686.3" y="261.5" class="small">0.969</text></g>
+<g><title>(2,3) 논문 가이드 근방: 1.000</title><rect x="0" y="270" width="760" height="26" class="hit"/><text x="147.6" y="287.5" text-anchor="end">(2,3) 논문 가이드 근방</text><path d="M157.6,276 h534.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-534.4 z" class="mark-worse"/><text x="703" y="287.5" class="small">1.000</text></g>
+<g><title>(1,3): 1.000</title><rect x="0" y="296" width="760" height="26" class="hit"/><text x="147.6" y="313.5" text-anchor="end">(1,3)</text><path d="M157.6,302 h534.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-534.4 z" class="mark-worse"/><text x="703" y="313.5" class="small">1.000</text></g>
+<g><title>(1,1): 1.000</title><rect x="0" y="322" width="760" height="26" class="hit"/><text x="147.6" y="339.5" text-anchor="end">(1,1)</text><path d="M157.6,328 h534.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-534.4 z" class="mark-worse"/><text x="703" y="339.5" class="small">1.000</text></g>
+<line x1="418.2" y1="56" x2="418.2" y2="348" class="reference"/>
+<text x="418.2" y="50" class="small" text-anchor="middle">기준선 0.484</text>
+</svg>
+<figcaption>그림 4. LLR_MATRIX_HD_1 환경의 (P,Q)별 FER: 클리핑을 건 조합은 모두 기준선보다 악화 (아래 표의 FER 열을 그린 것)</figcaption>
+</figure>
 <table>
 <thead>
 <tr>
@@ -411,6 +610,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 <li><strong>핵심</strong>: 무클립이 전 프레임 실패하는 상한 여유 환경에서 논문 가이드 (4,8)이
   <span class="better">FER 0 (0/256)으로 완전 복구</span>. 비율 복원 환경에서는
   반대로 (4,8)이 <span class="worse">전 프레임 실패</span></li>
+<li><strong>그림</strong>: 요약 절의 그림 2가 이 표를 그린 것임</li>
 </ul>
 </blockquote>
 <table>
@@ -438,13 +638,84 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 </tbody>
 </table>
 <h4 id="지표별-해석">지표별 해석</h4>
+<figure class="doc-figure">
+<svg xmlns="http://www.w3.org/2000/svg" class="ldpc-fig" viewBox="0 0 760 290" width="760" height="290" role="img" aria-label="클리핑 없음은 dv=4 열의 오류가 iteration 5까지 1개 안팎으로 줄지만, (2,3) 클리핑은 iteration 5부터 약 79개에서 더 줄지 않는다.">
+<rect x="0" y="0" width="760" height="290" class="surface"/>
+<line x1="16" y1="16" x2="34" y2="16" class="line-worse"/><circle cx="25" cy="16" r="4" class="mark-worse"/><text x="40" y="20" class="small">(2,3) 클리핑</text><line x1="128.2" y1="16" x2="146.2" y2="16" class="line-neutral"/><circle cx="137.2" cy="16" r="4" class="mark-neutral"/><text x="152.2" y="20" class="small">클리핑 없음 (7,7)</text>
+<text x="16" y="46" class="muted small">dv=4 열의 비트 오류 수 (프레임당 평균)</text>
+<line x1="56" y1="238" x2="550" y2="238" class="grid"/>
+<text x="48" y="242" class="muted small" text-anchor="end">0</text>
+<line x1="56" y1="194.5" x2="550" y2="194.5" class="grid"/>
+<text x="48" y="198.5" class="muted small" text-anchor="end">50</text>
+<line x1="56" y1="151" x2="550" y2="151" class="grid"/>
+<text x="48" y="155" class="muted small" text-anchor="end">100</text>
+<line x1="56" y1="107.5" x2="550" y2="107.5" class="grid"/>
+<text x="48" y="111.5" class="muted small" text-anchor="end">150</text>
+<line x1="56" y1="64" x2="550" y2="64" class="grid"/>
+<text x="48" y="68" class="muted small" text-anchor="end">200</text>
+<text x="72" y="256" class="muted small" text-anchor="middle">1</text>
+<text x="169.3" y="256" class="muted small" text-anchor="middle">5</text>
+<text x="290.8" y="256" class="muted small" text-anchor="middle">10</text>
+<text x="412.4" y="256" class="muted small" text-anchor="middle">15</text>
+<text x="534" y="256" class="muted small" text-anchor="middle">20</text>
+<text x="303" y="278" class="muted small" text-anchor="middle">iteration (복호 반복 횟수)</text>
+<polyline points="72,84.7 96.3,117.6 120.6,161.1 144.9,168.2 169.3,168.9 193.6,169 217.9,169.1 242.2,169.1 266.5,169.1 290.8,169.1 315.2,169.1 339.5,169.1 363.8,169.1 388.1,169.1 412.4,169.1 436.7,169.1 461.1,169.1 485.4,169.1 509.7,169.1 534,169.1" class="line-worse"/>
+<circle cx="534" cy="169.1" r="5" class="mark-worse ring"/>
+<g><title>(2,3) 클리핑, 1: 176.2개</title><circle cx="72" cy="84.7" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 2.0: 138.3개</title><circle cx="96.3" cy="117.6" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 3.0: 88.3개</title><circle cx="120.6" cy="161.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 4.0: 80.2개</title><circle cx="144.9" cy="168.2" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 5: 79.4개</title><circle cx="169.3" cy="168.9" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 6.0: 79.3개</title><circle cx="193.6" cy="169" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 7.0: 79.2개</title><circle cx="217.9" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 8.0: 79.2개</title><circle cx="242.2" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 9.0: 79.2개</title><circle cx="266.5" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 10: 79.2개</title><circle cx="290.8" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 11.0: 79.2개</title><circle cx="315.2" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 12.0: 79.2개</title><circle cx="339.5" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 13.0: 79.2개</title><circle cx="363.8" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 14.0: 79.2개</title><circle cx="388.1" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 15: 79.2개</title><circle cx="412.4" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 16.0: 79.2개</title><circle cx="436.7" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 17.0: 79.2개</title><circle cx="461.1" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 18.0: 79.2개</title><circle cx="485.4" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, iteration 19.0: 79.2개</title><circle cx="509.7" cy="169.1" r="9" class="hit"/></g>
+<g><title>(2,3) 클리핑, 20: 79.2개</title><circle cx="534" cy="169.1" r="9" class="hit"/></g>
+<text x="548" y="165.1" class="strong">79.2개에서 멈춤</text>
+<text x="548" y="182.1" class="muted small">더 줄지 않음 (전 프레임 실패)</text>
+<polyline points="72,74.7 96.3,196.4 120.6,229.3 144.9,235.8 169.3,237.1 193.6,237.2 217.9,237.3 242.2,237.3 266.5,237.3 290.8,237.3 315.2,237.3 339.5,237.3 363.8,237.3 388.1,237.3 412.4,237.3 436.7,237.3 461.1,237.3 485.4,237.3 509.7,237.3 534,237.3" class="line-neutral"/>
+<circle cx="534" cy="237.3" r="5" class="mark-neutral ring"/>
+<g><title>클리핑 없음 (7,7), 1: 187.7개</title><circle cx="72" cy="74.7" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 2.0: 47.8개</title><circle cx="96.3" cy="196.4" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 3.0: 10.0개</title><circle cx="120.6" cy="229.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 4.0: 2.6개</title><circle cx="144.9" cy="235.8" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 5: 1.0개</title><circle cx="169.3" cy="237.1" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 6.0: 0.9개</title><circle cx="193.6" cy="237.2" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 7.0: 0.8개</title><circle cx="217.9" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 8.0: 0.8개</title><circle cx="242.2" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 9.0: 0.8개</title><circle cx="266.5" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 10: 0.8개</title><circle cx="290.8" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 11.0: 0.8개</title><circle cx="315.2" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 12.0: 0.8개</title><circle cx="339.5" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 13.0: 0.8개</title><circle cx="363.8" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 14.0: 0.8개</title><circle cx="388.1" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 15: 0.8개</title><circle cx="412.4" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 16.0: 0.8개</title><circle cx="436.7" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 17.0: 0.8개</title><circle cx="461.1" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 18.0: 0.8개</title><circle cx="485.4" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), iteration 19.0: 0.8개</title><circle cx="509.7" cy="237.3" r="9" class="hit"/></g>
+<g><title>클리핑 없음 (7,7), 20: 0.8개</title><circle cx="534" cy="237.3" r="9" class="hit"/></g>
+<text x="548" y="233" class="strong">0.8개까지 줄어듦</text>
+</svg>
+<figcaption>그림 5. dv=4 열의 비트 오류 수가 iteration을 따라 줄어드는 모습 (LLR_MATRIX_HD_1 환경, E=200): 클리핑 없음은 1개 안팎까지 줄고, (2,3) 클리핑은 약 79개에서 멈춤</figcaption>
+</figure>
 <ol>
 <li><strong>반전 가능 조건이 반전 불능 경계를 정확히 예측함</strong> (평가 계획 4행):<ul>
 <li>dv 열의 최대 extrinsic <code>Q + (dv-1)×P</code>가 그 dv의 ch보다 작으면 반전 불능</li>
 <li>LLR_MATRIX_HD_1 환경의 지배 열 dv=4(147개 중 129개)는 ch=10. (2,3)은 최대
   extrinsic 9라 반전 불능(FER 1.0), (2,5)는 11이라 겨우 반전 가능(9.69e-01)</li>
-<li>dv별 오류 로그(평가 계획 3행)로 직접 확인됨: (2,3)에서 dv=4 오류가 iteration
-  2부터 79.2개로 동결</li>
+<li>dv별 오류 로그(평가 계획 3행)로 직접 확인됨 (그림 5): (2,3)에서 dv=4 오류가
+  iteration 5부터 약 79개에서 줄지 않고 iteration 7부터 79.2개로 동결</li>
 </ul>
 </li>
 <li><strong>LLR_MATRIX_HD_1 환경은 클리핑 여지가 없음</strong> (<span class="worse">전 클리핑
